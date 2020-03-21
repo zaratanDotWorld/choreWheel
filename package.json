@@ -1,0 +1,9 @@
+{
+  "name": "mirror",
+  "version": "0.1.0",
+  "description": "Chore wheel x1000",
+  "main": "index.js",
+  "repository": "git@github.com:kronosapiens/mirror.git",
+  "author": "Daniel Kronovet <krono@zaratan.world>",
+  "license": "UNLICENSED"
+}
