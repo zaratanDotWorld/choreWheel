@@ -2,8 +2,15 @@
   "name": "mirror",
   "version": "0.1.0",
   "description": "Chore wheel x1000",
-  "main": "index.js",
+  "main": "src/app.js",
   "repository": "git@github.com:kronosapiens/mirror.git",
   "author": "Daniel Kronovet <krono@zaratan.world>",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "scripts": {
+    "app": "node src/app.js"
+  },
+  "dependencies": {
+    "@slack/bolt": "^1.8.0",
+    "dotenv": "^8.2.0"
+  }
 }
