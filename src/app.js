@@ -11,33 +11,60 @@ const app = new App({
 
 // Define the interface
 
-app.message('hello', ({ message, say }) => {
-  // say(`Hey there <@${message.user}>!`);
-  say({
-    blocks: [
-      {
-        "type": "section",
-        "text": {
-          "type": "mrkdwn",
-          "text": `Hey there <@${message.user}>!`
-        },
-        "accessory": {
-          "type": "button",
-          "text": {
-            "type": "plain_text",
-            "text": "Click Me"
-          },
-          "action_id": "button_click"
-        }
-      }
-    ]
-  });
-});
+app.command('/echo', async ({ ack, command, say }) => {
+  // 'context', 'logger', 'client', 'next', 'body'
+  // 'payload', 'command', 'say','respond', 'ack'
 
-app.action('button_click', ({ body, ack, say }) => {
   ack();
 
-  say(`<@${body.user.id}> clicked the button`);
+  say(`${command.text}`);
+});
+
+app.command('/list', ({ ack, command, say }) => {
+  // 'context', 'logger', 'client', 'next', 'body'
+  // 'payload', 'command', 'say', 'respond', 'ack'
+
+  ack();
+
+  app.client.views.open({
+    token: process.env.SLACK_BOT_TOKEN,
+    trigger_id: command.trigger_id,
+    view: {
+      type: "modal",
+      callback_id: "modal-identifier",
+      title: {
+        type: "plain_text",
+        text: "Just a modal"
+      },
+      blocks: [
+        {
+          type: "section",
+          block_id: "section-identifier",
+          text: {
+            type: "mrkdwn",
+            text: "*Welcome* to ~my~ Block Kit _modal_!"
+          },
+          accessory: {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "Just a button"
+            },
+            action_id: "button_click"
+          }
+        }
+      ]
+    }
+  });
+
+});
+
+
+app.action('button_click', ({ ack }) => {
+  // 'context', 'logger', 'client', 'next'
+  // 'body', 'payload', 'action', 'ack'
+
+  ack();
 });
 
 // Launch the app
