@@ -35,27 +35,29 @@ exports.list = function() {
             "text": "...",
             "emoji": true
           },
-          "options": [
-            {
-              "text": {
-                "type": "plain_text",
-                "text": "Sweeping",
-                "emoji": true
-              },
-              "value": "sweeping"
-            },
-            {
-              "text": {
-                "type": "plain_text",
-                "text": "Dishes",
-                "emoji": true
-              },
-              "value": "dishes"
-            }
-          ]
+          "options": getOptions()
         }
       }
     ]
 
   }
+}
+
+const options = [
+  "Sweeping",
+  "Dishes",
+  "Restock",
+]
+
+function getOptions() {
+  return options.map(option => {
+    return {
+      "text": {
+        "type": "plain_text",
+        "text": option,
+        "emoji": true
+      },
+      "value": option
+    }
+  })
 }
