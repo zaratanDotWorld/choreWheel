@@ -47,19 +47,33 @@ app.command('/list', async ({ ack, command, say }) => {
   app.client.views.open(response);
 });
 
-// https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
 app.view(chores.callback_id, async ({ ack, body }) => {
   // 'context', 'logger', 'client', 'next', 'body', 'payload', 'view', 'ack'
 
   ack();
 
-  // This is silly
-  const value = 100;
+  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
   const chore = body.view.state.values.chore_input.chore_select.selected_option;
+  const value = 100;
   const message = {
     token: process.env.SLACK_BOT_TOKEN,
     channel: 'test',
-    text: `**${body.user.name}** did **${chore.value.toLowerCase()}** for **${value} tokens**. Thanks ${body.user.name}! ✨✨ React 👍 to endorse or 👎 to challenge.`
+    blocks: [
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": `*${body.user.name}* did *${chore.value.toLowerCase()}* for *${value} tokens*. Thanks ${body.user.name}! :sparkles::sparkles:`
+        }
+      },
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": "React :+1: to endorse or :-1: to challenge."
+        }
+      }
+    ]
   }
   const res = await app.client.chat.postMessage(message);
   console.log(`Message posted as ${res.channel}.${res.ts}`);
