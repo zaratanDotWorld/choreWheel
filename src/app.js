@@ -19,13 +19,12 @@ app.event('reaction_added', async ({ say, payload }) => {
 
   console.log(`User ${payload.user} just added ${payload.reaction} to message ${payload.item.channel}.${payload.item.ts}`);
 
-  app.client.reactions
-    .get({
+  const res = await app.client.reactions.get({
       token: process.env.SLACK_BOT_TOKEN,
       channel: payload.item.channel,
       timestamp: payload.item.ts
-    })
-    .then(res => { console.log(res.message.reactions); });
+    });
+  console.log(res.message.reactions);
 })
 
 app.event('reaction_removed', async ({ say, payload }) => {
@@ -44,7 +43,7 @@ app.command('/echo', async ({ ack, command, say }) => {
   say(`${command.text}`);
 });
 
-app.command('/list', ({ ack, command, say }) => {
+app.command('/list', async ({ ack, command, say }) => {
   // 'context', 'logger', 'client', 'next', 'body'
   // 'payload', 'command', 'say', 'respond', 'ack'
 
@@ -55,13 +54,11 @@ app.command('/list', ({ ack, command, say }) => {
     trigger_id: command.trigger_id,
     view: chores.list()
   }
-
-  app.client.views
-    .open(view);
+  app.client.views.open(view);
 });
 
 // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-app.view('modal_list', ({ ack, body }) => {
+app.view('modal_list', async ({ ack, body }) => {
   // 'context', 'logger', 'client', 'next'
   // 'body', 'payload', 'view', 'ack'
 
@@ -75,10 +72,8 @@ app.view('modal_list', ({ ack, body }) => {
     channel: 'test',
     text: `**${body.user.name}** did **${chore.value.toLowerCase()}** for **${value} tokens**. Thanks ${body.user.name}! ✨✨ React 👍 to endorse or 👎 to challenge.`
   }
-
-  app.client.chat
-    .postMessage(message)
-    .then(res => { console.log(`Message posted as ${res.channel}.${res.ts}`); });
+  const res = await app.client.chat.postMessage(message);
+  console.log(`Message posted as ${res.channel}.${res.ts}`);
 });
 
 // Launch the app
