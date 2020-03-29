@@ -2,6 +2,7 @@ require('dotenv').config()
 
 const { App } = require('@slack/bolt');
 
+const db = require('./db')
 const chores = require('./channels/chores')
 
 // Create the app
@@ -14,8 +15,7 @@ const app = new App({
 // Define the interface
 
 app.event('reaction_added', async ({ say, payload }) => {
-  // 'context', 'logger', 'client', 'next'
-  // 'body', 'payload', 'event', 'say'
+  // 'context', 'logger', 'client', 'next', 'body', 'payload', 'event', 'say'
 
   console.log(`User ${payload.user} just added ${payload.reaction} to message ${payload.item.channel}.${payload.item.ts}`);
 
@@ -28,39 +28,28 @@ app.event('reaction_added', async ({ say, payload }) => {
 })
 
 app.event('reaction_removed', async ({ say, payload }) => {
-  // 'context', 'logger', 'client', 'next'
-  // 'body', 'payload', 'event', 'say'
+  // 'context', 'logger', 'client', 'next', 'body', 'payload', 'event', 'say'
 
   console.log(`User ${payload.user} just removed ${payload.reaction} from message ${payload.item.channel}.${payload.item.ts}`);
 })
 
-app.command('/echo', async ({ ack, command, say }) => {
-  // 'context', 'logger', 'client', 'next', 'body'
-  // 'payload', 'command', 'say','respond', 'ack'
-
-  ack();
-
-  say(`${command.text}`);
-});
-
 app.command('/list', async ({ ack, command, say }) => {
-  // 'context', 'logger', 'client', 'next', 'body'
-  // 'payload', 'command', 'say', 'respond', 'ack'
+  // 'context', 'logger', 'client', 'next', 'body', 'payload', 'command', 'say', 'respond', 'ack'
 
   ack();
 
-  const view = {
+  const view = await chores.list(db);
+  const response = {
     token: process.env.SLACK_BOT_TOKEN,
     trigger_id: command.trigger_id,
-    view: chores.list()
+    view: view
   }
-  app.client.views.open(view);
+  app.client.views.open(response);
 });
 
 // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-app.view('modal_list', async ({ ack, body }) => {
-  // 'context', 'logger', 'client', 'next'
-  // 'body', 'payload', 'view', 'ack'
+app.view(chores.callback_id, async ({ ack, body }) => {
+  // 'context', 'logger', 'client', 'next', 'body', 'payload', 'view', 'ack'
 
   ack();
 

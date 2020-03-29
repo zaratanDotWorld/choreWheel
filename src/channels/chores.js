@@ -1,8 +1,11 @@
-exports.list = function() {
-  return {
+const callback_id = "modal_list";
 
+async function list(db) {
+  const options = await getOptions(db);
+
+  return {
     "type": "modal",
-    "callback_id": "modal_list",
+    "callback_id": callback_id,
     "title": {
       "type": "plain_text",
       "text": "Chores",
@@ -35,29 +38,49 @@ exports.list = function() {
             "text": "...",
             "emoji": true
           },
-          "options": getOptions()
+          "options": options
         }
       }
     ]
-
   }
 }
 
-const options = [
-  "Sweeping",
-  "Dishes",
-  "Restock",
-]
 
-function getOptions() {
+async function getOptions(db) {
+  const options = await db.getChores();
+
+  // [
+  //   {
+  //     id: 1,
+  //     created_at: '2020-03-29 22:01:03',
+  //     updated_at: '2020-03-29 22:01:03',
+  //     name: 'dishes'
+  //   },
+  //   {
+  //     id: 2,
+  //     created_at: '2020-03-29 22:01:03',
+  //     updated_at: '2020-03-29 22:01:03',
+  //     name: 'sweeping'
+  //   },
+  //   {
+  //     id: 3,
+  //     created_at: '2020-03-29 22:01:03',
+  //     updated_at: '2020-03-29 22:01:03',
+  //     name: 'restock'
+  //   }
+  // ]
+
   return options.map(option => {
     return {
       "text": {
         "type": "plain_text",
-        "text": option,
+        "text": option.name,
         "emoji": true
       },
-      "value": option
+      "value": option.name
     }
   })
 }
+
+exports.callback_id = callback_id;
+exports.list = list;

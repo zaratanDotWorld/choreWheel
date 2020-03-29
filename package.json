@@ -7,10 +7,18 @@
   "author": "Daniel Kronovet <krono@zaratan.world>",
   "license": "UNLICENSED",
   "scripts": {
-    "app": "node src/app.js"
+    "app": "node src/app.js",
+    "test": "mocha --exit",
+    "knex": "./node_modules/knex/bin/cli.js",
+    "migrate": "yarn run knex migrate:latest; yarn run knex seed:run",
+    "rollback": "yarn run knex migrate:rollback"
   },
   "dependencies": {
     "@slack/bolt": "^1.8.0",
-    "dotenv": "^8.2.0"
+    "dotenv": "^8.2.0",
+    "knex": "^0.20.13"
+  },
+  "devDependencies": {
+    "sqlite3": "^4.1.1"
   }
 }
