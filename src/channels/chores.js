@@ -31,14 +31,9 @@ async function list(db) {
           "emoji": true
         },
         "element": {
-          "type": "static_select",
+          "type": "radio_buttons",
           "action_id": "chore_select",
-          "placeholder": {
-            "type": "plain_text",
-            "text": "...",
-            "emoji": true
-          },
-          "options": options
+          "options": options,
         }
       }
     ]
@@ -77,7 +72,11 @@ async function getOptions(db) {
         "text": option.name,
         "emoji": true
       },
-      "value": option.name
+      "value": option.id.toString(),
+      "description": {
+        "type": "plain_text",
+        "text": option.created_at
+      }
     }
   })
 }
