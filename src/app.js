@@ -36,7 +36,7 @@ app.event('reaction_removed', async ({ say, payload }) => {
 app.command('/list', async ({ ack, command, say }) => {
   // 'context', 'logger', 'client', 'next', 'body', 'payload', 'command', 'say', 'respond', 'ack'
 
-  ack();
+  await ack();
 
   const view = await chores.list(db);
   const response = {
@@ -44,13 +44,13 @@ app.command('/list', async ({ ack, command, say }) => {
     trigger_id: command.trigger_id,
     view: view
   }
-  app.client.views.open(response);
+  await app.client.views.open(response);
 });
 
 app.view(chores.callback_id, async ({ ack, body }) => {
   // 'context', 'logger', 'client', 'next', 'body', 'payload', 'view', 'ack'
 
-  ack();
+  await ack();
 
   // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
   const chore = body.view.state.values.chore_input.chore_select.selected_option;

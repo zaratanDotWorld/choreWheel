@@ -14,7 +14,7 @@
     "rollback": "yarn run knex migrate:rollback"
   },
   "dependencies": {
-    "@slack/bolt": "^1.8.0",
+    "@slack/bolt": "^2.0.0",
     "dotenv": "^8.2.0",
     "knex": "^0.20.13"
   },
