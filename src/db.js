@@ -13,14 +13,23 @@ function errorLogger(error) {
 async function getActs() {
   return db('act')
     .select('*')
+    .where({ done_at: null, claimed_at: null })
     .catch(errorLogger);
 }
 
-async function doAct(actId, memberSlackId, messageId) {
-  return db('act')
-    .where({ id: actId })
-    .update({ done_by: memberSlackId, done_at: Date.now(), message_id: messageId })
-    .catch(errorLogger)
+async function doAct(actId, memberSlackId, messageId, choreName) {
+  try {
+    const now = Date.now();
+    await db.transaction(async trx => {
+      await trx('act')
+        .where({ id: actId })
+        .update({ done_by: memberSlackId, done_at: now, message_id: messageId });
+      await trx('act')
+        .insert({ chore_name: choreName, valued_at: now });
+    })
+  } catch (err) {
+    throw err;
+  }
 }
 
 exports.db = db;

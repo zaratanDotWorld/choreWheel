@@ -59,6 +59,7 @@ app.view(chores.callbackId, async ({ ack, body }) => {
   const actIndex = parseInt(view.state.values.act_input.act_select.selected_option.value);
   const act = view.blocks[0].element.options[actIndex];
   const actId = parseInt(act.description.text.split(".")[1]);
+  const choreName = act.text.text;
 
   const message = {
     token: process.env.SLACK_BOT_TOKEN,
@@ -68,7 +69,7 @@ app.view(chores.callbackId, async ({ ack, body }) => {
         "type": "section",
         "text": {
           "type": "mrkdwn",
-          "text": `*${user.name}* did *${act.text.text}* for *${act.description.text} tokens*. Thanks ${user.name}! :sparkles::sparkles:`
+          "text": `*${user.name}* did *${choreName}* for *${act.description.text} tokens*. Thanks ${user.name}! :sparkles::sparkles:`
         }
       },
       {
@@ -83,9 +84,10 @@ app.view(chores.callbackId, async ({ ack, body }) => {
 
   const res = await app.client.chat.postMessage(message);
   const messageId = `${res.channel}.${res.ts}`;
-  await db.doAct(actId, user.id, messageId);
 
-  console.log(`Message posted as ${res.channel}.${res.ts}`);
+  await db.doAct(actId, user.id, messageId, choreName);
+
+  console.log(`Message posted as ${messageId}`);
 });
 
 // Launch the app
