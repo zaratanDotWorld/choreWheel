@@ -1,8 +1,6 @@
 const callback_id = "modal_list";
 
-async function list(db) {
-  const options = await getOptions(db);
-
+function list(acts) {
   return {
     "type": "modal",
     "callback_id": callback_id,
@@ -33,7 +31,7 @@ async function list(db) {
         "element": {
           "type": "radio_buttons",
           "action_id": "chore_select",
-          "options": options,
+          "options": mapActs(acts)
         }
       }
     ]
@@ -41,41 +39,18 @@ async function list(db) {
 }
 
 
-async function getOptions(db) {
-  const options = await db.getChores();
-
-  // [
-  //   {
-  //     id: 1,
-  //     created_at: '2020-03-29 22:01:03',
-  //     updated_at: '2020-03-29 22:01:03',
-  //     name: 'dishes'
-  //   },
-  //   {
-  //     id: 2,
-  //     created_at: '2020-03-29 22:01:03',
-  //     updated_at: '2020-03-29 22:01:03',
-  //     name: 'sweeping'
-  //   },
-  //   {
-  //     id: 3,
-  //     created_at: '2020-03-29 22:01:03',
-  //     updated_at: '2020-03-29 22:01:03',
-  //     name: 'restock'
-  //   }
-  // ]
-
-  return options.map(option => {
+function mapActs(acts) {
+  return acts.map(act => {
     return {
       "text": {
         "type": "plain_text",
-        "text": option.name,
+        "text": act.chore_name,
         "emoji": true
       },
-      "value": option.id.toString(),
+      "value": act.id.toString(),
       "description": {
         "type": "plain_text",
-        "text": option.created_at
+        "text": act.value.toString()
       }
     }
   })

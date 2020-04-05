@@ -38,13 +38,14 @@ app.command('/list', async ({ ack, command, say }) => {
 
   await ack();
 
-  const view = await chores.list(db);
+  const acts = await db.getActs();
   const response = {
     token: process.env.SLACK_BOT_TOKEN,
     trigger_id: command.trigger_id,
-    view: view
+    view: chores.list(acts)
   }
-  await app.client.views.open(response);
+  const res = await app.client.views.open(response);
+  console.log(`Chores listed with id ${res.view.id}`);
 });
 
 app.view(chores.callback_id, async ({ ack, body }) => {
@@ -70,7 +71,7 @@ app.view(chores.callback_id, async ({ ack, body }) => {
         "type": "section",
         "text": {
           "type": "mrkdwn",
-          "text": "React :+1: to endorse or :-1: to challenge."
+          "text": "React :+1: to endorse or :-1: to challenge (& probably leave a comment about it)."
         }
       }
     ]

@@ -10,8 +10,9 @@
     "app": "node src/app.js",
     "test": "mocha --exit",
     "knex": "./node_modules/knex/bin/cli.js",
-    "migrate": "yarn run knex migrate:latest; yarn run knex seed:run",
-    "rollback": "yarn run knex migrate:rollback"
+    "knex:migrate": "yarn run knex migrate:latest",
+    "knex:rollback": "yarn run knex migrate:rollback",
+    "knex:seed": "yarn run knex seed:run"
   },
   "dependencies": {
     "@slack/bolt": "^2.0.0",

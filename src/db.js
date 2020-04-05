@@ -10,10 +10,10 @@ function errorLogger(error) {
   throw error
 }
 
-async function getChores() {
-  return db('chore')
+async function getActs() {
+  return db('act')
     .select('*')
     .catch(errorLogger)
 }
 
-exports.getChores = getChores
+exports.getActs = getActs
