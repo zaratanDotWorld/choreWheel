@@ -1,9 +1,9 @@
-const callback_id = "modal_list";
+const callbackId = "modal_list";
 
 function list(acts) {
   return {
     "type": "modal",
-    "callback_id": callback_id,
+    "callback_id": callbackId,
     "title": {
       "type": "plain_text",
       "text": "Chores",
@@ -22,7 +22,7 @@ function list(acts) {
     "blocks": [
       {
         "type": "input",
-        "block_id": "chore_input",
+        "block_id": "act_input",
         "label": {
           "type": "plain_text",
           "text": "🧹 Choose a chore",
@@ -30,7 +30,7 @@ function list(acts) {
         },
         "element": {
           "type": "radio_buttons",
-          "action_id": "chore_select",
+          "action_id": "act_select",
           "options": mapActs(acts)
         }
       }
@@ -40,21 +40,21 @@ function list(acts) {
 
 
 function mapActs(acts) {
-  return acts.map(act => {
+  return acts.map((act, index) => {
     return {
       "text": {
         "type": "plain_text",
         "text": act.chore_name,
         "emoji": true
       },
-      "value": act.id.toString(),
+      "value": index.toString(),
       "description": {
         "type": "plain_text",
-        "text": act.value.toString()
+        "text": `${act.value}.${act.id}`
       }
     }
   })
 }
 
-exports.callback_id = callback_id;
+exports.callbackId = callbackId;
 exports.list = list;

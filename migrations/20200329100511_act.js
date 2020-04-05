@@ -5,11 +5,11 @@ exports.up = function(knex, Promise) {
         t.string('chore_name').references('chore.name');
         t.integer('value');
         t.timestamp('valued_at');
-        t.string('claimed_by').references('member.userid');
+        t.string('claimed_by').references('member.slack_id');
         t.timestamp('claimed_at');
         t.integer('claimed_value');
         t.timestamp('unclaimed_at');
-        t.string('done_by').references('member.userid');
+        t.string('done_by').references('member.slack_id');
         t.timestamp('done_at');
         t.string('message_id');
         t.integer('votes_yay');

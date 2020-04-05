@@ -44,27 +44,31 @@ app.command('/list', async ({ ack, command, say }) => {
     trigger_id: command.trigger_id,
     view: chores.list(acts)
   }
+
   const res = await app.client.views.open(response);
   console.log(`Chores listed with id ${res.view.id}`);
 });
 
-app.view(chores.callback_id, async ({ ack, body }) => {
+app.view(chores.callbackId, async ({ ack, body }) => {
   // 'context', 'logger', 'client', 'next', 'body', 'payload', 'view', 'ack'
 
   await ack();
 
   // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-  const chore = body.view.state.values.chore_input.chore_select.selected_option;
-  const value = 100;
+  const { user, view } = body;
+  const actIndex = parseInt(view.state.values.act_input.act_select.selected_option.value);
+  const act = view.blocks[0].element.options[actIndex];
+  const actId = parseInt(act.description.text.split(".")[1]);
+
   const message = {
     token: process.env.SLACK_BOT_TOKEN,
-    channel: 'test',
+    channel: process.env.CHORES_CHANNEL,
     blocks: [
       {
         "type": "section",
         "text": {
           "type": "mrkdwn",
-          "text": `*${body.user.name}* did *${chore.value.toLowerCase()}* for *${value} tokens*. Thanks ${body.user.name}! :sparkles::sparkles:`
+          "text": `*${user.name}* did *${act.text.text}* for *${act.description.text} tokens*. Thanks ${user.name}! :sparkles::sparkles:`
         }
       },
       {
@@ -76,7 +80,11 @@ app.view(chores.callback_id, async ({ ack, body }) => {
       }
     ]
   }
+
   const res = await app.client.chat.postMessage(message);
+  const messageId = `${res.channel}.${res.ts}`;
+  await db.doAct(actId, user.id, messageId);
+
   console.log(`Message posted as ${res.channel}.${res.ts}`);
 });
 
