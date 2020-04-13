@@ -33,23 +33,45 @@ app.event('reaction_removed', async ({ say, payload }) => {
   console.log(`User ${payload.user} just removed ${payload.reaction} from message ${payload.item.channel}.${payload.item.ts}`);
 })
 
-app.command('/list', async ({ ack, command, say }) => {
+// Chores app
+
+app.command('/chores', async ({ ack, command, say }) => {
   // 'context', 'logger', 'client', 'next', 'body', 'payload', 'command', 'say', 'respond', 'ack'
 
   await ack();
 
-  const acts = await db.getActs();
-  const response = {
-    token: process.env.SLACK_BOT_TOKEN,
-    trigger_id: command.trigger_id,
-    view: chores.list(acts)
+  if (['claim', 'do', 'tune'].indexOf(command.text) > -1) {
+    let view;
+    if (command.text === 'claim') {
+      const actsList = await db.getActs();
+      view = chores.claim(actsList);
+    }
+    if (command.text === 'do') {
+      const actsList = await db.getActs();
+      view = chores.claim(actsList);
+    }
+    if (command.text === 'tune') {
+      const choresList = await db.getChores();
+      view = chores.tune(choresList);
+    }
+    const res = await app.client.views.open({
+      token: process.env.SLACK_BOT_TOKEN,
+      trigger_id: command.trigger_id,
+      view: view
+    });
+    console.log(`Chores listed with id ${res.view.id}`);
+  } else {
+    const res = await app.client.chat.postEphemeral({
+      token: process.env.SLACK_BOT_TOKEN,
+      channel: command.channel_id,
+      user: command.user_id,
+      text: "Sorry, I didn't understand that command..."
+    });
+    console.log(`Bad argument to /chores: ${command.text}`);
   }
-
-  const res = await app.client.views.open(response);
-  console.log(`Chores listed with id ${res.view.id}`);
 });
 
-app.view(chores.callbackId, async ({ ack, body }) => {
+app.view(chores.claimCallbackId, async ({ ack, body }) => {
   // 'context', 'logger', 'client', 'next', 'body', 'payload', 'view', 'ack'
 
   await ack();
