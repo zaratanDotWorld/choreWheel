@@ -17,6 +17,12 @@ async function getActs() {
     .catch(errorLogger);
 }
 
+async function getChores() {
+  return db('chore')
+    .select('*')
+    .catch(errorLogger);
+}
+
 async function doAct(actId, memberSlackId, messageId, choreName) {
   try {
     const now = Date.now();
@@ -34,4 +40,5 @@ async function doAct(actId, memberSlackId, messageId, choreName) {
 
 exports.db = db;
 exports.getActs = getActs;
+exports.getChores = getChores;
 exports.doAct = doAct;

@@ -58,29 +58,20 @@ app.view(chores.claimCallbackId, async ({ ack, body }) => {
 
   // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
   const { user, view } = body;
-  const actIndex = parseInt(view.state.values.act_input.act_select.selected_option.value);
+  const actIndex = parseInt(view.state.values.input.options.selected_option.value);
   const act = view.blocks[0].element.options[actIndex];
   const actId = parseInt(act.description.text.split(".")[1]);
   const choreName = act.text.text;
+
+  const textA = `*${user.name}* did *${choreName}* for *${act.description.text} tokens*. Thanks ${user.name}! :sparkles::sparkles:`;
+  const textB = "React :+1: to endorse or :-1: to challenge (& probably leave a comment about it).";
 
   const message = {
     token: process.env.SLACK_BOT_TOKEN,
     channel: process.env.CHORES_CHANNEL,
     blocks: [
-      {
-        "type": "section",
-        "text": {
-          "type": "mrkdwn",
-          "text": `*${user.name}* did *${choreName}* for *${act.description.text} tokens*. Thanks ${user.name}! :sparkles::sparkles:`
-        }
-      },
-      {
-        "type": "section",
-        "text": {
-          "type": "mrkdwn",
-          "text": "React :+1: to endorse or :-1: to challenge (& probably leave a comment about it)."
-        }
-      }
+      { "type": "section", "text": { "type": "mrkdwn", "text": textA } },
+      { "type": "section", "text": { "type": "mrkdwn", "text": textB } }
     ]
   }
 
