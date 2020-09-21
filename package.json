@@ -10,16 +10,16 @@
     "app": "node src/app.js",
     "test": "mocha --exit",
     "knex": "./node_modules/knex/bin/cli.js",
-    "knex:migrate": "yarn run knex migrate:latest",
-    "knex:rollback": "yarn run knex migrate:rollback",
-    "knex:seed": "yarn run knex seed:run"
+    "knex:migrate": "npm run knex migrate:latest",
+    "knex:rollback": "npm run knex migrate:rollback",
+    "knex:seed": "npm run knex seed:run"
   },
   "dependencies": {
-    "@slack/bolt": "^2.0.0",
+    "@slack/bolt": "^2.3.0",
     "dotenv": "^8.2.0",
-    "knex": "^0.20.13"
+    "knex": "^0.20.15"
   },
   "devDependencies": {
-    "sqlite3": "^4.1.1"
+    "sqlite3": "^4.2.0"
   }
 }
