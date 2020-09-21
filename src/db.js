@@ -10,8 +10,8 @@ function errorLogger(error) {
   throw error;
 }
 
-async function getActs() {
-  return db('act')
+async function getChoreActs() {
+  return db('chore_act')
     .select('*')
     .where({ done_at: null, claimed_at: null })
     .catch(errorLogger);
@@ -23,14 +23,14 @@ async function getChores() {
     .catch(errorLogger);
 }
 
-async function doAct(actId, memberSlackId, messageId, choreName) {
+async function doChoreAct(choreActId, choreName, residentSlackId, messageId) {
   try {
     const now = Date.now();
     await db.transaction(async trx => {
-      await trx('act')
-        .where({ id: actId })
-        .update({ done_by: memberSlackId, done_at: now, message_id: messageId });
-      await trx('act')
+      await trx('chore_act')
+        .where({ id: choreActId })
+        .update({ done_by: residentSlackId, done_at: now, message_id: messageId });
+      await trx('chore_act')
         .insert({ chore_name: choreName, valued_at: now });
     })
   } catch (err) {
@@ -38,7 +38,6 @@ async function doAct(actId, memberSlackId, messageId, choreName) {
   }
 }
 
-exports.db = db;
-exports.getActs = getActs;
 exports.getChores = getChores;
-exports.doAct = doAct;
+exports.getChoreActs = getChoreActs;
+exports.doChoreAct = doChoreAct;

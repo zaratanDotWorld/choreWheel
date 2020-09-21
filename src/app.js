@@ -14,71 +14,68 @@ const app = new App({
 
 // Define the interface
 
-app.event('reaction_added', async ({ say, payload }) => {
-  // 'context', 'logger', 'client', 'next', 'body', 'payload', 'event', 'say'
-
+app.event('reaction_added', async ({ payload }) => {
   console.log(`User ${payload.user} just added ${payload.reaction} to message ${payload.item.channel}.${payload.item.ts}`);
 
-  const res = await app.client.reactions.get({
-      token: process.env.SLACK_BOT_TOKEN,
-      channel: payload.item.channel,
-      timestamp: payload.item.ts
-    });
+  const reactionQuery = {
+    token: process.env.SLACK_BOT_TOKEN,
+    channel: payload.item.channel,
+    timestamp: payload.item.ts
+   }
+
+  const res = await app.client.reactions.get(reactionQuery);
   console.log(res.message.reactions);
 })
 
-app.event('reaction_removed', async ({ say, payload }) => {
-  // 'context', 'logger', 'client', 'next', 'body', 'payload', 'event', 'say'
-
+app.event('reaction_removed', async ({ payload }) => {
   console.log(`User ${payload.user} just removed ${payload.reaction} from message ${payload.item.channel}.${payload.item.ts}`);
 })
 
 // Chores app
 
-app.shortcut('chores-list', async ({ ack, shortcut, say }) => {
-  // 'context', 'logger', 'client', 'next', 'body', 'payload', 'shortcut', 'say', 'respond', 'ack'
+const CHORES_CHANNEL = "test";
+const CHORES_LIST = "chores-list";
+const CHORES_LIST_CALLBACK = "chores-list-callback";
 
+app.shortcut(CHORES_LIST, async ({ ack, shortcut }) => {
   await ack();
 
-  const actsList = await db.getActs();
-  view = chores.claim(actsList);
+  const choreActsList = await db.getChoreActs();
+  const view = chores.list(choreActsList);
+  view.callback_id = CHORES_LIST_CALLBACK;
 
-  const res = await app.client.views.open({
+  const viewPayload = {
     token: process.env.SLACK_BOT_TOKEN,
     trigger_id: shortcut.trigger_id,
     view: view
-  });
+  }
+
+  const res = await app.client.views.open(viewPayload);
   console.log(`Chores listed with id ${res.view.id}`);
 });
 
-app.view(chores.claimCallbackId, async ({ ack, body }) => {
-  // 'context', 'logger', 'client', 'next', 'body', 'payload', 'view', 'ack'
-
+app.view(CHORES_LIST_CALLBACK, async ({ ack, body }) => {
   await ack();
 
-  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
   const { user, view } = body;
-  const actIndex = parseInt(view.state.values.input.options.selected_option.value);
-  const act = view.blocks[0].element.options[actIndex];
-  const actId = parseInt(act.description.text.split(".")[1]);
-  const choreName = act.text.text;
+  const choreAct = getChoreAct(view);
 
-  const textA = `*${user.name}* did *${choreName}* for *${act.description.text} tokens*. Thanks ${user.name}! :sparkles::sparkles:`;
+  const textA = `*${user.name}* did *${choreAct.name}* for *${choreAct.description} tokens*. Thanks ${user.name}! :sparkles::sparkles:`;
   const textB = "React :+1: to endorse or :-1: to challenge (& probably leave a comment about it).";
 
-  const message = {
+  const messagePayload = {
     token: process.env.SLACK_BOT_TOKEN,
-    channel: process.env.CHORES_CHANNEL,
+    channel: CHORES_CHANNEL,
     blocks: [
       { "type": "section", "text": { "type": "mrkdwn", "text": textA } },
       { "type": "section", "text": { "type": "mrkdwn", "text": textB } }
     ]
   }
 
-  const res = await app.client.chat.postMessage(message);
+  const res = await app.client.chat.postMessage(messagePayload);
   const messageId = `${res.channel}.${res.ts}`;
 
-  await db.doAct(actId, user.id, messageId, choreName);
+  await db.doChoreAct(choreAct.id, choreAct.name, user.id, messageId);
 
   console.log(`Message posted as ${messageId}`);
 });
@@ -89,5 +86,19 @@ app.view(chores.claimCallbackId, async ({ ack, body }) => {
   await app.start(process.env.PORT || 3000);
   console.log('⚡️ Bolt app is running!');
 })();
+
+// Utils
+
+function getChoreAct(view) {
+  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
+  const choreActIndex = parseInt(view.state.values.input.options.selected_option.value);
+  const choreAct = view.blocks[0].element.options[choreActIndex];
+
+  return {
+    id: parseInt(choreAct.description.text.split(".")[1]),
+    name: choreAct.text.text,
+    description: choreAct.description.text
+  }
+}
 
 // Fin

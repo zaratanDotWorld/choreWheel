@@ -1,5 +1,5 @@
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable('member', function(t) {
+    return knex.schema.createTable('resident', function(t) {
         t.increments('id').unsigned().primary();
         t.string('slack_id').unique().notNull();
         t.timestamps(useTimestamps = true, defaultToNow = true);
@@ -9,5 +9,5 @@ exports.up = function(knex, Promise) {
 };
 
 exports.down = function(knex, Promise) {
-    return knex.schema.dropTable('member');
+    return knex.schema.dropTable('resident');
 };
