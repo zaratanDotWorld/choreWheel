@@ -1,11 +1,12 @@
 # mirror 💠
 Chore wheel x1000
 
-Part of [zaratan.world](https://zaratan.world)
+Read the **[whitepaper](https://docs.google.com/document/d/e/2PACX-1vRjC4BDc7nNF6gFRvDQrgod4zC_O--xzX-EwG1H2MCMV7YjvskIzxXfcC695cryegrqR6GHZAC_Y1q7/pub)**
 
 ## Channel Roadmap:
 
-- Chores (Apr 2020)
-- Hearts (Apr 2020)
-- Newbies (May 2020)
-- Shops (TBD)
+- Chores
+- Hearts
+- Things
+
+Part of [zaratan.world](https://zaratan.world)
