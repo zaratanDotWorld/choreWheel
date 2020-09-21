@@ -35,40 +35,20 @@ app.event('reaction_removed', async ({ say, payload }) => {
 
 // Chores app
 
-app.command('/chores', async ({ ack, command, say }) => {
-  // 'context', 'logger', 'client', 'next', 'body', 'payload', 'command', 'say', 'respond', 'ack'
+app.shortcut('chores-list', async ({ ack, shortcut, say }) => {
+  // 'context', 'logger', 'client', 'next', 'body', 'payload', 'shortcut', 'say', 'respond', 'ack'
 
   await ack();
 
-  if (['claim', 'do', 'tune'].indexOf(command.text) > -1) {
-    let view;
-    if (command.text === 'claim') {
-      const actsList = await db.getActs();
-      view = chores.claim(actsList);
-    }
-    if (command.text === 'do') {
-      const actsList = await db.getActs();
-      view = chores.claim(actsList);
-    }
-    if (command.text === 'tune') {
-      const choresList = await db.getChores();
-      view = chores.tune(choresList);
-    }
-    const res = await app.client.views.open({
-      token: process.env.SLACK_BOT_TOKEN,
-      trigger_id: command.trigger_id,
-      view: view
-    });
-    console.log(`Chores listed with id ${res.view.id}`);
-  } else {
-    const res = await app.client.chat.postEphemeral({
-      token: process.env.SLACK_BOT_TOKEN,
-      channel: command.channel_id,
-      user: command.user_id,
-      text: "Sorry, I didn't understand that command..."
-    });
-    console.log(`Bad argument to /chores: ${command.text}`);
-  }
+  const actsList = await db.getActs();
+  view = chores.claim(actsList);
+
+  const res = await app.client.views.open({
+    token: process.env.SLACK_BOT_TOKEN,
+    trigger_id: shortcut.trigger_id,
+    view: view
+  });
+  console.log(`Chores listed with id ${res.view.id}`);
 });
 
 app.view(chores.claimCallbackId, async ({ ack, body }) => {
