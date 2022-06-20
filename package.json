@@ -8,7 +8,9 @@
   "license": "UNLICENSED",
   "scripts": {
     "app": "node src/app.js",
+    "pretest": "npm run knex:migrate; npm run knex:seed",
     "test": "mocha --exit",
+    "posttest": "npm run knex:rollback",
     "knex": "./node_modules/knex/bin/cli.js",
     "knex:migrate": "npm run knex migrate:latest",
     "knex:rollback": "npm run knex migrate:rollback",
@@ -19,5 +21,8 @@
     "dotenv": "^10.0.0",
     "knex": "^0.95.15",
     "pg": "^8.7.3"
+  },
+  "devDependencies": {
+    "mocha": "^10.0.0"
   }
 }

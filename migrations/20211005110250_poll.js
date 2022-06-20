@@ -1,11 +1,12 @@
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable('chore', function(t) {
+    return knex.schema.createTable('poll', function(t) {
         t.increments('id').unsigned().primary();
-        t.string('name').unique().notNull();
         t.timestamps(useTimestamps = true, defaultToNow = true);
+        t.integer('duration').notNull();
+        t.integer('result');
     });
 };
 
 exports.down = function(knex, Promise) {
-    return knex.schema.dropTable('chore');
+    return knex.schema.dropTable('poll');
 };

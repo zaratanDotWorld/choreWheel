@@ -12,9 +12,7 @@ exports.up = function(knex, Promise) {
         t.string('done_by').references('resident.slack_id');
         t.timestamp('done_at');
         t.string('message_id');
-        t.integer('votes_yay');
-        t.integer('votes_nay');
-        t.integer('closed_at');
+        t.integer('poll_id');
     });
 };
 
