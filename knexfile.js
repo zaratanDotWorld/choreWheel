@@ -1,9 +1,7 @@
 module.exports = {
   development: {
-    client: 'sqlite3',
-    connection: {
-      filename: './db.sqlite'
-    },
+    client: 'pg',
+    connection: process.env.PG_CONNECTION_DEV,
     migrations: {
       tableName: 'knex_migrations'
     },
@@ -11,10 +9,8 @@ module.exports = {
   },
 
   test: {
-    client: 'sqlite3',
-    connection: {
-      filename: './db.sqlite'
-    },
+    client: 'pg',
+    connection: process.env.PG_CONNECTION_TEST,
     migrations: {
       tableName: 'knex_migrations'
     },
@@ -22,10 +18,8 @@ module.exports = {
   },
 
   production: {
-    client: 'sqlite3',
-    connection: {
-      filename: './db.sqlite'
-    },
+    client: 'pg',
+    connection: process.env.PG_CONNECTION_PROD,
     migrations: {
       tableName: 'knex_migrations'
     },

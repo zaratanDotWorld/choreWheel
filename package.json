@@ -15,11 +15,9 @@
     "knex:seed": "npm run knex seed:run"
   },
   "dependencies": {
-    "@slack/bolt": "^2.3.0",
-    "dotenv": "^8.2.0",
-    "knex": "^0.20.15"
-  },
-  "devDependencies": {
-    "sqlite3": "^4.2.0"
+    "@slack/bolt": "^3.11.3",
+    "dotenv": "^10.0.0",
+    "knex": "^0.95.15",
+    "pg": "^8.7.3"
   }
 }
