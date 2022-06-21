@@ -37,6 +37,11 @@ const CHORES_CHANNEL = "test";
 const CHORES_LIST = "chores-list";
 const CHORES_LIST_CALLBACK = "chores-list-callback";
 
+const POLL_VOTE = /poll-vote/;
+const POLL_VOTE_UP = "poll-vote-up";
+const POLL_VOTE_DOWN = "poll-vote-down";
+const POLL_VOTE_CANCEL = "poll-vote-cancel";
+
 app.shortcut(CHORES_LIST, async ({ ack, shortcut }) => {
   await ack();
 
@@ -63,12 +68,18 @@ app.view(CHORES_LIST_CALLBACK, async ({ ack, body }) => {
   const textA = `*${user.name}* did *${choreAct.name}* for *${choreAct.description} tokens*. Thanks ${user.name}! :sparkles::sparkles:`;
   const textB = "React :+1: to endorse or :-1: to challenge (& probably leave a comment about it).";
 
+  const upVote = makeVoteButton(POLL_VOTE_UP, 3);
+  const downVote = makeVoteButton(POLL_VOTE_DOWN, 1);
+  const cancelVote = makeVoteButton(POLL_VOTE_CANCEL);
+
   const messagePayload = {
     token: process.env.SLACK_BOT_TOKEN,
     channel: CHORES_CHANNEL,
     blocks: [
       { "type": "section", "text": { "type": "mrkdwn", "text": textA } },
-      { "type": "section", "text": { "type": "mrkdwn", "text": textB } }
+      { "type": "divider" },
+      { "type": "section", "text": { "type": "mrkdwn", "text": textB } },
+      { "type": "actions", "elements": [ upVote, downVote, cancelVote ] }
     ]
   }
 
@@ -80,6 +91,13 @@ app.view(CHORES_LIST_CALLBACK, async ({ ack, body }) => {
   console.log(`Message posted as ${messageId}`);
 });
 
+app.action(POLL_VOTE, async ({ ack, body, action }) => {
+  await ack();
+  console.log(body);
+  console.log(action);
+});
+
+
 // Launch the app
 
 (async () => {
@@ -88,6 +106,27 @@ app.view(CHORES_LIST_CALLBACK, async ({ ack, body }) => {
 })();
 
 // Utils
+
+function makeVoteButton(actionId, count = 0) {
+  let text = "";
+
+  if (actionId == POLL_VOTE_UP) {
+    text = `:+1: (${count})`;
+  } else if (actionId == POLL_VOTE_DOWN) {
+    text = `:-1: (${count})`;
+  } else if (actionId === POLL_VOTE_CANCEL) {
+    text = `:x:`;
+  } else {
+    new RangeError("Invalid actionId");
+  }
+
+  return {
+    "type": "button",
+    "text": { "type": "plain_text", "text": text, "emoji": true },
+    "value": actionId,
+    "action_id": actionId
+  }
+}
 
 function getChoreAct(view) {
   // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
