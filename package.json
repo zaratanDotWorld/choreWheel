@@ -8,9 +8,8 @@
   "license": "UNLICENSED",
   "scripts": {
     "app": "node src/app.js",
-    "pretest": "npm run knex:migrate; npm run knex:seed",
+    "pretest": "npm run knex:rollback; npm run knex:migrate; npm run knex:seed",
     "test": "mocha --exit",
-    "posttest": "npm run knex:rollback",
     "knex": "./node_modules/knex/bin/cli.js",
     "knex:migrate": "npm run knex migrate:latest",
     "knex:rollback": "npm run knex migrate:rollback",
@@ -18,11 +17,14 @@
   },
   "dependencies": {
     "@slack/bolt": "^3.11.3",
+    "bn.js": "^5.2.1",
     "dotenv": "^10.0.0",
     "knex": "^0.95.15",
     "pg": "^8.7.3"
   },
   "devDependencies": {
+    "bn-chai": "^1.0.1",
+    "chai": "^4.3.6",
     "mocha": "^10.0.0"
   }
 }
