@@ -3,7 +3,7 @@ exports.up = function(knex, Promise) {
         t.increments('id').unsigned().primary();
         t.timestamps(useTimestamps = true, defaultToNow = true);
         t.integer('poll_id').references('poll.id').notNull();
-        t.string('user').references('resident.slack_id').notNull();
+        t.string('user').references('user.slack_id').notNull();
         t.boolean('value');
     });
 };

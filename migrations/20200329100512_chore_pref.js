@@ -4,7 +4,7 @@ exports.up = function(knex, Promise) {
         t.timestamps(useTimestamps = true, defaultToNow = true);
         t.string('alpha_chore_name').references('chore.name').notNull();
         t.string('beta_chore_name').references('chore.name').notNull();
-        t.string('preferred_by').references('resident.slack_id').notNull();
+        t.string('preferred_by').references('user.slack_id').notNull();
         t.boolean('preference').notNull();
     });
 };
