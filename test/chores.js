@@ -2,8 +2,10 @@ const { expect } = require('chai');
 const chai = require('chai');
 const BN = require('bn.js');
 const bnChai = require('bn-chai');
+const chaiAsPromised = require("chai-as-promised");
 
 chai.use(bnChai(BN));
+chai.use(chaiAsPromised);
 
 const { db } = require('./../src/db');
 const chores = require('./../src/modules/chores/models');
@@ -19,9 +21,13 @@ describe('Chores', async () => {
   const DISHES = 'dishes';
   const SWEEPING = 'sweeping';
 
+  const FIRST = true;
+  const SECOND = false;
+
   beforeEach(async () => {
     await db('chore_value').del();
     await db('chore_claim').del();
+    await db('chore_pref').del();
   });
 
   it('can list the existing chores', async () => {
@@ -72,5 +78,28 @@ describe('Chores', async () => {
 
     const userChoreClaims = await chores.getUserChoreClaims(DISHES, XYZ);
     expect(userChoreClaims[0].value).to.eq.BN(20);
+  });
+
+  it('can set a chore preference', async () => {
+    await chores.setChorePreference(ABC, DISHES, SWEEPING, FIRST);
+    await chores.setChorePreference(XYZ, DISHES, SWEEPING, SECOND);
+
+    const preferences = await chores.getChorePreferences();
+    expect(preferences[0].preference).to.equal(FIRST);
+    expect(preferences[1].preference).to.equal(SECOND);
+  });
+
+  it('can update a chore preference', async () => {
+    await chores.setChorePreference(ABC, DISHES, SWEEPING, FIRST);
+    await chores.setChorePreference(ABC, DISHES, SWEEPING, SECOND);
+
+    const preferences = await chores.getChorePreferences();
+    expect(preferences.length).to.eq.BN(1);
+    expect(preferences[0].preference).to.equal(SECOND);
+  });
+
+  it('cannot set a chore in a bad order', async () => {
+    await expect(chores.setChorePreference(ABC, SWEEPING, DISHES, FIRST))
+      .to.be.rejectedWith('Chores out of order');
   });
 });

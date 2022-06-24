@@ -1,15 +1,9 @@
+const { assert } = require('chai');
 const { db, errorLogger } = require('./../../db');
 
 exports.getChores = async function getChores() {
   return db('chore')
     .select('*')
-    .catch(errorLogger);
-}
-
-exports.getChoreActs = async function getChoreActs() {
-  return db('chore_act')
-    .select('*')
-    .where({ done_at: null, claimed_at: null })
     .catch(errorLogger);
 }
 
@@ -58,16 +52,22 @@ exports.getUserChoreClaims = async function getUserChoreClaims(choreName, slackI
     .catch(errorLogger);
 }
 
-// exports.doChoreAct = async function doChoreAct(choreName, userSlackId, doneAt, messageId) {
-//   try {
-//     await db.transaction(async trx => {
-//       await trx('chore_act')
-//         .where({ id: choreActId })
-//         .update({ done_by: userSlackId, done_at: doneAt, message_id: messageId });
-//       await trx('chore_act')
-//         .insert({ chore_name: choreName, valued_at: doneAt });
-//     })
-//   } catch (err) {
-//     throw err;
-//   }
-// }
+exports.setChorePreference = async function setChorePreference(slackId, alphaChore, betaChore, preference) {
+  if (alphaChore >= betaChore) throw new Error('Chores out of order');
+  return db('chore_pref')
+    .insert({
+      preferred_by: slackId,
+      alpha_chore: alphaChore,
+      beta_chore: betaChore,
+      preference: preference,
+    })
+    .onConflict(['preferred_by', 'alpha_chore', 'beta_chore'])
+    .merge()
+    .catch(errorLogger);
+}
+
+exports.getChorePreferences = async function getChorePreferences() {
+  return db('chore_pref')
+    .select('alpha_chore', 'beta_chore', 'preference')
+    .catch(errorLogger);
+}
