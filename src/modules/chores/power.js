@@ -1,30 +1,25 @@
 const linAlg = require('linear-algebra')()
 
-exports.toIdentitySet = function toIdentitySet(preferenceArray) { // [{alpha_id, beta_id, win_bit}]
-  const idArray = preferenceArray.flatMap(p => [p.sid, p.tid])
-  return new Set(idArray)
-}
-
-exports.toIdentityMap = function toIdentityMap(preferenceArray) {
-  const idSet = toIdentitySet(preferenceArray)
-  return new Map(
-    Array.from(idSet)
-      .sort((a, b) => a - b) // Javascript is the worst.
-      .map((id, ix) => [id, ix]) // TrueIx -> MatrixIx
-  )
+// O(preferences)
+exports.convertPreferences = function convertPreferences(undirectedPreferences) { // [{alpha_id, beta_id, win_bit}]
+  return undirectedPreferences.map(p => {
+    let [source, target] = p.preference ? [p.alpha_chore, p.beta_chore] : [p.beta_chore, p.alpha_chore]
+    return { source: source.toString(), target: target.toString()}
+  })
 }
 
 // O(preferences)
-exports.toMatrix = function toMatrix(preferenceArray) { // [{alpha_id, beta_id, win_bit}]
-  const idMap = toIdentityMap(preferenceArray)
-  const n = idMap.size
+exports.toMatrix = function toMatrix(directedPreferences) { // [{source, target}]
+  const itemMap = toitemMap(directedPreferences)
+
+  const n = itemMap.size
   const matrix = linAlg.Matrix.zero(n, n)
 
   // Calculate the off-diagonals
-  preferenceArray.forEach(p => {
-    let loserIx = idMap.get(p.sid)
-    let winnerIx = idMap.get(p.tid)
-    matrix.data[loserIx][winnerIx] += 1
+  directedPreferences.forEach(p => {
+    let sourceIx = itemMap.get(p.source)
+    let targetIx = itemMap.get(p.target)
+    matrix.data[sourceIx][targetIx] += 1
   })
 
   // Add the diagonals (sums of columns)
@@ -34,26 +29,31 @@ exports.toMatrix = function toMatrix(preferenceArray) { // [{alpha_id, beta_id, 
 
 // O(identities^2 / 2)
 exports.fromMatrix = function fromMatrix(preferenceMatrix) {
-  console.assert(
-    preferenceMatrix.rows === preferenceMatrix.cols,
-    'Matrix must be square!'
-  )
+  if (preferenceMatrix.rows !== preferenceMatrix.cols) { throw new Error('Matrix must be square!'); }
+
   const n = preferenceMatrix.rows
   const array = []
   for (var i = 0; i < n; i++) {
     for (var j = 0; j < i; j++) {
       if (preferenceMatrix.data[i][j] > preferenceMatrix.data[j][i])
-        array.push({'sid': i, 'tid': j})
+        array.push({'source': i, 'target': j})
       else if (preferenceMatrix.data[i][j] < preferenceMatrix.data[j][i])
-        array.push({'sid': j, 'tid': i})
+        array.push({'source': j, 'target': i})
     }
   }
   return array
 }
 
+exports.applyLabels = function applyLabels(directedPreferences, eigenvector) {
+  const itemMap = toitemMap(directedPreferences);
+  if (itemMap.size !== eigenvector.length) { throw new Error('Mismatched arguments!'); }
+  itemMap.forEach((ix, item) => itemMap.set(item, eigenvector[ix]));
+  return itemMap
+}
+
 // O(n^3)-ish
 exports.powerMethod = function powerMethod(matrix, d = 1, epsilon = 0.001, nIter = 1000) {
-  console.assert(matrix.rows == matrix.cols, 'Matrix must be square!')
+  if (matrix.rows !== matrix.cols) { throw new Error('Matrix must be square!'); }
   const n = matrix.rows
 
   // Normalize matrix
@@ -85,6 +85,20 @@ exports.powerMethod = function powerMethod(matrix, d = 1, epsilon = 0.001, nIter
 }
 
 // Internal
+
+function toitemMap(directedPreferences) { // [{source, target}]
+  const itemSet = toItemSet(directedPreferences)
+  return new Map(
+    Array.from(itemSet)
+      .sort((a, b) => a - b) // Javascript is the worst
+      .map((item, ix) => [item, ix]) // ItemName -> MatrixIdx
+  )
+}
+
+function toItemSet(directedPreferences) { // [{source, target}]
+  const itemArray = directedPreferences.flatMap(p => [p.source, p.target])
+  return new Set(itemArray)
+}
 
 Array.prototype.flatMap = function(lambda) {
   return Array.prototype.concat.apply([], this.map(lambda))

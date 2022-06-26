@@ -9,6 +9,7 @@ chai.use(chaiAsPromised);
 
 const { db } = require('./../src/db');
 const chores = require('./../src/modules/chores/models');
+const power = require('./../src/modules/chores/power');
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -20,9 +21,10 @@ describe('Chores', async () => {
 
   const DISHES = 'dishes';
   const SWEEPING = 'sweeping';
+  const RESTOCK = 'restock';
 
-  const FIRST = true;
-  const SECOND = false;
+  const FIRST = false;
+  const SECOND = true;
 
   beforeEach(async () => {
     await db('chore_value').del();
@@ -101,5 +103,22 @@ describe('Chores', async () => {
   it('cannot set a chore in a bad order', async () => {
     await expect(chores.setChorePreference(ABC, SWEEPING, DISHES, FIRST))
       .to.be.rejectedWith('Chores out of order');
+  });
+
+  it('can use preferences to determine chore values', async () => {
+    // Prefer dishes to sweeping, and sweeping to restock
+    await chores.setChorePreference(ABC, DISHES, SWEEPING, FIRST);
+    await chores.setChorePreference(XYZ, RESTOCK, SWEEPING, SECOND);
+
+    const preferences = await chores.getChorePreferences();
+
+    const directedPreferences = power.convertPreferences(preferences);
+    const matrix = power.toMatrix(directedPreferences);
+    const rankings = power.powerMethod(matrix, d = .8);
+    const labeledRankings = power.applyLabels(directedPreferences, rankings);
+
+    expect(labeledRankings.get('dishes')).to.be.at.least(labeledRankings.get('sweeping'))
+    expect(labeledRankings.get('dishes')).to.be.at.least(labeledRankings.get('restock'))
+    expect(labeledRankings.get('sweeping')).to.be.at.least(labeledRankings.get('restock'))
   });
 });
