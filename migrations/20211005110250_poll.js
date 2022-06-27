@@ -3,7 +3,6 @@ exports.up = function(knex, Promise) {
         t.increments('id').unsigned().primary();
         t.timestamps(useTimestamps = true, defaultToNow = true);
         t.integer('duration').notNull();
-        t.integer('result');
     });
 };
 

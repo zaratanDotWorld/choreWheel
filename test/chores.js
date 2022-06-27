@@ -16,8 +16,8 @@ function sleep(ms) {
 }
 
 describe('Chores', async () => {
-  const ABC = 'ABC';
-  const XYZ = 'XYZ';
+  const USER1 = 'USER1';
+  const USER2 = 'USER2';
 
   const DISHES = 'dishes';
   const SWEEPING = 'sweeping';
@@ -59,9 +59,9 @@ describe('Chores', async () => {
     await chores.setChoreValues([{ chore_name: DISHES, value: 5 }]);
 
     await sleep(1);
-    await chores.claimChore(DISHES, ABC, new Date(), "");
+    await chores.claimChore(DISHES, USER1, new Date(), "");
 
-    const userChoreClaims = await chores.getUserChoreClaims(DISHES, ABC);
+    const userChoreClaims = await chores.getUserChoreClaims(DISHES, USER1);
     expect(userChoreClaims[0].value).to.eq.BN(15);
   });
 
@@ -70,21 +70,21 @@ describe('Chores', async () => {
     await chores.setChoreValues([{ chore_name: DISHES, value: 5 }]);
 
     await sleep(1);
-    await chores.claimChore(DISHES, ABC, new Date(), "");
+    await chores.claimChore(DISHES, USER1, new Date(), "");
 
     await sleep(1);
     await chores.setChoreValues([{ chore_name: DISHES, value: 20 }]);
 
     await sleep(1);
-    await chores.claimChore(DISHES, XYZ, new Date(), "");
+    await chores.claimChore(DISHES, USER2, new Date(), "");
 
-    const userChoreClaims = await chores.getUserChoreClaims(DISHES, XYZ);
+    const userChoreClaims = await chores.getUserChoreClaims(DISHES, USER2);
     expect(userChoreClaims[0].value).to.eq.BN(20);
   });
 
   it('can set a chore preference', async () => {
-    await chores.setChorePreference(ABC, DISHES, SWEEPING, FIRST);
-    await chores.setChorePreference(XYZ, DISHES, SWEEPING, SECOND);
+    await chores.setChorePreference(USER1, DISHES, SWEEPING, FIRST);
+    await chores.setChorePreference(USER2, DISHES, SWEEPING, SECOND);
 
     const preferences = await chores.getChorePreferences();
     expect(preferences[0].preference).to.equal(FIRST);
@@ -92,8 +92,8 @@ describe('Chores', async () => {
   });
 
   it('can update a chore preference', async () => {
-    await chores.setChorePreference(ABC, DISHES, SWEEPING, FIRST);
-    await chores.setChorePreference(ABC, DISHES, SWEEPING, SECOND);
+    await chores.setChorePreference(USER1, DISHES, SWEEPING, FIRST);
+    await chores.setChorePreference(USER1, DISHES, SWEEPING, SECOND);
 
     const preferences = await chores.getChorePreferences();
     expect(preferences.length).to.eq.BN(1);
@@ -101,24 +101,24 @@ describe('Chores', async () => {
   });
 
   it('cannot set a chore in a bad order', async () => {
-    await expect(chores.setChorePreference(ABC, SWEEPING, DISHES, FIRST))
+    await expect(chores.setChorePreference(USER1, SWEEPING, DISHES, FIRST))
       .to.be.rejectedWith('Chores out of order');
   });
 
   it('can use preferences to determine chore values', async () => {
     // Prefer dishes to sweeping, and sweeping to restock
-    await chores.setChorePreference(ABC, DISHES, SWEEPING, FIRST);
-    await chores.setChorePreference(XYZ, RESTOCK, SWEEPING, SECOND);
+    await chores.setChorePreference(USER1, DISHES, SWEEPING, FIRST);
+    await chores.setChorePreference(USER2, RESTOCK, SWEEPING, SECOND);
 
     const preferences = await chores.getChorePreferences();
 
     const directedPreferences = power.convertPreferences(preferences);
     const matrix = power.toMatrix(directedPreferences);
-    const rankings = power.powerMethod(matrix, d = .8);
-    const labeledRankings = power.applyLabels(directedPreferences, rankings);
+    const weights = power.powerMethod(matrix, d = .8);
+    const labeledWeights = power.applyLabels(directedPreferences, weights);
 
-    expect(labeledRankings.get('dishes')).to.be.at.least(labeledRankings.get('sweeping'))
-    expect(labeledRankings.get('dishes')).to.be.at.least(labeledRankings.get('restock'))
-    expect(labeledRankings.get('sweeping')).to.be.at.least(labeledRankings.get('restock'))
+    expect(labeledWeights.get('dishes')).to.equal(0.7328964266666669);
+    expect(labeledWeights.get('sweeping')).to.equal(0.2004369066666667);
+    expect(labeledWeights.get('restock')).to.equal(0.06666666666666667);
   });
 });

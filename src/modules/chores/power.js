@@ -52,7 +52,7 @@ exports.applyLabels = function applyLabels(directedPreferences, eigenvector) {
 }
 
 // O(n^3)-ish
-exports.powerMethod = function powerMethod(matrix, d = 1, epsilon = 0.001, nIter = 1000) {
+exports.powerMethod = function powerMethod(matrix, d = 1, epsilon = 0.001, nIter = 1000, log = false) {
   if (matrix.rows !== matrix.cols) { throw new Error('Matrix must be square!'); }
   const n = matrix.rows
 
@@ -80,7 +80,7 @@ exports.powerMethod = function powerMethod(matrix, d = 1, epsilon = 0.001, nIter
     prev = eigenvector
   }
 
-  console.log(`Eigenvector convergence after ${i} iterations`)
+  if (log) { console.log(`Eigenvector convergence after ${i} iterations`); }
   return eigenvector.data[0]
 }
 

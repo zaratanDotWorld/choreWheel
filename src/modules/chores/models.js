@@ -1,4 +1,3 @@
-const { assert } = require('chai');
 const { db, errorLogger } = require('./../../db');
 
 exports.getChores = async function getChores() {

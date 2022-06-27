@@ -3,8 +3,9 @@ exports.up = function(knex, Promise) {
         t.increments('id').unsigned().primary();
         t.timestamps(useTimestamps = true, defaultToNow = true);
         t.integer('poll_id').references('poll.id').notNull();
-        t.string('user').references('user.slack_id').notNull();
-        t.boolean('value');
+        t.string('encrypted_user_id').notNull();
+        t.boolean('vote');
+        t.unique(['poll_id', 'encrypted_user_id']);
     });
 };
 
