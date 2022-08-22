@@ -10,7 +10,7 @@ exports.up = function(knex, Promise) {
         t.timestamp('claimed_at');
         t.integer('value');
         t.string('message_id');
-        t.integer('poll_id');
+        t.integer('poll_id').references('poll.id');
     });
 };
 
