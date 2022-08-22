@@ -5,8 +5,8 @@ exports.seed = function(knex) {
     .then(function () {
       // Inserts seed entries
       return knex('user').insert([
-        {id: 1, slack_id: 'ABC', username: 'Keiko'},
-        {id: 2, slack_id: 'XYZ', username: 'Amber'},
+        {id: 1, email: 'keiko@gmail.com', slack_id: 'USER1'},
+        {id: 2, email: 'amber@gmail.com', slack_id: 'USER2'},
       ]);
     });
 };

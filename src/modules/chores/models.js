@@ -1,4 +1,5 @@
 const { db, errorLogger } = require('./../../db');
+const polls = require('./../polls/models');
 
 exports.getChores = async function getChores() {
   return db('chore')
@@ -27,14 +28,19 @@ exports.claimChore = async function claimChore(choreName, slackId, claimedAt, me
   const previousClaimedAt = (previousClaims.length === 0) ? new Date(0) : previousClaims.slice(-1)[0].claimed_at;
   const choreValue = await exports.getChoreValue(choreName, previousClaimedAt, claimedAt);
 
+  const pollIds = await polls.createPoll();
+
   return db('chore_claim')
     .insert({
       chore_name: choreName,
       claimed_by: slackId,
       claimed_at: claimedAt,
       message_id: messageId,
-      value: choreValue.sum
+      value: choreValue.sum,
+      poll_id: pollIds[0],
     })
+    .returning('poll_id')
+    .catch(errorLogger);
 }
 
 exports.getChoreClaims = async function getChoreClaims(choreName) {

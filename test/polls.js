@@ -31,14 +31,14 @@ describe('Chores', async () => {
   });
 
   it('can create a new poll', async () => {
-    const poll = await polls.createPoll(3 * DAY);
+    const pollIds = await polls.createPoll(3 * DAY);
 
-    expect(poll[0]).to.eq.BN(1);
+    expect(pollIds[0]).to.eq.BN(1);
   });
 
   it('can vote in a poll', async () => {
-    const poll = await polls.createPoll(3 * DAY);
-    const pollId = poll[0];
+    const pollIds = await polls.createPoll(3 * DAY);
+    const pollId = pollIds[0];
 
     await polls.submitVote(pollId, USER1, YAY);
 
@@ -48,8 +48,8 @@ describe('Chores', async () => {
   });
 
   it('can update the vote in a poll', async () => {
-    const poll = await polls.createPoll(3 * DAY);
-    const pollId = poll[0];
+    const pollIds = await polls.createPoll(3 * DAY);
+    const pollId = pollIds[0];
 
     await polls.submitVote(pollId, USER1, YAY);
 
@@ -69,8 +69,8 @@ describe('Chores', async () => {
   });
 
   it('cannot update the vote in a poll if the poll is closed', async () => {
-    const poll = await polls.createPoll(5);
-    const pollId = poll[0];
+    const pollIds = await polls.createPoll(5);
+    const pollId = pollIds[0];
 
     await sleep(10);
 
@@ -79,8 +79,8 @@ describe('Chores', async () => {
   });
 
   it('can get the results of a vote', async () => {
-    const poll = await polls.createPoll(10);
-    const pollId = poll[0];
+    const pollIds = await polls.createPoll(10);
+    const pollId = pollIds[0];
 
     await polls.submitVote(pollId, USER1, YAY);
     await polls.submitVote(pollId, USER2, YAY);
@@ -91,8 +91,8 @@ describe('Chores', async () => {
   });
 
   it('can get the result of a vote', async () => {
-    const poll = await polls.createPoll(10);
-    const pollId = poll[0];
+    const pollIds = await polls.createPoll(10);
+    const pollId = pollIds[0];
 
     await polls.submitVote(pollId, USER1, YAY);
     await polls.submitVote(pollId, USER2, YAY);

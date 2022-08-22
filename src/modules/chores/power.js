@@ -1,5 +1,6 @@
 const linAlg = require('linear-algebra')()
 
+
 // O(preferences)
 exports.convertPreferences = function convertPreferences(undirectedPreferences) { // [{alpha_id, beta_id, win_bit}]
   return undirectedPreferences.map(p => {
