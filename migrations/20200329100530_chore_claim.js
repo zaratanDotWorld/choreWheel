@@ -11,6 +11,7 @@ exports.up = function(knex, Promise) {
         t.integer('value');
         t.string('message_id');
         t.integer('poll_id').references('poll.id');
+        t.boolean('result');
     });
 };
 

@@ -1,5 +1,7 @@
 const { db, errorLogger } = require('./../../db');
-const polls = require('./../polls/models');
+const { defaultPollLength } = require('./../../config');
+
+const Polls = require('./../polls/models');
 
 exports.getChores = async function getChores() {
   return db('chore')
@@ -23,12 +25,12 @@ exports.setChoreValues = async function setChoreValues(choreData) {
     .catch(errorLogger)
 }
 
-exports.claimChore = async function claimChore(choreName, slackId, claimedAt, messageId) {
+exports.claimChore = async function claimChore(choreName, slackId, claimedAt, messageId, duration = defaultPollLength) {
   const previousClaims = await exports.getChoreClaims(choreName)
   const previousClaimedAt = (previousClaims.length === 0) ? new Date(0) : previousClaims.slice(-1)[0].claimed_at;
   const choreValue = await exports.getChoreValue(choreName, previousClaimedAt, claimedAt);
 
-  const pollIds = await polls.createPoll();
+  const pollIds = await Polls.createPoll(duration);
 
   return db('chore_claim')
     .insert({
@@ -39,7 +41,32 @@ exports.claimChore = async function claimChore(choreName, slackId, claimedAt, me
       value: choreValue.sum,
       poll_id: pollIds[0],
     })
-    .returning('poll_id')
+    .returning(['id', 'poll_id'])
+    .catch(errorLogger);
+}
+
+exports.resolveChoreClaim = async function resolveChoreClaim(claimId) {
+  const choreClaims = await exports.getChoreClaim(claimId);
+  const choreClaim = choreClaims[0];
+  const pollId = choreClaim.poll_id;
+  const poll = await Polls.getPoll(pollId);
+
+  if (Date.now() < Polls.endsAt(poll)) { throw new Error('Poll not closed!'); }
+
+  const { yays, nays } = await Polls.getResultCounts(pollId);
+  const result = yays >= 2 && yays > nays;
+
+  return db('chore_claim')
+    .where({ id: claimId })
+    .update({ result: result })
+    .returning('result')
+    .catch(errorLogger);
+}
+
+exports.getChoreClaim = async function getChoreClaim(claimId) {
+  return db('chore_claim')
+    .select('*')
+    .where({ id: claimId })
     .catch(errorLogger);
 }
 

@@ -22,9 +22,8 @@ exports.getPoll = async function getPoll(pollId) {
 exports.submitVote = async function submitVote(pollId, userId, vote) {
   const encryptedUserId = sha256(process.env.SALT + userId);
   const poll = await exports.getPoll(pollId);
-  const endsAt = new Date(poll.created_at.getTime() + poll.duration)
 
-  if (endsAt < Date.now()) { throw new Error('Poll has closed!'); }
+  if (exports.endsAt(poll) < Date.now()) { throw new Error('Poll has closed!'); }
 
   return db('poll_vote')
     .insert({
@@ -44,17 +43,20 @@ exports.getVotes = async function getVotes(pollId) {
 
 exports.getResults = async function getResults(pollId) {
   const poll = await exports.getPoll(pollId);
-  const endsAt =  new Date(poll.created_at.getTime() + poll.duration)
 
   return db('poll_vote')
     .where('poll_id', pollId)
-    .whereBetween('updated_at', [poll.created_at, endsAt])
+    .whereBetween('updated_at', [poll.created_at, exports.endsAt(poll)])
     .catch(errorLogger)
 }
 
-exports.getResult = async function getResult(pollId) {
+exports.getResultCounts = async function getResultCounts(pollId) {
   const votes = await exports.getResults(pollId);
   const yays = votes.filter(v => v.vote === true).length;
   const nays = votes.filter(v => v.vote === false).length;
-  return (yays > nays);
+  return { yays, nays };
+}
+
+exports.endsAt = function endsAt(poll) {
+  return new Date(poll.created_at.getTime() + poll.duration);
 }

@@ -8,13 +8,13 @@ chai.use(bnChai(BN));
 chai.use(chaiAsPromised);
 
 const { db } = require('./../src/db');
-const polls = require('./../src/modules/polls/models');
+const Polls = require('./../src/modules/polls/models');
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-describe('Chores', async () => {
+describe('Polls', async () => {
   const USER1 = 'USER1';
   const USER2 = 'USER2';
   const USER3 = 'USER3';
@@ -25,80 +25,92 @@ describe('Chores', async () => {
   const YAY = 1;
   const CANCEL = undefined;
 
-  beforeEach(async () => {
+  afterEach(async () => {
     await db('poll_vote').del();
     await db('poll').del();
   });
 
-  it('can create a new poll', async () => {
-    const pollIds = await polls.createPoll(3 * DAY);
+  describe('using polls', async () => {
+    it('can create a new poll', async () => {
+      let pollCount;
+      pollCount = await db('poll').count('*');
+      expect(pollCount[0].count).to.be.zero;
 
-    expect(pollIds[0]).to.eq.BN(1);
-  });
+      await Polls.createPoll(3 * DAY);
 
-  it('can vote in a poll', async () => {
-    const pollIds = await polls.createPoll(3 * DAY);
-    const pollId = pollIds[0];
+      pollCount = await db('poll').count('*');
+      expect(pollCount[0].count).to.eq.BN(1);
+    });
 
-    await polls.submitVote(pollId, USER1, YAY);
+    it('can vote in a poll', async () => {
+      const pollIds = await Polls.createPoll(3 * DAY);
+      const pollId = pollIds[0];
 
-    const votes = await polls.getVotes(pollId);
-    expect(votes.length).to.eq.BN(1);
-    expect(votes[0].vote).to.be.true;
-  });
+      await Polls.submitVote(pollId, USER1, YAY);
 
-  it('can update the vote in a poll', async () => {
-    const pollIds = await polls.createPoll(3 * DAY);
-    const pollId = pollIds[0];
+      const votes = await Polls.getVotes(pollId);
+      expect(votes.length).to.eq.BN(1);
+      expect(votes[0].vote).to.be.true;
+    });
 
-    await polls.submitVote(pollId, USER1, YAY);
+    it('can update the vote in a poll', async () => {
+      const pollIds = await Polls.createPoll(3 * DAY);
+      const pollId = pollIds[0];
 
-    let votes;
+      await Polls.submitVote(pollId, USER1, YAY);
 
-    await polls.submitVote(pollId, USER1, NAY);
+      let votes;
 
-    votes = await polls.getVotes(pollId);
-    expect(votes.length).to.eq.BN(1);
-    expect(votes[0].vote).to.be.false;
+      await Polls.submitVote(pollId, USER1, NAY);
 
-    await polls.submitVote(pollId, USER1, CANCEL);
+      votes = await Polls.getVotes(pollId);
+      expect(votes.length).to.eq.BN(1);
+      expect(votes[0].vote).to.be.false;
 
-    votes = await polls.getVotes(pollId);
-    expect(votes.length).to.eq.BN(1);
-    expect(votes[0].vote).to.be.null;
-  });
+      await Polls.submitVote(pollId, USER1, CANCEL);
 
-  it('cannot update the vote in a poll if the poll is closed', async () => {
-    const pollIds = await polls.createPoll(5);
-    const pollId = pollIds[0];
+      votes = await Polls.getVotes(pollId);
+      expect(votes.length).to.eq.BN(1);
+      expect(votes[0].vote).to.be.null;
+    });
 
-    await sleep(10);
+    it('cannot update the vote in a poll if the poll is closed', async () => {
+      const pollIds = await Polls.createPoll(5);
+      const pollId = pollIds[0];
 
-    await expect(polls.submitVote(pollId, USER1, YAY))
-      .to.be.rejectedWith('Poll has closed');
-  });
+      await sleep(5);
 
-  it('can get the results of a vote', async () => {
-    const pollIds = await polls.createPoll(10);
-    const pollId = pollIds[0];
+      await expect(Polls.submitVote(pollId, USER1, YAY))
+        .to.be.rejectedWith('Poll has closed');
+    });
 
-    await polls.submitVote(pollId, USER1, YAY);
-    await polls.submitVote(pollId, USER2, YAY);
-    await polls.submitVote(pollId, USER3, NAY);
+    it('can get the results of a vote', async () => {
+      const pollIds = await Polls.createPoll(10);
+      const pollId = pollIds[0];
 
-    const results = await polls.getResults(pollId);
-    expect(results.length).to.eq.BN(3);
-  });
+      await Polls.submitVote(pollId, USER1, YAY);
+      await Polls.submitVote(pollId, USER2, YAY);
+      await Polls.submitVote(pollId, USER3, NAY);
 
-  it('can get the result of a vote', async () => {
-    const pollIds = await polls.createPoll(10);
-    const pollId = pollIds[0];
+      await sleep(1);
 
-    await polls.submitVote(pollId, USER1, YAY);
-    await polls.submitVote(pollId, USER2, YAY);
-    await polls.submitVote(pollId, USER3, NAY);
+      const results = await Polls.getResults(pollId);
+      expect(results.length).to.eq.BN(3);
+    });
 
-    const result = await polls.getResult(pollId);
-    expect(result).to.be.true;
+    it('can get the result of a vote', async () => {
+      const pollIds = await Polls.createPoll(10);
+      const pollId = pollIds[0];
+
+      await Polls.submitVote(pollId, USER1, YAY);
+      await Polls.submitVote(pollId, USER2, YAY);
+      await Polls.submitVote(pollId, USER3, NAY);
+
+      await sleep(1);
+
+      const { yays, nays } = await Polls.getResultCounts(pollId);
+      expect(yays).to.eq.BN(2);
+      expect(nays).to.eq.BN(1);
+    });
   });
 });
