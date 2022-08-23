@@ -33,18 +33,17 @@ describe('Polls', async () => {
   describe('using polls', async () => {
     it('can create a new poll', async () => {
       let pollCount;
-      pollCount = await db('poll').count('*');
-      expect(pollCount[0].count).to.be.zero;
+      [ pollCount ] = await db('poll').count('*');
+      expect(pollCount.count).to.be.zero;
 
       await Polls.createPoll(3 * DAY);
 
-      pollCount = await db('poll').count('*');
-      expect(pollCount[0].count).to.eq.BN(1);
+      [ pollCount ] = await db('poll').count('*');
+      expect(pollCount.count).to.eq.BN(1);
     });
 
     it('can vote in a poll', async () => {
-      const pollIds = await Polls.createPoll(3 * DAY);
-      const pollId = pollIds[0];
+      const [ pollId ] = await Polls.createPoll(3 * DAY);
 
       await Polls.submitVote(pollId, USER1, YAY);
 
@@ -54,8 +53,7 @@ describe('Polls', async () => {
     });
 
     it('can update the vote in a poll', async () => {
-      const pollIds = await Polls.createPoll(3 * DAY);
-      const pollId = pollIds[0];
+      const [ pollId ] = await Polls.createPoll(3 * DAY);
 
       await Polls.submitVote(pollId, USER1, YAY);
 
@@ -75,8 +73,7 @@ describe('Polls', async () => {
     });
 
     it('cannot update the vote in a poll if the poll is closed', async () => {
-      const pollIds = await Polls.createPoll(5);
-      const pollId = pollIds[0];
+      const [ pollId ] = await Polls.createPoll(5);
 
       await sleep(5);
 
@@ -85,8 +82,7 @@ describe('Polls', async () => {
     });
 
     it('can get the results of a vote', async () => {
-      const pollIds = await Polls.createPoll(10);
-      const pollId = pollIds[0];
+      const [ pollId ] = await Polls.createPoll(10);
 
       await Polls.submitVote(pollId, USER1, YAY);
       await Polls.submitVote(pollId, USER2, YAY);
@@ -99,8 +95,7 @@ describe('Polls', async () => {
     });
 
     it('can get the result of a vote', async () => {
-      const pollIds = await Polls.createPoll(10);
-      const pollId = pollIds[0];
+      const [ pollId ] = await Polls.createPoll(10);
 
       await Polls.submitVote(pollId, USER1, YAY);
       await Polls.submitVote(pollId, USER2, YAY);

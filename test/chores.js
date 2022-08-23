@@ -134,16 +134,14 @@ describe('Chores', async () => {
       await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
       await sleep(1);
 
-      const choreClaims = await Chores.claimChore(DISHES, USER1, new Date(), "", 10);
-      const pollId = choreClaims[0].poll_id;
-      const claimId = choreClaims[0].id;
+      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), "", 10);
 
-      await Polls.submitVote(pollId, USER1, YAY);
-      await Polls.submitVote(pollId, USER2, YAY);
+      await Polls.submitVote(choreClaim.poll_id, USER1, YAY);
+      await Polls.submitVote(choreClaim.poll_id, USER2, YAY);
 
       await sleep(10);
 
-      const results = await Chores.resolveChoreClaim(claimId);
+      const results = await Chores.resolveChoreClaim(choreClaim.id);
       expect(results[0]).to.be.true;
     });
 
@@ -151,15 +149,13 @@ describe('Chores', async () => {
       await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
       await sleep(1);
 
-      const choreClaims = await Chores.claimChore(DISHES, USER1, new Date(), "", 10);
-      const pollId = choreClaims[0].poll_id;
-      const claimId = choreClaims[0].id;
+      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), "", 10);
 
-      await Polls.submitVote(pollId, USER1, YAY);
+      await Polls.submitVote(choreClaim.poll_id, USER1, YAY);
 
       await sleep(10);
 
-      const results = await Chores.resolveChoreClaim(claimId);
+      const results = await Chores.resolveChoreClaim(choreClaim.id);
       expect(results[0]).to.be.false;
     });
   });
