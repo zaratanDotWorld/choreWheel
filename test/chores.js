@@ -20,6 +20,8 @@ function sleep(ms) {
 
 describe('Chores', async () => {
 
+  const POLL_LENGTH = 35;
+
   afterEach(async () => {
     await db('chore_claim').del();
     await db('chore_value').del();
@@ -99,9 +101,11 @@ describe('Chores', async () => {
       await sleep(1);
 
       await Chores.claimChore(DISHES, USER1, new Date(), "");
+      await sleep(1);
 
-      const userChoreClaims = await Chores.getUserChoreClaims(DISHES, USER1);
-      expect(userChoreClaims[0].value).to.eq.BN(15);
+      const choreClaims = await Chores.getChoreClaims(DISHES);
+      expect(choreClaims[0].claimed_by).to.equal(USER1);
+      expect(choreClaims[0].value).to.eq.BN(15);
     });
 
     it('can claim a chore incrementally', async () => {
@@ -118,54 +122,151 @@ describe('Chores', async () => {
       await Chores.claimChore(DISHES, USER2, new Date(), "");
       await sleep(1);
 
-      const userChoreClaims = await Chores.getUserChoreClaims(DISHES, USER2);
-      expect(userChoreClaims[0].value).to.eq.BN(20);
+      const choreClaims = await Chores.getChoreClaims(DISHES);
+      expect(choreClaims[0].claimed_by).to.equal(USER1);
+      expect(choreClaims[0].value).to.eq.BN(15);
+      expect(choreClaims[1].claimed_by).to.equal(USER2);
+      expect(choreClaims[1].value).to.eq.BN(20);
     });
 
-    it('can verify a chore claim', async () => {
+    it('can successfully resolve a claim', async () => {
       await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
       await sleep(1);
 
-      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), "", 10);
+      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), "", POLL_LENGTH);
+      await sleep(1);
 
       await Polls.submitVote(choreClaim.poll_id, USER1, YAY);
       await Polls.submitVote(choreClaim.poll_id, USER2, YAY);
 
-      await sleep(10);
+      await sleep(POLL_LENGTH);
 
-      const results = await Chores.resolveChoreClaim(choreClaim.id);
-      expect(results[0]).to.be.true;
+      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id);
+      expect(resolvedClaim.result).to.equal('pass');
+      expect(resolvedClaim.value).to.eq.BN(10);
     });
 
-    it('cannot claim a chore without two positive votes', async () => {
+    it('cannot resolve a claim before the poll closes ', async () => {
       await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
       await sleep(1);
 
-      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), "", 10);
+      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), "", POLL_LENGTH);
+      await sleep(1);
+
+      await expect(Chores.resolveChoreClaim(choreClaim.id))
+        .to.be.rejectedWith('Poll not closed!');
+    });
+
+    it('cannot resolve a claim twice', async () => {
+      await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
+      await sleep(1);
+
+      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), "", POLL_LENGTH);
+      await sleep(1);
+
+      await sleep(POLL_LENGTH);
+
+      await Chores.resolveChoreClaim(choreClaim.id);
+      await sleep(1);
+
+      await expect(Chores.resolveChoreClaim(choreClaim.id))
+        .to.be.rejectedWith('Claim already resolved!');
+    });
+
+    it('cannot successfully resolve a claim without two positive votes', async () => {
+      await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
+      await sleep(1);
+
+      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), "", POLL_LENGTH);
+      await sleep(1);
 
       await Polls.submitVote(choreClaim.poll_id, USER1, YAY);
 
-      await sleep(10);
+      await sleep(POLL_LENGTH);
 
-      const results = await Chores.resolveChoreClaim(choreClaim.id);
-      expect(results[0]).to.be.false;
+      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id);
+      expect(resolvedClaim.result).to.equal('fail');
     });
 
-    it('cannot claim a chore without a passing vote', async () => {
+    it('cannot successfully resolve a claim without a passing vote', async () => {
       await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
       await sleep(1);
 
-      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), "", 10);
+      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), "", POLL_LENGTH);
+      await sleep(1);
 
       await Polls.submitVote(choreClaim.poll_id, USER1, YAY);
       await Polls.submitVote(choreClaim.poll_id, USER2, YAY);
       await Polls.submitVote(choreClaim.poll_id, USER3, NAY);
       await Polls.submitVote(choreClaim.poll_id, USER4, NAY);
 
-      await sleep(10);
+      await sleep(POLL_LENGTH);
 
-      const results = await Chores.resolveChoreClaim(choreClaim.id);
-      expect(results[0]).to.be.false;
+      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id);
+      expect(resolvedClaim.result).to.equal('fail');
+    });
+
+    it('can claim the incremental value if a prior claim is approved', async () => {
+      await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
+      await sleep(1);
+
+      const [ choreClaim1 ] = await Chores.claimChore(DISHES, USER1, new Date(), "", POLL_LENGTH);
+      await sleep(1);
+
+      await Chores.setChoreValues([{ chore_name: DISHES, value: 5 }]);
+      await sleep(1);
+
+      const [ choreClaim2 ] = await Chores.claimChore(DISHES, USER2, new Date(), "", POLL_LENGTH);
+      await sleep(1);
+
+      // Both claims are approved
+      await Polls.submitVote(choreClaim1.poll_id, USER1, YAY);
+      await Polls.submitVote(choreClaim1.poll_id, USER2, YAY);
+
+      await Polls.submitVote(choreClaim2.poll_id, USER1, YAY);
+      await Polls.submitVote(choreClaim2.poll_id, USER2, YAY);
+
+      await sleep(POLL_LENGTH);
+
+      const [ resolvedClaim1 ] = await Chores.resolveChoreClaim(choreClaim1.id);
+      expect(resolvedClaim1.result).to.equal('pass');
+      expect(resolvedClaim1.value).to.eq.BN(10);
+
+      const [ resolvedClaim2 ] = await Chores.resolveChoreClaim(choreClaim2.id);
+      expect(resolvedClaim2.result).to.equal('pass');
+      expect(resolvedClaim2.value).to.eq.BN(5);
+    });
+
+    it('can claim the entire value if a prior claim is denied', async () => {
+      await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
+      await sleep(1);
+
+      const [ choreClaim1 ] = await Chores.claimChore(DISHES, USER1, new Date(), "", POLL_LENGTH);
+      await sleep(1);
+
+      await Chores.setChoreValues([{ chore_name: DISHES, value: 5 }]);
+      await sleep(1);
+
+      const [ choreClaim2 ] = await Chores.claimChore(DISHES, USER2, new Date(), "", POLL_LENGTH);
+      await sleep(1);
+
+      // First claim is rejected
+      await Polls.submitVote(choreClaim1.poll_id, USER1, YAY);
+      await Polls.submitVote(choreClaim1.poll_id, USER2, NAY);
+
+      // Second claim is approved
+      await Polls.submitVote(choreClaim2.poll_id, USER1, YAY);
+      await Polls.submitVote(choreClaim2.poll_id, USER2, YAY);
+
+      await sleep(POLL_LENGTH);
+
+      const [ resolvedClaim1 ] = await Chores.resolveChoreClaim(choreClaim1.id);
+      expect(resolvedClaim1.result).to.equal('fail');
+      expect(resolvedClaim1.value).to.be.zero;
+
+      const [ resolvedClaim2 ] = await Chores.resolveChoreClaim(choreClaim2.id);
+      expect(resolvedClaim2.result).to.equal('pass');
+      expect(resolvedClaim2.value).to.eq.BN(15);
     });
   });
 });
