@@ -7,6 +7,8 @@ const chaiAsPromised = require("chai-as-promised");
 chai.use(bnChai(BN));
 chai.use(chaiAsPromised);
 
+const { USER1, USER2, USER3, USER4, YAY, NAY, FIRST, SECOND, DISHES, SWEEPING, RESTOCK } = require('./../src/constants');
+
 const { db } = require('./../src/db');
 const Chores = require('./../src/modules/chores/models');
 const Power = require('./../src/modules/chores/power');
@@ -17,17 +19,6 @@ function sleep(ms) {
 }
 
 describe('Chores', async () => {
-  const DISHES = 'dishes';
-  const SWEEPING = 'sweeping';
-  const RESTOCK = 'restock';
-
-  const FIRST = false;
-  const SECOND = true;
-
-  const YAY = 1;
-
-  const USER1 = 'USER1';
-  const USER2 = 'USER2';
 
   afterEach(async () => {
     await db('chore_claim').del();
@@ -125,6 +116,7 @@ describe('Chores', async () => {
       await sleep(1);
 
       await Chores.claimChore(DISHES, USER2, new Date(), "");
+      await sleep(1);
 
       const userChoreClaims = await Chores.getUserChoreClaims(DISHES, USER2);
       expect(userChoreClaims[0].value).to.eq.BN(20);
@@ -152,6 +144,23 @@ describe('Chores', async () => {
       const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), "", 10);
 
       await Polls.submitVote(choreClaim.poll_id, USER1, YAY);
+
+      await sleep(10);
+
+      const results = await Chores.resolveChoreClaim(choreClaim.id);
+      expect(results[0]).to.be.false;
+    });
+
+    it('cannot claim a chore without a passing vote', async () => {
+      await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
+      await sleep(1);
+
+      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), "", 10);
+
+      await Polls.submitVote(choreClaim.poll_id, USER1, YAY);
+      await Polls.submitVote(choreClaim.poll_id, USER2, YAY);
+      await Polls.submitVote(choreClaim.poll_id, USER3, NAY);
+      await Polls.submitVote(choreClaim.poll_id, USER4, NAY);
 
       await sleep(10);
 

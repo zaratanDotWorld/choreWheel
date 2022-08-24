@@ -7,6 +7,8 @@ const chaiAsPromised = require("chai-as-promised");
 chai.use(bnChai(BN));
 chai.use(chaiAsPromised);
 
+const { USER1, USER2, USER3, DAY, NAY, YAY, CANCEL } = require('./../src/constants');
+
 const { db } = require('./../src/db');
 const Polls = require('./../src/modules/polls/models');
 
@@ -15,15 +17,6 @@ function sleep(ms) {
 }
 
 describe('Polls', async () => {
-  const USER1 = 'USER1';
-  const USER2 = 'USER2';
-  const USER3 = 'USER3';
-
-  const DAY = 60 * 60 * 24 * 1000;
-
-  const NAY = 0;
-  const YAY = 1;
-  const CANCEL = undefined;
 
   afterEach(async () => {
     await db('poll_vote').del();
