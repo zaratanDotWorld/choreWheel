@@ -24,6 +24,8 @@ describe('Hearts', async () => {
   afterEach(async () => {
     await db('heart_challenge').del();
     await db('heart').del();
+    await db('poll_vote').del();
+    await db('poll').del();
   });
 
   describe('using hearts', async () => {

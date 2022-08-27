@@ -3,13 +3,13 @@ const { defaultPollLength } = require('./../../config');
 
 const Polls = require('./../polls/models');
 
-exports.getChores = async function getChores() {
+exports.getChores = async function () {
   return db('chore')
     .select('*')
     .catch(errorLogger);
 }
 
-exports.getChoreValue = async function getChoreValue(choreName, startTime, endTime) {
+exports.getChoreValue = async function (choreName, startTime, endTime) {
   return db('chore_value')
     .where('chore_name', choreName )
     .where('created_at', '>', startTime)
@@ -19,20 +19,20 @@ exports.getChoreValue = async function getChoreValue(choreName, startTime, endTi
     .catch(errorLogger)
 }
 
-exports.getCurrentChoreValue = async function getCurrentChoreValue(choreName, claimedAt) {
+exports.getCurrentChoreValue = async function (choreName, claimedAt) {
   const previousClaims = await exports.getChoreClaims(choreName)
   const filteredClaims = previousClaims.filter((claim) => claim.claimed_at < claimedAt);
   const previousClaimedAt = (filteredClaims.length === 0) ? new Date(0) : filteredClaims.slice(-1)[0].claimed_at;
   return exports.getChoreValue(choreName, previousClaimedAt, claimedAt);
 }
 
-exports.setChoreValues = async function setChoreValues(choreData) {
+exports.setChoreValues = async function (choreData) {
   return db('chore_value')
     .insert(choreData)
     .catch(errorLogger)
 }
 
-exports.claimChore = async function claimChore(choreName, slackId, claimedAt, messageId, duration = defaultPollLength) {
+exports.claimChore = async function (choreName, slackId, claimedAt, messageId, duration = defaultPollLength) {
   const [ pollId ] = await Polls.createPoll(duration);
 
   const choreValue = await exports.getCurrentChoreValue(choreName, claimedAt);
@@ -50,7 +50,7 @@ exports.claimChore = async function claimChore(choreName, slackId, claimedAt, me
     .catch(errorLogger);
 }
 
-exports.resolveChoreClaim = async function resolveChoreClaim(claimId) {
+exports.resolveChoreClaim = async function (claimId) {
   const [ choreClaim ] = await exports.getChoreClaim(claimId);
 
   if (choreClaim.result !== 'unknown') { throw new Error('Claim already resolved!'); }
@@ -74,14 +74,14 @@ exports.resolveChoreClaim = async function resolveChoreClaim(claimId) {
     .catch(errorLogger);
 }
 
-exports.getChoreClaim = async function getChoreClaim(claimId) {
+exports.getChoreClaim = async function (claimId) {
   return db('chore_claim')
     .select('*')
     .where({ id: claimId })
     .catch(errorLogger);
 }
 
-exports.getChoreClaims = async function getChoreClaims(choreName) {
+exports.getChoreClaims = async function (choreName) {
   return db('chore_claim')
     .select('*')
     .whereNot({ result: 'fail' })
@@ -89,7 +89,7 @@ exports.getChoreClaims = async function getChoreClaims(choreName) {
     .catch(errorLogger);
 }
 
-exports.setChorePreference = async function setChorePreference(slackId, alphaChore, betaChore, preference) {
+exports.setChorePreference = async function (slackId, alphaChore, betaChore, preference) {
   if (alphaChore >= betaChore) throw new Error('Chores out of order');
   return db('chore_pref')
     .insert({
@@ -103,7 +103,7 @@ exports.setChorePreference = async function setChorePreference(slackId, alphaCho
     .catch(errorLogger);
 }
 
-exports.getChorePreferences = async function getChorePreferences() {
+exports.getChorePreferences = async function () {
   return db('chore_pref')
     .select('alpha_chore', 'beta_chore', 'preference')
     .catch(errorLogger);

@@ -4,14 +4,14 @@ const { db, errorLogger } = require('./../../db');
 const { defaultPollLength } = require('./../../config');
 
 
-exports.createPoll = async function createPoll(duration = defaultPollLength) {
+exports.createPoll = async function (duration = defaultPollLength) {
   return db('poll')
     .insert({ duration: duration })
     .returning('id')
     .catch(errorLogger);
 }
 
-exports.getPoll = async function getPoll(pollId) {
+exports.getPoll = async function (pollId) {
   return db('poll')
     .select('*')
     .where('id', pollId)
@@ -19,7 +19,7 @@ exports.getPoll = async function getPoll(pollId) {
     .catch(errorLogger);
 }
 
-exports.submitVote = async function submitVote(pollId, userId, vote) {
+exports.submitVote = async function (pollId, userId, vote) {
   const encryptedUserId = sha256(process.env.SALT + userId);
   const poll = await exports.getPoll(pollId);
 
@@ -35,13 +35,13 @@ exports.submitVote = async function submitVote(pollId, userId, vote) {
     .catch(errorLogger);
 }
 
-exports.getVotes = async function getVotes(pollId) {
+exports.getVotes = async function (pollId) {
   return db('poll_vote')
     .where('poll_id', pollId)
     .catch(errorLogger)
 }
 
-exports.getResults = async function getResults(pollId) {
+exports.getResults = async function (pollId) {
   const poll = await exports.getPoll(pollId);
 
   return db('poll_vote')
@@ -50,13 +50,13 @@ exports.getResults = async function getResults(pollId) {
     .catch(errorLogger)
 }
 
-exports.getResultCounts = async function getResultCounts(pollId) {
+exports.getResultCounts = async function (pollId) {
   const votes = await exports.getResults(pollId);
   const yays = votes.filter(v => v.vote === true).length;
   const nays = votes.filter(v => v.vote === false).length;
   return { yays, nays };
 }
 
-exports.endsAt = function endsAt(poll) {
+exports.endsAt = function (poll) {
   return new Date(poll.created_at.getTime() + poll.duration);
 }
