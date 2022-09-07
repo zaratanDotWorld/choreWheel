@@ -9,14 +9,14 @@ exports.getUserHearts = async function (slackId) {
     .sum('value')
     .first()
     .catch(errorLogger);
-}
+};
 
 exports.generateHearts = async function (slackId, numHearts) {
   return db('heart')
-    .insert({ user: slackId, value: numHearts})
+    .insert({ user: slackId, value: numHearts })
     .returning('id')
     .catch(errorLogger);
-}
+};
 
 exports.initiateChallenge = async function (challenger, challengee, numHearts, duration = defaultPollLength) {
   const [ pollId ] = await Polls.createPoll(duration);
@@ -26,11 +26,11 @@ exports.initiateChallenge = async function (challenger, challengee, numHearts, d
       challenger: challenger,
       challengee: challengee,
       value: numHearts,
-      poll_id: pollId,
+      poll_id: pollId
     })
-    .returning(['id', 'poll_id'])
+    .returning([ 'id', 'poll_id' ])
     .catch(errorLogger);
-}
+};
 
 exports.getChallenge = async function (challengeId) {
   return db('heart_challenge')
@@ -38,7 +38,7 @@ exports.getChallenge = async function (challengeId) {
     .where('id', challengeId)
     .first()
     .catch(errorLogger);
-}
+};
 
 exports.resolveChallenge = async function (challengeId) {
   const challenge = await exports.getChallenge(challengeId);
@@ -59,12 +59,6 @@ exports.resolveChallenge = async function (challengeId) {
   return db('heart_challenge')
     .where({ id: challengeId })
     .update({ heart_id: heartId })
-    .returning(['heart_id'])
+    .returning([ 'heart_id' ])
     .catch(errorLogger);
-
-
-
-
-
-
-}
+};

@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const chai = require('chai');
 const BN = require('bn.js');
 const bnChai = require('bn-chai');
-const chaiAsPromised = require("chai-as-promised");
+const chaiAsPromised = require('chai-as-promised');
 
 chai.use(bnChai(BN));
 chai.use(chaiAsPromised);
@@ -14,12 +14,11 @@ const Chores = require('./../src/modules/chores/models');
 const Power = require('./../src/modules/chores/power');
 const Polls = require('./../src/modules/polls/models');
 
-function sleep(ms) {
+function sleep (ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 describe('Chores', async () => {
-
   const POLL_LENGTH = 35;
 
   afterEach(async () => {
@@ -38,9 +37,9 @@ describe('Chores', async () => {
     });
 
     it('can set and query for the latest chore values', async () => {
-      await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
-      await Chores.setChoreValues([{ chore_name: DISHES, value: 5 }]);
-      await Chores.setChoreValues([{ chore_name: SWEEPING, value: 20 }]);
+      await Chores.setChoreValues([ { chore_name: DISHES, value: 10 } ]);
+      await Chores.setChoreValues([ { chore_name: DISHES, value: 5 } ]);
+      await Chores.setChoreValues([ { chore_name: SWEEPING, value: 20 } ]);
 
       const now = new Date();
       const endTime = new Date(now.getTime() + 1000);
@@ -85,7 +84,7 @@ describe('Chores', async () => {
 
       const directedPreferences = Power.convertPreferences(preferences);
       const matrix = Power.toMatrix(directedPreferences);
-      const weights = Power.powerMethod(matrix, d = .8); // eslint-disable-line no-undef
+      const weights = Power.powerMethod(matrix, d = 0.8); // eslint-disable-line no-undef
       const labeledWeights = Power.applyLabels(directedPreferences, weights);
 
       expect(labeledWeights.get('dishes')).to.equal(0.7328964266666669);
@@ -96,11 +95,11 @@ describe('Chores', async () => {
 
   describe('claiming chores', async () => {
     it('can claim a chore', async () => {
-      await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
-      await Chores.setChoreValues([{ chore_name: DISHES, value: 5 }]);
+      await Chores.setChoreValues([ { chore_name: DISHES, value: 10 } ]);
+      await Chores.setChoreValues([ { chore_name: DISHES, value: 5 } ]);
       await sleep(1);
 
-      await Chores.claimChore(DISHES, USER1, new Date(), "");
+      await Chores.claimChore(DISHES, USER1, new Date(), '');
       await sleep(1);
 
       const choreClaims = await Chores.getChoreClaims(DISHES);
@@ -109,17 +108,17 @@ describe('Chores', async () => {
     });
 
     it('can claim a chore incrementally', async () => {
-      await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
-      await Chores.setChoreValues([{ chore_name: DISHES, value: 5 }]);
+      await Chores.setChoreValues([ { chore_name: DISHES, value: 10 } ]);
+      await Chores.setChoreValues([ { chore_name: DISHES, value: 5 } ]);
       await sleep(1);
 
-      await Chores.claimChore(DISHES, USER1, new Date(), "");
+      await Chores.claimChore(DISHES, USER1, new Date(), '');
       await sleep(1);
 
-      await Chores.setChoreValues([{ chore_name: DISHES, value: 20 }]);
+      await Chores.setChoreValues([ { chore_name: DISHES, value: 20 } ]);
       await sleep(1);
 
-      await Chores.claimChore(DISHES, USER2, new Date(), "");
+      await Chores.claimChore(DISHES, USER2, new Date(), '');
       await sleep(1);
 
       const choreClaims = await Chores.getChoreClaims(DISHES);
@@ -130,10 +129,10 @@ describe('Chores', async () => {
     });
 
     it('can successfully resolve a claim', async () => {
-      await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
+      await Chores.setChoreValues([ { chore_name: DISHES, value: 10 } ]);
       await sleep(1);
 
-      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), "", POLL_LENGTH);
+      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), '', POLL_LENGTH);
       await sleep(1);
 
       await Polls.submitVote(choreClaim.poll_id, USER1, YAY);
@@ -147,10 +146,10 @@ describe('Chores', async () => {
     });
 
     it('cannot resolve a claim before the poll closes ', async () => {
-      await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
+      await Chores.setChoreValues([ { chore_name: DISHES, value: 10 } ]);
       await sleep(1);
 
-      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), "", POLL_LENGTH);
+      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), '', POLL_LENGTH);
       await sleep(1);
 
       await expect(Chores.resolveChoreClaim(choreClaim.id))
@@ -158,10 +157,10 @@ describe('Chores', async () => {
     });
 
     it('cannot resolve a claim twice', async () => {
-      await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
+      await Chores.setChoreValues([ { chore_name: DISHES, value: 10 } ]);
       await sleep(1);
 
-      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), "", POLL_LENGTH);
+      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), '', POLL_LENGTH);
       await sleep(1);
 
       await sleep(POLL_LENGTH);
@@ -174,10 +173,10 @@ describe('Chores', async () => {
     });
 
     it('cannot successfully resolve a claim without two positive votes', async () => {
-      await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
+      await Chores.setChoreValues([ { chore_name: DISHES, value: 10 } ]);
       await sleep(1);
 
-      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), "", POLL_LENGTH);
+      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), '', POLL_LENGTH);
       await sleep(1);
 
       await Polls.submitVote(choreClaim.poll_id, USER1, YAY);
@@ -189,10 +188,10 @@ describe('Chores', async () => {
     });
 
     it('cannot successfully resolve a claim without a passing vote', async () => {
-      await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
+      await Chores.setChoreValues([ { chore_name: DISHES, value: 10 } ]);
       await sleep(1);
 
-      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), "", POLL_LENGTH);
+      const [ choreClaim ] = await Chores.claimChore(DISHES, USER1, new Date(), '', POLL_LENGTH);
       await sleep(1);
 
       await Polls.submitVote(choreClaim.poll_id, USER1, YAY);
@@ -207,16 +206,16 @@ describe('Chores', async () => {
     });
 
     it('can claim the incremental value if a prior claim is approved', async () => {
-      await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
+      await Chores.setChoreValues([ { chore_name: DISHES, value: 10 } ]);
       await sleep(1);
 
-      const [ choreClaim1 ] = await Chores.claimChore(DISHES, USER1, new Date(), "", POLL_LENGTH);
+      const [ choreClaim1 ] = await Chores.claimChore(DISHES, USER1, new Date(), '', POLL_LENGTH);
       await sleep(1);
 
-      await Chores.setChoreValues([{ chore_name: DISHES, value: 5 }]);
+      await Chores.setChoreValues([ { chore_name: DISHES, value: 5 } ]);
       await sleep(1);
 
-      const [ choreClaim2 ] = await Chores.claimChore(DISHES, USER2, new Date(), "", POLL_LENGTH);
+      const [ choreClaim2 ] = await Chores.claimChore(DISHES, USER2, new Date(), '', POLL_LENGTH);
       await sleep(1);
 
       // Both claims are approved
@@ -238,16 +237,16 @@ describe('Chores', async () => {
     });
 
     it('can claim the entire value if a prior claim is denied', async () => {
-      await Chores.setChoreValues([{ chore_name: DISHES, value: 10 }]);
+      await Chores.setChoreValues([ { chore_name: DISHES, value: 10 } ]);
       await sleep(1);
 
-      const [ choreClaim1 ] = await Chores.claimChore(DISHES, USER1, new Date(), "", POLL_LENGTH);
+      const [ choreClaim1 ] = await Chores.claimChore(DISHES, USER1, new Date(), '', POLL_LENGTH);
       await sleep(1);
 
-      await Chores.setChoreValues([{ chore_name: DISHES, value: 5 }]);
+      await Chores.setChoreValues([ { chore_name: DISHES, value: 5 } ]);
       await sleep(1);
 
-      const [ choreClaim2 ] = await Chores.claimChore(DISHES, USER2, new Date(), "", POLL_LENGTH);
+      const [ choreClaim2 ] = await Chores.claimChore(DISHES, USER2, new Date(), '', POLL_LENGTH);
       await sleep(1);
 
       // First claim is rejected

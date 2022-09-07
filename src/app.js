@@ -1,9 +1,9 @@
-require('dotenv').config()
+require('dotenv').config();
 
 const { App } = require('@slack/bolt');
 
-const db = require('./db')
-const chores = require('./channels/chores')
+const db = require('./db');
+const chores = require('./channels/chores');
 
 // Create the app
 
@@ -21,26 +21,26 @@ app.event('reaction_added', async ({ payload }) => {
     token: process.env.SLACK_BOT_TOKEN,
     channel: payload.item.channel,
     timestamp: payload.item.ts
-   }
+  };
 
   const res = await app.client.reactions.get(reactionQuery);
   console.log(res.message.reactions);
-})
+});
 
 app.event('reaction_removed', async ({ payload }) => {
   console.log(`User ${payload.user} just removed ${payload.reaction} from message ${payload.item.channel}.${payload.item.ts}`);
-})
+});
 
 // Chores app
 
-const CHORES_CHANNEL = "test";
-const CHORES_LIST = "chores-list";
-const CHORES_LIST_CALLBACK = "chores-list-callback";
+const CHORES_CHANNEL = 'test';
+const CHORES_LIST = 'chores-list';
+const CHORES_LIST_CALLBACK = 'chores-list-callback';
 
 const POLL_VOTE = /poll-vote/;
-const POLL_VOTE_UP = "poll-vote-up";
-const POLL_VOTE_DOWN = "poll-vote-down";
-const POLL_VOTE_CANCEL = "poll-vote-cancel";
+const POLL_VOTE_UP = 'poll-vote-up';
+const POLL_VOTE_DOWN = 'poll-vote-down';
+const POLL_VOTE_CANCEL = 'poll-vote-cancel';
 
 app.shortcut(CHORES_LIST, async ({ ack, shortcut }) => {
   await ack();
@@ -53,7 +53,7 @@ app.shortcut(CHORES_LIST, async ({ ack, shortcut }) => {
     token: process.env.SLACK_BOT_TOKEN,
     trigger_id: shortcut.trigger_id,
     view: view
-  }
+  };
 
   const res = await app.client.views.open(viewPayload);
   console.log(`Chores listed with id ${res.view.id}`);
@@ -66,7 +66,7 @@ app.view(CHORES_LIST_CALLBACK, async ({ ack, body }) => {
   const choreAct = getChoreAct(view);
 
   const textA = `*${user.name}* did *${choreAct.name}* for *${choreAct.description} tokens*. Thanks ${user.name}! :sparkles::sparkles:`;
-  const textB = "React :+1: to endorse or :-1: to challenge (& probably leave a comment about it).";
+  const textB = 'React :+1: to endorse or :-1: to challenge (& probably leave a comment about it).';
 
   const upVote = makeVoteButton(POLL_VOTE_UP, 3);
   const downVote = makeVoteButton(POLL_VOTE_DOWN, 1);
@@ -76,12 +76,12 @@ app.view(CHORES_LIST_CALLBACK, async ({ ack, body }) => {
     token: process.env.SLACK_BOT_TOKEN,
     channel: CHORES_CHANNEL,
     blocks: [
-      { "type": "section", "text": { "type": "mrkdwn", "text": textA } },
-      { "type": "divider" },
-      { "type": "section", "text": { "type": "mrkdwn", "text": textB } },
-      { "type": "actions", "elements": [ upVote, downVote, cancelVote ] }
+      { type: 'section', text: { type: 'mrkdwn', text: textA } },
+      { type: 'divider' },
+      { type: 'section', text: { type: 'mrkdwn', text: textB } },
+      { type: 'actions', elements: [ upVote, downVote, cancelVote ] }
     ]
-  }
+  };
 
   const res = await app.client.chat.postMessage(messagePayload);
   const messageId = `${res.channel}.${res.ts}`;
@@ -97,7 +97,6 @@ app.action(POLL_VOTE, async ({ ack, body, action }) => {
   console.log(action);
 });
 
-
 // Launch the app
 
 (async () => {
@@ -107,37 +106,37 @@ app.action(POLL_VOTE, async ({ ack, body, action }) => {
 
 // Utils
 
-function makeVoteButton(actionId, count = 0) {
-  let text = "";
+function makeVoteButton (actionId, count = 0) {
+  let text = '';
 
-  if (actionId == POLL_VOTE_UP) {
+  if (actionId === POLL_VOTE_UP) {
     text = `:+1: (${count})`;
-  } else if (actionId == POLL_VOTE_DOWN) {
+  } else if (actionId === POLL_VOTE_DOWN) {
     text = `:-1: (${count})`;
   } else if (actionId === POLL_VOTE_CANCEL) {
-    text = `:x:`;
+    text = ':x:';
   } else {
-    new RangeError("Invalid actionId");
+    throw new RangeError('Invalid actionId');
   }
 
   return {
-    "type": "button",
-    "text": { "type": "plain_text", "text": text, "emoji": true },
-    "value": actionId,
-    "action_id": actionId
-  }
+    type: 'button',
+    text: { type: 'plain_text', text: text, emoji: true },
+    value: actionId,
+    action_id: actionId
+  };
 }
 
-function getChoreAct(view) {
+function getChoreAct (view) {
   // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
   const choreActIndex = parseInt(view.state.values.input.options.selected_option.value);
   const choreAct = view.blocks[0].element.options[choreActIndex];
 
   return {
-    id: parseInt(choreAct.description.text.split(".")[1]),
+    id: parseInt(choreAct.description.text.split('.')[1]),
     name: choreAct.text.text,
     description: choreAct.description.text
-  }
+  };
 }
 
 // Fin

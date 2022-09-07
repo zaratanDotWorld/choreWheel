@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const chai = require('chai');
 const BN = require('bn.js');
 const bnChai = require('bn-chai');
-const chaiAsPromised = require("chai-as-promised");
+const chaiAsPromised = require('chai-as-promised');
 
 chai.use(bnChai(BN));
 chai.use(chaiAsPromised);
@@ -12,12 +12,11 @@ const { USER1, USER2, USER3, DAY, NAY, YAY, CANCEL } = require('./../src/constan
 const { db } = require('./../src/db');
 const Polls = require('./../src/modules/polls/models');
 
-function sleep(ms) {
+function sleep (ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 describe('Polls', async () => {
-
   afterEach(async () => {
     await db('poll_vote').del();
     await db('poll').del();

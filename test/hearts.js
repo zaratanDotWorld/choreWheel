@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const chai = require('chai');
 const BN = require('bn.js');
 const bnChai = require('bn-chai');
-const chaiAsPromised = require("chai-as-promised");
+const chaiAsPromised = require('chai-as-promised');
 
 chai.use(bnChai(BN));
 chai.use(chaiAsPromised);
@@ -13,12 +13,11 @@ const { db } = require('./../src/db');
 const Hearts = require('./../src/modules/hearts/models');
 const Polls = require('./../src/modules/polls/models');
 
-function sleep(ms) {
+function sleep (ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 describe('Hearts', async () => {
-
   const POLL_LENGTH = 35;
 
   afterEach(async () => {
@@ -41,7 +40,7 @@ describe('Hearts', async () => {
 
       expect(hearts1.sum).to.eq.BN(2);
       expect(hearts2.sum).to.eq.BN(1);
-      expect(hearts3.sum).to.equal(null)
+      expect(hearts3.sum).to.equal(null);
     });
 
     it('can aggregate positive and negative hearts', async () => {
@@ -57,7 +56,7 @@ describe('Hearts', async () => {
 
     it('can handle fractional hearts', async () => {
       await Hearts.generateHearts(USER1, 2.5);
-      await Hearts.generateHearts(USER1, -.75);
+      await Hearts.generateHearts(USER1, -0.75);
       await sleep(1);
 
       const hearts = await Hearts.getUserHearts(USER1);
@@ -164,5 +163,4 @@ describe('Hearts', async () => {
         .to.be.rejectedWith('Challenge already resolved!');
     });
   });
-
 });
