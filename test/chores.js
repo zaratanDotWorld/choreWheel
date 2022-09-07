@@ -85,7 +85,7 @@ describe('Chores', async () => {
 
       const directedPreferences = Power.convertPreferences(preferences);
       const matrix = Power.toMatrix(directedPreferences);
-      const weights = Power.powerMethod(matrix, d = .8);
+      const weights = Power.powerMethod(matrix, d = .8); // eslint-disable-line no-undef
       const labeledWeights = Power.applyLabels(directedPreferences, weights);
 
       expect(labeledWeights.get('dishes')).to.equal(0.7328964266666669);

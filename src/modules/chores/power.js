@@ -101,6 +101,7 @@ function toItemSet(directedPreferences) { // [{source, target}]
   return new Set(itemArray)
 }
 
+// eslint-disable-next-line no-extend-native
 Array.prototype.flatMap = function(lambda) {
   return Array.prototype.concat.apply([], this.map(lambda))
 }

@@ -8,6 +8,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "app": "node src/app.js",
+    "lint": "npx eslint .",
     "pretest": "npm run knex:rollback; npm run knex:migrate; npm run knex:seed",
     "test": "mocha --exit",
     "knex": "./node_modules/knex/bin/cli.js",
@@ -16,7 +17,7 @@
     "knex:seed": "npm run knex seed:run"
   },
   "dependencies": {
-    "@slack/bolt": "^3.11.3",
+    "@slack/bolt": "^3.12.1",
     "dotenv": "^10.0.0",
     "js-sha256": "^0.9.0",
     "knex": "^0.95.15",
@@ -28,7 +29,11 @@
     "bn.js": "^5.2.1",
     "chai": "^4.3.6",
     "chai-as-promised": "^7.1.1",
-    "eslint": "^8.18.0",
+    "eslint": "^8.23.0",
+    "eslint-config-semistandard": "^17.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-n": "^15.2.5",
+    "eslint-plugin-promise": "^6.0.1",
     "mocha": "^10.0.0"
   }
 }
