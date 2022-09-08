@@ -7,11 +7,11 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(bnChai(BN));
 chai.use(chaiAsPromised);
 
-const { USER1, USER2, USER3, USER4, USER5, NAY, YAY } = require('./../src/constants');
+const { USER1, USER2, USER3, USER4, USER5, NAY, YAY } = require('../src/constants');
 
-const { db } = require('./../src/db');
-const Hearts = require('./../src/modules/hearts/models');
-const Polls = require('./../src/modules/polls/models');
+const { db } = require('../src/db');
+const Hearts = require('../src/modules/hearts/models');
+const Polls = require('../src/modules/polls/models');
 
 function sleep (ms) {
   return new Promise(resolve => setTimeout(resolve, ms));

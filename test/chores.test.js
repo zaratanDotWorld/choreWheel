@@ -7,12 +7,12 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(bnChai(BN));
 chai.use(chaiAsPromised);
 
-const { USER1, USER2, USER3, USER4, YAY, NAY, FIRST, SECOND, DISHES, SWEEPING, RESTOCK } = require('./../src/constants');
+const { USER1, USER2, USER3, USER4, YAY, NAY, FIRST, SECOND, DISHES, SWEEPING, RESTOCK } = require('../src/constants');
 
-const { db } = require('./../src/db');
-const Chores = require('./../src/modules/chores/models');
-const Power = require('./../src/modules/chores/power');
-const Polls = require('./../src/modules/polls/models');
+const { db } = require('../src/db');
+const Chores = require('../src/modules/chores/models');
+const Power = require('../src/modules/chores/power');
+const Polls = require('../src/modules/polls/models');
 
 function sleep (ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
