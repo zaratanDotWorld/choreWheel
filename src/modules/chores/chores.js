@@ -1,13 +1,39 @@
-const { db, errorLogger } = require('./../../db');
-const { defaultPollLength } = require('./../../config');
+const { db, errorLogger } = require('../../db');
+const { defaultPollLength } = require('../../config');
 
-const Polls = require('./../polls/models');
+const Polls = require('../polls/polls');
+
+// Chores
 
 exports.getChores = async function () {
   return db('chore')
     .select('*')
     .catch(errorLogger);
 };
+
+// Chore Preferences
+
+exports.getChorePreferences = async function () {
+  return db('chore_pref')
+    .select('alpha_chore', 'beta_chore', 'preference')
+    .catch(errorLogger);
+};
+
+exports.setChorePreference = async function (slackId, alphaChore, betaChore, preference) {
+  if (alphaChore >= betaChore) throw new Error('Chores out of order');
+  return db('chore_pref')
+    .insert({
+      preferred_by: slackId,
+      alpha_chore: alphaChore,
+      beta_chore: betaChore,
+      preference: preference
+    })
+    .onConflict([ 'preferred_by', 'alpha_chore', 'beta_chore' ])
+    .merge()
+    .catch(errorLogger);
+};
+
+// Chore Values
 
 exports.getChoreValue = async function (choreName, startTime, endTime) {
   return db('chore_value')
@@ -20,6 +46,7 @@ exports.getChoreValue = async function (choreName, startTime, endTime) {
 };
 
 exports.getCurrentChoreValue = async function (choreName, claimedAt) {
+  if (claimedAt === undefined) { claimedAt = new Date(); };
   const previousClaims = await exports.getChoreClaims(choreName);
   const filteredClaims = previousClaims.filter((claim) => claim.claimed_at < claimedAt);
   const previousClaimedAt = (filteredClaims.length === 0) ? new Date(0) : filteredClaims.slice(-1)[0].claimed_at;
@@ -29,6 +56,23 @@ exports.getCurrentChoreValue = async function (choreName, claimedAt) {
 exports.setChoreValues = async function (choreData) {
   return db('chore_value')
     .insert(choreData)
+    .catch(errorLogger);
+};
+
+// Chore Claims
+
+exports.getChoreClaim = async function (claimId) {
+  return db('chore_claim')
+    .select('*')
+    .where({ id: claimId })
+    .catch(errorLogger);
+};
+
+exports.getChoreClaims = async function (choreName) {
+  return db('chore_claim')
+    .select('*')
+    .whereNot({ result: 'fail' })
+    .andWhere({ chore_name: choreName })
     .catch(errorLogger);
 };
 
@@ -71,40 +115,5 @@ exports.resolveChoreClaim = async function (claimId) {
     .where({ id: claimId })
     .update({ value: choreValue.sum, result: result })
     .returning([ 'value', 'result' ])
-    .catch(errorLogger);
-};
-
-exports.getChoreClaim = async function (claimId) {
-  return db('chore_claim')
-    .select('*')
-    .where({ id: claimId })
-    .catch(errorLogger);
-};
-
-exports.getChoreClaims = async function (choreName) {
-  return db('chore_claim')
-    .select('*')
-    .whereNot({ result: 'fail' })
-    .andWhere({ chore_name: choreName })
-    .catch(errorLogger);
-};
-
-exports.setChorePreference = async function (slackId, alphaChore, betaChore, preference) {
-  if (alphaChore >= betaChore) throw new Error('Chores out of order');
-  return db('chore_pref')
-    .insert({
-      preferred_by: slackId,
-      alpha_chore: alphaChore,
-      beta_chore: betaChore,
-      preference: preference
-    })
-    .onConflict([ 'preferred_by', 'alpha_chore', 'beta_chore' ])
-    .merge()
-    .catch(errorLogger);
-};
-
-exports.getChorePreferences = async function () {
-  return db('chore_pref')
-    .select('alpha_chore', 'beta_chore', 'preference')
     .catch(errorLogger);
 };

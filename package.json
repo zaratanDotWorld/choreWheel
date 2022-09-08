@@ -7,10 +7,10 @@
   "author": "Daniel Kronovet <krono@zaratan.world>",
   "license": "UNLICENSED",
   "scripts": {
-    "app": "node src/app.js",
+    "app": "node src/bolt/app.js",
     "lint": "npx eslint .",
-    "pretest": "npm run knex:rollback; npm run knex:migrate; npm run knex:seed",
-    "test": "mocha --exit",
+    "pretest": "npm run knex:rollback --env test; npm run knex:migrate --env test; npm run knex:seed --env test",
+    "test": "NODE_ENV=test; mocha --exit",
     "knex": "./node_modules/knex/bin/cli.js",
     "knex:migrate": "npm run knex migrate:latest",
     "knex:rollback": "npm run knex migrate:rollback",
