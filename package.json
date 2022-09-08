@@ -14,7 +14,8 @@
     "knex": "./node_modules/knex/bin/cli.js",
     "knex:migrate": "npm run knex migrate:latest",
     "knex:rollback": "npm run knex migrate:rollback",
-    "knex:seed": "npm run knex seed:run"
+    "knex:seed": "npm run knex seed:run",
+    "ngrok": "ngrok http --region=us --hostname=zaratan.ngrok.io 3000"
   },
   "dependencies": {
     "@slack/bolt": "^3.12.1",
