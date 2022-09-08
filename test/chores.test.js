@@ -10,9 +10,9 @@ chai.use(chaiAsPromised);
 const { USER1, USER2, USER3, USER4, YAY, NAY, FIRST, SECOND, DISHES, SWEEPING, RESTOCK } = require('../src/constants');
 
 const { db } = require('../src/db');
-const Chores = require('../src/modules/chores/models');
+const Chores = require('../src/modules/chores/chores');
 const Power = require('../src/modules/chores/power');
-const Polls = require('../src/modules/polls/models');
+const Polls = require('../src/modules/polls/polls');
 
 function sleep (ms) {
   return new Promise(resolve => setTimeout(resolve, ms));

@@ -1,4 +1,4 @@
-const { db, errorLogger } = require('./../../db');
+const { db, errorLogger } = require('../../db');
 
 exports.createUser = async function (email, slackId) {
   return db('user')

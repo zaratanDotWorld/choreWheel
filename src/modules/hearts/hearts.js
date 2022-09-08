@@ -1,7 +1,7 @@
-const { db, errorLogger } = require('./../../db');
-const { defaultPollLength } = require('./../../config');
+const { db, errorLogger } = require('../../db');
+const { defaultPollLength } = require('../../config');
 
-const Polls = require('./../polls/models');
+const Polls = require('../polls/polls');
 
 exports.getUserHearts = async function (slackId) {
   return db('heart')

@@ -2,8 +2,7 @@ require('dotenv').config();
 
 const { App } = require('@slack/bolt');
 
-const db = require('./db');
-const chores = require('./channels/chores');
+const chores = require('./modules/chores/models');
 
 // Create the app
 

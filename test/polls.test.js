@@ -10,7 +10,7 @@ chai.use(chaiAsPromised);
 const { USER1, USER2, USER3, DAY, NAY, YAY, CANCEL } = require('../src/constants');
 
 const { db } = require('../src/db');
-const Polls = require('../src/modules/polls/models');
+const Polls = require('../src/modules/polls/polls');
 
 function sleep (ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
