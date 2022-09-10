@@ -3,9 +3,11 @@ require('dotenv').config();
 const { App } = require('@slack/bolt');
 
 const Chores = require('../modules/chores/chores');
+const Polls = require('../modules/polls/polls');
 const Residents = require('../modules/residents/residents');
 
 const { defaultPollLength } = require('../config');
+const { YAY, NAY } = require('../constants');
 
 const blocks = require('./blocks');
 
@@ -66,7 +68,7 @@ app.view('chores-list-callback', async ({ ack, body }) => {
   const blockId = body.view.blocks[0].block_id;
   const [choreName, choreValue] = body.view.state.values[blockId].options.selected_option.value.split(".");
 
-  await Residents.createResident(undefined, residentId);
+  await Residents.addResident(residentId);
 
   const message = {
     token: process.env.SLACK_BOT_TOKEN,
@@ -78,9 +80,12 @@ app.view('chores-list-callback', async ({ ack, body }) => {
   const res = await app.client.chat.postMessage(message);
   const messageId = `${res.channel}.${res.ts}`;
 
-  await Chores.claimChore(choreName, residentId, new Date(res.ts * 1000), messageId, defaultPollLength);
-
   console.log(`Message posted as ${messageId}`);
+
+  const [ claim ] = await Chores.claimChore(choreName, residentId, new Date(res.ts * 1000), messageId, defaultPollLength);
+  await Polls.submitVote(claim.poll_id, residentId, YAY);
+
+  console.log(`Claim ${claim.id} created with poll ${claim.poll_id}`);
 });
 
 app.action(/poll-vote/, async ({ ack, body, action }) => {

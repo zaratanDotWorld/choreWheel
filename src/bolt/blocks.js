@@ -44,7 +44,7 @@ exports.choreListCallbackView = function (residentId, choreName, choreValue) {
   return [
       { type: 'section', text: { type: 'mrkdwn', text: textA } },
       { type: 'section', text: { type: 'mrkdwn', text: textB } },
-      { type: 'actions', elements: makeVoteButtons(0, 0) }
+      { type: 'actions', elements: makeVoteButtons(1, 0) }
     ]
 };
 
