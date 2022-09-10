@@ -5,6 +5,13 @@ const Polls = require('../polls/polls');
 
 // Chores
 
+exports.addChore = async function (choreName) {
+  return db('chore')
+    .insert({ name: choreName })
+    .returning('id')
+    .catch(errorLogger);
+};
+
 exports.getChores = async function () {
   return db('chore')
     .select('*')

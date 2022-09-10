@@ -18,8 +18,8 @@ exports.getPoll = async function (pollId) {
     .catch(errorLogger);
 };
 
-exports.submitVote = async function (pollId, userId, vote) {
-  const encryptedUserId = sha256(process.env.SALT + userId);
+exports.submitVote = async function (pollId, residentId, vote) {
+  const encryptedResidentId = sha256(process.env.SALT + residentId);
   const poll = await exports.getPoll(pollId);
 
   if (exports.endsAt(poll) < Date.now()) { throw new Error('Poll has closed!'); }
@@ -27,10 +27,10 @@ exports.submitVote = async function (pollId, userId, vote) {
   return db('poll_vote')
     .insert({
       poll_id: pollId,
-      encrypted_user_id: encryptedUserId,
+      encrypted_resident_id: encryptedResidentId,
       vote: vote
     })
-    .onConflict([ 'poll_id', 'encrypted_user_id' ]).merge()
+    .onConflict([ 'poll_id', 'encrypted_resident_id' ]).merge()
     .catch(errorLogger);
 };
 

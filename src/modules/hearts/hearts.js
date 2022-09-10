@@ -3,9 +3,9 @@ const { defaultPollLength } = require('../../config');
 
 const Polls = require('../polls/polls');
 
-exports.getUserHearts = async function (slackId) {
+exports.getResidentHearts = async function (slackId) {
   return db('heart')
-    .where('user', slackId)
+    .where('resident', slackId)
     .sum('value')
     .first()
     .catch(errorLogger);
@@ -13,7 +13,7 @@ exports.getUserHearts = async function (slackId) {
 
 exports.generateHearts = async function (slackId, numHearts) {
   return db('heart')
-    .insert({ user: slackId, value: numHearts })
+    .insert({ resident: slackId, value: numHearts })
     .returning('id')
     .catch(errorLogger);
 };

@@ -3,10 +3,10 @@ exports.up = function(knex, Promise) {
         t.increments('id').unsigned().primary();
         t.timestamps(useTimestamps = true, defaultToNow = true);
         t.string('chore_name').references('chore.name').notNull();
-        t.string('reserved_by').references('user.slack_id');
+        t.string('reserved_by').references('resident.slack_id');
         t.timestamp('reserved_at');
         t.timestamp('unreserved_at');
-        t.string('claimed_by').references('user.slack_id');
+        t.string('claimed_by').references('resident.slack_id');
         t.timestamp('claimed_at');
         t.integer('value');
         t.string('message_id');

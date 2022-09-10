@@ -7,16 +7,28 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(bnChai(BN));
 chai.use(chaiAsPromised);
 
-const { USER1, USER2, USER3, DAY, NAY, YAY, CANCEL } = require('../src/constants');
+const { DAY, NAY, YAY, CANCEL } = require('../src/constants');
 
 const { db } = require('../src/db');
 const Polls = require('../src/modules/polls/polls');
+const Residents = require('../src/modules/residents/residents');
 
 function sleep (ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 describe('Polls', async () => {
+  const RESIDENT1 = 'RESIDENT1';
+  const RESIDENT2 = 'RESIDENT2';
+  const RESIDENT3 = 'RESIDENT3';
+
+  before(async () => {
+    await db('resident').del();
+    await Residents.addResident(RESIDENT1);
+    await Residents.addResident(RESIDENT2);
+    await Residents.addResident(RESIDENT3);
+  });
+
   afterEach(async () => {
     await db('poll_vote').del();
     await db('poll').del();
@@ -37,7 +49,7 @@ describe('Polls', async () => {
     it('can vote in a poll', async () => {
       const [ pollId ] = await Polls.createPoll(3 * DAY);
 
-      await Polls.submitVote(pollId, USER1, YAY);
+      await Polls.submitVote(pollId, RESIDENT1, YAY);
 
       const votes = await Polls.getVotes(pollId);
       expect(votes.length).to.eq.BN(1);
@@ -47,17 +59,17 @@ describe('Polls', async () => {
     it('can update the vote in a poll', async () => {
       const [ pollId ] = await Polls.createPoll(3 * DAY);
 
-      await Polls.submitVote(pollId, USER1, YAY);
+      await Polls.submitVote(pollId, RESIDENT1, YAY);
 
       let votes;
 
-      await Polls.submitVote(pollId, USER1, NAY);
+      await Polls.submitVote(pollId, RESIDENT1, NAY);
 
       votes = await Polls.getVotes(pollId);
       expect(votes.length).to.eq.BN(1);
       expect(votes[0].vote).to.be.false;
 
-      await Polls.submitVote(pollId, USER1, CANCEL);
+      await Polls.submitVote(pollId, RESIDENT1, CANCEL);
 
       votes = await Polls.getVotes(pollId);
       expect(votes.length).to.eq.BN(1);
@@ -69,16 +81,16 @@ describe('Polls', async () => {
 
       await sleep(5);
 
-      await expect(Polls.submitVote(pollId, USER1, YAY))
+      await expect(Polls.submitVote(pollId, RESIDENT1, YAY))
         .to.be.rejectedWith('Poll has closed');
     });
 
     it('can get the results of a vote', async () => {
       const [ pollId ] = await Polls.createPoll(10);
 
-      await Polls.submitVote(pollId, USER1, YAY);
-      await Polls.submitVote(pollId, USER2, YAY);
-      await Polls.submitVote(pollId, USER3, NAY);
+      await Polls.submitVote(pollId, RESIDENT1, YAY);
+      await Polls.submitVote(pollId, RESIDENT2, YAY);
+      await Polls.submitVote(pollId, RESIDENT3, NAY);
 
       await sleep(1);
 
@@ -89,9 +101,9 @@ describe('Polls', async () => {
     it('can get the result of a vote', async () => {
       const [ pollId ] = await Polls.createPoll(10);
 
-      await Polls.submitVote(pollId, USER1, YAY);
-      await Polls.submitVote(pollId, USER2, YAY);
-      await Polls.submitVote(pollId, USER3, NAY);
+      await Polls.submitVote(pollId, RESIDENT1, YAY);
+      await Polls.submitVote(pollId, RESIDENT2, YAY);
+      await Polls.submitVote(pollId, RESIDENT3, NAY);
 
       await sleep(1);
 

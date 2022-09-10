@@ -9,8 +9,8 @@
   "scripts": {
     "app": "node src/bolt/app.js",
     "lint": "npx eslint .",
-    "pretest": "npx knex migrate:rollback --env test; npx knex migrate:latest --env test; npx knex seed:run --env test",
-    "test": "mocha --exit",
+    "pretest": "npx knex migrate:rollback --env test; npx knex migrate:latest --env test",
+    "test": "NODE_ENV=test mocha --exit",
     "ngrok": "ngrok http --region=us --hostname=zaratan.ngrok.io 3000"
   },
   "dependencies": {

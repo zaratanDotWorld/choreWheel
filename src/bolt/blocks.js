@@ -2,9 +2,9 @@
 // Chores Views
 
 exports.choresListView = function (choreValues) {
-  const mappedChoreValues = choreValues.map((choreClaim, index) => {
+  const mappedChoreValues = choreValues.map((choreClaim) => {
     return {
-      value: `${index}`,
+      value: `${choreClaim.name}.${choreClaim.value}`,
       text: { type: 'plain_text', text: choreClaim.name, emoji: true },
       description: { type: 'plain_text', text: `${choreClaim.value} points` }
     };
@@ -37,8 +37,8 @@ exports.getChoreClaim = function (view) {
   };
 }
 
-exports.choreListCallbackView = function (userName, choreClaim) {
-  const textA = `*${userName}* did *${choreClaim.name}* for *${choreClaim.value} tokens* :sparkles::sparkles:`;
+exports.choreListCallbackView = function (residentId, choreName, choreValue) {
+  const textA = `*<@${residentId}>* did *${choreName}* for *${choreValue} tokens* :sparkles::sparkles:`;
   const textB = 'React :+1: to endorse or :-1: to challenge (& probably leave a comment about it).';
 
   return [
