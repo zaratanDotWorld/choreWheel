@@ -8,16 +8,13 @@ chai.use(bnChai(BN));
 chai.use(chaiAsPromised);
 
 const { YAY, NAY, FIRST, SECOND } = require('../src/constants');
-
+const { sleep } = require('../src/utils');
 const { db } = require('../src/db');
+
 const Chores = require('../src/modules/chores/chores');
 const Power = require('../src/modules/chores/power');
 const Polls = require('../src/modules/polls/polls');
 const Residents = require('../src/modules/residents/residents');
-
-function sleep (ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 describe('Chores', async () => {
   const DISHES = 'dishes';
@@ -125,9 +122,23 @@ describe('Chores', async () => {
       await Chores.claimChore(DISHES, RESIDENT1, '', POLL_LENGTH);
       await sleep(1);
 
-      const choreClaims = await Chores.getChoreClaims(DISHES);
+      const choreClaims = await Chores.getValidChoreClaims(DISHES);
       expect(choreClaims[0].claimed_by).to.equal(RESIDENT1);
       expect(choreClaims[0].value).to.eq.BN(15);
+    });
+
+    it('can get a chore claim by messageId', async () => {
+      await Chores.setChoreValues([ { chore_name: DISHES, value: 10 } ]);
+      await sleep(1);
+
+      const messageId = 'xyz'
+
+      await Chores.claimChore(DISHES, RESIDENT1, messageId, POLL_LENGTH);
+      await sleep(1);
+
+      const choreClaim = await Chores.getChoreClaimByMessageId(messageId);
+      expect(choreClaim.claimed_by).to.equal(RESIDENT1);
+      expect(choreClaim.value).to.eq.BN(10);
     });
 
     it('can claim a chore incrementally', async () => {
@@ -144,7 +155,7 @@ describe('Chores', async () => {
       await Chores.claimChore(DISHES, RESIDENT2, '', POLL_LENGTH);
       await sleep(1);
 
-      const choreClaims = await Chores.getChoreClaims(DISHES);
+      const choreClaims = await Chores.getValidChoreClaims(DISHES);
       expect(choreClaims[0].claimed_by).to.equal(RESIDENT1);
       expect(choreClaims[0].value).to.eq.BN(15);
       expect(choreClaims[1].claimed_by).to.equal(RESIDENT2);

@@ -51,7 +51,7 @@ exports.resolveChallenge = async function (challengeId) {
   if (Date.now() < Polls.endsAt(poll)) { throw new Error('Poll not closed!'); }
 
   // Challangers wins with a majority and a minimum of four votes
-  const { yays, nays } = await Polls.getResultCounts(pollId);
+  const { yays, nays } = await Polls.getPollResultCounts(pollId);
   const loser = (yays >= 4 && yays > nays) ? challenge.challengee : challenge.challenger;
 
   const [ heartId ] = await exports.generateHearts(loser, -challenge.value);

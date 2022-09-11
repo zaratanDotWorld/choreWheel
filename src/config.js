@@ -1,1 +1,1 @@
-exports.defaultPollLength = 3 * 24 * 60 * 60; // 3 days
+exports.defaultPollLength = 3 * 24 * 60 * 60 * 1000; // 3 days

@@ -34,13 +34,13 @@ exports.submitVote = async function (pollId, residentId, vote) {
     .catch(errorLogger);
 };
 
-exports.getVotes = async function (pollId) {
+exports.getPollVotes = async function (pollId) {
   return db('poll_vote')
     .where('poll_id', pollId)
     .catch(errorLogger);
 };
 
-exports.getResults = async function (pollId) {
+exports.getPollResults = async function (pollId) {
   const poll = await exports.getPoll(pollId);
 
   return db('poll_vote')
@@ -49,8 +49,8 @@ exports.getResults = async function (pollId) {
     .catch(errorLogger);
 };
 
-exports.getResultCounts = async function (pollId) {
-  const votes = await exports.getResults(pollId);
+exports.getPollResultCounts = async function (pollId) {
+  const votes = await exports.getPollResults(pollId);
   const yays = votes.filter(v => v.vote === true).length;
   const nays = votes.filter(v => v.vote === false).length;
   return { yays, nays };

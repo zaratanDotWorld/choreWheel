@@ -8,6 +8,7 @@ const Residents = require('../modules/residents/residents');
 
 const { defaultPollLength } = require('../config');
 const { YAY, NAY } = require('../constants');
+const { sleep } = require('../utils');
 
 const blocks = require('./blocks');
 
@@ -66,7 +67,7 @@ app.view('chores-list-callback', async ({ ack, body }) => {
   // // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
   const residentId = body.user.id;
   const blockId = body.view.blocks[0].block_id;
-  const [choreName, choreValue] = body.view.state.values[blockId].options.selected_option.value.split(".");
+  const [ choreName, choreValue ] = body.view.state.values[blockId].options.selected_option.value.split(".");
 
   await Residents.addResident(residentId);
 
@@ -74,7 +75,7 @@ app.view('chores-list-callback', async ({ ack, body }) => {
     token: process.env.SLACK_BOT_TOKEN,
     channel: 'test',
     text: "Someone just completed a chore",
-    blocks: blocks.choreListCallbackView(residentId, choreName, choreValue)
+    blocks: blocks.choreListCallbackView(residentId, choreName, choreValue, defaultPollLength)
   };
 
   const res = await app.client.chat.postMessage(message);
@@ -82,7 +83,7 @@ app.view('chores-list-callback', async ({ ack, body }) => {
 
   console.log(`Message posted as ${messageId}`);
 
-  const [ claim ] = await Chores.claimChore(choreName, residentId, new Date(res.ts * 1000), messageId, defaultPollLength);
+  const [ claim ] = await Chores.claimChore(choreName, residentId, messageId, defaultPollLength);
   await Polls.submitVote(claim.poll_id, residentId, YAY);
 
   console.log(`Claim ${claim.id} created with poll ${claim.poll_id}`);
@@ -90,8 +91,22 @@ app.view('chores-list-callback', async ({ ack, body }) => {
 
 app.action(/poll-vote/, async ({ ack, body, action }) => {
   await ack();
-  console.log(body);
-  console.log(action);
+
+  // // Submit the vote
+  const messageId = `${body.channel.id}.${body.message.ts}`;
+  const choreClaim = await Chores.getChoreClaimByMessageId(messageId);
+  await Polls.submitVote(choreClaim.poll_id, body.user.id, parseInt(action.value));
+
+  await sleep(1);
+
+  const { yays, nays } = await Polls.getPollResultCounts(choreClaim.poll_id)
+
+  // Update the vote counts
+  body.message.channel = body.channel.id;
+  body.message.blocks[2].elements = blocks.makeVoteButtons(yays, nays)
+  await app.client.chat.update(body.message);
+
+  console.log(`Poll ${choreClaim.poll_id} updated`);
 });
 
 // Launch the app

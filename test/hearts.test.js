@@ -8,15 +8,12 @@ chai.use(bnChai(BN));
 chai.use(chaiAsPromised);
 
 const { NAY, YAY } = require('../src/constants');
-
+const { sleep } = require('../src/utils');
 const { db } = require('../src/db');
+
 const Hearts = require('../src/modules/hearts/hearts');
 const Polls = require('../src/modules/polls/polls');
 const Residents = require('../src/modules/residents/residents');
-
-function sleep (ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 describe('Hearts', async () => {
   const RESIDENT1 = 'RESIDENT1';

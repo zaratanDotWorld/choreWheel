@@ -8,14 +8,11 @@ chai.use(bnChai(BN));
 chai.use(chaiAsPromised);
 
 const { DAY, NAY, YAY, CANCEL } = require('../src/constants');
-
+const { sleep } = require('../src/utils');
 const { db } = require('../src/db');
+
 const Polls = require('../src/modules/polls/polls');
 const Residents = require('../src/modules/residents/residents');
-
-function sleep (ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 describe('Polls', async () => {
   const RESIDENT1 = 'RESIDENT1';
@@ -51,7 +48,7 @@ describe('Polls', async () => {
 
       await Polls.submitVote(pollId, RESIDENT1, YAY);
 
-      const votes = await Polls.getVotes(pollId);
+      const votes = await Polls.getPollVotes(pollId);
       expect(votes.length).to.eq.BN(1);
       expect(votes[0].vote).to.be.true;
     });
@@ -65,13 +62,13 @@ describe('Polls', async () => {
 
       await Polls.submitVote(pollId, RESIDENT1, NAY);
 
-      votes = await Polls.getVotes(pollId);
+      votes = await Polls.getPollVotes(pollId);
       expect(votes.length).to.eq.BN(1);
       expect(votes[0].vote).to.be.false;
 
       await Polls.submitVote(pollId, RESIDENT1, CANCEL);
 
-      votes = await Polls.getVotes(pollId);
+      votes = await Polls.getPollVotes(pollId);
       expect(votes.length).to.eq.BN(1);
       expect(votes[0].vote).to.be.null;
     });
@@ -94,7 +91,7 @@ describe('Polls', async () => {
 
       await sleep(1);
 
-      const results = await Polls.getResults(pollId);
+      const results = await Polls.getPollResults(pollId);
       expect(results.length).to.eq.BN(3);
     });
 
@@ -107,7 +104,7 @@ describe('Polls', async () => {
 
       await sleep(1);
 
-      const { yays, nays } = await Polls.getResultCounts(pollId);
+      const { yays, nays } = await Polls.getPollResultCounts(pollId);
       expect(yays).to.eq.BN(2);
       expect(nays).to.eq.BN(1);
     });
