@@ -11,7 +11,7 @@
     "app": "node src/bolt/app.js",
     "lint": "npx eslint .",
     "pretest": "npx knex migrate:rollback --env test; npx knex migrate:latest --env test",
-    "test": "NODE_ENV=test mocha --exit",
+    "test": "NODE_ENV=test nyc mocha --exit",
     "ngrok": "ngrok http --region=us --hostname=zaratan.ngrok.io 3000"
   },
   "dependencies": {
@@ -33,6 +33,7 @@
     "eslint-plugin-n": "^15.2.5",
     "eslint-plugin-promise": "^6.0.1",
     "husky": "^8.0.1",
-    "mocha": "^10.0.0"
+    "mocha": "^10.0.0",
+    "nyc": "^15.1.0"
   }
 }
