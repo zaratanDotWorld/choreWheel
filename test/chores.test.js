@@ -12,9 +12,10 @@ const { sleep } = require('../src/utils');
 const { db } = require('../src/db');
 
 const Chores = require('../src/modules/chores/chores');
-const Power = require('../src/modules/chores/power');
 const Polls = require('../src/modules/polls/polls');
 const Residents = require('../src/modules/residents/residents');
+
+const { PowerRanker } = require('../src/modules/chores/power');
 
 describe('Chores', async () => {
   const DISHES = 'dishes';
@@ -102,10 +103,8 @@ describe('Chores', async () => {
 
       const preferences = await Chores.getChorePreferences();
 
-      const directedPreferences = Power.convertPreferences(preferences);
-      const matrix = Power.toMatrix(directedPreferences);
-      const weights = Power.powerMethod(matrix, d = 0.8); // eslint-disable-line no-undef
-      const labeledWeights = Power.applyLabels(directedPreferences, weights);
+      const powerRanker = new PowerRanker(preferences);
+      const labeledWeights = powerRanker.run(d = 0.8); // eslint-disable-line no-undef
 
       expect(labeledWeights.get('dishes')).to.equal(0.7328964266666669);
       expect(labeledWeights.get('sweeping')).to.equal(0.2004369066666667);
