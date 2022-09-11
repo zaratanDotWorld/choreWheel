@@ -1,5 +1,4 @@
 const { db, errorLogger } = require('../../db');
-const { defaultPollLength } = require('../../config');
 
 const Polls = require('../polls/polls');
 
@@ -83,9 +82,10 @@ exports.getChoreClaims = async function (choreName) {
     .catch(errorLogger);
 };
 
-exports.claimChore = async function (choreName, slackId, claimedAt, messageId, duration = defaultPollLength) {
+exports.claimChore = async function (choreName, slackId, messageId, duration) {
   const [ pollId ] = await Polls.createPoll(duration);
 
+  const claimedAt = new Date();
   const choreValue = await exports.getCurrentChoreValue(choreName, claimedAt);
 
   return db('chore_claim')
