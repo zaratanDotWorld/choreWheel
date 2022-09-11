@@ -1,4 +1,4 @@
-const { db, errorLogger } = require('../../db');
+const { db } = require('../../db');
 
 const Polls = require('../polls/polls');
 
@@ -7,22 +7,19 @@ const Polls = require('../polls/polls');
 exports.addChore = async function (choreName) {
   return db('chore')
     .insert({ name: choreName })
-    .returning('id')
-    .catch(errorLogger);
+    .returning('id');
 };
 
 exports.getChores = async function () {
   return db('chore')
-    .select('*')
-    .catch(errorLogger);
+    .select('*');
 };
 
 // Chore Preferences
 
 exports.getChorePreferences = async function () {
   return db('chore_pref')
-    .select('alpha_chore', 'beta_chore', 'preference')
-    .catch(errorLogger);
+    .select('alpha_chore', 'beta_chore', 'preference');
 };
 
 exports.setChorePreference = async function (slackId, alphaChore, betaChore, preference) {
@@ -35,8 +32,7 @@ exports.setChorePreference = async function (slackId, alphaChore, betaChore, pre
       preference: preference
     })
     .onConflict([ 'preferred_by', 'alpha_chore', 'beta_chore' ])
-    .merge()
-    .catch(errorLogger);
+    .merge();
 };
 
 // Chore Values
@@ -47,8 +43,7 @@ exports.getChoreValue = async function (choreName, startTime, endTime) {
     .where('created_at', '>', startTime)
     .where('created_at', '<=', endTime)
     .sum('value')
-    .first()
-    .catch(errorLogger);
+    .first();
 };
 
 exports.getCurrentChoreValue = async function (choreName, claimedAt) {
@@ -61,8 +56,7 @@ exports.getCurrentChoreValue = async function (choreName, claimedAt) {
 
 exports.setChoreValues = async function (choreData) {
   return db('chore_value')
-    .insert(choreData)
-    .catch(errorLogger);
+    .insert(choreData);
 };
 
 // Chore Claims
@@ -71,24 +65,21 @@ exports.getChoreClaim = async function (claimId) {
   return db('chore_claim')
     .select('*')
     .where({ id: claimId })
-    .first()
-    .catch(errorLogger);
+    .first();
 };
 
 exports.getChoreClaimByMessageId = async function (messageId) {
   return db('chore_claim')
     .select('*')
     .where({ message_id: messageId })
-    .first()
-    .catch(errorLogger);
+    .first();
 };
 
 exports.getValidChoreClaims = async function (choreName) {
   return db('chore_claim')
     .select('*')
     .whereNot({ result: 'fail' })
-    .andWhere({ chore_name: choreName })
-    .catch(errorLogger);
+    .andWhere({ chore_name: choreName });
 };
 
 exports.claimChore = async function (choreName, slackId, messageId, duration) {
@@ -106,8 +97,7 @@ exports.claimChore = async function (choreName, slackId, messageId, duration) {
       value: choreValue.sum,
       poll_id: pollId
     })
-    .returning([ 'id', 'poll_id' ])
-    .catch(errorLogger);
+    .returning([ 'id', 'poll_id' ]);
 };
 
 exports.resolveChoreClaim = async function (claimId) {
@@ -130,6 +120,5 @@ exports.resolveChoreClaim = async function (claimId) {
   return db('chore_claim')
     .where({ id: claimId })
     .update({ value: choreValue.sum, result: result })
-    .returning([ 'value', 'result' ])
-    .catch(errorLogger);
+    .returning([ 'value', 'result' ]);
 };

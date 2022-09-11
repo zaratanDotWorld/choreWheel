@@ -1,4 +1,4 @@
-const { db, errorLogger } = require('../../db');
+const { db } = require('../../db');
 const { defaultPollLength } = require('../../config');
 
 const Polls = require('../polls/polls');
@@ -7,15 +7,13 @@ exports.getResidentHearts = async function (slackId) {
   return db('heart')
     .where('resident', slackId)
     .sum('value')
-    .first()
-    .catch(errorLogger);
+    .first();
 };
 
 exports.generateHearts = async function (slackId, numHearts) {
   return db('heart')
     .insert({ resident: slackId, value: numHearts })
-    .returning('id')
-    .catch(errorLogger);
+    .returning('id');
 };
 
 exports.initiateChallenge = async function (challenger, challengee, numHearts, duration = defaultPollLength) {
@@ -28,16 +26,14 @@ exports.initiateChallenge = async function (challenger, challengee, numHearts, d
       value: numHearts,
       poll_id: pollId
     })
-    .returning([ 'id', 'poll_id' ])
-    .catch(errorLogger);
+    .returning([ 'id', 'poll_id' ]);
 };
 
 exports.getChallenge = async function (challengeId) {
   return db('heart_challenge')
     .select('*')
     .where('id', challengeId)
-    .first()
-    .catch(errorLogger);
+    .first();
 };
 
 exports.resolveChallenge = async function (challengeId) {
@@ -59,6 +55,5 @@ exports.resolveChallenge = async function (challengeId) {
   return db('heart_challenge')
     .where({ id: challengeId })
     .update({ heart_id: heartId })
-    .returning([ 'heart_id' ])
-    .catch(errorLogger);
+    .returning([ 'heart_id' ]);
 };

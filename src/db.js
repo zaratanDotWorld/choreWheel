@@ -1,14 +1,6 @@
 require('dotenv').config();
 
 const knex = require('knex');
-
 const config = require('./../knexfile');
-const db = knex(config[process.env.NODE_ENV || 'development']);
 
-function errorLogger (error) {
-  console.error(error);
-  throw error;
-}
-
-exports.db = db;
-exports.errorLogger = errorLogger;
+exports.db = knex(config[process.env.NODE_ENV || 'development']);

@@ -1,21 +1,19 @@
 const sha256 = require('js-sha256');
 
-const { db, errorLogger } = require('./../../db');
+const { db } = require('./../../db');
 const { defaultPollLength } = require('./../../config');
 
 exports.createPoll = async function (duration = defaultPollLength) {
   return db('poll')
     .insert({ duration })
-    .returning('id')
-    .catch(errorLogger);
+    .returning('id');
 };
 
 exports.getPoll = async function (pollId) {
   return db('poll')
     .select('*')
     .where('id', pollId)
-    .first()
-    .catch(errorLogger);
+    .first();
 };
 
 exports.submitVote = async function (pollId, residentId, vote) {
@@ -30,14 +28,12 @@ exports.submitVote = async function (pollId, residentId, vote) {
       encrypted_resident_id: encryptedResidentId,
       vote: vote
     })
-    .onConflict([ 'poll_id', 'encrypted_resident_id' ]).merge()
-    .catch(errorLogger);
+    .onConflict([ 'poll_id', 'encrypted_resident_id' ]).merge();
 };
 
 exports.getPollVotes = async function (pollId) {
   return db('poll_vote')
-    .where('poll_id', pollId)
-    .catch(errorLogger);
+    .where('poll_id', pollId);
 };
 
 exports.getPollResults = async function (pollId) {
@@ -45,8 +41,7 @@ exports.getPollResults = async function (pollId) {
 
   return db('poll_vote')
     .where('poll_id', pollId)
-    .whereBetween('updated_at', [ poll.created_at, exports.endsAt(poll) ])
-    .catch(errorLogger);
+    .whereBetween('updated_at', [ poll.created_at, exports.endsAt(poll) ]);
 };
 
 exports.getPollResultCounts = async function (pollId) {
