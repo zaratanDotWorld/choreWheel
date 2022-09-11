@@ -1,9 +1,8 @@
 const sha256 = require('js-sha256');
 
 const { db } = require('./../../db');
-const { defaultPollLength } = require('./../../config');
 
-exports.createPoll = async function (duration = defaultPollLength) {
+exports.createPoll = async function (duration) {
   return db('poll')
     .insert({ duration })
     .returning('id');

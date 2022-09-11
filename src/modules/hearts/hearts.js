@@ -1,5 +1,4 @@
 const { db } = require('../../db');
-const { defaultPollLength } = require('../../config');
 
 const Polls = require('../polls/polls');
 
@@ -16,7 +15,7 @@ exports.generateHearts = async function (slackId, numHearts) {
     .returning('id');
 };
 
-exports.initiateChallenge = async function (challenger, challengee, numHearts, duration = defaultPollLength) {
+exports.initiateChallenge = async function (challenger, challengee, numHearts, duration) {
   const [ pollId ] = await Polls.createPoll(duration);
 
   return db('heart_challenge')

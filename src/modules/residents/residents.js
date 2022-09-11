@@ -6,8 +6,3 @@ exports.addResident = async function (slackId, email = undefined) {
     .onConflict('slack_id').ignore()
     .returning('id');
 };
-
-exports.getResidents = async function () {
-  return db('resident')
-    .select('*');
-};

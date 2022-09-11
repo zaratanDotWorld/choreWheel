@@ -44,10 +44,11 @@ app.shortcut('chores-list', async ({ ack, shortcut }) => {
   await ack();
 
   const choreValues = [];
+  const currentTime = new Date();
   const chores = await Chores.getChores();
 
   for (const chore of chores) {
-    const choreValue = await Chores.getCurrentChoreValue(chore.name);
+    const choreValue = await Chores.getCurrentChoreValue(chore.name, currentTime);
     choreValues.push({ name: chore.name, value: parseInt(choreValue.sum || 0) });
   }
 

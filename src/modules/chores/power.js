@@ -15,7 +15,12 @@ class PowerRanker {
     this.matrix = this.toMatrix(this.directedPreferences);
     this.verbose = verbose;
 
-    if (this.verbose) { console.log('Matrix initialized'); }
+    this.log('Matrix initialized');
+  }
+
+  log (msg) {
+    /* istanbul ignore next */
+    if (this.verbose) { console.log(msg); }
   }
 
   run (d = 1, epsilon = 0.001, nIter = 1000) {
@@ -86,7 +91,7 @@ class PowerRanker {
       prev = eigenvector;
     }
 
-    if (this.verbose) { console.log(`Eigenvector convergence after ${i} iterations`); }
+    this.log(`Eigenvector convergence after ${i} iterations`);
     return eigenvector.data[0];
   }
 

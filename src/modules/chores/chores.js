@@ -47,7 +47,6 @@ exports.getChoreValue = async function (choreName, startTime, endTime) {
 };
 
 exports.getCurrentChoreValue = async function (choreName, claimedAt) {
-  if (claimedAt === undefined) { claimedAt = new Date(); }
   const previousClaims = await exports.getValidChoreClaims(choreName);
   const filteredClaims = previousClaims.filter((claim) => claim.claimed_at < claimedAt);
   const previousClaimedAt = (filteredClaims.length === 0) ? new Date(0) : filteredClaims.slice(-1)[0].claimed_at;
