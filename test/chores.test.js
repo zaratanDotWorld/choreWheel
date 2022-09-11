@@ -130,7 +130,7 @@ describe('Chores', async () => {
       await Chores.setChoreValues([ { chore_name: DISHES, value: 10 } ]);
       await sleep(1);
 
-      const messageId = 'xyz'
+      const messageId = 'xyz';
 
       await Chores.claimChore(DISHES, RESIDENT1, messageId, POLL_LENGTH);
       await sleep(1);

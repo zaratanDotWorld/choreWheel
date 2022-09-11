@@ -7,7 +7,7 @@ const Polls = require('../modules/polls/polls');
 const Residents = require('../modules/residents/residents');
 
 const { defaultPollLength } = require('../config');
-const { YAY, NAY } = require('../constants');
+const { YAY } = require('../constants');
 const { sleep } = require('../utils');
 
 const blocks = require('./blocks');
@@ -49,7 +49,7 @@ app.shortcut('chores-list', async ({ ack, shortcut }) => {
   for (const chore of chores) {
     const choreValue = await Chores.getCurrentChoreValue(chore.name);
     choreValues.push({ name: chore.name, value: parseInt(choreValue.sum || 0) });
-  };
+  }
 
   const view = {
     token: process.env.SLACK_BOT_TOKEN,
@@ -67,14 +67,14 @@ app.view('chores-list-callback', async ({ ack, body }) => {
   // // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
   const residentId = body.user.id;
   const blockId = body.view.blocks[0].block_id;
-  const [ choreName, choreValue ] = body.view.state.values[blockId].options.selected_option.value.split(".");
+  const [ choreName, choreValue ] = body.view.state.values[blockId].options.selected_option.value.split('.');
 
   await Residents.addResident(residentId);
 
   const message = {
     token: process.env.SLACK_BOT_TOKEN,
     channel: 'test',
-    text: "Someone just completed a chore",
+    text: 'Someone just completed a chore',
     blocks: blocks.choreListCallbackView(residentId, choreName, choreValue, defaultPollLength)
   };
 
@@ -99,11 +99,11 @@ app.action(/poll-vote/, async ({ ack, body, action }) => {
 
   await sleep(1);
 
-  const { yays, nays } = await Polls.getPollResultCounts(choreClaim.poll_id)
+  const { yays, nays } = await Polls.getPollResultCounts(choreClaim.poll_id);
 
   // Update the vote counts
   body.message.channel = body.channel.id;
-  body.message.blocks[2].elements = blocks.makeVoteButtons(yays, nays)
+  body.message.blocks[2].elements = blocks.makeVoteButtons(yays, nays);
   await app.client.chat.update(body.message);
 
   console.log(`Poll ${choreClaim.poll_id} updated`);

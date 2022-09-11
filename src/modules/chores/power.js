@@ -3,14 +3,14 @@ const linAlg = require('linear-algebra')();
 // eslint-disable-next-line no-extend-native
 Array.prototype.flatMap = function (lambda) {
   return Array.prototype.concat.apply([], this.map(lambda));
-};``
+}; '';
 
 class PowerRanker {
   directedPreferences;
   matrix;
   verbose;
 
-  constructor(undirectedPreferences, verbose = false) {
+  constructor (undirectedPreferences, verbose = false) {
     this.directedPreferences = this.convertPreferences(undirectedPreferences);
     this.matrix = this.toMatrix(this.directedPreferences);
     this.verbose = verbose;
@@ -18,21 +18,21 @@ class PowerRanker {
     if (this.verbose) { console.log('Matrix initialized'); }
   }
 
-  run(d = 1, epsilon = 0.001, nIter = 1000) {
+  run (d = 1, epsilon = 0.001, nIter = 1000) {
     const weights = this.powerMethod(this.matrix, d, epsilon, nIter);
-    return  this.applyLabels(this.directedPreferences, weights);
+    return this.applyLabels(this.directedPreferences, weights);
   }
 
   // O(preferences)
-  convertPreferences(undirectedPreferences) { // [{alpha_id, beta_id, win_bit}]
+  convertPreferences (undirectedPreferences) { // [{alpha_id, beta_id, win_bit}]
     return undirectedPreferences.map(p => {
       const [ source, target ] = p.preference ? [ p.alpha_chore, p.beta_chore ] : [ p.beta_chore, p.alpha_chore ];
       return { source: source.toString(), target: target.toString() };
     });
-  };
+  }
 
   // O(preferences)
-  toMatrix(directedPreferences) { // [{source, target}]
+  toMatrix (directedPreferences) { // [{source, target}]
     const itemMap = this.#toitemMap(directedPreferences);
 
     const n = itemMap.size;
@@ -48,14 +48,14 @@ class PowerRanker {
     // Add the diagonals (sums of columns)
     this.#sumColumns(matrix).map((sum, ix) => matrix.data[ix][ix] = sum); // eslint-disable-line no-return-assign
     return matrix;
-  };
+  }
 
   applyLabels (directedPreferences, eigenvector) {
     const itemMap = this.#toitemMap(directedPreferences);
     if (itemMap.size !== eigenvector.length) { throw new Error('Mismatched arguments!'); }
     itemMap.forEach((ix, item) => itemMap.set(item, eigenvector[ix]));
     return itemMap;
-  };
+  }
 
   // O(n^3)-ish
   powerMethod (matrix, d = 1, epsilon = 0.001, nIter = 1000) {
@@ -88,7 +88,7 @@ class PowerRanker {
 
     if (this.verbose) { console.log(`Eigenvector convergence after ${i} iterations`); }
     return eigenvector.data[0];
-  };
+  }
 
   // Internal
 

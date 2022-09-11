@@ -7,6 +7,7 @@
   "author": "Daniel Kronovet <krono@zaratan.world>",
   "license": "UNLICENSED",
   "scripts": {
+    "prepare": "husky install",
     "app": "node src/bolt/app.js",
     "lint": "npx eslint .",
     "pretest": "npx knex migrate:rollback --env test; npx knex migrate:latest --env test",
@@ -31,6 +32,7 @@
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-n": "^15.2.5",
     "eslint-plugin-promise": "^6.0.1",
+    "husky": "^8.0.1",
     "mocha": "^10.0.0"
   }
 }

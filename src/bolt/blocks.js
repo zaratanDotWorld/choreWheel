@@ -24,7 +24,7 @@ exports.choresListView = function (choreValues) {
       }
     ]
   };
-}
+};
 
 exports.getChoreClaim = function (view) {
   // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
@@ -35,17 +35,17 @@ exports.getChoreClaim = function (view) {
     name: choreClaim.text.text,
     value: parseInt(choreClaim.description.text)
   };
-}
+};
 
 exports.choreListCallbackView = function (residentId, choreName, choreValue, pollDuration) {
   const textA = `*<@${residentId}>* did *${choreName}* for *${choreValue} tokens* :sparkles::sparkles:`;
   const textB = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / 1000 / 60 / 60} hours`;
 
   return [
-      { type: 'section', text: { type: 'mrkdwn', text: textA } },
-      { type: 'section', text: { type: 'mrkdwn', text: textB } },
-      { type: 'actions', elements: exports.makeVoteButtons(1, 0) }
-    ]
+    { type: 'section', text: { type: 'mrkdwn', text: textA } },
+    { type: 'section', text: { type: 'mrkdwn', text: textB } },
+    { type: 'actions', elements: exports.makeVoteButtons(1, 0) }
+  ];
 };
 
 // Polls Views (utils)
@@ -64,5 +64,5 @@ exports.makeVoteButtons = function (upvoteCount, downvoteCount) {
       value: '0',
       action_id: 'poll-vote-down'
     }
-  ]
-}
+  ];
+};
