@@ -11,8 +11,8 @@ const { DAY, NAY, YAY, CANCEL } = require('../src/constants');
 const { sleep } = require('../src/utils');
 const { db } = require('../src/db');
 
-const Polls = require('../src/modules/polls/polls');
-const Residents = require('../src/modules/residents/residents');
+const Polls = require('../src/modules/polls');
+const Residents = require('../src/modules/residents');
 
 describe('Polls', async () => {
   const RESIDENT1 = 'RESIDENT1';

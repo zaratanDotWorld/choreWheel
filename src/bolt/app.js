@@ -2,9 +2,9 @@ require('dotenv').config();
 
 const { App } = require('@slack/bolt');
 
-const Chores = require('../modules/chores/chores');
-const Polls = require('../modules/polls/polls');
-const Residents = require('../modules/residents/residents');
+const Chores = require('../modules/chores');
+const Polls = require('../modules/polls');
+const Residents = require('../modules/residents');
 
 const { defaultPollLength } = require('../config');
 const { YAY } = require('../constants');

@@ -11,11 +11,11 @@ const { YAY, NAY } = require('../src/constants');
 const { sleep } = require('../src/utils');
 const { db } = require('../src/db');
 
-const Chores = require('../src/modules/chores/chores');
-const Polls = require('../src/modules/polls/polls');
-const Residents = require('../src/modules/residents/residents');
+const Chores = require('../src/modules/chores');
+const Polls = require('../src/modules/polls');
+const Residents = require('../src/modules/residents');
 
-const { PowerRanker } = require('../src/modules/chores/power');
+const { PowerRanker } = require('../src/modules/power');
 
 describe('Chores', async () => {
   const DISHES = 'dishes';

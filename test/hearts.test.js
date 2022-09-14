@@ -11,9 +11,9 @@ const { NAY, YAY } = require('../src/constants');
 const { sleep } = require('../src/utils');
 const { db } = require('../src/db');
 
-const Hearts = require('../src/modules/hearts/hearts');
-const Polls = require('../src/modules/polls/polls');
-const Residents = require('../src/modules/residents/residents');
+const Hearts = require('../src/modules/hearts');
+const Polls = require('../src/modules/polls');
+const Residents = require('../src/modules/residents');
 
 describe('Hearts', async () => {
   const RESIDENT1 = 'RESIDENT1';

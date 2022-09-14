@@ -1,6 +1,6 @@
-const { db } = require('../../db');
+const { db } = require('../db');
 
-const Polls = require('../polls/polls');
+const Polls = require('./polls');
 
 // Chores
 
