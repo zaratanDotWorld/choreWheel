@@ -44,67 +44,67 @@ describe('Polls', async () => {
     });
 
     it('can vote in a poll', async () => {
-      const [ pollId ] = await Polls.createPoll(3 * DAY);
+      const [ poll ] = await Polls.createPoll(3 * DAY);
 
-      await Polls.submitVote(pollId, RESIDENT1, YAY);
+      await Polls.submitVote(poll.id, RESIDENT1, YAY);
 
-      const votes = await Polls.getPollVotes(pollId);
+      const votes = await Polls.getPollVotes(poll.id);
       expect(votes.length).to.eq.BN(1);
       expect(votes[0].vote).to.be.true;
     });
 
     it('can update the vote in a poll', async () => {
-      const [ pollId ] = await Polls.createPoll(3 * DAY);
+      const [ poll ] = await Polls.createPoll(3 * DAY);
 
-      await Polls.submitVote(pollId, RESIDENT1, YAY);
+      await Polls.submitVote(poll.id, RESIDENT1, YAY);
 
       let votes;
 
-      await Polls.submitVote(pollId, RESIDENT1, NAY);
+      await Polls.submitVote(poll.id, RESIDENT1, NAY);
 
-      votes = await Polls.getPollVotes(pollId);
+      votes = await Polls.getPollVotes(poll.id);
       expect(votes.length).to.eq.BN(1);
       expect(votes[0].vote).to.be.false;
 
-      await Polls.submitVote(pollId, RESIDENT1, CANCEL);
+      await Polls.submitVote(poll.id, RESIDENT1, CANCEL);
 
-      votes = await Polls.getPollVotes(pollId);
+      votes = await Polls.getPollVotes(poll.id);
       expect(votes.length).to.eq.BN(1);
       expect(votes[0].vote).to.be.null;
     });
 
     it('cannot update the vote in a poll if the poll is closed', async () => {
-      const [ pollId ] = await Polls.createPoll(5);
+      const [ poll ] = await Polls.createPoll(5);
 
       await sleep(5);
 
-      await expect(Polls.submitVote(pollId, RESIDENT1, YAY))
+      await expect(Polls.submitVote(poll.id, RESIDENT1, YAY))
         .to.be.rejectedWith('Poll has closed');
     });
 
     it('can get the results of a vote', async () => {
-      const [ pollId ] = await Polls.createPoll(10);
+      const [ poll ] = await Polls.createPoll(10);
 
-      await Polls.submitVote(pollId, RESIDENT1, YAY);
-      await Polls.submitVote(pollId, RESIDENT2, YAY);
-      await Polls.submitVote(pollId, RESIDENT3, NAY);
+      await Polls.submitVote(poll.id, RESIDENT1, YAY);
+      await Polls.submitVote(poll.id, RESIDENT2, YAY);
+      await Polls.submitVote(poll.id, RESIDENT3, NAY);
 
       await sleep(1);
 
-      const results = await Polls.getPollResults(pollId);
+      const results = await Polls.getPollResults(poll.id);
       expect(results.length).to.eq.BN(3);
     });
 
     it('can get the result of a vote', async () => {
-      const [ pollId ] = await Polls.createPoll(10);
+      const [ poll ] = await Polls.createPoll(10);
 
-      await Polls.submitVote(pollId, RESIDENT1, YAY);
-      await Polls.submitVote(pollId, RESIDENT2, YAY);
-      await Polls.submitVote(pollId, RESIDENT3, NAY);
+      await Polls.submitVote(poll.id, RESIDENT1, YAY);
+      await Polls.submitVote(poll.id, RESIDENT2, YAY);
+      await Polls.submitVote(poll.id, RESIDENT3, NAY);
 
       await sleep(1);
 
-      const { yays, nays } = await Polls.getPollResultCounts(pollId);
+      const { yays, nays } = await Polls.getPollResultCounts(poll.id);
       expect(yays).to.eq.BN(2);
       expect(nays).to.eq.BN(1);
     });

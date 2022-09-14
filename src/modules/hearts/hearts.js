@@ -16,14 +16,14 @@ exports.generateHearts = async function (slackId, numHearts) {
 };
 
 exports.initiateChallenge = async function (challenger, challengee, numHearts, duration) {
-  const [ pollId ] = await Polls.createPoll(duration);
+  const [ poll ] = await Polls.createPoll(duration);
 
   return db('heart_challenge')
     .insert({
       challenger: challenger,
       challengee: challengee,
       value: numHearts,
-      poll_id: pollId
+      poll_id: poll.id
     })
     .returning([ 'id', 'poll_id' ]);
 };
@@ -49,10 +49,10 @@ exports.resolveChallenge = async function (challengeId) {
   const { yays, nays } = await Polls.getPollResultCounts(pollId);
   const loser = (yays >= 4 && yays > nays) ? challenge.challengee : challenge.challenger;
 
-  const [ heartId ] = await exports.generateHearts(loser, -challenge.value);
+  const [ heart ] = await exports.generateHearts(loser, -challenge.value);
 
   return db('heart_challenge')
     .where({ id: challengeId })
-    .update({ heart_id: heartId })
+    .update({ heart_id: heart.id })
     .returning([ 'heart_id' ]);
 };

@@ -82,7 +82,7 @@ exports.getValidChoreClaims = async function (choreName) {
 };
 
 exports.claimChore = async function (choreName, slackId, messageId, duration) {
-  const [ pollId ] = await Polls.createPoll(duration);
+  const [ poll ] = await Polls.createPoll(duration);
 
   const claimedAt = new Date();
   const choreValue = await exports.getCurrentChoreValue(choreName, claimedAt);
@@ -94,7 +94,7 @@ exports.claimChore = async function (choreName, slackId, messageId, duration) {
       claimed_at: claimedAt,
       message_id: messageId,
       value: choreValue.sum,
-      poll_id: pollId
+      poll_id: poll.id
     })
     .returning([ 'id', 'poll_id' ]);
 };
