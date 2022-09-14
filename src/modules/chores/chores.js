@@ -23,7 +23,6 @@ exports.getChorePreferences = async function () {
 };
 
 exports.setChorePreference = async function (slackId, alphaChore, betaChore, preference) {
-  if (alphaChore >= betaChore) throw new Error('Chores out of order');
   return db('chore_pref')
     .insert({
       preferred_by: slackId,
@@ -33,6 +32,12 @@ exports.setChorePreference = async function (slackId, alphaChore, betaChore, pre
     })
     .onConflict([ 'preferred_by', 'alpha_chore', 'beta_chore' ])
     .merge();
+};
+
+exports.formatPreferencesForRanking = function (preferences) {
+  return preferences.map(p => {
+    return { alpha: p.alpha_chore, beta: p.beta_chore, preference: p.preference };
+  });
 };
 
 // Chore Values

@@ -7,7 +7,7 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(bnChai(BN));
 chai.use(chaiAsPromised);
 
-const { YAY, NAY, FIRST, SECOND } = require('../src/constants');
+const { YAY, NAY } = require('../src/constants');
 const { sleep } = require('../src/utils');
 const { db } = require('../src/db');
 
@@ -74,41 +74,49 @@ describe('Chores', async () => {
     });
 
     it('can set a chore preference', async () => {
-      await Chores.setChorePreference(RESIDENT1, DISHES, SWEEPING, FIRST);
-      await Chores.setChorePreference(RESIDENT2, DISHES, SWEEPING, SECOND);
+      await Chores.setChorePreference(RESIDENT1, DISHES, SWEEPING, 1);
+      await Chores.setChorePreference(RESIDENT2, DISHES, SWEEPING, 0);
 
       const preferences = await Chores.getChorePreferences();
-      expect(preferences[0].preference).to.equal(FIRST);
-      expect(preferences[1].preference).to.equal(SECOND);
+      expect(preferences[0].preference).to.equal(1);
+      expect(preferences[1].preference).to.equal(0);
     });
 
     it('can update a chore preference', async () => {
-      await Chores.setChorePreference(RESIDENT1, DISHES, SWEEPING, FIRST);
-      await Chores.setChorePreference(RESIDENT1, DISHES, SWEEPING, SECOND);
+      await Chores.setChorePreference(RESIDENT1, DISHES, SWEEPING, 1);
+      await Chores.setChorePreference(RESIDENT1, DISHES, SWEEPING, 0);
 
       const preferences = await Chores.getChorePreferences();
       expect(preferences.length).to.eq.BN(1);
-      expect(preferences[0].preference).to.equal(SECOND);
+      expect(preferences[0].preference).to.equal(0);
     });
 
-    it('cannot set a chore preference in a bad order', async () => {
-      await expect(Chores.setChorePreference(RESIDENT1, SWEEPING, DISHES, FIRST))
-        .to.be.rejectedWith('Chores out of order');
+    it('can return uniform preferences implicitly', async () => {
+      const chores = await Chores.getChores();
+
+      const powerRanker = new PowerRanker(chores, [], 2);
+      const labeledWeights = powerRanker.run(d = 0.8); // eslint-disable-line no-undef
+
+      expect(labeledWeights.get('dishes')).to.equal(0.3333333333333333);
+      expect(labeledWeights.get('sweeping')).to.equal(0.3333333333333333);
+      expect(labeledWeights.get('restock')).to.equal(0.3333333333333333);
     });
 
     it('can use preferences to determine chore values', async () => {
       // Prefer dishes to sweeping, and sweeping to restock
-      await Chores.setChorePreference(RESIDENT1, DISHES, SWEEPING, FIRST);
-      await Chores.setChorePreference(RESIDENT2, RESTOCK, SWEEPING, SECOND);
+      await Chores.setChorePreference(RESIDENT1, DISHES, SWEEPING, 1);
+      await Chores.setChorePreference(RESIDENT2, RESTOCK, SWEEPING, 0);
 
+      const chores = await Chores.getChores();
       const preferences = await Chores.getChorePreferences();
+      const parsedPreferences = Chores.formatPreferencesForRanking(preferences);
 
-      const powerRanker = new PowerRanker(preferences);
+      const powerRanker = new PowerRanker(chores, parsedPreferences, 2);
       const labeledWeights = powerRanker.run(d = 0.8); // eslint-disable-line no-undef
 
-      expect(labeledWeights.get('dishes')).to.equal(0.7328964266666669);
-      expect(labeledWeights.get('sweeping')).to.equal(0.2004369066666667);
-      expect(labeledWeights.get('restock')).to.equal(0.06666666666666667);
+      expect(labeledWeights.get('dishes')).to.equal(0.42564666666666673);
+      expect(labeledWeights.get('sweeping')).to.equal(0.31288000000000005);
+      expect(labeledWeights.get('restock')).to.equal(0.2614733333333334);
     });
   });
 

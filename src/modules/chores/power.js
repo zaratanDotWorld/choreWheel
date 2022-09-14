@@ -1,18 +1,15 @@
 const linAlg = require('linear-algebra')();
 
-// eslint-disable-next-line no-extend-native
-Array.prototype.flatMap = function (lambda) {
-  return Array.prototype.concat.apply([], this.map(lambda));
-}; '';
-
 class PowerRanker {
-  directedPreferences;
+  items;
+  preferences;
   matrix;
   verbose;
 
-  constructor (undirectedPreferences, verbose = false) {
-    this.directedPreferences = this.convertPreferences(undirectedPreferences);
-    this.matrix = this.toMatrix(this.directedPreferences);
+  constructor (items, preferences, numResidents, verbose = false) {
+    this.items = items;
+    this.preferences = preferences;
+    this.matrix = this.toMatrix(this.items, this.preferences, numResidents);
     this.verbose = verbose;
 
     this.log('Matrix initialized');
@@ -25,41 +22,39 @@ class PowerRanker {
 
   run (d = 1, epsilon = 0.001, nIter = 1000) {
     const weights = this.powerMethod(this.matrix, d, epsilon, nIter);
-    return this.applyLabels(this.directedPreferences, weights);
+    return this.applyLabels(this.items, weights);
+  }
+
+  // O(items)
+  applyLabels (items, eigenvector) {
+    const itemMap = this.#toitemMap(items);
+    if (itemMap.size !== eigenvector.length) { throw new Error('Mismatched arguments!'); }
+    itemMap.forEach((ix, item) => itemMap.set(item, eigenvector[ix]));
+    return itemMap;
   }
 
   // O(preferences)
-  convertPreferences (undirectedPreferences) { // [{alpha_id, beta_id, win_bit}]
-    return undirectedPreferences.map(p => {
-      const [ source, target ] = p.preference ? [ p.alpha_chore, p.beta_chore ] : [ p.beta_chore, p.alpha_chore ];
-      return { source: source.toString(), target: target.toString() };
-    });
-  }
+  toMatrix (items, preferences, numResidents) { // [{ alpha, beta, preference }]
+    const n = items.length;
+    const itemMap = this.#toitemMap(items);
 
-  // O(preferences)
-  toMatrix (directedPreferences) { // [{source, target}]
-    const itemMap = this.#toitemMap(directedPreferences);
+    // Initialise the matrix with (implicit) neutral preferences
+    const matrix = linAlg.Matrix.zero(n, n)
+      .plusEach(1).minus(linAlg.Matrix.identity(n)) // Zero on the diagonal, ones everywhere else
+      .mulEach(0.5).mulEach(numResidents); // Scale to .5 per resident
 
-    const n = itemMap.size;
-    const matrix = linAlg.Matrix.zero(n, n);
-
-    // Calculate the off-diagonals
-    directedPreferences.forEach(p => {
-      const sourceIx = itemMap.get(p.source);
-      const targetIx = itemMap.get(p.target);
-      matrix.data[sourceIx][targetIx] += 1;
+    // Add the preferences to the off-diagonals, removing the implicit neutral preference of 0.5
+    // Recall that preference > 0.5 is flow towards, preference < 0.5 is flow away
+    preferences.forEach(p => {
+      const alphaIx = itemMap.get(p.alpha);
+      const betaIx = itemMap.get(p.beta);
+      matrix.data[betaIx][alphaIx] += (p.preference - 0.5);
+      matrix.data[alphaIx][betaIx] += (1 - p.preference - 0.5);
     });
 
     // Add the diagonals (sums of columns)
     this.#sumColumns(matrix).map((sum, ix) => matrix.data[ix][ix] = sum); // eslint-disable-line no-return-assign
     return matrix;
-  }
-
-  applyLabels (directedPreferences, eigenvector) {
-    const itemMap = this.#toitemMap(directedPreferences);
-    if (itemMap.size !== eigenvector.length) { throw new Error('Mismatched arguments!'); }
-    itemMap.forEach((ix, item) => itemMap.set(item, eigenvector[ix]));
-    return itemMap;
   }
 
   // O(n^3)-ish
@@ -68,7 +63,7 @@ class PowerRanker {
     const n = matrix.rows;
 
     // Normalize matrix
-    matrix = matrix.mulEach(1); // Make copy
+    matrix = matrix.clone(); // Make a copy for safety
     matrix.data = matrix.data
       .map(row => {
         const rowSum = this.#sum(row);
@@ -97,8 +92,8 @@ class PowerRanker {
 
   // Internal
 
-  #toitemMap (directedPreferences) { // [{source, target}]
-    const itemSet = this.#toItemSet(directedPreferences);
+  #toitemMap (items) { // [{ name }]
+    const itemSet = this.#toItemSet(items);
     return new Map(
       Array.from(itemSet)
         .sort((a, b) => a - b) // Javascript is the worst
@@ -106,9 +101,8 @@ class PowerRanker {
     );
   }
 
-  #toItemSet (directedPreferences) { // [{source, target}]
-    const itemArray = directedPreferences.flatMap(p => [ p.source, p.target ]);
-    return new Set(itemArray);
+  #toItemSet (items) { // [{ name }]
+    return new Set(items.map(i => i.name));
   }
 
   #norm (array) {

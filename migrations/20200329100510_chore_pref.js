@@ -5,8 +5,9 @@ exports.up = function(knex, Promise) {
         t.string('preferred_by').references('resident.slack_id').notNull();
         t.string('alpha_chore').references('chore.name').notNull();
         t.string('beta_chore').references('chore.name').notNull();
-        t.boolean('preference').notNull();
+        t.float('preference').notNull().checkBetween([0, 1]);
         t.unique(['preferred_by', 'alpha_chore', 'beta_chore']);
+        t.check('?? < ??', ['alpha_chore', 'beta_chore']);
     });
 };
 
