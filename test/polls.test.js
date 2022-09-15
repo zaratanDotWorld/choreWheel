@@ -12,18 +12,24 @@ const { sleep } = require('../src/utils');
 const { db } = require('../src/db');
 
 const Polls = require('../src/modules/polls');
-const Residents = require('../src/modules/residents');
+const Admin = require('../src/modules/admin');
 
 describe('Polls', async () => {
+  const HOUSE = 'house123';
+
   const RESIDENT1 = 'RESIDENT1';
   const RESIDENT2 = 'RESIDENT2';
   const RESIDENT3 = 'RESIDENT3';
 
   before(async () => {
+    await db('chore').del();
     await db('resident').del();
-    await Residents.addResident(RESIDENT1);
-    await Residents.addResident(RESIDENT2);
-    await Residents.addResident(RESIDENT3);
+    await db('house').del();
+
+    await Admin.addHouse('Sage', HOUSE);
+    await Admin.addResident(HOUSE, RESIDENT1);
+    await Admin.addResident(HOUSE, RESIDENT2);
+    await Admin.addResident(HOUSE, RESIDENT3);
   });
 
   afterEach(async () => {
@@ -37,14 +43,14 @@ describe('Polls', async () => {
       [ pollCount ] = await db('poll').count('*');
       expect(pollCount.count).to.be.zero;
 
-      await Polls.createPoll(3 * DAY);
+      await Polls.createPoll(DAY);
 
       [ pollCount ] = await db('poll').count('*');
       expect(pollCount.count).to.eq.BN(1);
     });
 
     it('can vote in a poll', async () => {
-      const [ poll ] = await Polls.createPoll(3 * DAY);
+      const [ poll ] = await Polls.createPoll(DAY);
 
       await Polls.submitVote(poll.id, RESIDENT1, YAY);
 
@@ -54,7 +60,7 @@ describe('Polls', async () => {
     });
 
     it('can update the vote in a poll', async () => {
-      const [ poll ] = await Polls.createPoll(3 * DAY);
+      const [ poll ] = await Polls.createPoll(DAY);
 
       await Polls.submitVote(poll.id, RESIDENT1, YAY);
 

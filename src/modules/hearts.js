@@ -2,24 +2,26 @@ const { db } = require('../db');
 
 const Polls = require('./polls');
 
-exports.getResidentHearts = async function (slackId) {
+exports.getResidentHearts = async function (houseId, slackId) {
   return db('heart')
-    .where('resident', slackId)
+    .where('house_id', houseId)
+    .where('resident_id', slackId)
     .sum('value')
     .first();
 };
 
-exports.generateHearts = async function (slackId, numHearts) {
+exports.generateHearts = async function (houseId, slackId, numHearts) {
   return db('heart')
-    .insert({ resident: slackId, value: numHearts })
+    .insert({ house_id: houseId, resident_id: slackId, value: numHearts })
     .returning('id');
 };
 
-exports.initiateChallenge = async function (challenger, challengee, numHearts, duration) {
+exports.initiateChallenge = async function (houseId, challenger, challengee, numHearts, duration) {
   const [ poll ] = await Polls.createPoll(duration);
 
   return db('heart_challenge')
     .insert({
+      house_id: houseId,
       challenger: challenger,
       challengee: challengee,
       value: numHearts,
@@ -49,7 +51,7 @@ exports.resolveChallenge = async function (challengeId) {
   const { yays, nays } = await Polls.getPollResultCounts(pollId);
   const loser = (yays >= 4 && yays > nays) ? challenge.challengee : challenge.challenger;
 
-  const [ heart ] = await exports.generateHearts(loser, -challenge.value);
+  const [ heart ] = await exports.generateHearts(challenge.house_id, loser, -challenge.value);
 
   return db('heart_challenge')
     .where({ id: challengeId })

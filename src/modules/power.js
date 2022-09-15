@@ -7,8 +7,8 @@ class PowerRanker {
   verbose;
 
   constructor (items, preferences, numResidents, verbose = false) {
-    this.items = items;
-    this.preferences = preferences;
+    this.items = items; // [{ id, name }]
+    this.preferences = preferences; // [{ alpha, beta, preference }]
     this.matrix = this.toMatrix(this.items, this.preferences, numResidents);
     this.verbose = verbose;
 
@@ -92,7 +92,7 @@ class PowerRanker {
 
   // Internal
 
-  #toitemMap (items) { // [{ name }]
+  #toitemMap (items) { // [{ id, name }]
     const itemSet = this.#toItemSet(items);
     return new Map(
       Array.from(itemSet)
@@ -101,8 +101,8 @@ class PowerRanker {
     );
   }
 
-  #toItemSet (items) { // [{ name }]
-    return new Set(items.map(i => i.name));
+  #toItemSet (items) { // [{ id, name }]
+    return new Set(items.map(i => i.id));
   }
 
   #norm (array) {

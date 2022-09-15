@@ -13,9 +13,11 @@ const { db } = require('../src/db');
 
 const Hearts = require('../src/modules/hearts');
 const Polls = require('../src/modules/polls');
-const Residents = require('../src/modules/residents');
+const Admin = require('../src/modules/admin');
 
 describe('Hearts', async () => {
+  const HOUSE = 'house123';
+
   const RESIDENT1 = 'RESIDENT1';
   const RESIDENT2 = 'RESIDENT2';
   const RESIDENT3 = 'RESIDENT3';
@@ -25,12 +27,16 @@ describe('Hearts', async () => {
   const POLL_LENGTH = 35;
 
   before(async () => {
+    await db('chore').del();
     await db('resident').del();
-    await Residents.addResident(RESIDENT1);
-    await Residents.addResident(RESIDENT2);
-    await Residents.addResident(RESIDENT3);
-    await Residents.addResident(RESIDENT4);
-    await Residents.addResident(RESIDENT5);
+    await db('house').del();
+
+    await Admin.addHouse('Sage', HOUSE);
+    await Admin.addResident(HOUSE, RESIDENT1);
+    await Admin.addResident(HOUSE, RESIDENT2);
+    await Admin.addResident(HOUSE, RESIDENT3);
+    await Admin.addResident(HOUSE, RESIDENT4);
+    await Admin.addResident(HOUSE, RESIDENT5);
   });
 
   afterEach(async () => {
@@ -42,14 +48,14 @@ describe('Hearts', async () => {
 
   describe('using hearts', async () => {
     it('can generate hearts for residents', async () => {
-      await Hearts.generateHearts(RESIDENT1, 1);
-      await Hearts.generateHearts(RESIDENT1, 1);
-      await Hearts.generateHearts(RESIDENT2, 1);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, 1);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, 1);
+      await Hearts.generateHearts(HOUSE, RESIDENT2, 1);
       await sleep(1);
 
-      const hearts1 = await Hearts.getResidentHearts(RESIDENT1);
-      const hearts2 = await Hearts.getResidentHearts(RESIDENT2);
-      const hearts3 = await Hearts.getResidentHearts(RESIDENT3);
+      const hearts1 = await Hearts.getResidentHearts(HOUSE, RESIDENT1);
+      const hearts2 = await Hearts.getResidentHearts(HOUSE, RESIDENT2);
+      const hearts3 = await Hearts.getResidentHearts(HOUSE, RESIDENT3);
 
       expect(hearts1.sum).to.eq.BN(2);
       expect(hearts2.sum).to.eq.BN(1);
@@ -57,31 +63,31 @@ describe('Hearts', async () => {
     });
 
     it('can aggregate positive and negative hearts', async () => {
-      await Hearts.generateHearts(RESIDENT1, 2);
-      await Hearts.generateHearts(RESIDENT1, 1);
-      await Hearts.generateHearts(RESIDENT1, -2);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, 2);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, 1);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, -2);
       await sleep(1);
 
-      const hearts = await Hearts.getResidentHearts(RESIDENT1);
+      const hearts = await Hearts.getResidentHearts(HOUSE, RESIDENT1);
 
       expect(hearts.sum).to.eq.BN(1);
     });
 
     it('can handle fractional hearts', async () => {
-      await Hearts.generateHearts(RESIDENT1, 2.5);
-      await Hearts.generateHearts(RESIDENT1, -0.75);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, 2.5);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, -0.75);
       await sleep(1);
 
-      const hearts = await Hearts.getResidentHearts(RESIDENT1);
+      const hearts = await Hearts.getResidentHearts(HOUSE, RESIDENT1);
 
       expect(hearts.sum).to.eq.BN(1.75);
     });
 
     it('can resolve a challenge where the challenger wins', async () => {
-      await Hearts.generateHearts(RESIDENT1, 5);
-      await Hearts.generateHearts(RESIDENT2, 5);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, 5);
+      await Hearts.generateHearts(HOUSE, RESIDENT2, 5);
 
-      const [ challenge ] = await Hearts.initiateChallenge(RESIDENT1, RESIDENT2, 1, POLL_LENGTH);
+      const [ challenge ] = await Hearts.initiateChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, POLL_LENGTH);
 
       await Polls.submitVote(challenge.poll_id, RESIDENT1, YAY);
       await Polls.submitVote(challenge.poll_id, RESIDENT2, NAY);
@@ -94,17 +100,17 @@ describe('Hearts', async () => {
       await Hearts.resolveChallenge(challenge.id);
       await sleep(1);
 
-      const hearts1 = await Hearts.getResidentHearts(RESIDENT1);
-      const hearts2 = await Hearts.getResidentHearts(RESIDENT2);
+      const hearts1 = await Hearts.getResidentHearts(HOUSE, RESIDENT1);
+      const hearts2 = await Hearts.getResidentHearts(HOUSE, RESIDENT2);
       expect(hearts1.sum).to.eq.BN(5);
       expect(hearts2.sum).to.eq.BN(4);
     });
 
     it('can resolve a challenge where the challenger loses', async () => {
-      await Hearts.generateHearts(RESIDENT1, 5);
-      await Hearts.generateHearts(RESIDENT2, 5);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, 5);
+      await Hearts.generateHearts(HOUSE, RESIDENT2, 5);
 
-      const [ challenge ] = await Hearts.initiateChallenge(RESIDENT1, RESIDENT2, 1, POLL_LENGTH);
+      const [ challenge ] = await Hearts.initiateChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, POLL_LENGTH);
 
       await Polls.submitVote(challenge.poll_id, RESIDENT1, YAY);
       await Polls.submitVote(challenge.poll_id, RESIDENT2, NAY);
@@ -115,17 +121,17 @@ describe('Hearts', async () => {
       await Hearts.resolveChallenge(challenge.id);
       await sleep(1);
 
-      const hearts1 = await Hearts.getResidentHearts(RESIDENT1);
-      const hearts2 = await Hearts.getResidentHearts(RESIDENT2);
+      const hearts1 = await Hearts.getResidentHearts(HOUSE, RESIDENT1);
+      const hearts2 = await Hearts.getResidentHearts(HOUSE, RESIDENT2);
       expect(hearts1.sum).to.eq.BN(4);
       expect(hearts2.sum).to.eq.BN(5);
     });
 
     it('can resolve a challenge where the quorum is not reached', async () => {
-      await Hearts.generateHearts(RESIDENT1, 5);
-      await Hearts.generateHearts(RESIDENT2, 5);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, 5);
+      await Hearts.generateHearts(HOUSE, RESIDENT2, 5);
 
-      const [ challenge ] = await Hearts.initiateChallenge(RESIDENT1, RESIDENT2, 1, POLL_LENGTH);
+      const [ challenge ] = await Hearts.initiateChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, POLL_LENGTH);
 
       await Polls.submitVote(challenge.poll_id, RESIDENT1, YAY);
       await Polls.submitVote(challenge.poll_id, RESIDENT2, NAY);
@@ -136,17 +142,17 @@ describe('Hearts', async () => {
       await Hearts.resolveChallenge(challenge.id);
       await sleep(1);
 
-      const hearts1 = await Hearts.getResidentHearts(RESIDENT1);
-      const hearts2 = await Hearts.getResidentHearts(RESIDENT2);
+      const hearts1 = await Hearts.getResidentHearts(HOUSE, RESIDENT1);
+      const hearts2 = await Hearts.getResidentHearts(HOUSE, RESIDENT2);
       expect(hearts1.sum).to.eq.BN(4);
       expect(hearts2.sum).to.eq.BN(5);
     });
 
     it('cannot resolve a challenge before the poll is closed', async () => {
-      await Hearts.generateHearts(RESIDENT1, 5);
-      await Hearts.generateHearts(RESIDENT2, 5);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, 5);
+      await Hearts.generateHearts(HOUSE, RESIDENT2, 5);
 
-      const [ challenge ] = await Hearts.initiateChallenge(RESIDENT1, RESIDENT2, 1, POLL_LENGTH);
+      const [ challenge ] = await Hearts.initiateChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, POLL_LENGTH);
 
       await Polls.submitVote(challenge.poll_id, RESIDENT1, YAY);
       await Polls.submitVote(challenge.poll_id, RESIDENT2, NAY);
@@ -158,10 +164,10 @@ describe('Hearts', async () => {
     });
 
     it('cannot resolve a challenge twice', async () => {
-      await Hearts.generateHearts(RESIDENT1, 5);
-      await Hearts.generateHearts(RESIDENT2, 5);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, 5);
+      await Hearts.generateHearts(HOUSE, RESIDENT2, 5);
 
-      const [ challenge ] = await Hearts.initiateChallenge(RESIDENT1, RESIDENT2, 1, POLL_LENGTH);
+      const [ challenge ] = await Hearts.initiateChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, POLL_LENGTH);
 
       await Polls.submitVote(challenge.poll_id, RESIDENT1, YAY);
       await Polls.submitVote(challenge.poll_id, RESIDENT2, NAY);

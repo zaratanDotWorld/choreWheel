@@ -6,7 +6,7 @@ const Chores = require('../modules/chores');
 const Polls = require('../modules/polls');
 const Residents = require('../modules/residents');
 
-const { defaultPollLength } = require('../config');
+const { choresPollLength } = require('../config');
 const { YAY } = require('../constants');
 const { sleep } = require('../utils');
 
@@ -76,7 +76,7 @@ app.view('chores-list-callback', async ({ ack, body }) => {
     token: process.env.SLACK_BOT_TOKEN,
     channel: 'test',
     text: 'Someone just completed a chore',
-    blocks: blocks.choreListCallbackView(residentId, choreName, choreValue, defaultPollLength)
+    blocks: blocks.choreListCallbackView(residentId, choreName, choreValue, choresPollLength)
   };
 
   const res = await app.client.chat.postMessage(message);
@@ -84,7 +84,7 @@ app.view('chores-list-callback', async ({ ack, body }) => {
 
   console.log(`Message posted as ${messageId}`);
 
-  const [ claim ] = await Chores.claimChore(choreName, residentId, messageId, defaultPollLength);
+  const [ claim ] = await Chores.claimChore(choreName, residentId, messageId, choresPollLength);
   await Polls.submitVote(claim.poll_id, residentId, YAY);
 
   console.log(`Claim ${claim.id} created with poll ${claim.poll_id}`);

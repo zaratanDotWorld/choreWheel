@@ -4,58 +4,61 @@ const Polls = require('./polls');
 
 // Chores
 
-exports.addChore = async function (choreName) {
+exports.addChore = async function (houseId, choreName) {
   return db('chore')
-    .insert({ name: choreName })
+    .insert({ house_id: houseId, name: choreName })
     .returning('id');
 };
 
-exports.getChores = async function () {
+exports.getChores = async function (houseId) {
   return db('chore')
-    .select('*');
+    .select('*')
+    .where('house_id', houseId);
 };
 
 // Chore Preferences
 
-exports.getChorePreferences = async function () {
+exports.getChorePreferences = async function (houseId) {
   return db('chore_pref')
-    .select('alpha_chore', 'beta_chore', 'preference');
+    .where('house_id', houseId)
+    .select('alpha_chore_id', 'beta_chore_id', 'preference');
 };
 
-exports.setChorePreference = async function (slackId, alphaChore, betaChore, preference) {
+exports.setChorePreference = async function (houseId, slackId, alphaChoreId, betaChoreId, preference) {
   return db('chore_pref')
     .insert({
+      house_id: houseId,
       preferred_by: slackId,
-      alpha_chore: alphaChore,
-      beta_chore: betaChore,
+      alpha_chore_id: alphaChoreId,
+      beta_chore_id: betaChoreId,
       preference: preference
     })
-    .onConflict([ 'preferred_by', 'alpha_chore', 'beta_chore' ])
+    .onConflict([ 'house_id', 'preferred_by', 'alpha_chore_id', 'beta_chore_id' ])
     .merge();
 };
 
 exports.formatPreferencesForRanking = function (preferences) {
   return preferences.map(p => {
-    return { alpha: p.alpha_chore, beta: p.beta_chore, preference: p.preference };
+    return { alpha: p.alpha_chore_id, beta: p.beta_chore_id, preference: p.preference };
   });
 };
 
 // Chore Values
 
-exports.getChoreValue = async function (choreName, startTime, endTime) {
+exports.getChoreValue = async function (choreId, startTime, endTime) {
   return db('chore_value')
-    .where('chore_name', choreName)
+    .where('chore_id', choreId)
     .where('created_at', '>', startTime)
     .where('created_at', '<=', endTime)
     .sum('value')
     .first();
 };
 
-exports.getCurrentChoreValue = async function (choreName, claimedAt) {
-  const previousClaims = await exports.getValidChoreClaims(choreName);
+exports.getCurrentChoreValue = async function (choreId, claimedAt) {
+  const previousClaims = await exports.getValidChoreClaims(choreId);
   const filteredClaims = previousClaims.filter((claim) => claim.claimed_at < claimedAt);
   const previousClaimedAt = (filteredClaims.length === 0) ? new Date(0) : filteredClaims.slice(-1)[0].claimed_at;
-  return exports.getChoreValue(choreName, previousClaimedAt, claimedAt);
+  return exports.getChoreValue(choreId, previousClaimedAt, claimedAt);
 };
 
 exports.setChoreValues = async function (choreData) {
@@ -79,22 +82,22 @@ exports.getChoreClaimByMessageId = async function (messageId) {
     .first();
 };
 
-exports.getValidChoreClaims = async function (choreName) {
+exports.getValidChoreClaims = async function (choreId) {
   return db('chore_claim')
     .select('*')
     .whereNot({ result: 'fail' })
-    .andWhere({ chore_name: choreName });
+    .andWhere({ chore_id: choreId });
 };
 
-exports.claimChore = async function (choreName, slackId, messageId, duration) {
+exports.claimChore = async function (choreId, slackId, messageId, duration) {
   const [ poll ] = await Polls.createPoll(duration);
 
   const claimedAt = new Date();
-  const choreValue = await exports.getCurrentChoreValue(choreName, claimedAt);
+  const choreValue = await exports.getCurrentChoreValue(choreId, claimedAt);
 
   return db('chore_claim')
     .insert({
-      chore_name: choreName,
+      chore_id: choreId,
       claimed_by: slackId,
       claimed_at: claimedAt,
       message_id: messageId,
@@ -118,7 +121,7 @@ exports.resolveChoreClaim = async function (claimId) {
   const result = (yays >= 2 && yays > nays) ? 'pass' : 'fail';
 
   const choreValue = (result === 'pass')
-    ? await exports.getCurrentChoreValue(choreClaim.chore_name, choreClaim.claimed_at)
+    ? await exports.getCurrentChoreValue(choreClaim.chore_id, choreClaim.claimed_at)
     : { sum: 0 };
 
   return db('chore_claim')

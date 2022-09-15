@@ -2,7 +2,7 @@ exports.up = function(knex, Promise) {
     return knex.schema.createTable('chore_claim', function(t) {
         t.increments('id').unsigned().primary();
         t.timestamps(useTimestamps = true, defaultToNow = true);
-        t.string('chore_name').references('chore.name').notNull();
+        t.integer('chore_id').references('chore.id').notNull();
         t.string('reserved_by').references('resident.slack_id');
         t.timestamp('reserved_at');
         t.timestamp('unreserved_at');
