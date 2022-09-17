@@ -1,7 +1,5 @@
 require('dotenv').config();
 
-const voca = require('voca');
-
 const { App } = require('@slack/bolt');
 
 const Chores = require('../modules/chores');
@@ -44,20 +42,39 @@ app.event('app_home_opened', async ({ payload }) => {
 app.command('/chores-add', async ({ ack, command, say }) => {
   await ack();
 
-  console.log(command);
-  const formattedName = voca(command.text).latinise().lowerCase().value();
-  await Chores.addChore(command.team_id, formattedName);
+  const storedName = blocks.storeString(command.text);
+  const displayName = blocks.displayString(storedName);
 
-  await say(`${voca.titleCase(formattedName)} added to the chores list :star-struck:`);
+  const userInfo = await app.client.users.info({
+    token: process.env.SLACK_BOT_TOKEN,
+    user: command.user_id
+  });
+
+  if (userInfo.user.is_admin) {
+    await Chores.addChore(command.team_id, storedName);
+    await say(`${displayName} added to the chores list :star-struck:`);
+  } else {
+    await say('Only admins can update the chore list...');
+  }
 });
 
 app.command('/chores-del', async ({ ack, command, say }) => {
   await ack();
 
-  const formattedName = voca(command.text).latinise().lowerCase().value();
-  await Chores.deleteChore(command.team_id, formattedName);
+  const storedName = blocks.storeString(command.text);
+  const displayName = blocks.displayString(storedName);
 
-  await say(`${voca.titleCase(formattedName)} deleted from the chores list :sob:`);
+  const userInfo = await app.client.users.info({
+    token: process.env.SLACK_BOT_TOKEN,
+    user: command.user_id
+  });
+
+  if (userInfo.user.is_admin) {
+    await Chores.deleteChore(command.team_id, storedName);
+    await say(`${displayName} deleted from the chores list :sob:`);
+  } else {
+    await say('Only admins can update the chore list...');
+  }
 });
 
 app.command('/chores-list', async ({ ack, command, say }) => {

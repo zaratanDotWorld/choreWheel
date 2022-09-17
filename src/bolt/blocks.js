@@ -2,17 +2,38 @@ const voca = require('voca');
 
 // Chores Views
 
+exports.displayString = function (text) {
+  return voca.titleCase(text);
+};
+
+exports.storeString = function (text) {
+  return voca(text).latinise().lowerCase().value();
+};
+
 exports.choresHomeView = function (balance) {
+  const mainText = 'We use Chores to keep the house a nice place to live.\n' +
+    'Instead of a chore wheel or schedule, everyone owes *100 points* per month.\n' +
+    'You earn points by doing the chores you want, on your terms.\n' +
+    'The points for a chore go up until someone claims them, then resets to 0.\n' +
+    'Different chores earn points at different speeds, depending on your priorities.';
+
   return {
     type: 'home',
     blocks: [
       {
-        type: 'section',
-        text: { type: 'mrkdwn', text: 'Welcome to Chores! :gloves:' }
+        type: 'header',
+        text: { type: 'plain_text', text: 'Welcome to Chores :gloves:', emoji: true }
       },
       {
         type: 'section',
-        text: { type: 'mrkdwn', text: `You've earned ${balance} points so far this month :muscle:` }
+        text: { type: 'mrkdwn', text: mainText }
+      },
+      {
+        type: 'divider'
+      },
+      {
+        type: 'section',
+        text: { type: 'mrkdwn', text: `*You've earned ${balance} points so far this month :muscle:*` }
       },
       {
         type: 'actions',
@@ -35,7 +56,7 @@ exports.choresHomeView = function (balance) {
 
 exports.choresListView = function (chores) {
   const mappedChoreValues = chores.map((chore) => {
-    const choreName = voca.toTitleCase(chore.name);
+    const choreName = exports.displayString(chore.name);
     const choreValue = parseInt(chore.sum || 0);
     return {
       value: `${chore.id}.${choreValue}`,
