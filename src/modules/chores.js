@@ -6,14 +6,22 @@ const Polls = require('./polls');
 
 exports.addChore = async function (houseId, choreName) {
   return db('chore')
-    .insert({ house_id: houseId, name: choreName })
+    .insert({ house_id: houseId, name: choreName, active: true })
+    .onConflict([ 'house_id', 'name' ]).merge()
     .returning('id');
+};
+
+exports.deleteChore = async function (houseId, choreName) {
+  return db('chore')
+    .where({ house_id: houseId, name: choreName })
+    .update({ active: false });
 };
 
 exports.getChores = async function (houseId) {
   return db('chore')
     .select('*')
-    .where('house_id', houseId);
+    .where('house_id', houseId)
+    .where('active', true);
 };
 
 // Chore Preferences
@@ -33,8 +41,7 @@ exports.setChorePreference = async function (houseId, slackId, alphaChoreId, bet
       beta_chore_id: betaChoreId,
       preference: preference
     })
-    .onConflict([ 'house_id', 'preferred_by', 'alpha_chore_id', 'beta_chore_id' ])
-    .merge();
+    .onConflict([ 'house_id', 'preferred_by', 'alpha_chore_id', 'beta_chore_id' ]).merge();
 };
 
 exports.formatPreferencesForRanking = function (preferences) {

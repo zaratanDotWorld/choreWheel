@@ -1,10 +1,12 @@
 require('dotenv').config();
 
+const voca = require('voca');
+
 const { App } = require('@slack/bolt');
 
 const Chores = require('../modules/chores');
 const Polls = require('../modules/polls');
-const Residents = require('../modules/residents');
+const Admin = require('../modules/admin');
 
 const { choresPollLength } = require('../config');
 const { YAY } = require('../constants');
@@ -19,42 +21,71 @@ const app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET
 });
 
-// Define the interface
+// Publish the app home
 
-app.event('reaction_added', async ({ payload }) => {
-  console.log(`Resident ${payload.resident} just added ${payload.reaction} to message ${payload.item.channel}.${payload.item.ts}`);
+app.event('app_home_opened', async ({ payload }) => {
+  if (payload.tab === 'home') {
+    await Admin.addHouse('', payload.view.team_id);
+    await Admin.addResident('', payload.view.team_id, payload.user);
 
-  const reactionQuery = {
-    token: process.env.SLACK_BOT_TOKEN,
-    channel: payload.item.channel,
-    timestamp: payload.item.ts
-  };
+    const chorePoints = 10; // TODO: Implement this function
 
-  const res = await app.client.reactions.get(reactionQuery);
-  console.log(res.message.reactions);
+    const data = {
+      token: process.env.SLACK_BOT_TOKEN,
+      user_id: payload.user,
+      view: blocks.choresHomeView(chorePoints)
+    };
+    await app.client.views.publish(data);
+  }
 });
 
-app.event('reaction_removed', async ({ payload }) => {
-  console.log(`Resident ${payload.resident} just removed ${payload.reaction} from message ${payload.item.channel}.${payload.item.ts}`);
+// Slash commands
+
+app.command('/chores-add', async ({ ack, command, say }) => {
+  await ack();
+
+  console.log(command);
+  const formattedName = voca(command.text).latinise().lowerCase().value();
+  await Chores.addChore(command.team_id, formattedName);
+
+  await say(`${voca.titleCase(formattedName)} added to the chores list :star-struck:`);
 });
 
-// Chores flow
+app.command('/chores-del', async ({ ack, command, say }) => {
+  await ack();
 
-app.shortcut('chores-list', async ({ ack, shortcut }) => {
+  const formattedName = voca(command.text).latinise().lowerCase().value();
+  await Chores.deleteChore(command.team_id, formattedName);
+
+  await say(`${voca.titleCase(formattedName)} deleted from the chores list :sob:`);
+});
+
+app.command('/chores-list', async ({ ack, command, say }) => {
+  await ack();
+
+  const chores = await Chores.getChores(command.team_id);
+  const choreNames = chores.map((chore) => `\n${chore.name}`);
+
+  await say(`The current chores:${choreNames}`);
+});
+
+// Claim flow
+
+app.action('chores-claim', async ({ ack, body, action }) => {
   await ack();
 
   const choreValues = [];
   const currentTime = new Date();
-  const chores = await Chores.getChores();
+  const chores = await Chores.getChores(body.team.id);
 
   for (const chore of chores) {
-    const choreValue = await Chores.getCurrentChoreValue(chore.name, currentTime);
-    choreValues.push({ name: chore.name, value: parseInt(choreValue.sum || 0) });
+    const choreValue = await Chores.getCurrentChoreValue(chore.id, currentTime);
+    choreValues.push(choreValue);
   }
 
   const view = {
     token: process.env.SLACK_BOT_TOKEN,
-    trigger_id: shortcut.trigger_id,
+    trigger_id: action.trigger_id,
     view: blocks.choresListView(choreValues)
   };
 
@@ -62,7 +93,7 @@ app.shortcut('chores-list', async ({ ack, shortcut }) => {
   console.log(`Chores listed with id ${res.view.id}`);
 });
 
-app.view('chores-list-callback', async ({ ack, body }) => {
+app.view('chores-claim-callback', async ({ ack, body }) => {
   await ack();
 
   // // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
@@ -70,7 +101,7 @@ app.view('chores-list-callback', async ({ ack, body }) => {
   const blockId = body.view.blocks[0].block_id;
   const [ choreName, choreValue ] = body.view.state.values[blockId].options.selected_option.value.split('.');
 
-  await Residents.addResident(residentId);
+  await Admin.addResident(residentId);
 
   const message = {
     token: process.env.SLACK_BOT_TOKEN,

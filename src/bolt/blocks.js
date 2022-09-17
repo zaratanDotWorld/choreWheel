@@ -1,20 +1,54 @@
+const voca = require('voca');
 
 // Chores Views
 
-exports.choresListView = function (choreValues) {
-  const mappedChoreValues = choreValues.map((choreClaim) => {
+exports.choresHomeView = function (balance) {
+  return {
+    type: 'home',
+    blocks: [
+      {
+        type: 'section',
+        text: { type: 'mrkdwn', text: 'Welcome to Chores! :gloves:' }
+      },
+      {
+        type: 'section',
+        text: { type: 'mrkdwn', text: `You've earned ${balance} points so far this month :muscle:` }
+      },
+      {
+        type: 'actions',
+        elements: [
+          {
+            type: 'button',
+            action_id: 'chores-claim',
+            text: { type: 'plain_text', text: 'Claim a chore', emoji: true }
+          },
+          {
+            type: 'button',
+            action_id: 'chores-pref',
+            text: { type: 'plain_text', text: 'Set chore priorities', emoji: true }
+          }
+        ]
+      }
+    ]
+  };
+};
+
+exports.choresListView = function (chores) {
+  const mappedChoreValues = chores.map((chore) => {
+    const choreName = voca.toTitleCase(chore.name);
+    const choreValue = parseInt(chore.sum || 0);
     return {
-      value: `${choreClaim.name}.${choreClaim.value}`,
-      text: { type: 'plain_text', text: choreClaim.name, emoji: true },
-      description: { type: 'plain_text', text: `${choreClaim.value} points` }
+      value: `${chore.id}.${choreValue}`,
+      text: { type: 'plain_text', text: choreName, emoji: true },
+      description: { type: 'plain_text', text: `${choreValue} points` }
     };
   });
 
   return {
     type: 'modal',
-    callback_id: 'chores-list-callback',
+    callback_id: 'chores-claim-callback',
     title: { type: 'plain_text', text: 'Chores', emoji: true },
-    submit: { type: 'plain_text', text: 'Submit', emoji: true },
+    submit: { type: 'plain_text', text: 'Claim', emoji: true },
     close: { type: 'plain_text', text: 'Cancel', emoji: true },
     blocks: [
       {

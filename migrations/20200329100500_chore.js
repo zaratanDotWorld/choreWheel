@@ -4,6 +4,7 @@ exports.up = function(knex, Promise) {
         t.timestamps(useTimestamps = true, defaultToNow = true);
         t.string('house_id').references('house.slack_id').notNull();
         t.string('name').notNull();
+        t.boolean('active').notNull().defaultTo(true);
         t.unique(['house_id', 'name']);
     });
 };
