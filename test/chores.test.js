@@ -36,7 +36,7 @@ describe('Chores', async () => {
     await db('resident').del();
     await db('house').del();
 
-    await Admin.addHouse('Sage', HOUSE);
+    await Admin.addHouse(HOUSE);
     await Admin.addResident(HOUSE, RESIDENT1);
     await Admin.addResident(HOUSE, RESIDENT2);
     await Admin.addResident(HOUSE, RESIDENT3);
@@ -56,7 +56,7 @@ describe('Chores', async () => {
     await db('poll').del();
   });
 
-  describe('managing chore values', async () => {
+  describe('managing chore preferences', async () => {
     it('can list the existing chores', async () => {
       const allChores = await Chores.getChores(HOUSE);
 
@@ -99,6 +99,46 @@ describe('Chores', async () => {
       expect(preferences[0].preference).to.equal(0);
     });
 
+    it('can query for active chore preferences', async () => {
+      await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.0);
+      await Chores.setChorePreference(HOUSE, RESIDENT2, dishes.id, restock.id, 0.5);
+      await Chores.setChorePreference(HOUSE, RESIDENT3, sweeping.id, restock.id, 1.0);
+
+      let preferences;
+      preferences = await Chores.getActiveChorePreferences(HOUSE);
+      expect(preferences.length).to.eq.BN(3);
+
+      // Remove the third preference
+      await Admin.deleteResident(RESIDENT3);
+      await sleep(1);
+
+      preferences = await Chores.getActiveChorePreferences(HOUSE);
+      expect(preferences.length).to.eq.BN(2);
+
+      // Restore the third preference
+      await Admin.addResident(HOUSE, RESIDENT3);
+      await sleep(1);
+
+      preferences = await Chores.getActiveChorePreferences(HOUSE);
+      expect(preferences.length).to.eq.BN(3);
+
+      // Remove the last two preferences
+      await Chores.deleteChore(HOUSE, restock.name);
+      await sleep(1);
+
+      preferences = await Chores.getActiveChorePreferences(HOUSE);
+      expect(preferences.length).to.eq.BN(1);
+
+      // Restore the last two preferences
+      await Chores.addChore(HOUSE, restock.name);
+      await sleep(1);
+
+      preferences = await Chores.getActiveChorePreferences(HOUSE);
+      expect(preferences.length).to.eq.BN(3);
+    });
+  });
+
+  describe('managing chore values', async () => {
     it('can return uniform preferences implicitly', async () => {
       const chores = await Chores.getChores(HOUSE);
 

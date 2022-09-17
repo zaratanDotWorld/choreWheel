@@ -26,7 +26,7 @@ describe('Polls', async () => {
     await db('resident').del();
     await db('house').del();
 
-    await Admin.addHouse('Sage', HOUSE);
+    await Admin.addHouse(HOUSE);
     await Admin.addResident(HOUSE, RESIDENT1);
     await Admin.addResident(HOUSE, RESIDENT2);
     await Admin.addResident(HOUSE, RESIDENT3);

@@ -4,16 +4,16 @@ const Polls = require('./polls');
 
 // Chores
 
-exports.addChore = async function (houseId, choreName) {
+exports.addChore = async function (houseId, name) {
   return db('chore')
-    .insert({ house_id: houseId, name: choreName, active: true })
+    .insert({ house_id: houseId, name: name, active: true })
     .onConflict([ 'house_id', 'name' ]).merge()
-    .returning('id');
+    .returning('*');
 };
 
-exports.deleteChore = async function (houseId, choreName) {
+exports.deleteChore = async function (houseId, name) {
   return db('chore')
-    .where({ house_id: houseId, name: choreName })
+    .where({ house_id: houseId, name: name })
     .update({ active: false });
 };
 
@@ -32,16 +32,28 @@ exports.getChorePreferences = async function (houseId) {
     .select('alpha_chore_id', 'beta_chore_id', 'preference');
 };
 
+exports.getActiveChorePreferences = async function (houseId) {
+  return db('chore_pref')
+    .join('chore AS alpha_chore', 'chore_pref.alpha_chore_id', 'alpha_chore.id')
+    .join('chore AS beta_chore', 'chore_pref.beta_chore_id', 'beta_chore.id')
+    .join('resident', 'chore_pref.resident_id', 'resident.slack_id')
+    .where('chore_pref.house_id', houseId)
+    .where('resident.active', true)
+    .where('alpha_chore.active', true)
+    .where('beta_chore.active', true)
+    .select('alpha_chore_id', 'beta_chore_id', 'preference');
+};
+
 exports.setChorePreference = async function (houseId, slackId, alphaChoreId, betaChoreId, preference) {
   return db('chore_pref')
     .insert({
       house_id: houseId,
-      preferred_by: slackId,
+      resident_id: slackId,
       alpha_chore_id: alphaChoreId,
       beta_chore_id: betaChoreId,
       preference: preference
     })
-    .onConflict([ 'house_id', 'preferred_by', 'alpha_chore_id', 'beta_chore_id' ]).merge();
+    .onConflict([ 'house_id', 'resident_id', 'alpha_chore_id', 'beta_chore_id' ]).merge();
 };
 
 exports.formatPreferencesForRanking = function (preferences) {
@@ -61,11 +73,23 @@ exports.getChoreValue = async function (choreId, startTime, endTime) {
     .first();
 };
 
-exports.getCurrentChoreValue = async function (choreId, claimedAt) {
+exports.getCurrentChoreValue = async function (choreId, currentTime) {
   const previousClaims = await exports.getValidChoreClaims(choreId);
-  const filteredClaims = previousClaims.filter((claim) => claim.claimed_at < claimedAt);
+  const filteredClaims = previousClaims.filter((claim) => claim.claimed_at < currentTime);
   const previousClaimedAt = (filteredClaims.length === 0) ? new Date(0) : filteredClaims.slice(-1)[0].claimed_at;
-  return exports.getChoreValue(choreId, previousClaimedAt, claimedAt);
+  return exports.getChoreValue(choreId, previousClaimedAt, currentTime);
+};
+
+exports.getCurrentChoreValues = async function (houseId, currentTime) {
+  const choreValues = [];
+  const chores = await exports.getChores(houseId);
+
+  for (const chore of chores) {
+    const choreValue = await exports.getCurrentChoreValue(chore.id, currentTime);
+    choreValues.push({ id: chore.id, name: chore.name, value: parseInt(choreValue.sum || 0) });
+  }
+
+  return choreValues;
 };
 
 exports.setChoreValues = async function (choreData) {

@@ -2,12 +2,8 @@ const voca = require('voca');
 
 // Chores Views
 
-exports.displayString = function (text) {
-  return voca.titleCase(text);
-};
-
-exports.storeString = function (text) {
-  return voca(text).latinise().lowerCase().value();
+exports.formatChoreName = function (text) {
+  return voca(text).latinise().titleCase().value();
 };
 
 exports.choresHomeView = function (balance) {
@@ -56,11 +52,10 @@ exports.choresHomeView = function (balance) {
 
 exports.choresListView = function (chores) {
   const mappedChoreValues = chores.map((chore) => {
-    const choreName = exports.displayString(chore.name);
     const choreValue = parseInt(chore.sum || 0);
     return {
       value: `${chore.id}.${choreValue}`,
-      text: { type: 'plain_text', text: choreName, emoji: true },
+      text: { type: 'plain_text', text: chore.name, emoji: true },
       description: { type: 'plain_text', text: `${choreValue} points` }
     };
   });

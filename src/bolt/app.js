@@ -42,17 +42,15 @@ app.event('app_home_opened', async ({ payload }) => {
 app.command('/chores-add', async ({ ack, command, say }) => {
   await ack();
 
-  const storedName = blocks.storeString(command.text);
-  const displayName = blocks.displayString(storedName);
-
   const userInfo = await app.client.users.info({
     token: process.env.SLACK_BOT_TOKEN,
     user: command.user_id
   });
 
   if (userInfo.user.is_admin) {
-    await Chores.addChore(command.team_id, storedName);
-    await say(`${displayName} added to the chores list :star-struck:`);
+    const choreName = blocks.formatChoreName(command.text);
+    await Chores.addChore(command.team_id, choreName);
+    await say(`${choreName} added to the chores list :star-struck:`);
   } else {
     await say('Only admins can update the chore list...');
   }
@@ -61,17 +59,15 @@ app.command('/chores-add', async ({ ack, command, say }) => {
 app.command('/chores-del', async ({ ack, command, say }) => {
   await ack();
 
-  const storedName = blocks.storeString(command.text);
-  const displayName = blocks.displayString(storedName);
-
   const userInfo = await app.client.users.info({
     token: process.env.SLACK_BOT_TOKEN,
     user: command.user_id
   });
 
   if (userInfo.user.is_admin) {
-    await Chores.deleteChore(command.team_id, storedName);
-    await say(`${displayName} deleted from the chores list :sob:`);
+    const choreName = blocks.formatChoreName(command.text);
+    await Chores.deleteChore(command.team_id, choreName);
+    await say(`${choreName} deleted from the chores list :sob:`);
   } else {
     await say('Only admins can update the chore list...');
   }
@@ -91,18 +87,11 @@ app.command('/chores-list', async ({ ack, command, say }) => {
 app.action('chores-claim', async ({ ack, body, action }) => {
   await ack();
 
-  const choreValues = [];
-  const currentTime = new Date();
-  const chores = await Chores.getChores(body.team.id);
-
-  for (const chore of chores) {
-    const choreValue = await Chores.getCurrentChoreValue(chore.id, currentTime);
-    choreValues.push(choreValue);
-  }
+  const choreValues = await Chores.getCurrentChoreValues(body.team.id, new Date());
 
   const view = {
     token: process.env.SLACK_BOT_TOKEN,
-    trigger_id: action.trigger_id,
+    trigger_id: body.trigger_id,
     view: blocks.choresListView(choreValues)
   };
 
