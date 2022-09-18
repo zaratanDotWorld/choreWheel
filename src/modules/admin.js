@@ -7,6 +7,11 @@ exports.addHouse = async function (houseId, name) {
     .returning('*');
 };
 
+exports.getHouses = async function () {
+  return db('house')
+    .select('*');
+};
+
 exports.addResident = async function (houseId, slackId, name) {
   return db('resident')
     .insert({ name: name, house_id: houseId, slack_id: slackId, active: true })
@@ -23,5 +28,6 @@ exports.deleteResident = async function (slackId) {
 exports.getResidents = async function (houseId) {
   return db('resident')
     .select('*')
-    .where('house_id', houseId);
+    .where('house_id', houseId)
+    .where('active', true);
 };
