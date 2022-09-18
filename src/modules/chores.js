@@ -1,6 +1,9 @@
 const { db } = require('../db');
 
+const Admin = require('./admin');
 const Polls = require('./polls');
+
+const { PowerRanker } = require('./power');
 
 // Chores
 
@@ -90,6 +93,16 @@ exports.getCurrentChoreValues = async function (houseId, currentTime) {
   }
 
   return choreValues;
+};
+
+exports.getCurrentChoreRankings = async function (houseId) {
+  const chores = await exports.getChores(houseId);
+  const preferences = await exports.getActiveChorePreferences(houseId);
+  const residents = await Admin.getResidents(houseId);
+
+  const formattedPreferences = exports.formatPreferencesForRanking(preferences);
+  const powerRanker = new PowerRanker(chores, formattedPreferences, residents.length);
+  return powerRanker.run(d = 0.8); // eslint-disable-line no-undef
 };
 
 exports.setChoreValues = async function (choreData) {

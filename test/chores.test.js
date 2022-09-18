@@ -15,8 +15,6 @@ const Chores = require('../src/modules/chores');
 const Polls = require('../src/modules/polls');
 const Admin = require('../src/modules/admin');
 
-const { PowerRanker } = require('../src/modules/power');
-
 describe('Chores', async () => {
   const HOUSE = 'house123';
 
@@ -37,10 +35,6 @@ describe('Chores', async () => {
     await db('house').del();
 
     await Admin.addHouse(HOUSE);
-    await Admin.addResident(HOUSE, RESIDENT1);
-    await Admin.addResident(HOUSE, RESIDENT2);
-    await Admin.addResident(HOUSE, RESIDENT3);
-    await Admin.addResident(HOUSE, RESIDENT4);
 
     await db('chore').del();
     [ dishes ] = await Chores.addChore(HOUSE, 'dishes');
@@ -54,9 +48,15 @@ describe('Chores', async () => {
     await db('chore_pref').del();
     await db('poll_vote').del();
     await db('poll').del();
+    await db('resident').del();
   });
 
   describe('managing chore preferences', async () => {
+    beforeEach(async () => {
+      await Admin.addResident(HOUSE, RESIDENT1);
+      await Admin.addResident(HOUSE, RESIDENT2);
+    });
+
     it('can list the existing chores', async () => {
       const allChores = await Chores.getChores(HOUSE);
 
@@ -100,6 +100,9 @@ describe('Chores', async () => {
     });
 
     it('can query for active chore preferences', async () => {
+      await Admin.addResident(HOUSE, RESIDENT3);
+      await sleep(1);
+
       await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.0);
       await Chores.setChorePreference(HOUSE, RESIDENT2, dishes.id, restock.id, 0.5);
       await Chores.setChorePreference(HOUSE, RESIDENT3, sweeping.id, restock.id, 1.0);
@@ -139,12 +142,13 @@ describe('Chores', async () => {
   });
 
   describe('managing chore values', async () => {
-    it('can return uniform preferences implicitly', async () => {
-      const chores = await Chores.getChores(HOUSE);
+    beforeEach(async () => {
+      await Admin.addResident(HOUSE, RESIDENT1);
+      await Admin.addResident(HOUSE, RESIDENT2);
+    });
 
-      const residents = await Admin.getResidents(HOUSE);
-      const powerRanker = new PowerRanker(chores, [], residents.length);
-      const labeledWeights = powerRanker.run(d = 0.8); // eslint-disable-line no-undef
+    it('can return uniform preferences implicitly', async () => {
+      const labeledWeights = await Chores.getCurrentChoreRankings(HOUSE);
 
       expect(labeledWeights.get(dishes.id)).to.equal(0.3333333333333333);
       expect(labeledWeights.get(sweeping.id)).to.equal(0.3333333333333333);
@@ -156,12 +160,7 @@ describe('Chores', async () => {
       await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
       await Chores.setChorePreference(HOUSE, RESIDENT2, sweeping.id, restock.id, 1);
 
-      const chores = await Chores.getChores(HOUSE);
-      const preferences = await Chores.getChorePreferences(HOUSE);
-      const parsedPreferences = Chores.formatPreferencesForRanking(preferences);
-
-      const powerRanker = new PowerRanker(chores, parsedPreferences, 2);
-      const labeledWeights = powerRanker.run(d = 0.8); // eslint-disable-line no-undef
+      const labeledWeights = await Chores.getCurrentChoreRankings(HOUSE);
 
       expect(labeledWeights.get(dishes.id)).to.equal(0.42564666666666673);
       expect(labeledWeights.get(sweeping.id)).to.equal(0.31288000000000005);
@@ -173,12 +172,7 @@ describe('Chores', async () => {
       await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.7);
       await Chores.setChorePreference(HOUSE, RESIDENT2, sweeping.id, restock.id, 0.7);
 
-      const chores = await Chores.getChores(HOUSE);
-      const preferences = await Chores.getChorePreferences(HOUSE);
-      const parsedPreferences = Chores.formatPreferencesForRanking(preferences);
-
-      const powerRanker = new PowerRanker(chores, parsedPreferences, 2);
-      const labeledWeights = powerRanker.run(d = 0.8); // eslint-disable-line no-undef
+      const labeledWeights = await Chores.getCurrentChoreRankings(HOUSE);
 
       expect(labeledWeights.get(dishes.id)).to.equal(0.36816469333333335);
       expect(labeledWeights.get(sweeping.id)).to.equal(0.33009407999999996);
@@ -190,12 +184,7 @@ describe('Chores', async () => {
       await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
       await Chores.setChorePreference(HOUSE, RESIDENT2, sweeping.id, restock.id, 0);
 
-      const chores = await Chores.getChores(HOUSE);
-      const preferences = await Chores.getChorePreferences(HOUSE);
-      const parsedPreferences = Chores.formatPreferencesForRanking(preferences);
-
-      const powerRanker = new PowerRanker(chores, parsedPreferences, 2);
-      const labeledWeights = powerRanker.run(d = 0.8); // eslint-disable-line no-undef
+      const labeledWeights = await Chores.getCurrentChoreRankings(HOUSE);
 
       expect(labeledWeights.get(dishes.id)).to.equal(0.40740000000000004);
       expect(labeledWeights.get(sweeping.id)).to.equal(0.1852);
@@ -204,6 +193,13 @@ describe('Chores', async () => {
   });
 
   describe('claiming chores', async () => {
+    beforeEach(async () => {
+      await Admin.addResident(HOUSE, RESIDENT1);
+      await Admin.addResident(HOUSE, RESIDENT2);
+      await Admin.addResident(HOUSE, RESIDENT3);
+      await Admin.addResident(HOUSE, RESIDENT4);
+    });
+
     it('can claim a chore', async () => {
       await Chores.setChoreValues([
         { chore_id: dishes.id, value: 10 },
