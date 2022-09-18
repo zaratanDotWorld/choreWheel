@@ -6,7 +6,7 @@ const Chores = require('../modules/chores');
 const Polls = require('../modules/polls');
 const Admin = require('../modules/admin');
 
-const { choresPollLength } = require('../config');
+const { choresPollLength, pointsPerResident } = require('../config');
 const { YAY } = require('../constants');
 const { sleep } = require('../utils');
 
@@ -87,6 +87,9 @@ app.command('/chores-list', async ({ ack, command, say }) => {
 app.action('chores-claim', async ({ ack, body, action }) => {
   await ack();
 
+  // Update the chore values
+  await Chores.updateChoreValues(body.team.id, new Date(), pointsPerResident);
+
   const choreValues = await Chores.getCurrentChoreValues(body.team.id, new Date());
 
   const view = {
@@ -121,7 +124,7 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
 
   console.log(`Message posted as ${messageId}`);
 
-  const [ claim ] = await Chores.claimChore(choreName, residentId, messageId, choresPollLength);
+  const [ claim ] = await Chores.claimChore(choreName, residentId, new Date(), messageId, choresPollLength);
   await Polls.submitVote(claim.poll_id, residentId, YAY);
 
   console.log(`Claim ${claim.id} created with poll ${claim.poll_id}`);

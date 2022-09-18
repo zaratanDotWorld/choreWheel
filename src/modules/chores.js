@@ -5,6 +5,8 @@ const Polls = require('./polls');
 
 const { PowerRanker } = require('./power');
 
+const { HOUR } = require('../constants');
+
 // Chores
 
 exports.addChore = async function (houseId, name) {
@@ -111,11 +113,16 @@ exports.getChoreValueScalar = async function (houseId, updateInterval, pointsPer
 };
 
 exports.getChoreValueIntervalScalar = async function (houseId, currentTime) {
-  const lastUpdate = await exports.getLastChoreValueUpdate(houseId);
-  const hoursSinceUpdate = Math.floor((currentTime - lastUpdate.valued_at) / (60 * 60 * 1000)); // In hours
+  const lastChoreValue = await exports.getLastChoreValueUpdate(houseId);
+  const lastUpdate = (lastChoreValue !== undefined)
+    ? lastChoreValue.valued_at
+    : new Date(currentTime.getTime() - HOUR); // First update assigns an hour of value
 
+  const hoursSinceUpdate = Math.floor((currentTime - lastUpdate) / HOUR);
   const daysInMonth = new Date(currentTime.getFullYear(), currentTime.getMonth() + 1, 0).getDate();
-  const hoursInMonth = daysInMonth * 24; // In hours
+  const hoursInMonth = 24 * daysInMonth;
+
+  // TODO: handle scenario where interval spans 2 months
 
   return (hoursSinceUpdate / hoursInMonth);
 };
@@ -129,10 +136,25 @@ exports.getLastChoreValueUpdate = async function (houseId) {
     .first();
 };
 
-exports.setChoreValues = async function (choreData, scalar = 1) {
-  choreData.forEach(c => c.value *= scalar); // eslint-disable-line no-return-assign
+exports.updateChoreValues = async function (houseId, updateTime, pointsPerResident) {
+  const intervalScalar = await exports.getChoreValueIntervalScalar(houseId, updateTime);
+
+  // If we've updated in the last interval, short-circuit execution
+  if (intervalScalar === 0) { return Promise.resolve(); }
+
+  const residents = await Admin.getResidents(houseId);
+  const chores = await exports.getChores(houseId);
+  const choreRankings = await exports.getCurrentChoreRankings(houseId);
+  const updateScalar = (residents.length * pointsPerResident) * intervalScalar;
+
+  const choreValues = chores.map(chore => {
+    const value = choreRankings.get(chore.id) * updateScalar;
+    return { chore_id: chore.id, valued_at: updateTime, value: value };
+  });
+
   return db('chore_value')
-    .insert(choreData);
+    .insert(choreValues)
+    .returning('*');
 };
 
 // Chore Claims
@@ -158,10 +180,8 @@ exports.getValidChoreClaims = async function (choreId) {
     .andWhere({ chore_id: choreId });
 };
 
-exports.claimChore = async function (choreId, slackId, messageId, duration) {
+exports.claimChore = async function (choreId, slackId, claimedAt, messageId, duration) {
   const [ poll ] = await Polls.createPoll(duration);
-
-  const claimedAt = new Date();
   const choreValue = await exports.getCurrentChoreValue(choreId, claimedAt);
 
   return db('chore_claim')
