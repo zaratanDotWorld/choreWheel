@@ -3,7 +3,8 @@ exports.up = function(knex, Promise) {
         t.increments('id').unsigned().primary();
         t.timestamps(useTimestamps = true, defaultToNow = true);
         t.integer('chore_id').references('chore.id').notNull();
-        t.integer('value');
+        t.timestamp('valued_at').notNull();
+        t.float('value').notNull();
     });
 };
 

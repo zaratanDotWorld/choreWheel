@@ -65,9 +65,9 @@ describe('Chores', async () => {
 
     it('can set and query for the latest chore values', async () => {
       await Chores.setChoreValues([
-        { chore_id: dishes.id, value: 10 },
-        { chore_id: dishes.id, value: 5 },
-        { chore_id: sweeping.id, value: 20 }
+        { chore_id: dishes.id, valued_at: new Date(), value: 10 },
+        { chore_id: dishes.id, valued_at: new Date(), value: 5 },
+        { chore_id: sweeping.id, valued_at: new Date(), value: 20 }
       ]);
 
       const now = new Date();
@@ -190,6 +190,43 @@ describe('Chores', async () => {
       expect(labeledWeights.get(sweeping.id)).to.equal(0.1852);
       expect(labeledWeights.get(restock.id)).to.equal(0.4074);
     });
+
+    it('can calculate the interval since the last chore valuation', async () => {
+      const firstValuationTime = new Date(2000, 0, 1); // January 1
+      const secondValuationTime = new Date(2000, 0, 2); // January 2
+
+      await Chores.setChoreValues([
+        { chore_id: dishes.id, valued_at: firstValuationTime, value: 10 },
+        { chore_id: dishes.id, valued_at: secondValuationTime, value: 10 }
+      ]);
+
+      const queryTime = new Date(secondValuationTime.getTime() + 60 * 60 * 1000); // 1 hour
+      const intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, queryTime);
+      expect(intervalScalar).to.equal(0.0013440860215053765);
+    });
+
+    it('can calculate the interval on an hourly basis', async () => {
+      const valuationTime = new Date(2000, 0, 1);
+
+      await Chores.setChoreValues([
+        { chore_id: dishes.id, valued_at: valuationTime, value: 10 }
+      ]);
+
+      let queryTime;
+      let intervalScalar;
+
+      queryTime = new Date(valuationTime.getTime() + (60 + 10) * 60 * 1000); // 1 hour, 10 minutes
+      intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, queryTime);
+      expect(intervalScalar).to.equal(0.0013440860215053765);
+
+      queryTime = new Date(valuationTime.getTime() + (60 + 45) * 60 * 1000); // 1 hour, 45 minutes
+      intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, queryTime);
+      expect(intervalScalar).to.equal(0.0013440860215053765);
+
+      queryTime = new Date(valuationTime.getTime() + (60 + 60) * 60 * 1000); // 2 hours
+      intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, queryTime);
+      expect(intervalScalar).to.equal(0.002688172043010753);
+    });
   });
 
   describe('claiming chores', async () => {
@@ -202,8 +239,8 @@ describe('Chores', async () => {
 
     it('can claim a chore', async () => {
       await Chores.setChoreValues([
-        { chore_id: dishes.id, value: 10 },
-        { chore_id: dishes.id, value: 5 }
+        { chore_id: dishes.id, valued_at: new Date(), value: 10 },
+        { chore_id: dishes.id, valued_at: new Date(), value: 5 }
       ]);
       await sleep(1);
 
@@ -216,7 +253,7 @@ describe('Chores', async () => {
     });
 
     it('can get a chore claim by messageId', async () => {
-      await Chores.setChoreValues([ { chore_id: dishes.id, value: 10 } ]);
+      await Chores.setChoreValues([ { chore_id: dishes.id, valued_at: new Date(), value: 10 } ]);
       await sleep(1);
 
       const messageId = 'xyz';
@@ -231,15 +268,15 @@ describe('Chores', async () => {
 
     it('can claim a chore incrementally', async () => {
       // Two separate events
-      await Chores.setChoreValues([ { chore_id: dishes.id, value: 10 } ]);
+      await Chores.setChoreValues([ { chore_id: dishes.id, valued_at: new Date(), value: 10 } ]);
       await sleep(1);
-      await Chores.setChoreValues([ { chore_id: dishes.id, value: 5 } ]);
+      await Chores.setChoreValues([ { chore_id: dishes.id, valued_at: new Date(), value: 5 } ]);
       await sleep(1);
 
       await Chores.claimChore(dishes.id, RESIDENT1, '', POLL_LENGTH);
       await sleep(1);
 
-      await Chores.setChoreValues([ { chore_id: dishes.id, value: 20 } ]);
+      await Chores.setChoreValues([ { chore_id: dishes.id, valued_at: new Date(), value: 20 } ]);
       await sleep(1);
 
       await Chores.claimChore(dishes.id, RESIDENT2, '', POLL_LENGTH);
@@ -253,7 +290,7 @@ describe('Chores', async () => {
     });
 
     it('can successfully resolve a claim', async () => {
-      await Chores.setChoreValues([ { chore_id: dishes.id, value: 10 } ]);
+      await Chores.setChoreValues([ { chore_id: dishes.id, valued_at: new Date(), value: 10 } ]);
       await sleep(1);
 
       const [ choreClaim ] = await Chores.claimChore(dishes.id, RESIDENT1, '', POLL_LENGTH);
@@ -270,7 +307,7 @@ describe('Chores', async () => {
     });
 
     it('cannot resolve a claim before the poll closes ', async () => {
-      await Chores.setChoreValues([ { chore_id: dishes.id, value: 10 } ]);
+      await Chores.setChoreValues([ { chore_id: dishes.id, valued_at: new Date(), value: 10 } ]);
       await sleep(1);
 
       const [ choreClaim ] = await Chores.claimChore(dishes.id, RESIDENT1, '', POLL_LENGTH);
@@ -281,7 +318,7 @@ describe('Chores', async () => {
     });
 
     it('cannot resolve a claim twice', async () => {
-      await Chores.setChoreValues([ { chore_id: dishes.id, value: 10 } ]);
+      await Chores.setChoreValues([ { chore_id: dishes.id, valued_at: new Date(), value: 10 } ]);
       await sleep(1);
 
       const [ choreClaim ] = await Chores.claimChore(dishes.id, RESIDENT1, '', POLL_LENGTH);
@@ -297,7 +334,7 @@ describe('Chores', async () => {
     });
 
     it('cannot successfully resolve a claim without two positive votes', async () => {
-      await Chores.setChoreValues([ { chore_id: dishes.id, value: 10 } ]);
+      await Chores.setChoreValues([ { chore_id: dishes.id, valued_at: new Date(), value: 10 } ]);
       await sleep(1);
 
       const [ choreClaim ] = await Chores.claimChore(dishes.id, RESIDENT1, '', POLL_LENGTH);
@@ -312,7 +349,7 @@ describe('Chores', async () => {
     });
 
     it('cannot successfully resolve a claim without a passing vote', async () => {
-      await Chores.setChoreValues([ { chore_id: dishes.id, value: 10 } ]);
+      await Chores.setChoreValues([ { chore_id: dishes.id, valued_at: new Date(), value: 10 } ]);
       await sleep(1);
 
       const [ choreClaim ] = await Chores.claimChore(dishes.id, RESIDENT1, '', POLL_LENGTH);
@@ -330,13 +367,13 @@ describe('Chores', async () => {
     });
 
     it('can claim the incremental value if a prior claim is approved', async () => {
-      await Chores.setChoreValues([ { chore_id: dishes.id, value: 10 } ]);
+      await Chores.setChoreValues([ { chore_id: dishes.id, valued_at: new Date(), value: 10 } ]);
       await sleep(1);
 
       const [ choreClaim1 ] = await Chores.claimChore(dishes.id, RESIDENT1, '', POLL_LENGTH);
       await sleep(1);
 
-      await Chores.setChoreValues([ { chore_id: dishes.id, value: 5 } ]);
+      await Chores.setChoreValues([ { chore_id: dishes.id, valued_at: new Date(), value: 5 } ]);
       await sleep(1);
 
       const [ choreClaim2 ] = await Chores.claimChore(dishes.id, RESIDENT2, '', POLL_LENGTH);
@@ -361,13 +398,13 @@ describe('Chores', async () => {
     });
 
     it('can claim the entire value if a prior claim is denied', async () => {
-      await Chores.setChoreValues([ { chore_id: dishes.id, value: 10 } ]);
+      await Chores.setChoreValues([ { chore_id: dishes.id, valued_at: new Date(), value: 10 } ]);
       await sleep(1);
 
       const [ choreClaim1 ] = await Chores.claimChore(dishes.id, RESIDENT1, '', POLL_LENGTH);
       await sleep(1);
 
-      await Chores.setChoreValues([ { chore_id: dishes.id, value: 5 } ]);
+      await Chores.setChoreValues([ { chore_id: dishes.id, valued_at: new Date(), value: 5 } ]);
       await sleep(1);
 
       const [ choreClaim2 ] = await Chores.claimChore(dishes.id, RESIDENT2, '', POLL_LENGTH);

@@ -105,7 +105,32 @@ exports.getCurrentChoreRankings = async function (houseId) {
   return powerRanker.run(d = 0.8); // eslint-disable-line no-undef
 };
 
-exports.setChoreValues = async function (choreData) {
+exports.getChoreValueScalar = async function (houseId, updateInterval, pointsPerResident) {
+  const residents = await Admin.getResidents(houseId);
+  return (residents.length * pointsPerResident) * updateInterval;
+};
+
+exports.getChoreValueIntervalScalar = async function (houseId, currentTime) {
+  const lastUpdate = await exports.getLastChoreValueUpdate(houseId);
+  const hoursSinceUpdate = Math.floor((currentTime - lastUpdate.valued_at) / (60 * 60 * 1000)); // In hours
+
+  const daysInMonth = new Date(currentTime.getFullYear(), currentTime.getMonth() + 1, 0).getDate();
+  const hoursInMonth = daysInMonth * 24; // In hours
+
+  return (hoursSinceUpdate / hoursInMonth);
+};
+
+exports.getLastChoreValueUpdate = async function (houseId) {
+  return db('chore_value')
+    .join('chore', 'chore_value.chore_id', 'chore.id')
+    .where('chore.house_id', houseId)
+    .orderBy('chore_value.valued_at', 'desc')
+    .select('chore_value.valued_at')
+    .first();
+};
+
+exports.setChoreValues = async function (choreData, scalar = 1) {
+  choreData.forEach(c => c.value *= scalar); // eslint-disable-line no-return-assign
   return db('chore_value')
     .insert(choreData);
 };

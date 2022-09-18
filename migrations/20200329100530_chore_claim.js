@@ -8,7 +8,7 @@ exports.up = function(knex, Promise) {
         t.timestamp('unreserved_at');
         t.string('claimed_by').references('resident.slack_id');
         t.timestamp('claimed_at');
-        t.integer('value');
+        t.float('value');
         t.string('message_id');
         t.integer('poll_id').references('poll.id');
         t.enu('result', ['unknown', 'fail', 'pass']).defaultTo('unknown');
