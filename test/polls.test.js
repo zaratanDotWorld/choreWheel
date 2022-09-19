@@ -1,10 +1,7 @@
 const { expect } = require('chai');
 const chai = require('chai');
-const BN = require('bn.js');
-const bnChai = require('bn-chai');
 const chaiAsPromised = require('chai-as-promised');
 
-chai.use(bnChai(BN));
 chai.use(chaiAsPromised);
 
 const { DAY, NAY, YAY, CANCEL } = require('../src/constants');
@@ -41,12 +38,12 @@ describe('Polls', async () => {
     it('can create a new poll', async () => {
       let pollCount;
       [ pollCount ] = await db('poll').count('*');
-      expect(pollCount.count).to.be.zero;
+      expect(parseInt(pollCount.count)).to.equal(0);
 
       await Polls.createPoll(DAY);
 
       [ pollCount ] = await db('poll').count('*');
-      expect(pollCount.count).to.eq.BN(1);
+      expect(parseInt(pollCount.count)).to.equal(1);
     });
 
     it('can vote in a poll', async () => {
@@ -55,7 +52,7 @@ describe('Polls', async () => {
       await Polls.submitVote(poll.id, RESIDENT1, new Date(), YAY);
 
       const votes = await Polls.getPollVotes(poll.id);
-      expect(votes.length).to.eq.BN(1);
+      expect(votes.length).to.equal(1);
       expect(votes[0].vote).to.be.true;
     });
 
@@ -69,13 +66,13 @@ describe('Polls', async () => {
       await Polls.submitVote(poll.id, RESIDENT1, new Date(), NAY);
 
       votes = await Polls.getPollVotes(poll.id);
-      expect(votes.length).to.eq.BN(1);
+      expect(votes.length).to.equal(1);
       expect(votes[0].vote).to.be.false;
 
       await Polls.submitVote(poll.id, RESIDENT1, new Date(), CANCEL);
 
       votes = await Polls.getPollVotes(poll.id);
-      expect(votes.length).to.eq.BN(1);
+      expect(votes.length).to.equal(1);
       expect(votes[0].vote).to.be.null;
     });
 
@@ -98,7 +95,7 @@ describe('Polls', async () => {
       await sleep(1);
 
       const results = await Polls.getPollResults(poll.id);
-      expect(results.length).to.eq.BN(3);
+      expect(results.length).to.equal(3);
     });
 
     it('can get the result of a vote', async () => {
@@ -111,8 +108,8 @@ describe('Polls', async () => {
       await sleep(1);
 
       const { yays, nays } = await Polls.getPollResultCounts(poll.id);
-      expect(yays).to.eq.BN(2);
-      expect(nays).to.eq.BN(1);
+      expect(yays).to.equal(2);
+      expect(nays).to.equal(1);
     });
   });
 });

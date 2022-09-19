@@ -1,10 +1,7 @@
 const { expect } = require('chai');
 const chai = require('chai');
-const BN = require('bn.js');
-const bnChai = require('bn-chai');
 const chaiAsPromised = require('chai-as-promised');
 
-chai.use(bnChai(BN));
 chai.use(chaiAsPromised);
 
 const { YAY, NAY } = require('../src/constants');
@@ -60,7 +57,7 @@ describe('Chores', async () => {
     it('can list the existing chores', async () => {
       const allChores = await Chores.getChores(HOUSE);
 
-      expect(allChores.length).to.eq.BN(3);
+      expect(allChores.length).to.equal(3);
     });
 
     it('can set and query for the latest chore values', async () => {
@@ -75,10 +72,10 @@ describe('Chores', async () => {
       const startTime = new Date(now.getTime() - 1000);
 
       const dishesValue = await Chores.getChoreValue(dishes.id, startTime, endTime);
-      expect(dishesValue.sum).to.eq.BN(15);
+      expect(dishesValue.sum).to.equal(15);
 
       const sweepingValue = await Chores.getChoreValue(sweeping.id, startTime, endTime);
-      expect(sweepingValue.sum).to.eq.BN(20);
+      expect(sweepingValue.sum).to.equal(20);
     });
 
     it('can set a chore preference', async () => {
@@ -95,7 +92,7 @@ describe('Chores', async () => {
       await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0);
 
       const preferences = await Chores.getChorePreferences(HOUSE);
-      expect(preferences.length).to.eq.BN(1);
+      expect(preferences.length).to.equal(1);
       expect(preferences[0].preference).to.equal(0);
     });
 
@@ -109,35 +106,35 @@ describe('Chores', async () => {
 
       let preferences;
       preferences = await Chores.getActiveChorePreferences(HOUSE);
-      expect(preferences.length).to.eq.BN(3);
+      expect(preferences.length).to.equal(3);
 
       // Remove the third preference
       await Admin.deleteResident(RESIDENT3);
       await sleep(1);
 
       preferences = await Chores.getActiveChorePreferences(HOUSE);
-      expect(preferences.length).to.eq.BN(2);
+      expect(preferences.length).to.equal(2);
 
       // Restore the third preference
       await Admin.addResident(HOUSE, RESIDENT3);
       await sleep(1);
 
       preferences = await Chores.getActiveChorePreferences(HOUSE);
-      expect(preferences.length).to.eq.BN(3);
+      expect(preferences.length).to.equal(3);
 
       // Remove the last two preferences
       await Chores.deleteChore(HOUSE, restock.name);
       await sleep(1);
 
       preferences = await Chores.getActiveChorePreferences(HOUSE);
-      expect(preferences.length).to.eq.BN(1);
+      expect(preferences.length).to.equal(1);
 
       // Restore the last two preferences
       await Chores.addChore(HOUSE, restock.name);
       await sleep(1);
 
       preferences = await Chores.getActiveChorePreferences(HOUSE);
-      expect(preferences.length).to.eq.BN(3);
+      expect(preferences.length).to.equal(3);
     });
   });
 
@@ -240,13 +237,13 @@ describe('Chores', async () => {
 
       const intervalScalar1 = await Chores.getChoreValueIntervalScalar(HOUSE, updateTime1);
       const choreValues1 = await Chores.updateChoreValues(HOUSE, updateTime1, pointsPerResident);
-      expect(choreValues1.length).to.eq.BN(3);
+      expect(choreValues1.length).to.equal(3);
 
       await sleep(1);
 
       const intervalScalar2 = await Chores.getChoreValueIntervalScalar(HOUSE, updateTime2);
       const choreValues2 = await Chores.updateChoreValues(HOUSE, updateTime2, pointsPerResident);
-      expect(choreValues2.length).to.eq.BN(3);
+      expect(choreValues2.length).to.equal(3);
 
       expect(intervalScalar1 * 11).to.equal(intervalScalar2); // 1 hour vs 11 hours
       expect(intervalScalar1 + intervalScalar2).to.equal(1 / 60); // 12 hours = 1/60th of the monthly allocation
@@ -277,7 +274,7 @@ describe('Chores', async () => {
 
       const choreClaims = await Chores.getValidChoreClaims(dishes.id);
       expect(choreClaims[0].claimed_by).to.equal(RESIDENT1);
-      expect(choreClaims[0].value).to.eq.BN(15);
+      expect(choreClaims[0].value).to.equal(15);
     });
 
     it('can get a chore claim by messageId', async () => {
@@ -291,7 +288,7 @@ describe('Chores', async () => {
 
       const choreClaim = await Chores.getChoreClaimByMessageId(messageId);
       expect(choreClaim.claimed_by).to.equal(RESIDENT1);
-      expect(choreClaim.value).to.eq.BN(10);
+      expect(choreClaim.value).to.equal(10);
     });
 
     it('can claim a chore incrementally', async () => {
@@ -312,9 +309,9 @@ describe('Chores', async () => {
 
       const choreClaims = await Chores.getValidChoreClaims(dishes.id);
       expect(choreClaims[0].claimed_by).to.equal(RESIDENT1);
-      expect(choreClaims[0].value).to.eq.BN(15);
+      expect(choreClaims[0].value).to.equal(15);
       expect(choreClaims[1].claimed_by).to.equal(RESIDENT2);
-      expect(choreClaims[1].value).to.eq.BN(20);
+      expect(choreClaims[1].value).to.equal(20);
     });
 
     it('can successfully resolve a claim', async () => {
@@ -331,7 +328,7 @@ describe('Chores', async () => {
 
       const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, new Date());
       expect(resolvedClaim.valid).to.be.true;
-      expect(resolvedClaim.value).to.eq.BN(10);
+      expect(resolvedClaim.value).to.equal(10);
     });
 
     it('cannot resolve a claim before the poll closes ', async () => {
@@ -418,11 +415,11 @@ describe('Chores', async () => {
 
       const [ resolvedClaim1 ] = await Chores.resolveChoreClaim(choreClaim1.id, new Date());
       expect(resolvedClaim1.valid).to.be.true;
-      expect(resolvedClaim1.value).to.eq.BN(10);
+      expect(resolvedClaim1.value).to.equal(10);
 
       const [ resolvedClaim2 ] = await Chores.resolveChoreClaim(choreClaim2.id, new Date());
       expect(resolvedClaim2.valid).to.be.true;
-      expect(resolvedClaim2.value).to.eq.BN(5);
+      expect(resolvedClaim2.value).to.equal(5);
     });
 
     it('can claim the entire value if a prior claim is denied', async () => {
@@ -450,11 +447,11 @@ describe('Chores', async () => {
 
       const [ resolvedClaim1 ] = await Chores.resolveChoreClaim(choreClaim1.id, new Date());
       expect(resolvedClaim1.valid).to.be.false;
-      expect(resolvedClaim1.value).to.be.zero;
+      expect(resolvedClaim1.value).to.equal(0);
 
       const [ resolvedClaim2 ] = await Chores.resolveChoreClaim(choreClaim2.id, new Date());
       expect(resolvedClaim2.valid).to.be.true;
-      expect(resolvedClaim2.value).to.eq.BN(15);
+      expect(resolvedClaim2.value).to.equal(15);
     });
   });
 });

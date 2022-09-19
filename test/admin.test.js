@@ -1,10 +1,7 @@
 const { expect } = require('chai');
 const chai = require('chai');
-const BN = require('bn.js');
-const bnChai = require('bn-chai');
 const chaiAsPromised = require('chai-as-promised');
 
-chai.use(bnChai(BN));
 chai.use(chaiAsPromised);
 
 const { sleep } = require('../src/utils');
@@ -33,39 +30,39 @@ describe('Admin', async () => {
     it('can add a house', async () => {
       let houses;
       houses = await Admin.getHouses();
-      expect(houses.length).to.be.zero;
+      expect(houses.length).to.equal(0);
 
       await Admin.addHouse(HOUSE1);
       await sleep(1);
 
       houses = await Admin.getHouses();
-      expect(houses.length).to.eq.BN(1);
+      expect(houses.length).to.equal(1);
 
       await Admin.addHouse(HOUSE2);
       await sleep(1);
 
       houses = await Admin.getHouses();
-      expect(houses.length).to.eq.BN(2);
+      expect(houses.length).to.equal(2);
     });
 
     it('can add a house idempotently', async () => {
       let houses;
       houses = await Admin.getHouses();
-      expect(houses.length).to.be.zero;
+      expect(houses.length).to.equal(0);
 
       await Admin.addHouse(HOUSE1);
       await Admin.addHouse(HOUSE2);
       await sleep(1);
 
       houses = await Admin.getHouses();
-      expect(houses.length).to.eq.BN(2);
+      expect(houses.length).to.equal(2);
 
       await Admin.addHouse(HOUSE1);
       await Admin.addHouse(HOUSE2);
       await sleep(1);
 
       houses = await Admin.getHouses();
-      expect(houses.length).to.eq.BN(2);
+      expect(houses.length).to.equal(2);
     });
   });
 
@@ -78,32 +75,32 @@ describe('Admin', async () => {
     it('can add a resident', async () => {
       let residents;
       residents = await Admin.getResidents(HOUSE1);
-      expect(residents.length).to.be.zero;
+      expect(residents.length).to.equal(0);
 
       await Admin.addResident(HOUSE1, RESIDENT1);
       await sleep(1);
 
       residents = await Admin.getResidents(HOUSE1);
-      expect(residents.length).to.eq.BN(1);
+      expect(residents.length).to.equal(1);
 
       await Admin.addResident(HOUSE1, RESIDENT2);
       await sleep(1);
 
       residents = await Admin.getResidents(HOUSE1);
-      expect(residents.length).to.eq.BN(2);
+      expect(residents.length).to.equal(2);
     });
 
     it('can add a resident idempotently', async () => {
       let residents;
       residents = await Admin.getResidents(HOUSE1);
-      expect(residents.length).to.be.zero;
+      expect(residents.length).to.equal(0);
 
       await Admin.addResident(HOUSE1, RESIDENT1);
       await Admin.addResident(HOUSE1, RESIDENT1);
       await sleep(1);
 
       residents = await Admin.getResidents(HOUSE1);
-      expect(residents.length).to.eq.BN(1);
+      expect(residents.length).to.equal(1);
     });
 
     it('can delete a resident', async () => {
@@ -112,13 +109,13 @@ describe('Admin', async () => {
 
       let residents;
       residents = await Admin.getResidents(HOUSE1);
-      expect(residents.length).to.eq.BN(1);
+      expect(residents.length).to.equal(1);
 
       await Admin.deleteResident(RESIDENT1);
       await sleep(1);
 
       residents = await Admin.getResidents(HOUSE1);
-      expect(residents.length).to.be.zero;
+      expect(residents.length).to.equal(0);
     });
   });
 });

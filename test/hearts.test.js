@@ -1,10 +1,7 @@
 const { expect } = require('chai');
 const chai = require('chai');
-const BN = require('bn.js');
-const bnChai = require('bn-chai');
 const chaiAsPromised = require('chai-as-promised');
 
-chai.use(bnChai(BN));
 chai.use(chaiAsPromised);
 
 const { NAY, YAY } = require('../src/constants');
@@ -57,8 +54,8 @@ describe('Hearts', async () => {
       const hearts2 = await Hearts.getResidentHearts(HOUSE, RESIDENT2);
       const hearts3 = await Hearts.getResidentHearts(HOUSE, RESIDENT3);
 
-      expect(hearts1.sum).to.eq.BN(2);
-      expect(hearts2.sum).to.eq.BN(1);
+      expect(hearts1.sum).to.equal(2);
+      expect(hearts2.sum).to.equal(1);
       expect(hearts3.sum).to.equal(null);
     });
 
@@ -70,7 +67,7 @@ describe('Hearts', async () => {
 
       const hearts = await Hearts.getResidentHearts(HOUSE, RESIDENT1);
 
-      expect(hearts.sum).to.eq.BN(1);
+      expect(hearts.sum).to.equal(1);
     });
 
     it('can handle fractional hearts', async () => {
@@ -80,7 +77,7 @@ describe('Hearts', async () => {
 
       const hearts = await Hearts.getResidentHearts(HOUSE, RESIDENT1);
 
-      expect(hearts.sum).to.eq.BN(1.75);
+      expect(hearts.sum).to.equal(1.75);
     });
 
     it('can resolve a challenge where the challenger wins', async () => {
@@ -102,8 +99,8 @@ describe('Hearts', async () => {
 
       const hearts1 = await Hearts.getResidentHearts(HOUSE, RESIDENT1);
       const hearts2 = await Hearts.getResidentHearts(HOUSE, RESIDENT2);
-      expect(hearts1.sum).to.eq.BN(5);
-      expect(hearts2.sum).to.eq.BN(4);
+      expect(hearts1.sum).to.equal(5);
+      expect(hearts2.sum).to.equal(4);
     });
 
     it('can resolve a challenge where the challenger loses', async () => {
@@ -123,8 +120,8 @@ describe('Hearts', async () => {
 
       const hearts1 = await Hearts.getResidentHearts(HOUSE, RESIDENT1);
       const hearts2 = await Hearts.getResidentHearts(HOUSE, RESIDENT2);
-      expect(hearts1.sum).to.eq.BN(4);
-      expect(hearts2.sum).to.eq.BN(5);
+      expect(hearts1.sum).to.equal(4);
+      expect(hearts2.sum).to.equal(5);
     });
 
     it('can resolve a challenge where the quorum is not reached', async () => {
@@ -144,8 +141,8 @@ describe('Hearts', async () => {
 
       const hearts1 = await Hearts.getResidentHearts(HOUSE, RESIDENT1);
       const hearts2 = await Hearts.getResidentHearts(HOUSE, RESIDENT2);
-      expect(hearts1.sum).to.eq.BN(4);
-      expect(hearts2.sum).to.eq.BN(5);
+      expect(hearts1.sum).to.equal(4);
+      expect(hearts2.sum).to.equal(5);
     });
 
     it('cannot resolve a challenge before the poll is closed', async () => {
