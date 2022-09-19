@@ -1,7 +1,9 @@
 const { expect } = require('chai');
 const chai = require('chai');
+const chaiAlmost = require('chai-almost');
 const chaiAsPromised = require('chai-as-promised');
 
+chai.use(chaiAlmost());
 chai.use(chaiAsPromised);
 
 const { YAY, NAY } = require('../src/constants');
@@ -147,9 +149,9 @@ describe('Chores', async () => {
     it('can return uniform preferences implicitly', async () => {
       const labeledWeights = await Chores.getCurrentChoreRankings(HOUSE);
 
-      expect(labeledWeights.get(dishes.id)).to.equal(0.3333333333333333);
-      expect(labeledWeights.get(sweeping.id)).to.equal(0.3333333333333333);
-      expect(labeledWeights.get(restock.id)).to.equal(0.3333333333333333);
+      expect(labeledWeights.get(dishes.id)).to.almost.equal(0.3333333333333333);
+      expect(labeledWeights.get(sweeping.id)).to.almost.equal(0.3333333333333333);
+      expect(labeledWeights.get(restock.id)).to.almost.equal(0.3333333333333333);
     });
 
     it('can use preferences to determine chore values', async () => {
@@ -159,9 +161,9 @@ describe('Chores', async () => {
 
       const labeledWeights = await Chores.getCurrentChoreRankings(HOUSE);
 
-      expect(labeledWeights.get(dishes.id)).to.equal(0.42564666666666673);
-      expect(labeledWeights.get(sweeping.id)).to.equal(0.31288000000000005);
-      expect(labeledWeights.get(restock.id)).to.equal(0.2614733333333334);
+      expect(labeledWeights.get(dishes.id)).to.almost.equal(0.42564666666666673);
+      expect(labeledWeights.get(sweeping.id)).to.almost.equal(0.31288000000000005);
+      expect(labeledWeights.get(restock.id)).to.almost.equal(0.2614733333333334);
     });
 
     it('can use preferences to determine mild chore values', async () => {
@@ -171,9 +173,9 @@ describe('Chores', async () => {
 
       const labeledWeights = await Chores.getCurrentChoreRankings(HOUSE);
 
-      expect(labeledWeights.get(dishes.id)).to.equal(0.36816469333333335);
-      expect(labeledWeights.get(sweeping.id)).to.equal(0.33009407999999996);
-      expect(labeledWeights.get(restock.id)).to.equal(0.3017412266666667);
+      expect(labeledWeights.get(dishes.id)).to.almost.equal(0.36816469333333335);
+      expect(labeledWeights.get(sweeping.id)).to.almost.equal(0.33009407999999996);
+      expect(labeledWeights.get(restock.id)).to.almost.equal(0.3017412266666667);
     });
 
     it('can use preferences to determine complex chore values', async () => {
@@ -183,9 +185,9 @@ describe('Chores', async () => {
 
       const labeledWeights = await Chores.getCurrentChoreRankings(HOUSE);
 
-      expect(labeledWeights.get(dishes.id)).to.equal(0.40740000000000004);
-      expect(labeledWeights.get(sweeping.id)).to.equal(0.1852);
-      expect(labeledWeights.get(restock.id)).to.equal(0.4074);
+      expect(labeledWeights.get(dishes.id)).to.almost.equal(0.40740000000000004);
+      expect(labeledWeights.get(sweeping.id)).to.almost.equal(0.1852);
+      expect(labeledWeights.get(restock.id)).to.almost.equal(0.4074);
     });
 
     it('can calculate the interval since the last chore valuation', async () => {
@@ -199,7 +201,7 @@ describe('Chores', async () => {
 
       const queryTime = new Date(secondValuationTime.getTime() + 60 * 60 * 1000); // 1 hour
       const intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, queryTime);
-      expect(intervalScalar).to.equal(0.0013440860215053765);
+      expect(intervalScalar).to.almost.equal(0.0013440860215053765);
     });
 
     it('can calculate the interval on an hourly basis', async () => {
@@ -214,15 +216,15 @@ describe('Chores', async () => {
 
       queryTime = new Date(valuationTime.getTime() + (60 + 10) * 60 * 1000); // 1 hour, 10 minutes
       intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, queryTime);
-      expect(intervalScalar).to.equal(0.0013440860215053765);
+      expect(intervalScalar).to.almost.equal(0.0013440860215053765);
 
       queryTime = new Date(valuationTime.getTime() + (60 + 45) * 60 * 1000); // 1 hour, 45 minutes
       intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, queryTime);
-      expect(intervalScalar).to.equal(0.0013440860215053765);
+      expect(intervalScalar).to.almost.equal(0.0013440860215053765);
 
       queryTime = new Date(valuationTime.getTime() + (60 + 60) * 60 * 1000); // 2 hours
       intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, queryTime);
-      expect(intervalScalar).to.equal(0.002688172043010753);
+      expect(intervalScalar).to.almost.equal(0.002688172043010753);
     });
 
     it('can do an end-to-end update of chore values', async () => {
@@ -245,12 +247,12 @@ describe('Chores', async () => {
       const choreValues2 = await Chores.updateChoreValues(HOUSE, updateTime2, pointsPerResident);
       expect(choreValues2.length).to.equal(3);
 
-      expect(intervalScalar1 * 11).to.equal(intervalScalar2); // 1 hour vs 11 hours
-      expect(intervalScalar1 + intervalScalar2).to.equal(1 / 60); // 12 hours = 1/60th of the monthly allocation
+      expect(intervalScalar1 * 11).to.almost.equal(intervalScalar2); // 1 hour vs 11 hours
+      expect(intervalScalar1 + intervalScalar2).to.almost.equal(1 / 60); // 12 hours = 1/60th of the monthly allocation
 
       const sumPoints1 = choreValues1.map(cv => cv.value).reduce((sum, val) => sum + val, 0);
       const sumPoints2 = choreValues2.map(cv => cv.value).reduce((sum, val) => sum + val, 0);
-      expect(sumPoints1 + sumPoints2).to.equal(pointsPerResident * 2 / 60);
+      expect(sumPoints1 + sumPoints2).to.almost.equal(pointsPerResident * 2 / 60);
     });
   });
 
