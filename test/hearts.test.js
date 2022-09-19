@@ -89,11 +89,11 @@ describe('Hearts', async () => {
 
       const [ challenge ] = await Hearts.initiateChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, POLL_LENGTH);
 
-      await Polls.submitVote(challenge.poll_id, RESIDENT1, YAY);
-      await Polls.submitVote(challenge.poll_id, RESIDENT2, NAY);
-      await Polls.submitVote(challenge.poll_id, RESIDENT3, YAY);
-      await Polls.submitVote(challenge.poll_id, RESIDENT4, YAY);
-      await Polls.submitVote(challenge.poll_id, RESIDENT5, YAY);
+      await Polls.submitVote(challenge.poll_id, RESIDENT1, new Date(), YAY);
+      await Polls.submitVote(challenge.poll_id, RESIDENT2, new Date(), NAY);
+      await Polls.submitVote(challenge.poll_id, RESIDENT3, new Date(), YAY);
+      await Polls.submitVote(challenge.poll_id, RESIDENT4, new Date(), YAY);
+      await Polls.submitVote(challenge.poll_id, RESIDENT5, new Date(), YAY);
 
       await sleep(POLL_LENGTH);
 
@@ -112,9 +112,9 @@ describe('Hearts', async () => {
 
       const [ challenge ] = await Hearts.initiateChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, POLL_LENGTH);
 
-      await Polls.submitVote(challenge.poll_id, RESIDENT1, YAY);
-      await Polls.submitVote(challenge.poll_id, RESIDENT2, NAY);
-      await Polls.submitVote(challenge.poll_id, RESIDENT3, NAY);
+      await Polls.submitVote(challenge.poll_id, RESIDENT1, new Date(), YAY);
+      await Polls.submitVote(challenge.poll_id, RESIDENT2, new Date(), NAY);
+      await Polls.submitVote(challenge.poll_id, RESIDENT3, new Date(), NAY);
 
       await sleep(POLL_LENGTH);
 
@@ -133,9 +133,9 @@ describe('Hearts', async () => {
 
       const [ challenge ] = await Hearts.initiateChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, POLL_LENGTH);
 
-      await Polls.submitVote(challenge.poll_id, RESIDENT1, YAY);
-      await Polls.submitVote(challenge.poll_id, RESIDENT2, NAY);
-      await Polls.submitVote(challenge.poll_id, RESIDENT3, YAY);
+      await Polls.submitVote(challenge.poll_id, RESIDENT1, new Date(), YAY);
+      await Polls.submitVote(challenge.poll_id, RESIDENT2, new Date(), NAY);
+      await Polls.submitVote(challenge.poll_id, RESIDENT3, new Date(), YAY);
 
       await sleep(POLL_LENGTH);
 
@@ -154,9 +154,9 @@ describe('Hearts', async () => {
 
       const [ challenge ] = await Hearts.initiateChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, POLL_LENGTH);
 
-      await Polls.submitVote(challenge.poll_id, RESIDENT1, YAY);
-      await Polls.submitVote(challenge.poll_id, RESIDENT2, NAY);
-      await Polls.submitVote(challenge.poll_id, RESIDENT3, YAY);
+      await Polls.submitVote(challenge.poll_id, RESIDENT1, new Date(), YAY);
+      await Polls.submitVote(challenge.poll_id, RESIDENT2, new Date(), NAY);
+      await Polls.submitVote(challenge.poll_id, RESIDENT3, new Date(), YAY);
       await sleep(1);
 
       await expect(Hearts.resolveChallenge(challenge.id))
@@ -169,9 +169,9 @@ describe('Hearts', async () => {
 
       const [ challenge ] = await Hearts.initiateChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, POLL_LENGTH);
 
-      await Polls.submitVote(challenge.poll_id, RESIDENT1, YAY);
-      await Polls.submitVote(challenge.poll_id, RESIDENT2, NAY);
-      await Polls.submitVote(challenge.poll_id, RESIDENT3, YAY);
+      await Polls.submitVote(challenge.poll_id, RESIDENT1, new Date(), YAY);
+      await Polls.submitVote(challenge.poll_id, RESIDENT2, new Date(), NAY);
+      await Polls.submitVote(challenge.poll_id, RESIDENT3, new Date(), YAY);
 
       await sleep(POLL_LENGTH);
 

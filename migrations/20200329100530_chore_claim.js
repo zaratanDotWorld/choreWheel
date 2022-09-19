@@ -11,7 +11,7 @@ exports.up = function(knex, Promise) {
         t.float('value');
         t.string('message_id');
         t.integer('poll_id').references('poll.id');
-        t.enu('result', ['unknown', 'fail', 'pass']).defaultTo('unknown');
+        t.boolean('valid').notNull().defaultTo(true);
     });
 };
 

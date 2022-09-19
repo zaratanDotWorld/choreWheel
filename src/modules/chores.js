@@ -176,7 +176,7 @@ exports.getChoreClaimByMessageId = async function (messageId) {
 exports.getValidChoreClaims = async function (choreId) {
   return db('chore_claim')
     .select('*')
-    .whereNot({ result: 'fail' })
+    .whereNot({ valid: false })
     .andWhere({ chore_id: choreId });
 };
 
@@ -197,9 +197,10 @@ exports.claimChore = async function (choreId, slackId, claimedAt, messageId, dur
 };
 
 exports.resolveChoreClaim = async function (claimId) {
-  const choreClaim = await exports.getChoreClaim(claimId);
+  // TODO: make extra sure no one can ever retroactively
+  //  invalidate a claim by changing their vote past the deadline
 
-  if (choreClaim.result !== 'unknown') { throw new Error('Claim already resolved!'); }
+  const choreClaim = await exports.getChoreClaim(claimId);
 
   const pollId = choreClaim.poll_id;
   const poll = await Polls.getPoll(pollId);
@@ -207,14 +208,14 @@ exports.resolveChoreClaim = async function (claimId) {
   if (Date.now() < Polls.endsAt(poll)) { throw new Error('Poll not closed!'); }
 
   const { yays, nays } = await Polls.getPollResultCounts(pollId);
-  const result = (yays >= 2 && yays > nays) ? 'pass' : 'fail';
+  const valid = (yays >= 2 && yays > nays);
 
-  const choreValue = (result === 'pass')
+  const choreValue = valid
     ? await exports.getCurrentChoreValue(choreClaim.chore_id, choreClaim.claimed_at)
     : { sum: 0 };
 
   return db('chore_claim')
     .where({ id: claimId })
-    .update({ value: choreValue.sum, result: result })
-    .returning([ 'value', 'result' ]);
+    .update({ value: choreValue.sum, valid: valid })
+    .returning([ 'value', 'valid' ]);
 };

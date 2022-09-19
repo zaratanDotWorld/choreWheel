@@ -125,7 +125,7 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   console.log(`Message posted as ${messageId}`);
 
   const [ claim ] = await Chores.claimChore(choreName, residentId, new Date(), messageId, choresPollLength);
-  await Polls.submitVote(claim.poll_id, residentId, YAY);
+  await Polls.submitVote(claim.poll_id, residentId, new Date(), YAY);
 
   console.log(`Claim ${claim.id} created with poll ${claim.poll_id}`);
 });
@@ -136,7 +136,7 @@ app.action(/poll-vote/, async ({ ack, body, action }) => {
   // // Submit the vote
   const messageId = `${body.channel.id}.${body.message.ts}`;
   const choreClaim = await Chores.getChoreClaimByMessageId(messageId);
-  await Polls.submitVote(choreClaim.poll_id, body.user.id, parseInt(action.value));
+  await Polls.submitVote(choreClaim.poll_id, body.user.id, new Date(), parseInt(action.value));
 
   await sleep(1);
 

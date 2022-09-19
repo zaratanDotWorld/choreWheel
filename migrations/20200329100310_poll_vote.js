@@ -4,6 +4,7 @@ exports.up = function(knex, Promise) {
         t.timestamps(useTimestamps = true, defaultToNow = true);
         t.integer('poll_id').references('poll.id').notNull();
         t.string('encrypted_resident_id').notNull();
+        t.timestamp('submitted_at').notNull();
         t.boolean('vote');
         t.unique(['poll_id', 'encrypted_resident_id']);
     });
