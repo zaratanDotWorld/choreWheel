@@ -329,7 +329,7 @@ describe('Chores', async () => {
 
       await sleep(POLL_LENGTH);
 
-      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id);
+      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, new Date());
       expect(resolvedClaim.valid).to.be.true;
       expect(resolvedClaim.value).to.eq.BN(10);
     });
@@ -341,8 +341,24 @@ describe('Chores', async () => {
       const [ choreClaim ] = await Chores.claimChore(dishes.id, RESIDENT1, new Date(), '', POLL_LENGTH);
       await sleep(1);
 
-      await expect(Chores.resolveChoreClaim(choreClaim.id))
+      await expect(Chores.resolveChoreClaim(choreClaim.id, new Date()))
         .to.be.rejectedWith('Poll not closed!');
+    });
+
+    it('cannot resolve a claim twice', async () => {
+      await db('chore_value').insert([ { chore_id: dishes.id, valued_at: new Date(), value: 10 } ]);
+      await sleep(1);
+
+      const [ choreClaim ] = await Chores.claimChore(dishes.id, RESIDENT1, new Date(), '', POLL_LENGTH);
+      await sleep(1);
+
+      await sleep(POLL_LENGTH);
+
+      await Chores.resolveChoreClaim(choreClaim.id, new Date());
+      await sleep(1);
+
+      const [ claimResolution ] = await Chores.resolveChoreClaim(choreClaim.id, new Date());
+      expect(claimResolution).to.be.undefined;
     });
 
     it('cannot successfully resolve a claim without two positive votes', async () => {
@@ -356,7 +372,7 @@ describe('Chores', async () => {
 
       await sleep(POLL_LENGTH);
 
-      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id);
+      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, new Date());
       expect(resolvedClaim.valid).to.be.false;
     });
 
@@ -374,7 +390,7 @@ describe('Chores', async () => {
 
       await sleep(POLL_LENGTH);
 
-      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id);
+      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, new Date());
       expect(resolvedClaim.valid).to.be.false;
     });
 
@@ -400,11 +416,11 @@ describe('Chores', async () => {
 
       await sleep(POLL_LENGTH);
 
-      const [ resolvedClaim1 ] = await Chores.resolveChoreClaim(choreClaim1.id);
+      const [ resolvedClaim1 ] = await Chores.resolveChoreClaim(choreClaim1.id, new Date());
       expect(resolvedClaim1.valid).to.be.true;
       expect(resolvedClaim1.value).to.eq.BN(10);
 
-      const [ resolvedClaim2 ] = await Chores.resolveChoreClaim(choreClaim2.id);
+      const [ resolvedClaim2 ] = await Chores.resolveChoreClaim(choreClaim2.id, new Date());
       expect(resolvedClaim2.valid).to.be.true;
       expect(resolvedClaim2.value).to.eq.BN(5);
     });
@@ -432,11 +448,11 @@ describe('Chores', async () => {
 
       await sleep(POLL_LENGTH);
 
-      const [ resolvedClaim1 ] = await Chores.resolveChoreClaim(choreClaim1.id);
+      const [ resolvedClaim1 ] = await Chores.resolveChoreClaim(choreClaim1.id, new Date());
       expect(resolvedClaim1.valid).to.be.false;
       expect(resolvedClaim1.value).to.be.zero;
 
-      const [ resolvedClaim2 ] = await Chores.resolveChoreClaim(choreClaim2.id);
+      const [ resolvedClaim2 ] = await Chores.resolveChoreClaim(choreClaim2.id, new Date());
       expect(resolvedClaim2.valid).to.be.true;
       expect(resolvedClaim2.value).to.eq.BN(15);
     });

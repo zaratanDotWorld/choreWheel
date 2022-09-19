@@ -196,16 +196,13 @@ exports.claimChore = async function (choreId, slackId, claimedAt, messageId, dur
     .returning([ 'id', 'poll_id' ]);
 };
 
-exports.resolveChoreClaim = async function (claimId) {
-  // TODO: make extra sure no one can ever retroactively
-  //  invalidate a claim by changing their vote past the deadline
-
+exports.resolveChoreClaim = async function (claimId, resolvedAt) {
   const choreClaim = await exports.getChoreClaim(claimId);
 
   const pollId = choreClaim.poll_id;
   const poll = await Polls.getPoll(pollId);
 
-  if (Date.now() < Polls.endsAt(poll)) { throw new Error('Poll not closed!'); }
+  if (resolvedAt.getTime() < Polls.endsAt(poll)) { throw new Error('Poll not closed!'); }
 
   const { yays, nays } = await Polls.getPollResultCounts(pollId);
   const valid = (yays >= 2 && yays > nays);
@@ -215,7 +212,7 @@ exports.resolveChoreClaim = async function (claimId) {
     : { sum: 0 };
 
   return db('chore_claim')
-    .where({ id: claimId })
-    .update({ value: choreValue.sum, valid: valid })
+    .where({ id: claimId, resolved_at: null }) // Cannot resolve twice
+    .update({ value: choreValue.sum, resolved_at: resolvedAt, valid: valid })
     .returning([ 'value', 'valid' ]);
 };

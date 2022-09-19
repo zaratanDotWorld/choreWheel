@@ -19,7 +19,7 @@ exports.submitVote = async function (pollId, residentId, submittedAt, vote) {
   const encryptedResidentId = sha256(process.env.SALT + residentId);
   const poll = await exports.getPoll(pollId);
 
-  if (exports.endsAt(poll) < submittedAt) { throw new Error('Poll has closed!'); }
+  if (exports.endsAt(poll) < submittedAt.getTime()) { throw new Error('Poll has closed!'); }
 
   return db('poll_vote')
     .insert({
