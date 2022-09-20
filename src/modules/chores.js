@@ -180,7 +180,7 @@ exports.getValidChoreClaims = async function (choreId) {
     .andWhere({ chore_id: choreId });
 };
 
-exports.claimChore = async function (choreId, slackId, claimedAt, messageId, duration) {
+exports.claimChore = async function (choreId, slackId, claimedAt, duration) {
   const [ poll ] = await Polls.createPoll(duration);
   const choreValue = await exports.getCurrentChoreValue(choreId, claimedAt);
 
@@ -189,7 +189,6 @@ exports.claimChore = async function (choreId, slackId, claimedAt, messageId, dur
       chore_id: choreId,
       claimed_by: slackId,
       claimed_at: claimedAt,
-      message_id: messageId,
       value: choreValue.sum || 0,
       poll_id: poll.id
     })

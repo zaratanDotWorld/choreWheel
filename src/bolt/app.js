@@ -147,21 +147,17 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const residentId = body.user.id;
   const { chores_channel: choresChannel } = await Admin.getHouse(body.team.id);
 
+  const [ claim ] = await Chores.claimChore(choreId, residentId, new Date(), choresPollLength);
+  await Polls.submitVote(claim.poll_id, residentId, new Date(), YAY);
+
   const message = {
     token: process.env.SLACK_BOT_TOKEN,
     channel: choresChannel,
     text: 'Someone just completed a chore',
-    blocks: blocks.choreListCallbackView(residentId, choreName, Number(choreValue), choresPollLength)
+    blocks: blocks.choreListCallbackView(residentId, choreName, Number(choreValue), claim.poll_id, choresPollLength)
   };
 
   res = await app.client.chat.postMessage(message);
-  const messageId = `${res.channel}.${res.ts}`;
-
-  console.log(`Chore claim posted as ${messageId}`);
-
-  const [ claim ] = await Chores.claimChore(choreId, residentId, new Date(), messageId, choresPollLength);
-  await Polls.submitVote(claim.poll_id, residentId, new Date(), YAY);
-
   console.log(`Claim ${claim.id} created with poll ${claim.poll_id}`);
 });
 
@@ -169,20 +165,19 @@ app.action(/poll-vote/, async ({ ack, body, action }) => {
   await ack();
 
   // // Submit the vote
-  const messageId = `${body.channel.id}.${body.message.ts}`;
-  const choreClaim = await Chores.getChoreClaimByMessageId(messageId);
-  await Polls.submitVote(choreClaim.poll_id, body.user.id, new Date(), parseInt(action.value));
+  const [ pollId, value ] = action.value.split('|');
+  await Polls.submitVote(pollId, body.user.id, new Date(), value);
 
   await sleep(1);
 
-  const { yays, nays } = await Polls.getPollResultCounts(choreClaim.poll_id);
+  const { yays, nays } = await Polls.getPollResultCounts(pollId);
 
   // Update the vote counts
   body.message.channel = body.channel.id;
-  body.message.blocks[2].elements = blocks.makeVoteButtons(yays, nays);
+  body.message.blocks[2].elements = blocks.makeVoteButtons(pollId, yays, nays);
   await app.client.chat.update(body.message);
 
-  console.log(`Poll ${choreClaim.poll_id} updated`);
+  console.log(`Poll ${pollId} updated`);
 });
 
 // Launch the app

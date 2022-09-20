@@ -88,31 +88,31 @@ exports.getChoreClaim = function (view) {
   };
 };
 
-exports.choreListCallbackView = function (residentId, choreName, choreValue, pollDuration) {
+exports.choreListCallbackView = function (residentId, choreName, choreValue, pollId, pollDuration) {
   const textA = `*<@${residentId}>* did *${choreName}* for *${choreValue.toPrecision(2)} tokens* :sparkles::sparkles:`;
   const textB = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / HOUR} hours`;
 
   return [
     { type: 'section', text: { type: 'mrkdwn', text: textA } },
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
-    { type: 'actions', elements: exports.makeVoteButtons(1, 0) }
+    { type: 'actions', elements: exports.makeVoteButtons(pollId, 1, 0) }
   ];
 };
 
 // Polls Views (utils)
 
-exports.makeVoteButtons = function (upvoteCount, downvoteCount) {
+exports.makeVoteButtons = function (pollId, upvoteCount, downvoteCount) {
   return [
     {
       type: 'button',
       text: { type: 'plain_text', text: `:+1: (${upvoteCount})`, emoji: true },
-      value: '1',
+      value: `${pollId}|1`,
       action_id: 'poll-vote-up'
     },
     {
       type: 'button',
       text: { type: 'plain_text', text: `:-1: (${downvoteCount})`, emoji: true },
-      value: '0',
+      value: `${pollId}|0`,
       action_id: 'poll-vote-down'
     }
   ];

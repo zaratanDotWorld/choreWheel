@@ -9,7 +9,6 @@ exports.up = function(knex, Promise) {
         t.string('claimed_by').references('resident.slack_id');
         t.timestamp('claimed_at');
         t.float('value');
-        t.string('message_id');
         t.integer('poll_id').references('poll.id');
         t.timestamp('resolved_at');
         t.boolean('valid').notNull().defaultTo(true);
