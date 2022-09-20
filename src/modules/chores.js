@@ -91,7 +91,7 @@ exports.getCurrentChoreValues = async function (houseId, currentTime) {
 
   for (const chore of chores) {
     const choreValue = await exports.getCurrentChoreValue(chore.id, currentTime);
-    choreValues.push({ id: chore.id, name: chore.name, value: parseInt(choreValue.sum || 0) });
+    choreValues.push({ id: chore.id, name: chore.name, value: choreValue.sum || 0 });
   }
 
   return choreValues;

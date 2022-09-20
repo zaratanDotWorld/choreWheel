@@ -7,6 +7,8 @@ class PowerRanker {
   verbose;
 
   constructor (items, preferences, numResidents, verbose = false) {
+    if (items.length < 2) { throw new Error('PowerRanker: Cannot rank less than two items'); }
+
     this.items = items; // [{ id, name }]
     this.preferences = preferences; // [{ alpha, beta, preference }]
     this.matrix = this.toMatrix(this.items, this.preferences, numResidents);

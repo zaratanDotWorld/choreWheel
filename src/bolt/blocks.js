@@ -52,11 +52,10 @@ exports.choresHomeView = function (balance) {
 
 exports.choresListView = function (chores) {
   const mappedChoreValues = chores.map((chore) => {
-    const choreValue = parseInt(chore.sum || 0);
     return {
-      value: `${chore.id}.${choreValue}`,
+      value: `${chore.id}.${chore.value}`,
       text: { type: 'plain_text', text: chore.name, emoji: true },
-      description: { type: 'plain_text', text: `${choreValue} points` }
+      description: { type: 'plain_text', text: `${chore.value.toPrecision(2)} points` }
     };
   });
 

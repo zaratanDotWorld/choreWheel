@@ -23,8 +23,10 @@ const app = new App({
 
 app.event('app_home_opened', async ({ payload }) => {
   if (payload.tab === 'home') {
-    await Admin.addHouse('', payload.view.team_id);
-    await Admin.addResident('', payload.view.team_id, payload.user);
+    await Admin.addHouse(payload.view.team_id, '');
+    await Admin.addResident(payload.view.team_id, payload.user, '');
+    console.log(`Added house ${payload.view.team_id}`);
+    console.log(`Added resident ${payload.user}`);
 
     const chorePoints = 10; // TODO: Implement this function
 
@@ -50,7 +52,9 @@ app.command('/chores-add', async ({ ack, command, say }) => {
   if (userInfo.user.is_admin) {
     const choreName = blocks.formatChoreName(command.text);
     await Chores.addChore(command.team_id, choreName);
+
     await say(`${choreName} added to the chores list :star-struck:`);
+    console.log(`Added chore ${choreName}`);
   } else {
     await say('Only admins can update the chore list...');
   }
@@ -67,7 +71,9 @@ app.command('/chores-del', async ({ ack, command, say }) => {
   if (userInfo.user.is_admin) {
     const choreName = blocks.formatChoreName(command.text);
     await Chores.deleteChore(command.team_id, choreName);
+
     await say(`${choreName} deleted from the chores list :sob:`);
+    console.log(`Deleted chore ${choreName}`);
   } else {
     await say('Only admins can update the chore list...');
   }
@@ -110,7 +116,7 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const blockId = body.view.blocks[0].block_id;
   const [ choreName, choreValue ] = body.view.state.values[blockId].options.selected_option.value.split('.');
 
-  await Admin.addResident(residentId);
+  await Admin.addResident(residentId, '');
 
   const message = {
     token: process.env.SLACK_BOT_TOKEN,
