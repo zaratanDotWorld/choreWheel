@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-const { App } = require('@slack/bolt');
+const { App, LogLevel } = require('@slack/bolt');
 
 const Chores = require('../modules/chores');
 const Polls = require('../modules/polls');
@@ -17,8 +17,31 @@ const blocks = require('./blocks');
 let res;
 
 const app = new App({
-  token: process.env.SLACK_BOT_TOKEN,
-  signingSecret: process.env.SLACK_SIGNING_SECRET
+  logLevel: LogLevel.DEBUG,
+  signingSecret: process.env.SLACK_SIGNING_SECRET,
+  clientId: process.env.SLACK_CLIENT_ID,
+  clientSecret: process.env.SLACK_CLIENT_SECRET,
+  stateSecret: process.env.STATE_SECRET,
+  scopes: [
+    'channels:history',
+    'channels:read',
+    'chat:write',
+    'users:read',
+    'commands'
+  ],
+  installationStore: {
+    storeInstallation: async (installation) => {
+      return Admin.updateHouse({ slack_id: installation.team.id, chores_oauth: installation.bot.token });
+    },
+    fetchInstallation: async (installQuery) => {
+      const house = await Admin.getHouse(installQuery.teamId);
+      return Promise.resolve(house.chores_oauth);
+    },
+    deleteInstallation: async (installQuery) => {
+      return Admin.updateHouse({ slack_id: installQuery.teamId, chores_oauth: null });
+    }
+  },
+  installerOptions: { directInstall: true }
 });
 
 // Publish the app home

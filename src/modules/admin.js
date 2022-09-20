@@ -9,6 +9,13 @@ exports.addHouse = async function (houseId, name) {
     .returning('*');
 };
 
+exports.updateHouse = async function (houseData) {
+  return db('house')
+    .insert(houseData)
+    .onConflict('slack_id').merge()
+    .returning('*');
+};
+
 exports.getHouse = async function (houseId) {
   return db('house')
     .where({ slack_id: houseId })
