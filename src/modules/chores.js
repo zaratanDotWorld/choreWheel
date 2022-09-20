@@ -190,7 +190,7 @@ exports.claimChore = async function (choreId, slackId, claimedAt, messageId, dur
       claimed_by: slackId,
       claimed_at: claimedAt,
       message_id: messageId,
-      value: choreValue.sum,
+      value: choreValue.sum || 0,
       poll_id: poll.id
     })
     .returning([ 'id', 'poll_id' ]);

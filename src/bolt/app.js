@@ -14,6 +14,8 @@ const blocks = require('./blocks');
 
 // Create the app
 
+let res;
+
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
   signingSecret: process.env.SLACK_SIGNING_SECRET
@@ -41,13 +43,43 @@ app.event('app_home_opened', async ({ payload }) => {
 
 // Slash commands
 
+async function getUser (userId) {
+  return app.client.users.info({
+    token: process.env.SLACK_BOT_TOKEN,
+    user: userId
+  });
+}
+
+app.command('/chores-channel', async ({ ack, command, say }) => {
+  await ack();
+
+  const channelName = command.text;
+  const userInfo = await getUser(command.user_id);
+
+  if (userInfo.user.is_admin) {
+    let channelId;
+
+    try {
+      res = await app.client.conversations.list({ token: process.env.SLACK_BOT_TOKEN });
+      channelId = res.channels.filter(channel => channel.name === channelName)[0].id;
+    } catch (err) {
+      await say(`Channel ${channelName} not found...`);
+      throw err;
+    }
+
+    await Admin.setChoreClaimsChannel(command.team_id, channelId);
+
+    await say(`Chore claims channel set to ${channelName} :fire:`);
+    console.log(`Set chore claims channel to ${channelName}`);
+  } else {
+    await say('Only admins can set the channels...');
+  }
+});
+
 app.command('/chores-add', async ({ ack, command, say }) => {
   await ack();
 
-  const userInfo = await app.client.users.info({
-    token: process.env.SLACK_BOT_TOKEN,
-    user: command.user_id
-  });
+  const userInfo = await getUser(command.user_id);
 
   if (userInfo.user.is_admin) {
     const choreName = blocks.formatChoreName(command.text);
@@ -63,10 +95,7 @@ app.command('/chores-add', async ({ ack, command, say }) => {
 app.command('/chores-del', async ({ ack, command, say }) => {
   await ack();
 
-  const userInfo = await app.client.users.info({
-    token: process.env.SLACK_BOT_TOKEN,
-    user: command.user_id
-  });
+  const userInfo = await getUser(command.user_id);
 
   if (userInfo.user.is_admin) {
     const choreName = blocks.formatChoreName(command.text);
@@ -104,7 +133,7 @@ app.action('chores-claim', async ({ ack, body, action }) => {
     view: blocks.choresListView(choreValues)
   };
 
-  const res = await app.client.views.open(view);
+  res = await app.client.views.open(view);
   console.log(`Chores listed with id ${res.view.id}`);
 });
 
@@ -112,25 +141,25 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   await ack();
 
   // // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-  const residentId = body.user.id;
   const blockId = body.view.blocks[0].block_id;
-  const [ choreName, choreValue ] = body.view.state.values[blockId].options.selected_option.value.split('.');
+  const [ choreId, choreName, choreValue ] = body.view.state.values[blockId].options.selected_option.value.split('|');
 
-  await Admin.addResident(residentId, '');
+  const residentId = body.user.id;
+  const { chores_channel: choresChannel } = await Admin.getHouse(body.team.id);
 
   const message = {
     token: process.env.SLACK_BOT_TOKEN,
-    channel: 'test',
+    channel: choresChannel,
     text: 'Someone just completed a chore',
-    blocks: blocks.choreListCallbackView(residentId, choreName, choreValue, choresPollLength)
+    blocks: blocks.choreListCallbackView(residentId, choreName, Number(choreValue), choresPollLength)
   };
 
-  const res = await app.client.chat.postMessage(message);
+  res = await app.client.chat.postMessage(message);
   const messageId = `${res.channel}.${res.ts}`;
 
-  console.log(`Message posted as ${messageId}`);
+  console.log(`Chore claim posted as ${messageId}`);
 
-  const [ claim ] = await Chores.claimChore(choreName, residentId, new Date(), messageId, choresPollLength);
+  const [ claim ] = await Chores.claimChore(choreId, residentId, new Date(), messageId, choresPollLength);
   await Polls.submitVote(claim.poll_id, residentId, new Date(), YAY);
 
   console.log(`Claim ${claim.id} created with poll ${claim.poll_id}`);

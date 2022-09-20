@@ -1,5 +1,7 @@
 const { db } = require('../db');
 
+// Houses
+
 exports.addHouse = async function (houseId, name) {
   return db('house')
     .insert({ name: name, slack_id: houseId })
@@ -7,10 +9,20 @@ exports.addHouse = async function (houseId, name) {
     .returning('*');
 };
 
-exports.getHouses = async function () {
+exports.getHouse = async function (houseId) {
   return db('house')
-    .select('*');
+    .where({ slack_id: houseId })
+    .select('*')
+    .first();
 };
+
+exports.setChoreClaimsChannel = async function (houseId, channelId) {
+  return db('house')
+    .where({ slack_id: houseId })
+    .update({ chores_channel: channelId });
+};
+
+// Residents
 
 exports.addResident = async function (houseId, slackId, name) {
   return db('resident')

@@ -1,5 +1,7 @@
 const voca = require('voca');
 
+const { HOUR } = require('../constants');
+
 // Chores Views
 
 exports.formatChoreName = function (text) {
@@ -7,9 +9,9 @@ exports.formatChoreName = function (text) {
 };
 
 exports.choresHomeView = function (balance) {
-  const mainText = 'We use Chores to keep the house a nice place to live.\n' +
+  const mainText = 'We use Chores to keep the house a nice place to live.\n\n' +
     'Instead of a chore wheel or schedule, everyone owes *100 points* per month. ' +
-    'You earn points by doing the chores you want, on your terms.\n' +
+    'You earn points by doing the chores you want, on your terms.\n\n' +
     'The points for a chore go up every hour until someone claims them, then resets to 0. ' +
     'Different chores gain points at different speeds, depending on your priorities, which you can change.';
 
@@ -53,7 +55,7 @@ exports.choresHomeView = function (balance) {
 exports.choresListView = function (chores) {
   const mappedChoreValues = chores.map((chore) => {
     return {
-      value: `${chore.id}.${chore.value}`,
+      value: `${chore.id}|${chore.name}|${chore.value}`,
       text: { type: 'plain_text', text: chore.name, emoji: true },
       description: { type: 'plain_text', text: `${chore.value.toPrecision(2)} points` }
     };
@@ -87,8 +89,8 @@ exports.getChoreClaim = function (view) {
 };
 
 exports.choreListCallbackView = function (residentId, choreName, choreValue, pollDuration) {
-  const textA = `*<@${residentId}>* did *${choreName}* for *${choreValue} tokens* :sparkles::sparkles:`;
-  const textB = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / 1000 / 60 / 60} hours`;
+  const textA = `*<@${residentId}>* did *${choreName}* for *${choreValue.toPrecision(2)} tokens* :sparkles::sparkles:`;
+  const textB = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / HOUR} hours`;
 
   return [
     { type: 'section', text: { type: 'mrkdwn', text: textA } },

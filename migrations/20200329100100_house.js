@@ -4,6 +4,9 @@ exports.up = function(knex, Promise) {
         t.timestamps(useTimestamps = true, defaultToNow = true);
         t.string('name').unique();
         t.string('slack_id').unique().notNull(); // Slack Team Id
+        t.string('oauth_token');
+        t.string('chores_channel');
+        t.string('hearts_channel');
     });
 };
 
