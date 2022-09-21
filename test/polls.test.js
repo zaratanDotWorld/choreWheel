@@ -23,7 +23,7 @@ describe('Polls', async () => {
     await db('Resident').del();
     await db('House').del();
 
-    await Admin.addHouse(HOUSE);
+    await Admin.updateHouse({ slackId: HOUSE });
     await Admin.addResident(HOUSE, RESIDENT1);
     await Admin.addResident(HOUSE, RESIDENT2);
     await Admin.addResident(HOUSE, RESIDENT3);

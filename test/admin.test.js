@@ -32,13 +32,13 @@ describe('Admin', async () => {
       houses = await db('House').select('*');
       expect(houses.length).to.equal(0);
 
-      await Admin.addHouse(HOUSE1);
+      await Admin.updateHouse({ slackId: HOUSE1 });
       await sleep(1);
 
       houses = await db('House').select('*');
       expect(houses.length).to.equal(1);
 
-      await Admin.addHouse(HOUSE2);
+      await Admin.updateHouse({ slackId: HOUSE2 });
       await sleep(1);
 
       houses = await db('House').select('*');
@@ -50,15 +50,15 @@ describe('Admin', async () => {
       houses = await db('House').select('*');
       expect(houses.length).to.equal(0);
 
-      await Admin.addHouse(HOUSE1);
-      await Admin.addHouse(HOUSE2);
+      await Admin.updateHouse({ slackId: HOUSE1 });
+      await Admin.updateHouse({ slackId: HOUSE2 });
       await sleep(1);
 
       houses = await db('House').select('*');
       expect(houses.length).to.equal(2);
 
-      await Admin.addHouse(HOUSE1);
-      await Admin.addHouse(HOUSE2);
+      await Admin.updateHouse({ slackId: HOUSE1 });
+      await Admin.updateHouse({ slackId: HOUSE2 });
       await sleep(1);
 
       houses = await db('House').select('*');
@@ -68,8 +68,8 @@ describe('Admin', async () => {
 
   describe('keeping track of residents', async () => {
     beforeEach(async () => {
-      await Admin.addHouse(HOUSE1);
-      await Admin.addHouse(HOUSE2);
+      await Admin.updateHouse({ slackId: HOUSE1 });
+      await Admin.updateHouse({ slackId: HOUSE2 });
     });
 
     it('can add a resident', async () => {

@@ -33,7 +33,7 @@ describe('Chores', async () => {
     await db('Resident').del();
     await db('House').del();
 
-    await Admin.addHouse(HOUSE);
+    await Admin.updateHouse({ slackId: HOUSE });
 
     await db('Chore').del();
     [ dishes ] = await Chores.addChore(HOUSE, 'dishes');

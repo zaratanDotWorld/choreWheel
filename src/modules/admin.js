@@ -2,13 +2,6 @@ const { db } = require('../db');
 
 // Houses
 
-exports.addHouse = async function (houseId, name) {
-  return db('House')
-    .insert({ slackId: houseId, name: name })
-    .onConflict('slackId').merge()
-    .returning('*');
-};
-
 exports.updateHouse = async function (houseData) {
   return db('House')
     .insert(houseData)
