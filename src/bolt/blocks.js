@@ -13,7 +13,7 @@ exports.choresHomeView = function (balance) {
     'Instead of a chore wheel or schedule, everyone owes *100 points* per month. ' +
     'You earn points by doing the chores you want, on your terms.\n\n' +
     'The points for a chore go up every hour until someone claims them, then resets to 0. ' +
-    'Different chores gain points at different speeds, depending on your priorities, which you can change.';
+    'Chores gain points at different speeds, depending on your priorities, which you can change.';
 
   return {
     type: 'home',

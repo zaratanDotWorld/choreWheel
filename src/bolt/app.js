@@ -12,9 +12,10 @@ const { sleep } = require('../utils');
 
 const blocks = require('./blocks');
 
-// Create the app
-
 let res;
+let oauthToken;
+
+// Create the app
 
 const app = new App({
   logLevel: LogLevel.DEBUG,
@@ -23,22 +24,28 @@ const app = new App({
   clientSecret: process.env.SLACK_CLIENT_SECRET,
   stateSecret: process.env.STATE_SECRET,
   scopes: [
-    'channels:history',
-    'channels:read',
+    'channels:history', 'channels:read',
     'chat:write',
     'users:read',
     'commands'
   ],
   installationStore: {
     storeInstallation: async (installation) => {
-      return Admin.updateHouse({ slack_id: installation.team.id, chores_oauth: installation.bot.token });
+      return Admin.updateHouse({
+        slack_id: installation.team.id,
+        chores_oauth: installation.bot.token
+      });
     },
     fetchInstallation: async (installQuery) => {
       const house = await Admin.getHouse(installQuery.teamId);
+      oauthToken = house.chores_oauth;
       return Promise.resolve(house.chores_oauth);
     },
     deleteInstallation: async (installQuery) => {
-      return Admin.updateHouse({ slack_id: installQuery.teamId, chores_oauth: null });
+      return Admin.updateHouse({
+        slack_id: installQuery.teamId,
+        chores_oauth: null
+      });
     }
   },
   installerOptions: { directInstall: true }
@@ -56,7 +63,7 @@ app.event('app_home_opened', async ({ payload }) => {
     const chorePoints = 10; // TODO: Implement this function
 
     const data = {
-      token: process.env.SLACK_BOT_TOKEN,
+      token: oauthToken,
       user_id: payload.user,
       view: blocks.choresHomeView(chorePoints)
     };
@@ -68,7 +75,7 @@ app.event('app_home_opened', async ({ payload }) => {
 
 async function getUser (userId) {
   return app.client.users.info({
-    token: process.env.SLACK_BOT_TOKEN,
+    token: oauthToken,
     user: userId
   });
 }
@@ -79,11 +86,13 @@ app.command('/chores-channel', async ({ ack, command, say }) => {
   const channelName = command.text;
   const userInfo = await getUser(command.user_id);
 
+  let text;
+
   if (userInfo.user.is_admin) {
     let channelId;
 
     try {
-      res = await app.client.conversations.list({ token: process.env.SLACK_BOT_TOKEN });
+      res = await app.client.conversations.list({ token: oauthToken });
       channelId = res.channels.filter(channel => channel.name === channelName)[0].id;
     } catch (err) {
       await say(`Channel ${channelName} not found...`);
@@ -92,11 +101,14 @@ app.command('/chores-channel', async ({ ack, command, say }) => {
 
     await Admin.setChoreClaimsChannel(command.team_id, channelId);
 
-    await say(`Chore claims channel set to ${channelName} :fire:`);
+    text = `Chore claims channel set to ${channelName} :fire:`;
     console.log(`Set chore claims channel to ${channelName}`);
   } else {
-    await say('Only admins can set the channels...');
+    text = 'Only admins can set the channels...';
   }
+
+  const message = { token: oauthToken, channel: command.channel_id, text: text };
+  await app.client.chat.postMessage(message);
 });
 
 app.command('/chores-add', async ({ ack, command, say }) => {
@@ -104,15 +116,20 @@ app.command('/chores-add', async ({ ack, command, say }) => {
 
   const userInfo = await getUser(command.user_id);
 
+  let text;
+
   if (userInfo.user.is_admin) {
     const choreName = blocks.formatChoreName(command.text);
     await Chores.addChore(command.team_id, choreName);
 
-    await say(`${choreName} added to the chores list :star-struck:`);
+    text = `${choreName} added to the chores list :star-struck:`;
     console.log(`Added chore ${choreName}`);
   } else {
-    await say('Only admins can update the chore list...');
+    text = 'Only admins can update the chore list...';
   }
+
+  const message = { token: oauthToken, channel: command.channel_id, text: text };
+  await app.client.chat.postMessage(message);
 });
 
 app.command('/chores-del', async ({ ack, command, say }) => {
@@ -120,15 +137,20 @@ app.command('/chores-del', async ({ ack, command, say }) => {
 
   const userInfo = await getUser(command.user_id);
 
+  let text;
+
   if (userInfo.user.is_admin) {
     const choreName = blocks.formatChoreName(command.text);
-    await Chores.deleteChore(command.team_id, choreName);
+    await Chores.addChore(command.team_id, choreName);
 
-    await say(`${choreName} deleted from the chores list :sob:`);
-    console.log(`Deleted chore ${choreName}`);
+    text = `${choreName} added to the chores list :star-struck:`;
+    console.log(`Added chore ${choreName}`);
   } else {
-    await say('Only admins can update the chore list...');
+    text = 'Only admins can update the chore list...';
   }
+
+  const message = { token: oauthToken, channel: command.channel_id, text: text };
+  await app.client.chat.postMessage(message);
 });
 
 app.command('/chores-list', async ({ ack, command, say }) => {
@@ -137,7 +159,9 @@ app.command('/chores-list', async ({ ack, command, say }) => {
   const chores = await Chores.getChores(command.team_id);
   const choreNames = chores.map((chore) => `\n${chore.name}`);
 
-  await say(`The current chores:${choreNames}`);
+  const text = `The current chores:${choreNames}`;
+  const message = { token: oauthToken, channel: command.channel_id, text: text };
+  await app.client.chat.postMessage(message);
 });
 
 // Claim flow
@@ -151,7 +175,7 @@ app.action('chores-claim', async ({ ack, body, action }) => {
   const choreValues = await Chores.getCurrentChoreValues(body.team.id, new Date());
 
   const view = {
-    token: process.env.SLACK_BOT_TOKEN,
+    token: oauthToken,
     trigger_id: body.trigger_id,
     view: blocks.choresListView(choreValues)
   };
@@ -168,13 +192,14 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const [ choreId, choreName, choreValue ] = body.view.state.values[blockId].options.selected_option.value.split('|');
 
   const residentId = body.user.id;
+  // TODO: Return error to user if channel is not set
   const { chores_channel: choresChannel } = await Admin.getHouse(body.team.id);
 
   const [ claim ] = await Chores.claimChore(choreId, residentId, new Date(), choresPollLength);
   await Polls.submitVote(claim.poll_id, residentId, new Date(), YAY);
 
   const message = {
-    token: process.env.SLACK_BOT_TOKEN,
+    token: oauthToken,
     channel: choresChannel,
     text: 'Someone just completed a chore',
     blocks: blocks.choreListCallbackView(residentId, choreName, Number(choreValue), claim.poll_id, choresPollLength)
@@ -196,8 +221,10 @@ app.action(/poll-vote/, async ({ ack, body, action }) => {
   const { yays, nays } = await Polls.getPollResultCounts(pollId);
 
   // Update the vote counts
+  body.message.token = oauthToken;
   body.message.channel = body.channel.id;
   body.message.blocks[2].elements = blocks.makeVoteButtons(pollId, yays, nays);
+
   await app.client.chat.update(body.message);
 
   console.log(`Poll ${pollId} updated`);
