@@ -19,9 +19,9 @@ describe('Polls', async () => {
   const RESIDENT3 = 'RESIDENT3';
 
   before(async () => {
-    await db('chore').del();
-    await db('resident').del();
-    await db('house').del();
+    await db('Chore').del();
+    await db('Resident').del();
+    await db('House').del();
 
     await Admin.addHouse(HOUSE);
     await Admin.addResident(HOUSE, RESIDENT1);
@@ -30,19 +30,19 @@ describe('Polls', async () => {
   });
 
   afterEach(async () => {
-    await db('poll_vote').del();
-    await db('poll').del();
+    await db('PollVote').del();
+    await db('Poll').del();
   });
 
   describe('using polls', async () => {
     it('can create a new poll', async () => {
       let pollCount;
-      [ pollCount ] = await db('poll').count('*');
+      [ pollCount ] = await db('Poll').count('*');
       expect(parseInt(pollCount.count)).to.equal(0);
 
       await Polls.createPoll(DAY);
 
-      [ pollCount ] = await db('poll').count('*');
+      [ pollCount ] = await db('Poll').count('*');
       expect(parseInt(pollCount.count)).to.equal(1);
     });
 
@@ -79,7 +79,7 @@ describe('Polls', async () => {
     it('cannot update the vote in a poll if the poll is closed', async () => {
       const [ poll ] = await Polls.createPoll(5);
 
-      await sleep(5);
+      await sleep(10);
 
       await expect(Polls.submitVote(poll.id, RESIDENT1, new Date(), YAY))
         .to.be.rejectedWith('Poll has closed');

@@ -1,14 +1,14 @@
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable('chore', function(t) {
+    return knex.schema.createTable('Chore', function(t) {
         t.increments('id').unsigned().primary();
-        t.timestamps(useTimestamps = true, defaultToNow = true);
-        t.string('house_id').references('house.slack_id').notNull();
+        t.timestamps(useTimestamps = true, defaultToNow = true, useCamelCase = true);
+        t.string('houseId').references('House.slackId').notNull();
         t.string('name').notNull();
         t.boolean('active').notNull().defaultTo(true);
-        t.unique(['house_id', 'name']);
+        t.unique(['houseId', 'name']);
     });
 };
 
 exports.down = function(knex, Promise) {
-    return knex.schema.dropTable('chore');
+    return knex.schema.dropTable('Chore');
 };

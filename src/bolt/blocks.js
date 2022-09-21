@@ -10,7 +10,7 @@ exports.formatChoreName = function (text) {
 
 exports.choresHomeView = function (balance) {
   const mainText = 'We use Chores to keep the house a nice place to live.\n\n' +
-    'Instead of a chore wheel or schedule, everyone owes *100 points* per month. ' +
+    'Instead of a chore wheel or schedule, everyone owes *100 points* per month, or about 3 points per day. ' +
     'You earn points by doing the chores you want, on your terms.\n\n' +
     'The points for a chore go up every hour until someone claims them, then resets to 0. ' +
     'Chores gain points at different speeds, depending on your priorities, which you can change.';
@@ -53,7 +53,7 @@ exports.choresHomeView = function (balance) {
 };
 
 exports.choresClaimView = function (chores) {
-  const mappedChoreValues = chores.map((chore) => {
+  const mappedChores = chores.map((chore) => {
     return {
       value: `${chore.id}|${chore.name}|${chore.value}`,
       text: { type: 'plain_text', text: chore.name, emoji: true },
@@ -71,20 +71,9 @@ exports.choresClaimView = function (chores) {
       {
         type: 'input',
         label: { type: 'plain_text', text: 'Claim a chore', emoji: true },
-        element: { type: 'radio_buttons', action_id: 'options', options: mappedChoreValues }
+        element: { type: 'radio_buttons', action_id: 'options', options: mappedChores }
       }
     ]
-  };
-};
-
-exports.getChoreClaim = function (view) {
-  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-  const choreClaimIndex = view.state.values.input.options.selected_option.value;
-  const choreClaim = view.blocks[0].element.options[parseInt(choreClaimIndex)];
-
-  return {
-    name: choreClaim.text.text,
-    value: parseInt(choreClaim.description.text)
   };
 };
 
@@ -108,7 +97,7 @@ exports.choresRankView = function (chores) {
   });
 
   const mainText = 'Increasing the priority of one chore over another will give it more points over time. ' +
-    'You can express the preference strongly, weakly, or neutrally (equal value).';
+    'You can express the preference strongly, mildly, or neutrally (equal value).';
 
   return {
     type: 'modal',
@@ -157,7 +146,7 @@ exports.choresRankView = function (chores) {
               value: '1.0'
             },
             {
-              text: { type: 'plain_text', text: 'Weak (70/30)', emoji: true },
+              text: { type: 'plain_text', text: 'Mild (70/30)', emoji: true },
               value: '0.7'
             },
             {
@@ -166,8 +155,8 @@ exports.choresRankView = function (chores) {
             }
           ],
           initial_option: {
-            text: { type: 'plain_text', text: 'Strong (100/0)', emoji: true },
-            value: '1.0'
+            text: { type: 'plain_text', text: 'Mild (70/30)', emoji: true },
+            value: '0.7'
           }
         }
       }

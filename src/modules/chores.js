@@ -10,78 +10,78 @@ const { HOUR } = require('../constants');
 // Chores
 
 exports.addChore = async function (houseId, name) {
-  return db('chore')
-    .insert({ house_id: houseId, name: name, active: true })
-    .onConflict([ 'house_id', 'name' ]).merge()
+  return db('Chore')
+    .insert({ houseId: houseId, name: name, active: true })
+    .onConflict([ 'houseId', 'name' ]).merge()
     .returning('*');
 };
 
 exports.deleteChore = async function (houseId, name) {
-  return db('chore')
-    .where({ house_id: houseId, name: name })
+  return db('Chore')
+    .where({ houseId, name })
     .update({ active: false });
 };
 
 exports.getChores = async function (houseId) {
-  return db('chore')
+  return db('Chore')
     .select('*')
-    .where('house_id', houseId)
+    .where({ houseId })
     .where('active', true);
 };
 
 // Chore Preferences
 
 exports.getChorePreferences = async function (houseId) {
-  return db('chore_pref')
-    .where('house_id', houseId)
-    .select('alpha_chore_id', 'beta_chore_id', 'preference');
+  return db('ChorePref')
+    .where({ houseId })
+    .select('alphaChoreId', 'betaChoreId', 'preference');
 };
 
 exports.getActiveChorePreferences = async function (houseId) {
-  return db('chore_pref')
-    .join('chore AS alpha_chore', 'chore_pref.alpha_chore_id', 'alpha_chore.id')
-    .join('chore AS beta_chore', 'chore_pref.beta_chore_id', 'beta_chore.id')
-    .join('resident', 'chore_pref.resident_id', 'resident.slack_id')
-    .where('chore_pref.house_id', houseId)
-    .where('resident.active', true)
-    .where('alpha_chore.active', true)
-    .where('beta_chore.active', true)
-    .select('alpha_chore_id', 'beta_chore_id', 'preference');
+  return db('ChorePref')
+    .join('Chore AS AlphaChore', 'ChorePref.alphaChoreId', 'AlphaChore.id')
+    .join('Chore AS BetaChore', 'ChorePref.betaChoreId', 'BetaChore.id')
+    .join('Resident', 'ChorePref.residentId', 'Resident.slackId')
+    .where('ChorePref.houseId', houseId)
+    .where('Resident.active', true)
+    .where('AlphaChore.active', true)
+    .where('BetaChore.active', true)
+    .select('alphaChoreId', 'betaChoreId', 'preference');
 };
 
 exports.setChorePreference = async function (houseId, slackId, alphaChoreId, betaChoreId, preference) {
-  return db('chore_pref')
+  return db('ChorePref')
     .insert({
-      house_id: houseId,
-      resident_id: slackId,
-      alpha_chore_id: alphaChoreId,
-      beta_chore_id: betaChoreId,
+      houseId: houseId,
+      residentId: slackId,
+      alphaChoreId: alphaChoreId,
+      betaChoreId: betaChoreId,
       preference: preference
     })
-    .onConflict([ 'house_id', 'resident_id', 'alpha_chore_id', 'beta_chore_id' ]).merge();
+    .onConflict([ 'houseId', 'residentId', 'alphaChoreId', 'betaChoreId' ]).merge();
 };
 
 exports.formatPreferencesForRanking = function (preferences) {
   return preferences.map(p => {
-    return { alpha: p.alpha_chore_id, beta: p.beta_chore_id, preference: p.preference };
+    return { alpha: p.alphaChoreId, beta: p.betaChoreId, preference: p.preference };
   });
 };
 
 // Chore Values
 
 exports.getChoreValue = async function (choreId, startTime, endTime) {
-  return db('chore_value')
-    .where('chore_id', choreId)
-    .where('created_at', '>', startTime)
-    .where('created_at', '<=', endTime)
+  return db('ChoreValue')
+    .where('choreId', choreId)
+    .where('createdAt', '>', startTime)
+    .where('createdAt', '<=', endTime)
     .sum('value')
     .first();
 };
 
 exports.getCurrentChoreValue = async function (choreId, currentTime) {
   const previousClaims = await exports.getValidChoreClaims(choreId);
-  const filteredClaims = previousClaims.filter((claim) => claim.claimed_at < currentTime);
-  const previousClaimedAt = (filteredClaims.length === 0) ? new Date(0) : filteredClaims.slice(-1)[0].claimed_at;
+  const filteredClaims = previousClaims.filter((claim) => claim.claimedAt < currentTime);
+  const previousClaimedAt = (filteredClaims.length === 0) ? new Date(0) : filteredClaims.slice(-1)[0].claimedAt;
   return exports.getChoreValue(choreId, previousClaimedAt, currentTime);
 };
 
@@ -115,8 +115,8 @@ exports.getChoreValueScalar = async function (houseId, updateInterval, pointsPer
 exports.getChoreValueIntervalScalar = async function (houseId, currentTime) {
   const lastChoreValue = await exports.getLastChoreValueUpdate(houseId);
   const lastUpdate = (lastChoreValue !== undefined)
-    ? lastChoreValue.valued_at
-    : new Date(currentTime.getTime() - HOUR); // First update assigns an hour of value
+    ? lastChoreValue.valuedAt
+    : new Date(currentTime.getTime() - (6 * HOUR)); // First update assigns six hours of value
 
   const hoursSinceUpdate = Math.floor((currentTime - lastUpdate) / HOUR);
   const daysInMonth = new Date(currentTime.getFullYear(), currentTime.getMonth() + 1, 0).getDate();
@@ -128,11 +128,11 @@ exports.getChoreValueIntervalScalar = async function (houseId, currentTime) {
 };
 
 exports.getLastChoreValueUpdate = async function (houseId) {
-  return db('chore_value')
-    .join('chore', 'chore_value.chore_id', 'chore.id')
-    .where('chore.house_id', houseId)
-    .orderBy('chore_value.valued_at', 'desc')
-    .select('chore_value.valued_at')
+  return db('ChoreValue')
+    .join('Chore', 'ChoreValue.choreId', 'Chore.id')
+    .where('Chore.houseId', houseId)
+    .orderBy('ChoreValue.valuedAt', 'desc')
+    .select('ChoreValue.valuedAt')
     .first();
 };
 
@@ -149,10 +149,10 @@ exports.updateChoreValues = async function (houseId, updateTime, pointsPerReside
 
   const choreValues = chores.map(chore => {
     const value = choreRankings.get(chore.id) * updateScalar;
-    return { chore_id: chore.id, valued_at: updateTime, value: value };
+    return { choreId: chore.id, valuedAt: updateTime, value: value };
   });
 
-  return db('chore_value')
+  return db('ChoreValue')
     .insert(choreValues)
     .returning('*');
 };
@@ -160,45 +160,45 @@ exports.updateChoreValues = async function (houseId, updateTime, pointsPerReside
 // Chore Claims
 
 exports.getChoreClaim = async function (claimId) {
-  return db('chore_claim')
+  return db('ChoreClaim')
     .select('*')
     .where({ id: claimId })
     .first();
 };
 
 exports.getChoreClaimByMessageId = async function (messageId) {
-  return db('chore_claim')
+  return db('ChoreClaim')
     .select('*')
-    .where({ message_id: messageId })
+    .where({ messageId })
     .first();
 };
 
 exports.getValidChoreClaims = async function (choreId) {
-  return db('chore_claim')
+  return db('ChoreClaim')
     .select('*')
     .whereNot({ valid: false })
-    .andWhere({ chore_id: choreId });
+    .andWhere({ choreId });
 };
 
 exports.claimChore = async function (choreId, slackId, claimedAt, duration) {
   const [ poll ] = await Polls.createPoll(duration);
   const choreValue = await exports.getCurrentChoreValue(choreId, claimedAt);
 
-  return db('chore_claim')
+  return db('ChoreClaim')
     .insert({
-      chore_id: choreId,
-      claimed_by: slackId,
-      claimed_at: claimedAt,
+      choreId: choreId,
+      claimedBy: slackId,
+      claimedAt: claimedAt,
       value: choreValue.sum || 0,
-      poll_id: poll.id
+      pollId: poll.id
     })
-    .returning([ 'id', 'poll_id' ]);
+    .returning([ 'id', 'pollId' ]);
 };
 
 exports.resolveChoreClaim = async function (claimId, resolvedAt) {
   const choreClaim = await exports.getChoreClaim(claimId);
 
-  const pollId = choreClaim.poll_id;
+  const pollId = choreClaim.pollId;
   const poll = await Polls.getPoll(pollId);
 
   if (resolvedAt.getTime() < Polls.endsAt(poll)) { throw new Error('Poll not closed!'); }
@@ -207,11 +207,11 @@ exports.resolveChoreClaim = async function (claimId, resolvedAt) {
   const valid = (yays >= 2 && yays > nays);
 
   const choreValue = valid
-    ? await exports.getCurrentChoreValue(choreClaim.chore_id, choreClaim.claimed_at)
+    ? await exports.getCurrentChoreValue(choreClaim.choreId, choreClaim.claimedAt)
     : { sum: 0 };
 
-  return db('chore_claim')
-    .where({ id: claimId, resolved_at: null }) // Cannot resolve twice
-    .update({ value: choreValue.sum, resolved_at: resolvedAt, valid: valid })
+  return db('ChoreClaim')
+    .where({ id: claimId, resolvedAt: null }) // Cannot resolve twice
+    .update({ value: choreValue.sum, resolvedAt: resolvedAt, valid: valid })
     .returning([ 'value', 'valid' ]);
 };

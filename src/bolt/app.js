@@ -13,7 +13,7 @@ const { sleep } = require('../utils');
 const blocks = require('./blocks');
 
 let res;
-let oauthToken;
+let choresOauth;
 
 // Create the app
 
@@ -26,26 +26,19 @@ const app = new App({
   scopes: [
     'channels:history', 'channels:read',
     'chat:write',
-    'users:read',
-    'commands'
+    'commands',
+    'users:read'
   ],
   installationStore: {
     storeInstallation: async (installation) => {
-      return Admin.updateHouse({
-        slack_id: installation.team.id,
-        chores_oauth: installation.bot.token
-      });
+      return Admin.updateHouse({ slackId: installation.team.id, choresOauth: installation.bot.token });
     },
     fetchInstallation: async (installQuery) => {
-      const house = await Admin.getHouse(installQuery.teamId);
-      oauthToken = house.chores_oauth;
-      return Promise.resolve(house.chores_oauth);
+      ({ choresOauth } = await Admin.getHouse(installQuery.teamId));
+      return choresOauth;
     },
     deleteInstallation: async (installQuery) => {
-      return Admin.updateHouse({
-        slack_id: installQuery.teamId,
-        chores_oauth: null
-      });
+      return Admin.updateHouse({ slackId: installQuery.teamId, choresOauth: null });
     }
   },
   installerOptions: { directInstall: true }
@@ -63,7 +56,7 @@ app.event('app_home_opened', async ({ payload }) => {
     const chorePoints = 10; // TODO: Implement this function
 
     const data = {
-      token: oauthToken,
+      token: choresOauth,
       user_id: payload.user,
       view: blocks.choresHomeView(chorePoints)
     };
@@ -75,7 +68,7 @@ app.event('app_home_opened', async ({ payload }) => {
 
 async function getUser (userId) {
   return app.client.users.info({
-    token: oauthToken,
+    token: choresOauth,
     user: userId
   });
 }
@@ -92,7 +85,7 @@ app.command('/chores-channel', async ({ ack, command, say }) => {
     let channelId;
 
     try {
-      res = await app.client.conversations.list({ token: oauthToken });
+      res = await app.client.conversations.list({ token: choresOauth });
       channelId = res.channels.filter(channel => channel.name === channelName)[0].id;
     } catch (err) {
       await say(`Channel ${channelName} not found...`);
@@ -107,7 +100,7 @@ app.command('/chores-channel', async ({ ack, command, say }) => {
     text = 'Only admins can set the channels...';
   }
 
-  const message = { token: oauthToken, channel: command.channel_id, text: text };
+  const message = { token: choresOauth, channel: command.channel_id, text: text };
   await app.client.chat.postMessage(message);
 });
 
@@ -128,7 +121,7 @@ app.command('/chores-add', async ({ ack, command, say }) => {
     text = 'Only admins can update the chore list...';
   }
 
-  const message = { token: oauthToken, channel: command.channel_id, text: text };
+  const message = { token: choresOauth, channel: command.channel_id, text: text };
   await app.client.chat.postMessage(message);
 });
 
@@ -149,7 +142,7 @@ app.command('/chores-del', async ({ ack, command, say }) => {
     text = 'Only admins can update the chore list...';
   }
 
-  const message = { token: oauthToken, channel: command.channel_id, text: text };
+  const message = { token: choresOauth, channel: command.channel_id, text: text };
   await app.client.chat.postMessage(message);
 });
 
@@ -160,7 +153,7 @@ app.command('/chores-list', async ({ ack, command, say }) => {
   const choreNames = chores.map((chore) => `\n${chore.name}`);
 
   const text = `The current chores:${choreNames}`;
-  const message = { token: oauthToken, channel: command.channel_id, text: text };
+  const message = { token: choresOauth, channel: command.channel_id, text: text };
   await app.client.chat.postMessage(message);
 });
 
@@ -175,7 +168,7 @@ app.action('chores-claim', async ({ ack, body, action }) => {
   const choreValues = await Chores.getCurrentChoreValues(body.team.id, new Date());
 
   const view = {
-    token: oauthToken,
+    token: choresOauth,
     trigger_id: body.trigger_id,
     view: blocks.choresClaimView(choreValues)
   };
@@ -191,22 +184,23 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const blockId = body.view.blocks[0].block_id;
   const [ choreId, choreName, choreValue ] = body.view.state.values[blockId].options.selected_option.value.split('|');
 
-  const residentId = body.user.id;
   // TODO: Return error to user if channel is not set
-  const { chores_channel: choresChannel } = await Admin.getHouse(body.team.id);
+  const residentId = body.user.id;
+  const { choresChannel } = await Admin.getHouse(body.team.id);
 
+  // Perform the claim
   const [ claim ] = await Chores.claimChore(choreId, residentId, new Date(), choresPollLength);
-  await Polls.submitVote(claim.poll_id, residentId, new Date(), YAY);
+  await Polls.submitVote(claim.pollId, residentId, new Date(), YAY);
 
   const message = {
-    token: oauthToken,
+    token: choresOauth,
     channel: choresChannel,
     text: 'Someone just completed a chore',
-    blocks: blocks.choresClaimCallbackView(residentId, choreName, Number(choreValue), claim.poll_id, choresPollLength)
+    blocks: blocks.choresClaimCallbackView(residentId, choreName, Number(choreValue), claim.pollId, choresPollLength)
   };
 
   res = await app.client.chat.postMessage(message);
-  console.log(`Claim ${claim.id} created with poll ${claim.poll_id}`);
+  console.log(`Claim ${claim.id} created with poll ${claim.pollId}`);
 });
 
 // Ranking flow
@@ -217,7 +211,7 @@ app.action('chores-rank', async ({ ack, body, action }) => {
   const chores = await Chores.getChores(body.team.id);
 
   const view = {
-    token: oauthToken,
+    token: choresOauth,
     trigger_id: body.trigger_id,
     view: blocks.choresRankView(chores)
   };
@@ -256,12 +250,13 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
     preference = 1.0 - Number(strength);
   }
 
-  const { chores_channel: choresChannel } = await Admin.getHouse(body.team.id);
+  const { choresChannel } = await Admin.getHouse(body.team.id);
 
+  // Perform the update
   await Chores.setChorePreference(body.team.id, body.user.id, alphaChoreId, betaChoreId, preference);
 
   const message = {
-    token: oauthToken,
+    token: choresOauth,
     channel: choresChannel,
     text: `Someone just prioritized ${targetChoreName} over ${sourceChoreName} :rocket:`
   };
@@ -284,7 +279,7 @@ app.action(/poll-vote/, async ({ ack, body, action }) => {
   const { yays, nays } = await Polls.getPollResultCounts(pollId);
 
   // Update the vote counts
-  body.message.token = oauthToken;
+  body.message.token = choresOauth;
   body.message.channel = body.channel.id;
   body.message.blocks[2].elements = blocks.makeVoteButtons(pollId, yays, nays);
 

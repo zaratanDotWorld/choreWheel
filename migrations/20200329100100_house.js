@@ -1,20 +1,20 @@
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable('house', function(t) {
+    return knex.schema.createTable('House', function(t) {
         t.increments('id').unsigned().primary();
-        t.timestamps(useTimestamps = true, defaultToNow = true);
+        t.timestamps(useTimestamps = true, defaultToNow = true, useCamelCase = true);
         t.string('name').unique();
-        t.string('slack_id').unique().notNull(); // Slack Team Id
-        t.string('chores_oauth');
-        t.string('chores_channel');
-        t.string('hearts_oauth');
-        t.string('hearts_channel');
-        t.string('things_oauth');
-        t.string('things_channel');
-        t.string('hangs_oauth');
-        t.string('hangs_channel');
+        t.string('slackId').unique().notNull(); // Slack Team Id
+        t.string('choresOauth');
+        t.string('choresChannel');
+        t.string('heartsOauth');
+        t.string('heartsChannel');
+        t.string('thingsOauth');
+        t.string('thingsChannel');
+        t.string('hangsOauth');
+        t.string('hangsChannel');
     });
 };
 
 exports.down = function(knex, Promise) {
-    return knex.schema.dropTable('house');
+    return knex.schema.dropTable('House');
 };

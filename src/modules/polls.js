@@ -3,13 +3,13 @@ const sha256 = require('js-sha256');
 const { db } = require('../db');
 
 exports.createPoll = async function (duration) {
-  return db('poll')
+  return db('Poll')
     .insert({ duration })
     .returning('id');
 };
 
 exports.getPoll = async function (pollId) {
-  return db('poll')
+  return db('Poll')
     .select('*')
     .where('id', pollId)
     .first();
@@ -21,27 +21,22 @@ exports.submitVote = async function (pollId, residentId, submittedAt, vote) {
 
   if (exports.endsAt(poll) < submittedAt.getTime()) { throw new Error('Poll has closed!'); }
 
-  return db('poll_vote')
-    .insert({
-      poll_id: pollId,
-      encrypted_resident_id: encryptedResidentId,
-      submitted_at: submittedAt,
-      vote: vote
-    })
-    .onConflict([ 'poll_id', 'encrypted_resident_id' ]).merge();
+  return db('PollVote')
+    .insert({ pollId, encryptedResidentId, submittedAt, vote })
+    .onConflict([ 'pollId', 'encryptedResidentId' ]).merge();
 };
 
 exports.getPollVotes = async function (pollId) {
-  return db('poll_vote')
-    .where('poll_id', pollId);
+  return db('PollVote')
+    .where('pollId', pollId);
 };
 
 exports.getPollResults = async function (pollId) {
   const poll = await exports.getPoll(pollId);
 
-  return db('poll_vote')
-    .where('poll_id', pollId)
-    .whereBetween('updated_at', [ poll.created_at, exports.endsAt(poll) ]);
+  return db('PollVote')
+    .where('pollId', pollId)
+    .whereBetween('updatedAt', [ poll.createdAt, exports.endsAt(poll) ]);
 };
 
 exports.getPollResultCounts = async function (pollId) {
@@ -52,5 +47,5 @@ exports.getPollResultCounts = async function (pollId) {
 };
 
 exports.endsAt = function (poll) {
-  return new Date(poll.created_at.getTime() + poll.duration);
+  return new Date(poll.createdAt.getTime() + poll.duration);
 };

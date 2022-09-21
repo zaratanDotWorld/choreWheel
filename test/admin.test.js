@@ -17,51 +17,51 @@ describe('Admin', async () => {
   const RESIDENT2 = 'RESIDENT2';
 
   before(async () => {
-    await db('resident').del();
-    await db('house').del();
+    await db('Resident').del();
+    await db('House').del();
   });
 
   afterEach(async () => {
-    await db('resident').del();
-    await db('house').del();
+    await db('Resident').del();
+    await db('House').del();
   });
 
   describe('keeping track of houses', async () => {
     it('can add a house', async () => {
       let houses;
-      houses = await db('house').select('*');
+      houses = await db('House').select('*');
       expect(houses.length).to.equal(0);
 
       await Admin.addHouse(HOUSE1);
       await sleep(1);
 
-      houses = await db('house').select('*');
+      houses = await db('House').select('*');
       expect(houses.length).to.equal(1);
 
       await Admin.addHouse(HOUSE2);
       await sleep(1);
 
-      houses = await db('house').select('*');
+      houses = await db('House').select('*');
       expect(houses.length).to.equal(2);
     });
 
     it('can add a house idempotently', async () => {
       let houses;
-      houses = await db('house').select('*');
+      houses = await db('House').select('*');
       expect(houses.length).to.equal(0);
 
       await Admin.addHouse(HOUSE1);
       await Admin.addHouse(HOUSE2);
       await sleep(1);
 
-      houses = await db('house').select('*');
+      houses = await db('House').select('*');
       expect(houses.length).to.equal(2);
 
       await Admin.addHouse(HOUSE1);
       await Admin.addHouse(HOUSE2);
       await sleep(1);
 
-      houses = await db('house').select('*');
+      houses = await db('House').select('*');
       expect(houses.length).to.equal(2);
     });
   });

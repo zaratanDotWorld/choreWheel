@@ -1,13 +1,13 @@
 exports.up = function(knex, Promise) {
-    return knex.schema.createTable('heart', function(t) {
+    return knex.schema.createTable('Heart', function(t) {
         t.increments('id').unsigned().primary();
-        t.timestamps(useTimestamps = true, defaultToNow = true);
-        t.string('house_id').references('house.slack_id').notNull();
-        t.string('resident_id').references('resident.slack_id').notNull();
+        t.timestamps(useTimestamps = true, defaultToNow = true, useCamelCase = true);
+        t.string('houseId').references('House.slackId').notNull();
+        t.string('residentId').references('Resident.slackId').notNull();
         t.float('value');
     });
 };
 
 exports.down = function(knex, Promise) {
-    return knex.schema.dropTable('heart');
+    return knex.schema.dropTable('Heart');
 };
