@@ -31,7 +31,7 @@ const app = new App({
   ],
   installationStore: {
     storeInstallation: async (installation) => {
-      return Admin.updateHouse({ slackId: installation.team.id, choresOauth: installation.bot.token });
+      return Admin.updateHouse({ slackId: installation.team.id, choresOauth: installation });
     },
     fetchInstallation: async (installQuery) => {
       ({ choresOauth } = await Admin.getHouse(installQuery.teamId));
@@ -56,7 +56,7 @@ app.event('app_home_opened', async ({ payload }) => {
     const chorePoints = 10; // TODO: Implement this function
 
     const data = {
-      token: choresOauth,
+      token: choresOauth.bot.token,
       user_id: payload.user,
       view: blocks.choresHomeView(chorePoints)
     };
@@ -68,9 +68,18 @@ app.event('app_home_opened', async ({ payload }) => {
 
 async function getUser (userId) {
   return app.client.users.info({
-    token: choresOauth,
+    token: choresOauth.bot.token,
     user: userId
   });
+}
+
+function prepareEphemeral (command, text) {
+  return {
+    token: choresOauth.bot.token,
+    channel: command.channel_id,
+    user: command.user_id,
+    text: text
+  };
 }
 
 app.command('/chores-channel', async ({ ack, command, say }) => {
@@ -82,15 +91,9 @@ app.command('/chores-channel', async ({ ack, command, say }) => {
   let text;
 
   if (userInfo.user.is_admin) {
-    let channelId;
-
-    try {
-      res = await app.client.conversations.list({ token: choresOauth });
-      channelId = res.channels.filter(channel => channel.name === channelName)[0].id;
-    } catch (err) {
-      await say(`Channel ${channelName} not found...`);
-      throw err;
-    }
+    // TODO: return a friendly error if the channel doesn't exist
+    res = await app.client.conversations.list({ token: choresOauth.bot.token });
+    const channelId = res.channels.filter(channel => channel.name === channelName)[0].id;
 
     await Admin.setChoreClaimsChannel(command.team_id, channelId);
 
@@ -100,8 +103,8 @@ app.command('/chores-channel', async ({ ack, command, say }) => {
     text = 'Only admins can set the channels...';
   }
 
-  const message = { token: choresOauth, channel: command.channel_id, text: text };
-  await app.client.chat.postMessage(message);
+  const message = prepareEphemeral(command, text);
+  await app.client.chat.postEphemeral(message);
 });
 
 app.command('/chores-add', async ({ ack, command, say }) => {
@@ -121,8 +124,8 @@ app.command('/chores-add', async ({ ack, command, say }) => {
     text = 'Only admins can update the chore list...';
   }
 
-  const message = { token: choresOauth, channel: command.channel_id, text: text };
-  await app.client.chat.postMessage(message);
+  const message = prepareEphemeral(command, text);
+  await app.client.chat.postEphemeral(message);
 });
 
 app.command('/chores-del', async ({ ack, command, say }) => {
@@ -142,8 +145,8 @@ app.command('/chores-del', async ({ ack, command, say }) => {
     text = 'Only admins can update the chore list...';
   }
 
-  const message = { token: choresOauth, channel: command.channel_id, text: text };
-  await app.client.chat.postMessage(message);
+  const message = prepareEphemeral(command, text);
+  await app.client.chat.postEphemeral(message);
 });
 
 app.command('/chores-list', async ({ ack, command, say }) => {
@@ -153,8 +156,8 @@ app.command('/chores-list', async ({ ack, command, say }) => {
   const choreNames = chores.map((chore) => `\n${chore.name}`);
 
   const text = `The current chores:${choreNames}`;
-  const message = { token: choresOauth, channel: command.channel_id, text: text };
-  await app.client.chat.postMessage(message);
+  const message = prepareEphemeral(command, text);
+  await app.client.chat.postEphemeral(message);
 });
 
 // Claim flow
@@ -168,7 +171,7 @@ app.action('chores-claim', async ({ ack, body, action }) => {
   const choreValues = await Chores.getCurrentChoreValues(body.team.id, new Date());
 
   const view = {
-    token: choresOauth,
+    token: choresOauth.bot.token,
     trigger_id: body.trigger_id,
     view: blocks.choresClaimView(choreValues)
   };
@@ -193,7 +196,7 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   await Polls.submitVote(claim.pollId, residentId, new Date(), YAY);
 
   const message = {
-    token: choresOauth,
+    token: choresOauth.bot.token,
     channel: choresChannel,
     text: 'Someone just completed a chore',
     blocks: blocks.choresClaimCallbackView(residentId, choreName, Number(choreValue), claim.pollId, choresPollLength)
@@ -211,7 +214,7 @@ app.action('chores-rank', async ({ ack, body, action }) => {
   const chores = await Chores.getChores(body.team.id);
 
   const view = {
-    token: choresOauth,
+    token: choresOauth.bot.token,
     trigger_id: body.trigger_id,
     view: blocks.choresRankView(chores)
   };
@@ -256,7 +259,7 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   await Chores.setChorePreference(body.team.id, body.user.id, alphaChoreId, betaChoreId, preference);
 
   const message = {
-    token: choresOauth,
+    token: choresOauth.bot.token,
     channel: choresChannel,
     text: `Someone just prioritized ${targetChoreName} over ${sourceChoreName} :rocket:`
   };

@@ -10,7 +10,7 @@ exports.formatChoreName = function (text) {
 
 exports.choresHomeView = function (balance) {
   const mainText = 'We use Chores to keep the house a nice place to live.\n\n' +
-    'Instead of a chore wheel or schedule, everyone owes *100 points* per month, or about 3 points per day. ' +
+    'Instead of a chore wheel or schedule, everyone owes *100 points* per month. ' +
     'You earn points by doing the chores you want, on your terms.\n\n' +
     'The points for a chore go up every hour until someone claims them, then resets to 0. ' +
     'Chores gain points at different speeds, depending on your priorities, which you can change.';

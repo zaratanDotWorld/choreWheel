@@ -4,13 +4,13 @@ exports.up = function(knex, Promise) {
         t.timestamps(useTimestamps = true, defaultToNow = true, useCamelCase = true);
         t.string('name').unique();
         t.string('slackId').unique().notNull(); // Slack Team Id
-        t.string('choresOauth');
+        t.jsonb('choresOauth');
         t.string('choresChannel');
-        t.string('heartsOauth');
+        t.jsonb('heartsOauth');
         t.string('heartsChannel');
-        t.string('thingsOauth');
+        t.jsonb('thingsOauth');
         t.string('thingsChannel');
-        t.string('hangsOauth');
+        t.jsonb('hangsOauth');
         t.string('hangsChannel');
     });
 };
