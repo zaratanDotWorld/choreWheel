@@ -177,11 +177,11 @@ app.action('chores-claim', async ({ ack, body, action }) => {
   const view = {
     token: oauthToken,
     trigger_id: body.trigger_id,
-    view: blocks.choresListView(choreValues)
+    view: blocks.choresClaimView(choreValues)
   };
 
   res = await app.client.views.open(view);
-  console.log(`Chores listed with id ${res.view.id}`);
+  console.log(`Chores-claim opened with id ${res.view.id}`);
 });
 
 app.view('chores-claim-callback', async ({ ack, body }) => {
@@ -202,12 +202,75 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
     token: oauthToken,
     channel: choresChannel,
     text: 'Someone just completed a chore',
-    blocks: blocks.choreListCallbackView(residentId, choreName, Number(choreValue), claim.poll_id, choresPollLength)
+    blocks: blocks.choresClaimCallbackView(residentId, choreName, Number(choreValue), claim.poll_id, choresPollLength)
   };
 
   res = await app.client.chat.postMessage(message);
   console.log(`Claim ${claim.id} created with poll ${claim.poll_id}`);
 });
+
+// Ranking flow
+
+app.action('chores-rank', async ({ ack, body, action }) => {
+  await ack();
+
+  const chores = await Chores.getChores(body.team.id);
+
+  const view = {
+    token: oauthToken,
+    trigger_id: body.trigger_id,
+    view: blocks.choresRankView(chores)
+  };
+
+  res = await app.client.views.open(view);
+  console.log(`Chores-rank opened with id ${res.view.id}`);
+});
+
+app.view('chores-rank-callback', async ({ ack, body }) => {
+  await ack();
+
+  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
+
+  const targetBlockId = body.view.blocks[2].block_id;
+  const sourceBlockId = body.view.blocks[3].block_id;
+  const valueBlockId = body.view.blocks[4].block_id;
+
+  const [ targetChoreId, targetChoreName ] = body.view.state.values[targetBlockId].chores.selected_option.value.split('|');
+  const [ sourceChoreId, sourceChoreName ] = body.view.state.values[sourceBlockId].chores.selected_option.value.split('|');
+  const strength = body.view.state.values[valueBlockId].strength.selected_option.value;
+
+  let alphaChoreId;
+  let betaChoreId;
+  let preference;
+
+  // TODO: Return a friendly error if you try to prefer a chore to itself
+
+  // Value flows from source to target, and from beta to alpha
+  if (parseInt(targetChoreId) < parseInt(sourceChoreId)) {
+    alphaChoreId = parseInt(targetChoreId);
+    betaChoreId = parseInt(sourceChoreId);
+    preference = Number(strength);
+  } else {
+    alphaChoreId = parseInt(sourceChoreId);
+    betaChoreId = parseInt(targetChoreId);
+    preference = 1.0 - Number(strength);
+  }
+
+  const { chores_channel: choresChannel } = await Admin.getHouse(body.team.id);
+
+  await Chores.setChorePreference(body.team.id, body.user.id, alphaChoreId, betaChoreId, preference);
+
+  const message = {
+    token: oauthToken,
+    channel: choresChannel,
+    text: `Someone just prioritized ${targetChoreName} over ${sourceChoreName} :rocket:`
+  };
+
+  res = await app.client.chat.postMessage(message);
+  console.log(`Chore preference updated, ${alphaChoreId} vs ${betaChoreId} at ${preference}`);
+});
+
+// Voting flow
 
 app.action(/poll-vote/, async ({ ack, body, action }) => {
   await ack();

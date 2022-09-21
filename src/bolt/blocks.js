@@ -43,7 +43,7 @@ exports.choresHomeView = function (balance) {
           },
           {
             type: 'button',
-            action_id: 'chores-pref',
+            action_id: 'chores-rank',
             text: { type: 'plain_text', text: 'Set chore priorities', emoji: true }
           }
         ]
@@ -52,7 +52,7 @@ exports.choresHomeView = function (balance) {
   };
 };
 
-exports.choresListView = function (chores) {
+exports.choresClaimView = function (chores) {
   const mappedChoreValues = chores.map((chore) => {
     return {
       value: `${chore.id}|${chore.name}|${chore.value}`,
@@ -88,7 +88,7 @@ exports.getChoreClaim = function (view) {
   };
 };
 
-exports.choreListCallbackView = function (residentId, choreName, choreValue, pollId, pollDuration) {
+exports.choresClaimCallbackView = function (residentId, choreName, choreValue, pollId, pollDuration) {
   const textA = `*<@${residentId}>* did *${choreName}* for *${choreValue.toPrecision(2)} tokens* :sparkles::sparkles:`;
   const textB = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / HOUR} hours`;
 
@@ -97,6 +97,82 @@ exports.choreListCallbackView = function (residentId, choreName, choreValue, pol
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
     { type: 'actions', elements: exports.makeVoteButtons(pollId, 1, 0) }
   ];
+};
+
+exports.choresRankView = function (chores) {
+  const mappedChores = chores.map((chore) => {
+    return {
+      value: `${chore.id}|${chore.name}`,
+      text: { type: 'plain_text', text: chore.name, emoji: true }
+    };
+  });
+
+  const mainText = 'Increasing the priority of one chore over another will give it more points over time. ' +
+    'You can express the preference strongly, weakly, or neutrally (equal value).';
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-rank-callback',
+    title: { type: 'plain_text', text: 'Chores :gloves:', emoji: true },
+    submit: { type: 'plain_text', text: 'Submit', emoji: true },
+    close: { type: 'plain_text', text: 'Cancel', emoji: true },
+    blocks: [
+      {
+        type: 'header',
+        text: { type: 'plain_text', text: 'Update your chore preferences ', emoji: true }
+      },
+      {
+        type: 'section',
+        text: { type: 'plain_text', text: mainText, emoji: true }
+      },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Chore to prioritize', emoji: true },
+        element: {
+          type: 'static_select',
+          action_id: 'chores',
+          placeholder: { type: 'plain_text', text: 'Pick a chore', emoji: true },
+          options: mappedChores
+        }
+      },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Chore to deprioritize', emoji: true },
+        element: {
+          type: 'static_select',
+          action_id: 'chores',
+          placeholder: { type: 'plain_text', text: 'Pick a chore', emoji: true },
+          options: mappedChores
+        }
+      },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Preference strength', emoji: true },
+        element: {
+          type: 'radio_buttons',
+          action_id: 'strength',
+          options: [
+            {
+              text: { type: 'plain_text', text: 'Strong (100/0)', emoji: true },
+              value: '1.0'
+            },
+            {
+              text: { type: 'plain_text', text: 'Weak (70/30)', emoji: true },
+              value: '0.7'
+            },
+            {
+              text: { type: 'plain_text', text: 'Neutral (50/50)', emoji: true },
+              value: '0.5'
+            }
+          ],
+          initial_option: {
+            text: { type: 'plain_text', text: 'Strong (100/0)', emoji: true },
+            value: '1.0'
+          }
+        }
+      }
+    ]
+  };
 };
 
 // Polls Views (utils)
