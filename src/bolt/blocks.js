@@ -31,7 +31,7 @@ exports.choresHomeView = function (balance) {
       },
       {
         type: 'section',
-        text: { type: 'mrkdwn', text: `*You've earned ${balance} points so far this month :muscle:*` }
+        text: { type: 'mrkdwn', text: `*You've earned ${balance.toPrecision(2)} points so far this month :muscle:*` }
       },
       {
         type: 'actions',

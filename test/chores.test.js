@@ -279,6 +279,11 @@ describe('Chores', async () => {
       expect(choreClaims[0].value).to.equal(15);
     });
 
+    it('cannot claim a chore with a zero value', async () => {
+      await expect(Chores.claimChore(dishes.id, RESIDENT1, new Date(), POLL_LENGTH))
+        .to.be.rejectedWith('Cannot claim a zero-value chore!');
+    });
+
     it('can claim a chore incrementally', async () => {
       // Two separate events
       await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: new Date(), value: 10 } ]);
@@ -439,6 +444,29 @@ describe('Chores', async () => {
       const [ resolvedClaim2 ] = await Chores.resolveChoreClaim(choreClaim2.id, new Date());
       expect(resolvedClaim2.valid).to.be.true;
       expect(resolvedClaim2.value).to.equal(15);
+    });
+
+    it('can query a users valid chore claims within a time range', async () => {
+      await db('ChoreValue').insert([
+        { choreId: dishes.id, valuedAt: new Date(), value: 10 },
+        { choreId: sweeping.id, valuedAt: new Date(), value: 20 }
+      ]);
+      await sleep(1);
+
+      await Chores.claimChore(dishes.id, RESIDENT1, new Date(), POLL_LENGTH);
+      await Chores.claimChore(sweeping.id, RESIDENT1, new Date(), POLL_LENGTH);
+      await sleep(1);
+
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const y2k = new Date(2000, 1, 1);
+
+      let choreClaimsValue;
+      choreClaimsValue = await Chores.getUserChoreClaims(RESIDENT1, monthStart, now);
+      expect(choreClaimsValue.sum).to.equal(30);
+
+      choreClaimsValue = await Chores.getUserChoreClaims(RESIDENT1, y2k, monthStart);
+      expect(choreClaimsValue.sum).to.equal(null);
     });
   });
 });

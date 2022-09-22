@@ -28,14 +28,14 @@ exports.submitVote = async function (pollId, residentId, submittedAt, vote) {
 
 exports.getPollVotes = async function (pollId) {
   return db('PollVote')
-    .where('pollId', pollId);
+    .where({ pollId });
 };
 
 exports.getPollResults = async function (pollId) {
   const poll = await exports.getPoll(pollId);
 
   return db('PollVote')
-    .where('pollId', pollId)
+    .where({ pollId })
     .whereBetween('updatedAt', [ poll.createdAt, exports.endsAt(poll) ]);
 };
 

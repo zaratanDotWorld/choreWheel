@@ -49,15 +49,16 @@ const app = new App({
 app.event('app_home_opened', async ({ payload }) => {
   if (payload.tab === 'home') {
     await Admin.addResident(payload.view.team_id, payload.user, '');
-    console.log(`Added house ${payload.view.team_id}`);
     console.log(`Added resident ${payload.user}`);
 
-    const chorePoints = 10; // TODO: Implement this function
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const userChorePoints = await Chores.getUserChoreClaims(payload.user, monthStart, now);
 
     const data = {
       token: choresOauth.bot.token,
       user_id: payload.user,
-      view: blocks.choresHomeView(chorePoints)
+      view: blocks.choresHomeView(userChorePoints.sum || 0)
     };
     await app.client.views.publish(data);
   }
@@ -281,7 +282,7 @@ app.action(/poll-vote/, async ({ ack, body, action }) => {
   const { yays, nays } = await Polls.getPollResultCounts(pollId);
 
   // Update the vote counts
-  body.message.token = choresOauth;
+  body.message.token = choresOauth.bot.token;
   body.message.channel = body.channel.id;
   body.message.blocks[2].elements = blocks.makeVoteButtons(pollId, yays, nays);
 

@@ -71,9 +71,8 @@ exports.formatPreferencesForRanking = function (preferences) {
 
 exports.getChoreValue = async function (choreId, startTime, endTime) {
   return db('ChoreValue')
-    .where('choreId', choreId)
-    .where('createdAt', '>', startTime)
-    .where('createdAt', '<=', endTime)
+    .where({ choreId })
+    .whereBetween('createdAt', [ startTime, endTime ])
     .sum('value')
     .first();
 };
@@ -166,13 +165,6 @@ exports.getChoreClaim = async function (claimId) {
     .first();
 };
 
-exports.getChoreClaimByMessageId = async function (messageId) {
-  return db('ChoreClaim')
-    .select('*')
-    .where({ messageId })
-    .first();
-};
-
 exports.getValidChoreClaims = async function (choreId) {
   return db('ChoreClaim')
     .select('*')
@@ -181,15 +173,20 @@ exports.getValidChoreClaims = async function (choreId) {
 };
 
 exports.claimChore = async function (choreId, slackId, claimedAt, duration) {
-  const [ poll ] = await Polls.createPoll(duration);
   const choreValue = await exports.getCurrentChoreValue(choreId, claimedAt);
+
+  if (choreValue.sum === null) {
+    throw new Error('Cannot claim a zero-value chore!');
+  }
+
+  const [ poll ] = await Polls.createPoll(duration);
 
   return db('ChoreClaim')
     .insert({
       choreId: choreId,
       claimedBy: slackId,
       claimedAt: claimedAt,
-      value: choreValue.sum || 0,
+      value: choreValue.sum,
       pollId: poll.id
     })
     .returning([ 'id', 'pollId' ]);
@@ -214,4 +211,12 @@ exports.resolveChoreClaim = async function (claimId, resolvedAt) {
     .where({ id: claimId, resolvedAt: null }) // Cannot resolve twice
     .update({ value: choreValue.sum, resolvedAt: resolvedAt, valid: valid })
     .returning([ 'value', 'valid' ]);
+};
+
+exports.getUserChoreClaims = async function (residentId, startTime, endTime) {
+  return db('ChoreClaim')
+    .where({ claimedBy: residentId, valid: true })
+    .whereBetween('claimedAt', [ startTime, endTime ])
+    .sum('value')
+    .first();
 };
