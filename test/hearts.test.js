@@ -48,7 +48,7 @@ describe('Hearts', async () => {
       await Hearts.generateHearts(HOUSE, RESIDENT1, 1);
       await Hearts.generateHearts(HOUSE, RESIDENT1, 1);
       await Hearts.generateHearts(HOUSE, RESIDENT2, 1);
-      await sleep(1);
+      await sleep(5);
 
       const hearts1 = await Hearts.getResidentHearts(HOUSE, RESIDENT1);
       const hearts2 = await Hearts.getResidentHearts(HOUSE, RESIDENT2);
@@ -63,7 +63,7 @@ describe('Hearts', async () => {
       await Hearts.generateHearts(HOUSE, RESIDENT1, 2);
       await Hearts.generateHearts(HOUSE, RESIDENT1, 1);
       await Hearts.generateHearts(HOUSE, RESIDENT1, -2);
-      await sleep(1);
+      await sleep(5);
 
       const hearts = await Hearts.getResidentHearts(HOUSE, RESIDENT1);
 
@@ -73,7 +73,7 @@ describe('Hearts', async () => {
     it('can handle fractional hearts', async () => {
       await Hearts.generateHearts(HOUSE, RESIDENT1, 2.5);
       await Hearts.generateHearts(HOUSE, RESIDENT1, -0.75);
-      await sleep(1);
+      await sleep(5);
 
       const hearts = await Hearts.getResidentHearts(HOUSE, RESIDENT1);
 
@@ -95,7 +95,7 @@ describe('Hearts', async () => {
       await sleep(POLL_LENGTH);
 
       await Hearts.resolveChallenge(challenge.id);
-      await sleep(1);
+      await sleep(5);
 
       const hearts1 = await Hearts.getResidentHearts(HOUSE, RESIDENT1);
       const hearts2 = await Hearts.getResidentHearts(HOUSE, RESIDENT2);
@@ -116,7 +116,7 @@ describe('Hearts', async () => {
       await sleep(POLL_LENGTH);
 
       await Hearts.resolveChallenge(challenge.id);
-      await sleep(1);
+      await sleep(5);
 
       const hearts1 = await Hearts.getResidentHearts(HOUSE, RESIDENT1);
       const hearts2 = await Hearts.getResidentHearts(HOUSE, RESIDENT2);
@@ -137,7 +137,7 @@ describe('Hearts', async () => {
       await sleep(POLL_LENGTH);
 
       await Hearts.resolveChallenge(challenge.id);
-      await sleep(1);
+      await sleep(5);
 
       const hearts1 = await Hearts.getResidentHearts(HOUSE, RESIDENT1);
       const hearts2 = await Hearts.getResidentHearts(HOUSE, RESIDENT2);
@@ -154,7 +154,7 @@ describe('Hearts', async () => {
       await Polls.submitVote(challenge.pollId, RESIDENT1, new Date(), YAY);
       await Polls.submitVote(challenge.pollId, RESIDENT2, new Date(), NAY);
       await Polls.submitVote(challenge.pollId, RESIDENT3, new Date(), YAY);
-      await sleep(1);
+      await sleep(5);
 
       await expect(Hearts.resolveChallenge(challenge.id))
         .to.be.rejectedWith('Poll not closed!');
@@ -173,7 +173,7 @@ describe('Hearts', async () => {
       await sleep(POLL_LENGTH);
 
       await Hearts.resolveChallenge(challenge.id);
-      await sleep(1);
+      await sleep(5);
 
       await expect(Hearts.resolveChallenge(challenge.id))
         .to.be.rejectedWith('Challenge already resolved!');

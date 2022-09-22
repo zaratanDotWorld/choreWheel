@@ -33,13 +33,13 @@ describe('Admin', async () => {
       expect(houses.length).to.equal(0);
 
       await Admin.updateHouse({ slackId: HOUSE1 });
-      await sleep(1);
+      await sleep(5);
 
       houses = await db('House').select('*');
       expect(houses.length).to.equal(1);
 
       await Admin.updateHouse({ slackId: HOUSE2 });
-      await sleep(1);
+      await sleep(5);
 
       houses = await db('House').select('*');
       expect(houses.length).to.equal(2);
@@ -52,14 +52,14 @@ describe('Admin', async () => {
 
       await Admin.updateHouse({ slackId: HOUSE1 });
       await Admin.updateHouse({ slackId: HOUSE2 });
-      await sleep(1);
+      await sleep(5);
 
       houses = await db('House').select('*');
       expect(houses.length).to.equal(2);
 
       await Admin.updateHouse({ slackId: HOUSE1 });
       await Admin.updateHouse({ slackId: HOUSE2 });
-      await sleep(1);
+      await sleep(5);
 
       houses = await db('House').select('*');
       expect(houses.length).to.equal(2);
@@ -78,13 +78,13 @@ describe('Admin', async () => {
       expect(residents.length).to.equal(0);
 
       await Admin.addResident(HOUSE1, RESIDENT1);
-      await sleep(1);
+      await sleep(5);
 
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(1);
 
       await Admin.addResident(HOUSE1, RESIDENT2);
-      await sleep(1);
+      await sleep(5);
 
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(2);
@@ -97,7 +97,7 @@ describe('Admin', async () => {
 
       await Admin.addResident(HOUSE1, RESIDENT1);
       await Admin.addResident(HOUSE1, RESIDENT1);
-      await sleep(1);
+      await sleep(5);
 
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(1);
@@ -105,14 +105,14 @@ describe('Admin', async () => {
 
     it('can delete a resident', async () => {
       await Admin.addResident(HOUSE1, RESIDENT1);
-      await sleep(1);
+      await sleep(5);
 
       let residents;
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(1);
 
       await Admin.deleteResident(RESIDENT1);
-      await sleep(1);
+      await sleep(5);
 
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(0);

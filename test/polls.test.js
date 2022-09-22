@@ -92,7 +92,7 @@ describe('Polls', async () => {
       await Polls.submitVote(poll.id, RESIDENT2, new Date(), YAY);
       await Polls.submitVote(poll.id, RESIDENT3, new Date(), NAY);
 
-      await sleep(1);
+      await sleep(5);
 
       const results = await Polls.getPollResults(poll.id);
       expect(results.length).to.equal(3);
@@ -105,7 +105,7 @@ describe('Polls', async () => {
       await Polls.submitVote(poll.id, RESIDENT2, new Date(), YAY);
       await Polls.submitVote(poll.id, RESIDENT3, new Date(), NAY);
 
-      await sleep(1);
+      await sleep(5);
 
       const { yays, nays } = await Polls.getPollResultCounts(poll.id);
       expect(yays).to.equal(2);

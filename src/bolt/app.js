@@ -277,7 +277,7 @@ app.action(/poll-vote/, async ({ ack, body, action }) => {
   const [ pollId, value ] = action.value.split('|');
   await Polls.submitVote(pollId, body.user.id, new Date(), value);
 
-  await sleep(1);
+  await sleep(5);
 
   const { yays, nays } = await Polls.getPollResultCounts(pollId);
 
