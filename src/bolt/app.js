@@ -211,12 +211,12 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
 app.action('chores-rank', async ({ ack, body, action }) => {
   await ack();
 
-  const chores = await Chores.getChores(body.team.id);
+  const choreRankings = await Chores.getCurrentChoreRankings(body.team.id);
 
   const view = {
     token: choresOauth.bot.token,
     trigger_id: body.trigger_id,
-    view: blocks.choresRankView(chores)
+    view: blocks.choresRankView(choreRankings)
   };
 
   res = await app.client.views.open(view);

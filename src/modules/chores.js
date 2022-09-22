@@ -103,7 +103,11 @@ exports.getCurrentChoreRankings = async function (houseId) {
 
   const formattedPreferences = exports.formatPreferencesForRanking(preferences);
   const powerRanker = new PowerRanker(chores, formattedPreferences, residents.length);
-  return powerRanker.run(d = 0.8); // eslint-disable-line no-undef
+  const rankings = powerRanker.run(d = 0.8); // eslint-disable-line no-undef
+
+  return chores.map(chore => {
+    return { id: chore.id, name: chore.name, ranking: rankings.get(chore.id) };
+  })
 };
 
 exports.getChoreValueScalar = async function (houseId, updateInterval, pointsPerResident) {
@@ -142,13 +146,11 @@ exports.updateChoreValues = async function (houseId, updateTime, pointsPerReside
   if (intervalScalar === 0) { return Promise.resolve(); }
 
   const residents = await Admin.getResidents(houseId);
-  const chores = await exports.getChores(houseId);
   const choreRankings = await exports.getCurrentChoreRankings(houseId);
   const updateScalar = (residents.length * pointsPerResident) * intervalScalar;
 
-  const choreValues = chores.map(chore => {
-    const value = choreRankings.get(chore.id) * updateScalar;
-    return { choreId: chore.id, valuedAt: updateTime, value: value };
+  const choreValues = choreRankings.map(chore => {
+    return { choreId: chore.id, valuedAt: updateTime, value: chore.ranking * updateScalar };
   });
 
   return db('ChoreValue')

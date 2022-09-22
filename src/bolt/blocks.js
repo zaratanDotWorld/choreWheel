@@ -92,7 +92,7 @@ exports.choresRankView = function (chores) {
   const mappedChores = chores.map((chore) => {
     return {
       value: `${chore.id}|${chore.name}`,
-      text: { type: 'plain_text', text: chore.name, emoji: true }
+      text: { type: 'plain_text', text: `${chore.name} (${chore.ranking.toPrecision(2) * 100})`, emoji: true }
     };
   });
 
@@ -120,7 +120,7 @@ exports.choresRankView = function (chores) {
         element: {
           type: 'static_select',
           action_id: 'chores',
-          placeholder: { type: 'plain_text', text: 'Pick a chore', emoji: true },
+          placeholder: { type: 'plain_text', text: 'Chore (current value)', emoji: true },
           options: mappedChores
         }
       },
@@ -130,7 +130,7 @@ exports.choresRankView = function (chores) {
         element: {
           type: 'static_select',
           action_id: 'chores',
-          placeholder: { type: 'plain_text', text: 'Pick a chore', emoji: true },
+          placeholder: { type: 'plain_text', text: 'Chore (current value)', emoji: true },
           options: mappedChores
         }
       },
