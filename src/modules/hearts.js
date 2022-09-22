@@ -16,8 +16,8 @@ exports.generateHearts = async function (houseId, slackId, numHearts) {
     .returning('id');
 };
 
-exports.initiateChallenge = async function (houseId, challenger, challengee, numHearts, duration) {
-  const [ poll ] = await Polls.createPoll(duration);
+exports.initiateChallenge = async function (houseId, challenger, challengee, numHearts, challengeTime, duration) {
+  const [ poll ] = await Polls.createPoll(challengeTime, duration);
 
   return db('HeartChallenge')
     .insert({
@@ -45,7 +45,7 @@ exports.resolveChallenge = async function (challengeId) {
   const pollId = challenge.pollId;
   const poll = await Polls.getPoll(pollId);
 
-  if (Date.now() < Polls.endsAt(poll)) { throw new Error('Poll not closed!'); }
+  if (Date.now() < poll.endTime) { throw new Error('Poll not closed!'); }
 
   // Challangers wins with a majority and a minimum of four votes
   const { yays, nays } = await Polls.getPollResultCounts(pollId);

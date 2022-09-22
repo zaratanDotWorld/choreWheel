@@ -107,7 +107,7 @@ exports.getCurrentChoreRankings = async function (houseId) {
 
   return chores.map(chore => {
     return { id: chore.id, name: chore.name, ranking: rankings.get(chore.id) };
-  })
+  });
 };
 
 exports.getChoreValueScalar = async function (houseId, updateInterval, pointsPerResident) {
@@ -181,7 +181,7 @@ exports.claimChore = async function (choreId, slackId, claimedAt, duration) {
     throw new Error('Cannot claim a zero-value chore!');
   }
 
-  const [ poll ] = await Polls.createPoll(duration);
+  const [ poll ] = await Polls.createPoll(claimedAt, duration);
 
   return db('ChoreClaim')
     .insert({
@@ -200,7 +200,7 @@ exports.resolveChoreClaim = async function (claimId, resolvedAt) {
   const pollId = choreClaim.pollId;
   const poll = await Polls.getPoll(pollId);
 
-  if (resolvedAt.getTime() < Polls.endsAt(poll)) { throw new Error('Poll not closed!'); }
+  if (resolvedAt < poll.endTime) { throw new Error('Poll not closed!'); }
 
   const { yays, nays } = await Polls.getPollResultCounts(pollId);
   const valid = (yays >= 2 && yays > nays);

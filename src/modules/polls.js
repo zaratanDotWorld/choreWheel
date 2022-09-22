@@ -2,9 +2,10 @@ const sha256 = require('js-sha256');
 
 const { db } = require('../db');
 
-exports.createPoll = async function (duration) {
+exports.createPoll = async function (startTime, duration) {
+  const endTime = new Date(startTime.getTime() + duration);
   return db('Poll')
-    .insert({ duration })
+    .insert({ startTime, endTime })
     .returning('id');
 };
 
@@ -19,7 +20,7 @@ exports.submitVote = async function (pollId, residentId, submittedAt, vote) {
   const encryptedResidentId = sha256(process.env.SALT + residentId);
   const poll = await exports.getPoll(pollId);
 
-  if (exports.endsAt(poll) < submittedAt.getTime()) { throw new Error('Poll has closed!'); }
+  if (poll.endTime < submittedAt) { throw new Error('Poll has closed!'); }
 
   return db('PollVote')
     .insert({ pollId, encryptedResidentId, submittedAt, vote })
@@ -33,10 +34,9 @@ exports.getPollVotes = async function (pollId) {
 
 exports.getPollResults = async function (pollId) {
   const poll = await exports.getPoll(pollId);
-
   return db('PollVote')
     .where({ pollId })
-    .whereBetween('updatedAt', [ poll.createdAt, exports.endsAt(poll) ]);
+    .whereBetween('updatedAt', [ poll.startTime, poll.endTime ]);
 };
 
 exports.getPollResultCounts = async function (pollId) {
@@ -44,8 +44,4 @@ exports.getPollResultCounts = async function (pollId) {
   const yays = votes.filter(v => v.vote === true).length;
   const nays = votes.filter(v => v.vote === false).length;
   return { yays, nays };
-};
-
-exports.endsAt = function (poll) {
-  return new Date(poll.createdAt.getTime() + poll.duration);
 };

@@ -40,14 +40,14 @@ describe('Polls', async () => {
       [ pollCount ] = await db('Poll').count('*');
       expect(parseInt(pollCount.count)).to.equal(0);
 
-      await Polls.createPoll(DAY);
+      await Polls.createPoll(new Date(), DAY);
 
       [ pollCount ] = await db('Poll').count('*');
       expect(parseInt(pollCount.count)).to.equal(1);
     });
 
     it('can vote in a poll', async () => {
-      const [ poll ] = await Polls.createPoll(DAY);
+      const [ poll ] = await Polls.createPoll(new Date(), DAY);
 
       await Polls.submitVote(poll.id, RESIDENT1, new Date(), YAY);
 
@@ -57,7 +57,7 @@ describe('Polls', async () => {
     });
 
     it('can update the vote in a poll', async () => {
-      const [ poll ] = await Polls.createPoll(DAY);
+      const [ poll ] = await Polls.createPoll(new Date(), DAY);
 
       await Polls.submitVote(poll.id, RESIDENT1, new Date(), YAY);
 
@@ -77,7 +77,7 @@ describe('Polls', async () => {
     });
 
     it('cannot update the vote in a poll if the poll is closed', async () => {
-      const [ poll ] = await Polls.createPoll(5);
+      const [ poll ] = await Polls.createPoll(new Date(), 5);
 
       await sleep(10);
 
@@ -86,7 +86,7 @@ describe('Polls', async () => {
     });
 
     it('can get the results of a vote', async () => {
-      const [ poll ] = await Polls.createPoll(10);
+      const [ poll ] = await Polls.createPoll(new Date(), 10);
 
       await Polls.submitVote(poll.id, RESIDENT1, new Date(), YAY);
       await Polls.submitVote(poll.id, RESIDENT2, new Date(), YAY);
@@ -99,7 +99,7 @@ describe('Polls', async () => {
     });
 
     it('can get the result of a vote', async () => {
-      const [ poll ] = await Polls.createPoll(10);
+      const [ poll ] = await Polls.createPoll(new Date(), 10);
 
       await Polls.submitVote(poll.id, RESIDENT1, new Date(), YAY);
       await Polls.submitVote(poll.id, RESIDENT2, new Date(), YAY);
