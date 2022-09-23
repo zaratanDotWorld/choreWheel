@@ -5,7 +5,7 @@ const Polls = require('./polls');
 
 const { PowerRanker } = require('./power');
 
-const { HOUR } = require('../constants');
+const { HOUR, DAY } = require('../constants');
 
 // Chores
 
@@ -223,10 +223,9 @@ exports.getUserChoreClaims = async function (residentId, startTime, endTime) {
     .first();
 };
 
-exports.addChoreBreak = async function (residentId, startTime, duration) {
-  const endTime = new Date(startTime.getTime() + duration);
+exports.addChoreBreak = async function (residentId, startDate, endDate) {
   return db('ChoreBreak')
-    .insert({ residentId, startTime, endTime })
+    .insert({ residentId, startDate, endDate })
     .returning('*');
 };
 
@@ -242,8 +241,34 @@ exports.getActiveResidentCount = async function (houseId, now) {
     .where('Resident.houseId', houseId)
     .where('Resident.active', true)
     .where(function () { // Want residents NOT currently on a break
-      this.where('ChoreBreak.startTime', '>', now).orWhereNull('ChoreBreak.startTime')
-        .orWhere('ChoreBreak.endTime', '<=', now).orWhereNull('ChoreBreak.endTime');
+      this.where('ChoreBreak.startDate', '>', now).orWhereNull('ChoreBreak.startDate')
+        .orWhere('ChoreBreak.endDate', '<=', now).orWhereNull('ChoreBreak.endDate');
     })
     .countDistinct('Resident.slackId');
+};
+
+exports.getActiveResidentPercentage = async function (residentId, now) {
+  // TODO: implement this more efficiently... currently O(n) but could probably be O(1)
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const daysInMonth = monthEnd.getDate();
+  const activeDays = new Map([ ...Array(daysInMonth).keys() ].map(day => [ day, true ]));
+
+  const choreBreaks = await db('ChoreBreak')
+    .where({ residentId })
+    .where(function () { // Either startDate or endDate is betwen monthStart and monthEnd
+      this.whereBetween('startDate', [ monthStart, monthEnd ])
+        .orWhereBetween('endDate', [ monthStart, monthEnd ]);
+    })
+    .select('*');
+
+  for (const choreBreak of choreBreaks) {
+    let startDate = choreBreak.startDate;
+    while (startDate < choreBreak.endDate) {
+      activeDays.set(startDate.getDate() - 1, false);
+      startDate = new Date(startDate.getTime() + DAY);
+    }
+  }
+  const numActiveDays = Array.from(activeDays.values()).filter(active => active).length;
+  return numActiveDays / daysInMonth;
 };

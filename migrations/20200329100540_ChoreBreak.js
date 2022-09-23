@@ -3,8 +3,9 @@ exports.up = function(knex, Promise) {
         t.increments('id').unsigned().primary();
         t.timestamps(useTimestamps = true, defaultToNow = true, useCamelCase = true);
         t.string('residentId').references('Resident.slackId');
-        t.timestamp('startTime');
-        t.timestamp('endTime');
+        t.date('startDate');
+        t.date('endDate');
+        t.check('?? < ??', ['startDate', 'endDate']);
     });
 };
 
