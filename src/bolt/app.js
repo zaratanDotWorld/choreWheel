@@ -54,11 +54,12 @@ app.event('app_home_opened', async ({ payload }) => {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const userChorePoints = await Chores.getUserChoreClaims(payload.user, monthStart, now);
+    const userActivePercentage = await Chores.getActiveResidentPercentage(payload.user, now);
 
     const data = {
       token: choresOauth.bot.token,
       user_id: payload.user,
-      view: blocks.choresHomeView(userChorePoints.sum || 0)
+      view: blocks.choresHomeView(userChorePoints.sum || 0, userActivePercentage * pointsPerResident)
     };
     await app.client.views.publish(data);
   }
@@ -191,6 +192,11 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const residentId = body.user.id;
   const { choresChannel } = await Admin.getHouse(body.team.id);
 
+  // Get chore points to date
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const userChorePoints = await Chores.getUserChoreClaims(residentId, monthStart, now);
+
   // Perform the claim
   const [ claim ] = await Chores.claimChore(choreId, residentId, new Date(), choresPollLength);
   await Polls.submitVote(claim.pollId, residentId, new Date(), YAY);
@@ -199,7 +205,14 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
     token: choresOauth.bot.token,
     channel: choresChannel,
     text: 'Someone just completed a chore',
-    blocks: blocks.choresClaimCallbackView(residentId, choreName, Number(choreValue), claim.pollId, choresPollLength)
+    blocks: blocks.choresClaimCallbackView(
+      residentId,
+      choreName,
+      Number(choreValue),
+      userChorePoints.sum || 0,
+      claim.pollId,
+      choresPollLength
+    )
   };
 
   res = await app.client.chat.postMessage(message);

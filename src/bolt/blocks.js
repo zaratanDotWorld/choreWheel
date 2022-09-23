@@ -8,7 +8,7 @@ exports.formatChoreName = function (text) {
   return voca(text).latinise().titleCase().value();
 };
 
-exports.choresHomeView = function (balance) {
+exports.choresHomeView = function (balance, owed) {
   const mainText = 'We use Chores to keep the house a nice place to live.\n\n' +
     'Instead of a chore wheel or schedule, everyone owes *100 points* per month. ' +
     'You earn points by doing the chores you want, on your terms.\n\n' +
@@ -31,7 +31,7 @@ exports.choresHomeView = function (balance) {
       },
       {
         type: 'section',
-        text: { type: 'mrkdwn', text: `*You've earned ${balance.toPrecision(2)} points so far this month :muscle:*` }
+        text: { type: 'mrkdwn', text: `*You've earned ${balance.toPrecision(2)} points this month, out of ${parseInt(owed)} owed :muscle:*` }
       },
       {
         type: 'actions',
@@ -77,13 +77,15 @@ exports.choresClaimView = function (chores) {
   };
 };
 
-exports.choresClaimCallbackView = function (residentId, choreName, choreValue, pollId, pollDuration) {
-  const textA = `*<@${residentId}>* did *${choreName}* for *${choreValue.toPrecision(2)} tokens* :sparkles::sparkles:`;
-  const textB = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / HOUR} hours`;
+exports.choresClaimCallbackView = function (residentId, choreName, choreValue, totalValue, pollId, pollDuration) {
+  const textA = `*<@${residentId}>* did *${choreName}* for *${choreValue.toPrecision(2)} points*`;
+  const textB = `*<@${residentId}>* has earned *${totalValue}* points this month :sparkles::sparkles:`;
+  const textC = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / HOUR} hours`;
 
   return [
     { type: 'section', text: { type: 'mrkdwn', text: textA } },
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
+    { type: 'section', text: { type: 'mrkdwn', text: textC } },
     { type: 'actions', elements: exports.makeVoteButtons(pollId, 1, 0) }
   ];
 };
