@@ -3,9 +3,6 @@ exports.up = function(knex, Promise) {
         t.increments('id').unsigned().primary();
         t.timestamps(useTimestamps = true, defaultToNow = true, useCamelCase = true);
         t.integer('choreId').references('Chore.id').notNull();
-        t.string('reservedBy').references('Resident.slackId');
-        t.timestamp('reservedAt');
-        t.timestamp('unreservedAt');
         t.string('claimedBy').references('Resident.slackId');
         t.timestamp('claimedAt');
         t.float('value');
