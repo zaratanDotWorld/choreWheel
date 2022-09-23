@@ -145,9 +145,9 @@ exports.updateChoreValues = async function (houseId, updateTime, pointsPerReside
   // If we've updated in the last interval, short-circuit execution
   if (intervalScalar === 0) { return Promise.resolve(); }
 
-  const residents = await Admin.getResidents(houseId);
+  const [ residentCount ] = await exports.getActiveResidentCount(houseId, updateTime);
   const choreRankings = await exports.getCurrentChoreRankings(houseId);
-  const updateScalar = (residents.length * pointsPerResident) * intervalScalar;
+  const updateScalar = (residentCount.count * pointsPerResident) * intervalScalar;
 
   const choreValues = choreRankings.map(chore => {
     return { choreId: chore.id, valuedAt: updateTime, value: chore.ranking * updateScalar };
@@ -221,4 +221,29 @@ exports.getUserChoreClaims = async function (residentId, startTime, endTime) {
     .whereBetween('claimedAt', [ startTime, endTime ])
     .sum('value')
     .first();
+};
+
+exports.addChoreBreak = async function (residentId, startTime, duration) {
+  const endTime = new Date(startTime.getTime() + duration);
+  return db('ChoreBreak')
+    .insert({ residentId, startTime, endTime })
+    .returning('*');
+};
+
+exports.deleteChoreBreak = async function (choreBreakId) {
+  return db('ChoreBreak')
+    .where({ id: choreBreakId })
+    .del();
+};
+
+exports.getActiveResidentCount = async function (houseId, now) {
+  return db('Resident')
+    .fullOuterJoin('ChoreBreak', 'Resident.slackId', 'ChoreBreak.residentId')
+    .where('Resident.houseId', houseId)
+    .where('Resident.active', true)
+    .where(function () { // Want residents NOT currently on a break
+      this.where('ChoreBreak.startTime', '>', now).orWhereNull('ChoreBreak.startTime')
+        .orWhere('ChoreBreak.endTime', '<=', now).orWhereNull('ChoreBreak.endTime');
+    })
+    .countDistinct('Resident.slackId');
 };

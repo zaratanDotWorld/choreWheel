@@ -6,7 +6,7 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAlmost());
 chai.use(chaiAsPromised);
 
-const { YAY, NAY } = require('../src/constants');
+const { YAY, NAY, DAY } = require('../src/constants');
 const { sleep } = require('../src/utils');
 const { db } = require('../src/db');
 
@@ -35,13 +35,13 @@ describe('Chores', async () => {
 
     await Admin.updateHouse({ slackId: HOUSE });
 
-    await db('Chore').del();
     [ dishes ] = await Chores.addChore(HOUSE, 'dishes');
     [ sweeping ] = await Chores.addChore(HOUSE, 'sweeping');
     [ restock ] = await Chores.addChore(HOUSE, 'restock');
   });
 
   afterEach(async () => {
+    await db('ChoreBreak').del();
     await db('ChoreClaim').del();
     await db('ChoreValue').del();
     await db('ChorePref').del();
@@ -467,6 +467,69 @@ describe('Chores', async () => {
 
       choreClaimsValue = await Chores.getUserChoreClaims(RESIDENT1, y2k, monthStart);
       expect(choreClaimsValue.sum).to.equal(null);
+    });
+  });
+
+  describe('managing chore breaks', async () => {
+    beforeEach(async () => {
+      await Admin.addResident(HOUSE, RESIDENT1);
+      await Admin.addResident(HOUSE, RESIDENT2);
+    });
+
+    it('can add a chore break', async () => {
+      let breakCount;
+      [ breakCount ] = await db('ChoreBreak').count('*');
+      expect(parseInt(breakCount.count)).to.equal(0);
+
+      await Chores.addChoreBreak(RESIDENT1, new Date(), DAY);
+
+      [ breakCount ] = await db('ChoreBreak').count('*');
+      expect(parseInt(breakCount.count)).to.equal(1);
+    });
+
+    it('can delete a chore break', async () => {
+      let breakCount;
+      [ breakCount ] = await db('ChoreBreak').count('*');
+      expect(parseInt(breakCount.count)).to.equal(0);
+
+      const [ choreBreak ] = await Chores.addChoreBreak(RESIDENT1, new Date(), DAY);
+      sleep(5);
+
+      [ breakCount ] = await db('ChoreBreak').count('*');
+      expect(parseInt(breakCount.count)).to.equal(1);
+
+      await Chores.deleteChoreBreak(choreBreak.id);
+      sleep(5);
+
+      [ breakCount ] = await db('ChoreBreak').count('*');
+      expect(parseInt(breakCount.count)).to.equal(0);
+    });
+
+    it('can exclude inactive residents from the chore valuing', async () => {
+      await Admin.addResident(HOUSE, RESIDENT3);
+
+      const now = new Date();
+      const soon = new Date(now.getTime() + 60 * 1000); // One minute from now
+      const later = new Date(now.getTime() + 2 * DAY); // Two days from now
+
+      let residentCount;
+      [ residentCount ] = await Chores.getActiveResidentCount(HOUSE, soon);
+      expect(parseInt(residentCount.count)).to.equal(3);
+
+      await Chores.addChoreBreak(RESIDENT1, now, DAY);
+      await sleep(5);
+
+      [ residentCount ] = await Chores.getActiveResidentCount(HOUSE, soon);
+      expect(parseInt(residentCount.count)).to.equal(2);
+
+      // After the break ends
+      [ residentCount ] = await Chores.getActiveResidentCount(HOUSE, later);
+      expect(parseInt(residentCount.count)).to.equal(3);
+
+      // Will also exclude if inactive
+      await Admin.deleteResident(RESIDENT3);
+      [ residentCount ] = await Chores.getActiveResidentCount(HOUSE, later);
+      expect(parseInt(residentCount.count)).to.equal(2);
     });
   });
 });

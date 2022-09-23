@@ -33,6 +33,7 @@ exports.getPollVotes = async function (pollId) {
 };
 
 exports.getPollResults = async function (pollId) {
+  // TODO: implement using a join on poll
   const poll = await exports.getPoll(pollId);
   return db('PollVote')
     .where({ pollId })
