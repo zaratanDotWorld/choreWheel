@@ -152,10 +152,10 @@ app.command('/chores-del', async ({ ack, command, say }) => {
 app.command('/chores-list', async ({ ack, command, say }) => {
   await ack();
 
-  const chores = await Chores.getChores(command.team_id);
-  const choreNames = chores.map((chore) => `\n${chore.name}`);
+  const choresRankings = await Chores.getCurrentChoreRankings(command.team_id);
+  const parsedChores = choresRankings.map((chore) => `\n${chore.name} (${chore.ranking.toPrecision(2) * 100})`);
 
-  const text = `The current chores:${choreNames}`;
+  const text = `The current chores and their values (adding up to 100):${parsedChores}`;
   const message = prepareEphemeral(command, text);
   await app.client.chat.postEphemeral(message);
 });
@@ -211,12 +211,12 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
 app.action('chores-rank', async ({ ack, body, action }) => {
   await ack();
 
-  const choreRankings = await Chores.getCurrentChoreRankings(body.team.id);
+  const chores = await Chores.getChores(body.team.id);
 
   const view = {
     token: choresOauth.bot.token,
     trigger_id: body.trigger_id,
-    view: blocks.choresRankView(choreRankings)
+    view: blocks.choresRankView(chores)
   };
 
   res = await app.client.views.open(view);

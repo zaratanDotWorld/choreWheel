@@ -92,12 +92,12 @@ exports.choresRankView = function (chores) {
   const mappedChores = chores.map((chore) => {
     return {
       value: `${chore.id}|${chore.name}`,
-      text: { type: 'plain_text', text: `${chore.name} (${chore.ranking.toPrecision(2) * 100})`, emoji: true }
+      text: { type: 'plain_text', text: `${chore.name}`, emoji: true }
     };
   });
 
   const mainText = 'Increasing the priority of one chore over another will give it more points over time. ' +
-    'You can express the preference strongly, mildly, or neutrally (equal value).';
+    'You can express the preference as strong, mild, or neutral (equal value).';
 
   return {
     type: 'modal',
@@ -120,7 +120,7 @@ exports.choresRankView = function (chores) {
         element: {
           type: 'static_select',
           action_id: 'chores',
-          placeholder: { type: 'plain_text', text: 'Chore (current value)', emoji: true },
+          placeholder: { type: 'plain_text', text: 'Choose a chore', emoji: true },
           options: mappedChores
         }
       },
@@ -130,7 +130,7 @@ exports.choresRankView = function (chores) {
         element: {
           type: 'static_select',
           action_id: 'chores',
-          placeholder: { type: 'plain_text', text: 'Chore (current value)', emoji: true },
+          placeholder: { type: 'plain_text', text: 'Choose a chore', emoji: true },
           options: mappedChores
         }
       },
@@ -142,20 +142,20 @@ exports.choresRankView = function (chores) {
           action_id: 'strength',
           options: [
             {
-              text: { type: 'plain_text', text: 'Strong (100/0)', emoji: true },
+              text: { type: 'plain_text', text: 'Strong', emoji: true },
               value: '1.0'
             },
             {
-              text: { type: 'plain_text', text: 'Mild (70/30)', emoji: true },
+              text: { type: 'plain_text', text: 'Mild', emoji: true },
               value: '0.7'
             },
             {
-              text: { type: 'plain_text', text: 'Neutral (50/50)', emoji: true },
+              text: { type: 'plain_text', text: 'Neutral', emoji: true },
               value: '0.5'
             }
           ],
           initial_option: {
-            text: { type: 'plain_text', text: 'Mild (70/30)', emoji: true },
+            text: { type: 'plain_text', text: 'Mild', emoji: true },
             value: '0.7'
           }
         }
