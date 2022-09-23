@@ -5,8 +5,7 @@ const { db } = require('../db');
 exports.updateHouse = async function (houseData) {
   return db('House')
     .insert(houseData)
-    .onConflict('slackId').merge()
-    .returning('*');
+    .onConflict('slackId').merge();
 };
 
 exports.getHouse = async function (houseId) {
@@ -24,11 +23,10 @@ exports.setChoreClaimsChannel = async function (houseId, channelId) {
 
 // Residents
 
-exports.addResident = async function (houseId, slackId, name) {
+exports.addResident = async function (houseId, slackId) {
   return db('Resident')
-    .insert({ name: name, houseId: houseId, slackId: slackId, active: true })
-    .onConflict('slackId').merge()
-    .returning('*');
+    .insert({ houseId: houseId, slackId: slackId, active: true })
+    .onConflict('slackId').merge();
 };
 
 exports.deleteResident = async function (slackId) {

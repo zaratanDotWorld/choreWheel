@@ -48,7 +48,7 @@ const app = new App({
 
 app.event('app_home_opened', async ({ payload }) => {
   if (payload.tab === 'home') {
-    await Admin.addResident(payload.view.team_id, payload.user, '');
+    await Admin.addResident(payload.view.team_id, payload.user);
     console.log(`Added resident ${payload.user}`);
 
     const now = new Date();
