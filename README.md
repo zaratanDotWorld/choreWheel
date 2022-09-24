@@ -1,5 +1,7 @@
 # Mirror 🪞
 
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/kronosapiens/mirror/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/kronosapiens/mirror/tree/master)
+
 Mirror is pioneering governance software, and provides the internal operating model for [Zaratan](https://zaratan.world) houses.
 
 Developed in collaboration with social scientists and game designers, Mirror is a set of tools and processes which enable groups of individuals to easily and effectively share space. The term "Mirror" is meant to evoke the extent to which these tools do not prescribe values, but rather support the reflection of the values of the residents themselves.
