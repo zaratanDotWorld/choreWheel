@@ -4,7 +4,7 @@ const chaiAsPromised = require('chai-as-promised');
 
 chai.use(chaiAsPromised);
 
-const { DAY, NAY, YAY, CANCEL } = require('../src/constants');
+const { HOUR, DAY, NAY, YAY, CANCEL } = require('../src/constants');
 const { sleep } = require('../src/utils');
 const { db } = require('../src/db');
 
@@ -18,6 +18,9 @@ describe('Polls', async () => {
   const RESIDENT2 = 'RESIDENT2';
   const RESIDENT3 = 'RESIDENT3';
 
+  let now;
+  let soon;
+
   before(async () => {
     await db('Chore').del();
     await db('Resident').del();
@@ -27,6 +30,9 @@ describe('Polls', async () => {
     await Admin.addResident(HOUSE, RESIDENT1);
     await Admin.addResident(HOUSE, RESIDENT2);
     await Admin.addResident(HOUSE, RESIDENT3);
+
+    now = new Date();
+    soon = new Date(now.getTime() + HOUR);
   });
 
   afterEach(async () => {
@@ -40,16 +46,16 @@ describe('Polls', async () => {
       [ pollCount ] = await db('Poll').count('*');
       expect(parseInt(pollCount.count)).to.equal(0);
 
-      await Polls.createPoll(new Date(), DAY);
+      await Polls.createPoll(now, DAY);
 
       [ pollCount ] = await db('Poll').count('*');
       expect(parseInt(pollCount.count)).to.equal(1);
     });
 
     it('can vote in a poll', async () => {
-      const [ poll ] = await Polls.createPoll(new Date(), DAY);
+      const [ poll ] = await Polls.createPoll(now, DAY);
 
-      await Polls.submitVote(poll.id, RESIDENT1, new Date(), YAY);
+      await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
 
       const votes = await Polls.getPollVotes(poll.id);
       expect(votes.length).to.equal(1);
@@ -57,19 +63,19 @@ describe('Polls', async () => {
     });
 
     it('can update the vote in a poll', async () => {
-      const [ poll ] = await Polls.createPoll(new Date(), DAY);
+      const [ poll ] = await Polls.createPoll(now, DAY);
 
-      await Polls.submitVote(poll.id, RESIDENT1, new Date(), YAY);
+      await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
 
       let votes;
 
-      await Polls.submitVote(poll.id, RESIDENT1, new Date(), NAY);
+      await Polls.submitVote(poll.id, RESIDENT1, soon, NAY);
 
       votes = await Polls.getPollVotes(poll.id);
       expect(votes.length).to.equal(1);
       expect(votes[0].vote).to.be.false;
 
-      await Polls.submitVote(poll.id, RESIDENT1, new Date(), CANCEL);
+      await Polls.submitVote(poll.id, RESIDENT1, soon, CANCEL);
 
       votes = await Polls.getPollVotes(poll.id);
       expect(votes.length).to.equal(1);
@@ -77,20 +83,20 @@ describe('Polls', async () => {
     });
 
     it('cannot update the vote in a poll if the poll is closed', async () => {
-      const [ poll ] = await Polls.createPoll(new Date(), 5);
+      const [ poll ] = await Polls.createPoll(now, DAY);
 
-      await sleep(10);
+      await sleep(5);
 
-      await expect(Polls.submitVote(poll.id, RESIDENT1, new Date(), YAY))
+      await expect(Polls.submitVote(poll.id, RESIDENT1, new Date(now.getTime() + DAY + 1), YAY))
         .to.be.rejectedWith('Poll has closed');
     });
 
     it('can get the results of a vote', async () => {
-      const [ poll ] = await Polls.createPoll(new Date(), 10);
+      const [ poll ] = await Polls.createPoll(now, DAY);
 
-      await Polls.submitVote(poll.id, RESIDENT1, new Date(), YAY);
-      await Polls.submitVote(poll.id, RESIDENT2, new Date(), YAY);
-      await Polls.submitVote(poll.id, RESIDENT3, new Date(), NAY);
+      await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
+      await Polls.submitVote(poll.id, RESIDENT2, soon, YAY);
+      await Polls.submitVote(poll.id, RESIDENT3, soon, NAY);
 
       await sleep(5);
 
@@ -99,11 +105,11 @@ describe('Polls', async () => {
     });
 
     it('can get the result of a vote', async () => {
-      const [ poll ] = await Polls.createPoll(new Date(), 10);
+      const [ poll ] = await Polls.createPoll(now, DAY);
 
-      await Polls.submitVote(poll.id, RESIDENT1, new Date(), YAY);
-      await Polls.submitVote(poll.id, RESIDENT2, new Date(), YAY);
-      await Polls.submitVote(poll.id, RESIDENT3, new Date(), NAY);
+      await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
+      await Polls.submitVote(poll.id, RESIDENT2, soon, YAY);
+      await Polls.submitVote(poll.id, RESIDENT3, soon, NAY);
 
       await sleep(5);
 
