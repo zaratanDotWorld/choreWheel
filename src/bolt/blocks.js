@@ -78,14 +78,13 @@ exports.choresClaimView = function (chores) {
 };
 
 exports.choresClaimCallbackView = function (residentId, choreName, choreValue, totalValue, pollId, pollDuration) {
-  const textA = `*<@${residentId}>* did *${choreName}* for *${choreValue.toPrecision(2)} points*`;
-  const textB = `*<@${residentId}>* has earned *${totalValue}* points this month :sparkles::sparkles:`;
-  const textC = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / HOUR} hours`;
+  const textA = `*<@${residentId}>* did *${choreName}* for *${choreValue.toPrecision(2)} points*. ` +
+    `That's *${totalValue.toPrecision(2)}* points this month :sparkles::sparkles:`;
+  const textB = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / HOUR} hours`;
 
   return [
     { type: 'section', text: { type: 'mrkdwn', text: textA } },
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
-    { type: 'section', text: { type: 'mrkdwn', text: textC } },
     { type: 'actions', elements: exports.makeVoteButtons(pollId, 1, 0) }
   ];
 };

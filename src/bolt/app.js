@@ -167,9 +167,9 @@ app.action('chores-claim', async ({ ack, body, action }) => {
   await ack();
 
   // Update the chore values
-  await Chores.updateChoreValues(body.team.id, new Date(), pointsPerResident);
-
-  const choreValues = await Chores.getCurrentChoreValues(body.team.id, new Date());
+  const now = new Date();
+  await Chores.updateChoreValues(body.team.id, now, pointsPerResident);
+  const choreValues = await Chores.getCurrentChoreValues(body.team.id, now);
 
   const view = {
     token: choresOauth.bot.token,
@@ -198,8 +198,8 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const userChorePoints = await Chores.getUserChoreClaims(residentId, monthStart, now);
 
   // Perform the claim
-  const [ claim ] = await Chores.claimChore(choreId, residentId, new Date(), choresPollLength);
-  await Polls.submitVote(claim.pollId, residentId, new Date(), YAY);
+  const [ claim ] = await Chores.claimChore(choreId, residentId, now, choresPollLength);
+  await Polls.submitVote(claim.pollId, residentId, now, YAY);
 
   const message = {
     token: choresOauth.bot.token,
