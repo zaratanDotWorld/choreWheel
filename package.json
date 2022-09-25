@@ -14,7 +14,8 @@
     "test": "NODE_ENV=test mocha --exit",
     "pretest:coverage": "npx knex migrate:rollback --env test; npx knex migrate:latest --env test",
     "test:coverage": "NODE_ENV=test nyc --check-coverage mocha --exit",
-    "ngrok": "ngrok http --region=us --hostname=zaratan.ngrok.io 3000"
+    "ngrok": "ngrok http --region=us --hostname=zaratan.ngrok.io 3000",
+    "apprunner": "npx knex migrate:latest; npm start"
   },
   "dependencies": {
     "@slack/bolt": "^3.12.1",

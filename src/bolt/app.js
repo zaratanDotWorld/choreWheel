@@ -17,12 +17,22 @@ let choresOauth;
 
 // Create the app
 
+const healthCheck = {
+  path: '/healthcheck',
+  method: [ 'GET' ],
+  handler: (_, res) => {
+    res.writeHead(200);
+    res.end('Health check successful!');
+  }
+};
+
 const app = new App({
   logLevel: LogLevel.DEBUG,
   signingSecret: process.env.SLACK_SIGNING_SECRET,
   clientId: process.env.SLACK_CLIENT_ID,
   clientSecret: process.env.SLACK_CLIENT_SECRET,
   stateSecret: process.env.STATE_SECRET,
+  customRoutes: [ healthCheck ],
   scopes: [
     'channels:history', 'channels:read',
     'chat:write',
