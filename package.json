@@ -9,13 +9,13 @@
   "scripts": {
     "prepare": "husky install",
     "start": "node src/bolt/app.js",
-    "lint": "npx eslint .",
+    "start:ngrok": "ngrok http --region=us --hostname=zaratan.ngrok.io 3000",
+    "start:apprunner": "npx knex migrate:latest; npm start",
     "pretest": "npx knex migrate:rollback --env test; npx knex migrate:latest --env test",
     "test": "NODE_ENV=test mocha --exit",
     "pretest:coverage": "npx knex migrate:rollback --env test; npx knex migrate:latest --env test",
     "test:coverage": "NODE_ENV=test nyc --check-coverage mocha --exit",
-    "ngrok": "ngrok http --region=us --hostname=zaratan.ngrok.io 3000",
-    "apprunner": "npx knex migrate:latest; npm start"
+    "lint": "npx eslint ."
   },
   "dependencies": {
     "@slack/bolt": "^3.12.1",
