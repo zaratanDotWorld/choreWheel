@@ -28,41 +28,50 @@ describe('Admin', async () => {
 
   describe('keeping track of houses', async () => {
     it('can add a house', async () => {
-      let houses;
-      houses = await db('House').select('*');
-      expect(houses.length).to.equal(0);
+      let numHouses;
+      numHouses = await Admin.getNumHouses();
+      expect(parseInt(numHouses.count)).to.equal(0);
 
       await Admin.updateHouse({ slackId: HOUSE1 });
       await sleep(5);
 
-      houses = await db('House').select('*');
-      expect(houses.length).to.equal(1);
+      numHouses = await Admin.getNumHouses();
+      expect(parseInt(numHouses.count)).to.equal(1);
 
       await Admin.updateHouse({ slackId: HOUSE2 });
       await sleep(5);
 
-      houses = await db('House').select('*');
-      expect(houses.length).to.equal(2);
+      numHouses = await Admin.getNumHouses();
+      expect(parseInt(numHouses.count)).to.equal(2);
     });
 
     it('can add a house idempotently', async () => {
-      let houses;
-      houses = await db('House').select('*');
-      expect(houses.length).to.equal(0);
+      let numHouses;
+      numHouses = await Admin.getNumHouses();
+      expect(parseInt(numHouses.count)).to.equal(0);
 
       await Admin.updateHouse({ slackId: HOUSE1 });
       await Admin.updateHouse({ slackId: HOUSE2 });
       await sleep(5);
 
-      houses = await db('House').select('*');
-      expect(houses.length).to.equal(2);
+      numHouses = await Admin.getNumHouses();
+      expect(parseInt(numHouses.count)).to.equal(2);
 
       await Admin.updateHouse({ slackId: HOUSE1 });
       await Admin.updateHouse({ slackId: HOUSE2 });
       await sleep(5);
 
-      houses = await db('House').select('*');
-      expect(houses.length).to.equal(2);
+      numHouses = await Admin.getNumHouses();
+      expect(parseInt(numHouses.count)).to.equal(2);
+    });
+
+    it('can get house auth info', async () => {
+      const authInfo = { token: 'value' };
+      await Admin.updateHouse({ slackId: HOUSE1, choresOauth: authInfo });
+      await sleep(5);
+
+      const { choresOauth } = await Admin.getHouse(HOUSE1);
+      expect(choresOauth.token).to.equal('value');
     });
   });
 

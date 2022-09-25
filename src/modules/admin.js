@@ -15,6 +15,12 @@ exports.getHouse = async function (houseId) {
     .first();
 };
 
+exports.getNumHouses = async function () {
+  return db('House')
+    .count('id')
+    .first();
+};
+
 exports.setChoreClaimsChannel = async function (houseId, channelId) {
   return db('House')
     .where({ slackId: houseId })

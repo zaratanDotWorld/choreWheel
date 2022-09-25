@@ -17,6 +17,16 @@ let choresOauth;
 
 // Create the app
 
+const home = {
+  path: '/',
+  method: [ 'GET' ],
+  handler: async (_, res) => {
+    const numHouses = await Admin.getNumHouses();
+    res.writeHead(200);
+    res.end(`Number of houses: ${numHouses.count}`);
+  }
+};
+
 const healthCheck = {
   path: '/healthcheck',
   method: [ 'GET' ],
@@ -32,7 +42,7 @@ const app = new App({
   clientId: process.env.SLACK_CLIENT_ID,
   clientSecret: process.env.SLACK_CLIENT_SECRET,
   stateSecret: process.env.STATE_SECRET,
-  customRoutes: [ healthCheck ],
+  customRoutes: [ home, healthCheck ],
   scopes: [
     'channels:history', 'channels:read',
     'chat:write',
