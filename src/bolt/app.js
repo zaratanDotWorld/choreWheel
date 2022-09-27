@@ -66,19 +66,19 @@ const app = new App({
 
 // Publish the app home
 
-app.event('app_home_opened', async ({ payload }) => {
-  if (payload.tab === 'home') {
-    await Admin.addResident(payload.view.team_id, payload.user);
-    console.log(`Added resident ${payload.user}`);
+app.event('app_home_opened', async ({ body, event }) => {
+  if (event.tab === 'home') {
+    await Admin.addResident(body.team_id, event.user);
+    console.log(`Added resident ${event.user}`);
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const userChorePoints = await Chores.getUserChoreClaims(payload.user, monthStart, now);
-    const userActivePercentage = await Chores.getActiveResidentPercentage(payload.user, now);
+    const userChorePoints = await Chores.getUserChoreClaims(event.user, monthStart, now);
+    const userActivePercentage = await Chores.getActiveResidentPercentage(event.user, now);
 
     const data = {
       token: choresOauth.bot.token,
-      user_id: payload.user,
+      user_id: event.user,
       view: blocks.choresHomeView(userChorePoints.sum || 0, userActivePercentage * pointsPerResident)
     };
     await app.client.views.publish(data);
@@ -118,7 +118,7 @@ app.command('/chores-channel', async ({ ack, command, say }) => {
 
     await Admin.setChoreClaimsChannel(command.team_id, channelId);
 
-    text = `Chore claims channel set to ${channelName} :fire:`;
+    text = `Chore claims channel set to ${channelName} :fire:\nPlease add the Chores bot to the channel`;
     console.log(`Set chore claims channel to ${channelName}`);
   } else {
     text = 'Only admins can set the channels...';
@@ -158,10 +158,10 @@ app.command('/chores-del', async ({ ack, command, say }) => {
 
   if (userInfo.user.is_admin) {
     const choreName = blocks.formatChoreName(command.text);
-    await Chores.addChore(command.team_id, choreName);
+    await Chores.deleteChore(command.team_id, choreName);
 
-    text = `${choreName} added to the chores list :star-struck:`;
-    console.log(`Added chore ${choreName}`);
+    text = `${choreName} removed from the chores list :sob:`;
+    console.log(`Deleted chore ${choreName}`);
   } else {
     text = 'Only admins can update the chore list...';
   }
@@ -174,9 +174,9 @@ app.command('/chores-list', async ({ ack, command, say }) => {
   await ack();
 
   const choresRankings = await Chores.getCurrentChoreRankings(command.team_id);
-  const parsedChores = choresRankings.map((chore) => `\n${chore.name} (${chore.ranking.toPrecision(2) * 100})`);
+  const parsedChores = choresRankings.map((chore) => `\n${chore.name} (${chore.ranking.toFixed(2)})`);
 
-  const text = `The current chores and their values (adding up to 100):${parsedChores}`;
+  const text = `The current chores and their priority (adding up to 1):${parsedChores}`;
   const message = prepareEphemeral(command, text);
   await app.client.chat.postEphemeral(message);
 });
@@ -187,9 +187,16 @@ app.action('chores-claim', async ({ ack, body, action }) => {
   await ack();
 
   // Update the chore values
+  // By doing it this way, we avoid race conditions
   const now = new Date();
-  await Chores.updateChoreValues(body.team.id, now, pointsPerResident);
   const choreValues = await Chores.getCurrentChoreValues(body.team.id, now);
+  const choreValueUpdates = await Chores.updateChoreValues(body.team.id, now, pointsPerResident);
+
+  // O(n**2), too bad
+  choreValues.forEach((choreValue) => {
+    const choreValueUpdate = choreValueUpdates.find((update) => update.id === choreValue.id);
+    choreValue.value += (choreValueUpdate) ? choreValueUpdate.value : 0;
+  });
 
   const view = {
     token: choresOauth.bot.token,
@@ -208,9 +215,11 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const blockId = body.view.blocks[0].block_id;
   const [ choreId, choreName, choreValue ] = body.view.state.values[blockId].options.selected_option.value.split('|');
 
-  // TODO: Return error to user if channel is not set
   const residentId = body.user.id;
   const { choresChannel } = await Admin.getHouse(body.team.id);
+
+  // TODO: Return error to user (not console) if channel is not set
+  if (choresChannel === null) { throw new Error('Chores channel not set!'); }
 
   // Get chore points to date
   const now = new Date();
@@ -229,7 +238,7 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
       residentId,
       choreName,
       Number(choreValue),
-      userChorePoints.sum || 0,
+      (userChorePoints.sum || 0) + Number(choreValue),
       claim.pollId,
       choresPollLength
     )

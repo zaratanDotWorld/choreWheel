@@ -143,7 +143,7 @@ exports.updateChoreValues = async function (houseId, updateTime, pointsPerReside
   const intervalScalar = await exports.getChoreValueIntervalScalar(houseId, updateTime);
 
   // If we've updated in the last interval, short-circuit execution
-  if (intervalScalar === 0) { return Promise.resolve(); }
+  if (intervalScalar === 0) { return Promise.resolve([]); }
 
   const [ residentCount ] = await exports.getActiveResidentCount(houseId, updateTime);
   const choreRankings = await exports.getCurrentChoreRankings(houseId);

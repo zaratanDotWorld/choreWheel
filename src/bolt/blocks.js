@@ -31,7 +31,7 @@ exports.choresHomeView = function (balance, owed) {
       },
       {
         type: 'section',
-        text: { type: 'mrkdwn', text: `*You've earned ${balance.toPrecision(2)} points this month, out of ${parseInt(owed)} owed :muscle:*` }
+        text: { type: 'mrkdwn', text: `*You've earned ${balance.toFixed(1)} points this month, out of ${parseInt(owed)} owed :muscle:*` }
       },
       {
         type: 'actions',
@@ -57,7 +57,7 @@ exports.choresClaimView = function (chores) {
     return {
       value: `${chore.id}|${chore.name}|${chore.value}`,
       text: { type: 'plain_text', text: chore.name, emoji: true },
-      description: { type: 'plain_text', text: `${chore.value.toPrecision(2)} points` }
+      description: { type: 'plain_text', text: `${chore.value.toFixed(1)} points` }
     };
   });
 
@@ -78,8 +78,8 @@ exports.choresClaimView = function (chores) {
 };
 
 exports.choresClaimCallbackView = function (residentId, choreName, choreValue, totalValue, pollId, pollDuration) {
-  const textA = `*<@${residentId}>* did *${choreName}* for *${choreValue.toPrecision(2)} points*. ` +
-    `That's *${totalValue.toPrecision(2)}* points this month :sparkles::sparkles:`;
+  const textA = `*<@${residentId}>* did *${choreName}* for *${choreValue.toFixed(1)} points*. ` +
+    `That's *${totalValue.toFixed(1)}* points this month :sparkles::sparkles:`;
   const textB = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / HOUR} hours`;
 
   return [
