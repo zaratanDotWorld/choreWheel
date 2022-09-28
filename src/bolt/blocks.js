@@ -71,7 +71,12 @@ exports.choresClaimView = function (chores) {
       {
         type: 'input',
         label: { type: 'plain_text', text: 'Claim a chore', emoji: true },
-        element: { type: 'radio_buttons', action_id: 'options', options: mappedChores }
+        element: {
+          type: 'static_select',
+          action_id: 'options',
+          placeholder: { type: 'plain_text', text: 'Choose a chore', emoji: true },
+          options: mappedChores
+        }
       }
     ]
   };
