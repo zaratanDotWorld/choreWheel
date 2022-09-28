@@ -13,7 +13,8 @@ exports.choresHomeView = function (balance, owed) {
     'Instead of a chore wheel or schedule, everyone owes *100 points* per month. ' +
     'You earn points by doing the chores you want, on your terms.\n\n' +
     'The points for a chore go up every hour until someone claims them, then resets to 0. ' +
-    'Chores gain points at different speeds, depending on your priorities, which you can change.';
+    'Chores gain points at different speeds, depending on your priorities, which you can change.\n\n' +
+    'Claims are verified by the house via emoji vote, and require at least *two* thumbs-up votes.';
 
   return {
     type: 'home',
@@ -56,8 +57,7 @@ exports.choresClaimView = function (chores) {
   const mappedChores = chores.map((chore) => {
     return {
       value: `${chore.id}|${chore.name}|${chore.value}`,
-      text: { type: 'plain_text', text: chore.name, emoji: true },
-      description: { type: 'plain_text', text: `${chore.value.toFixed(1)} points` }
+      text: { type: 'plain_text', text: `${chore.name} - ${chore.value.toFixed(1)} points`, emoji: true }
     };
   });
 
@@ -74,7 +74,7 @@ exports.choresClaimView = function (chores) {
         element: {
           type: 'static_select',
           action_id: 'options',
-          placeholder: { type: 'plain_text', text: 'Choose a chore', emoji: true },
+          placeholder: { type: 'plain_text', text: 'Chore - num points', emoji: true },
           options: mappedChores
         }
       }
