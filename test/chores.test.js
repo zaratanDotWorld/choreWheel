@@ -111,7 +111,7 @@ describe('Chores', async () => {
       expect(preferences.length).to.equal(3);
 
       // Remove the third preference
-      await Admin.deleteResident(RESIDENT3);
+      await Admin.updateResident(HOUSE, RESIDENT3, false, '');
       await sleep(5);
 
       preferences = await Chores.getActiveChorePreferences(HOUSE);
@@ -529,7 +529,7 @@ describe('Chores', async () => {
       expect(parseInt(residentCount.count)).to.equal(3);
 
       // Will also exclude if inactive
-      await Admin.deleteResident(RESIDENT3);
+      await Admin.updateResident(HOUSE, RESIDENT3, false, '');
       [ residentCount ] = await Chores.getActiveResidentCount(HOUSE, later);
       expect(parseInt(residentCount.count)).to.equal(2);
     });

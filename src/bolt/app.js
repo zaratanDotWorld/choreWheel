@@ -181,6 +181,26 @@ app.command('/chores-list', async ({ ack, command, say }) => {
   await app.client.chat.postEphemeral(message);
 });
 
+app.command('/chores-sync', async ({ ack, command, say }) => {
+  await ack();
+
+  const SLACKBOT = 'USLACKBOT';
+
+  const workspaceMembers = await app.client.users.list({ token: choresOauth.bot.token });
+
+  for (const member of workspaceMembers.members) {
+    if (!member.is_bot & member.id !== SLACKBOT) {
+      await Admin.updateResident(member.team_id, member.id, !member.deleted, member.real_name);
+    }
+  }
+
+  const residents = await Admin.getResidents(workspaceMembers.members[0].team_id);
+
+  const text = `Synced workspace, ${residents.length} active residents found`;
+  const message = prepareEphemeral(command, text);
+  await app.client.chat.postEphemeral(message);
+});
+
 // Claim flow
 
 app.action('chores-claim', async ({ ack, body, action }) => {
@@ -194,7 +214,7 @@ app.action('chores-claim', async ({ ack, body, action }) => {
 
   // O(n**2), too bad
   choreValues.forEach((choreValue) => {
-    const choreValueUpdate = choreValueUpdates.find((update) => update.id === choreValue.id);
+    const choreValueUpdate = choreValueUpdates.find((update) => update.choreId === choreValue.id);
     choreValue.value += (choreValueUpdate) ? choreValueUpdate.value : 0;
   });
 

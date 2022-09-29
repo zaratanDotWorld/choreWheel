@@ -30,15 +30,13 @@ exports.setChoreClaimsChannel = async function (houseId, channelId) {
 // Residents
 
 exports.addResident = async function (houseId, slackId) {
-  return db('Resident')
-    .insert({ houseId: houseId, slackId: slackId, active: true })
-    .onConflict('slackId').merge();
+  return exports.updateResident(houseId, slackId, true, '');
 };
 
-exports.deleteResident = async function (slackId) {
+exports.updateResident = async function (houseId, slackId, active, name) {
   return db('Resident')
-    .where({ slackId })
-    .update({ active: false });
+    .insert({ houseId, slackId, active, name })
+    .onConflict('slackId').merge();
 };
 
 exports.getResidents = async function (houseId) {

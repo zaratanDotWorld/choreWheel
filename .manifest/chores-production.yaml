@@ -27,6 +27,10 @@ features:
       url: https://mirror.zaratan.world/slack/events
       description: Set the claims channel
       should_escape: true
+    - command: /chores-sync
+      url: https://mirror.zaratan.world/slack/events
+      description: Update the active members
+      should_escape: true
 oauth_config:
   redirect_urls:
     - https://mirror.zaratan.world/slack/oauth_redirect

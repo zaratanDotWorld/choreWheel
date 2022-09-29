@@ -27,6 +27,10 @@ features:
       url: https://zaratan.ngrok.io/slack/events
       description: Set the claims channel
       should_escape: true
+    - command: /chores-sync
+      url: https://zaratan.ngrok.io/slack/events
+      description: Update the active members
+      should_escape: true
 oauth_config:
   redirect_urls:
     - https://zaratan.ngrok.io/slack/oauth_redirect

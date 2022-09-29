@@ -120,7 +120,7 @@ describe('Admin', async () => {
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(1);
 
-      await Admin.deleteResident(RESIDENT1);
+      await Admin.updateResident(HOUSE1, RESIDENT1, false, '');
       await sleep(5);
 
       residents = await Admin.getResidents(HOUSE1);
