@@ -5,6 +5,8 @@ exports.up = function(knex, Promise) {
         t.integer('choreId').references('Chore.id').notNull();
         t.timestamp('valuedAt').notNull();
         t.float('value').notNull();
+        t.float('ranking').notNull();
+        t.integer('residents').notNull();
     });
 };
 

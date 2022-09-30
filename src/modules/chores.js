@@ -151,7 +151,13 @@ exports.updateChoreValues = async function (houseId, updateTime) {
   const updateScalar = (residentCount.count * pointsPerResident) * intervalScalar;
 
   const choreValues = choreRankings.map(chore => {
-    return { choreId: chore.id, valuedAt: updateTime, value: chore.ranking * updateScalar };
+    return {
+      choreId: chore.id,
+      valuedAt: updateTime,
+      value: chore.ranking * updateScalar,
+      ranking: chore.ranking,
+      residents: residentCount.count
+    };
   });
 
   return db('ChoreValue')
