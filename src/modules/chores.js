@@ -6,6 +6,7 @@ const Polls = require('./polls');
 const { PowerRanker } = require('./power');
 
 const { HOUR, DAY } = require('../constants');
+const { pointsPerResident, initialValueDuration } = require('../config');
 
 // Chores
 
@@ -72,7 +73,7 @@ exports.formatPreferencesForRanking = function (preferences) {
 exports.getChoreValue = async function (choreId, startTime, endTime) {
   return db('ChoreValue')
     .where({ choreId })
-    .whereBetween('createdAt', [ startTime, endTime ])
+    .whereBetween('valuedAt', [ startTime, endTime ])
     .sum('value')
     .first();
 };
@@ -110,7 +111,7 @@ exports.getCurrentChoreRankings = async function (houseId) {
   });
 };
 
-exports.getChoreValueScalar = async function (houseId, updateInterval, pointsPerResident) {
+exports.getChoreValueScalar = async function (houseId, updateInterval) {
   const residents = await Admin.getResidents(houseId);
   return (residents.length * pointsPerResident) * updateInterval;
 };
@@ -119,7 +120,7 @@ exports.getChoreValueIntervalScalar = async function (houseId, currentTime) {
   const lastChoreValue = await exports.getLastChoreValueUpdate(houseId);
   const lastUpdate = (lastChoreValue !== undefined)
     ? lastChoreValue.valuedAt
-    : new Date(currentTime.getTime() - (6 * HOUR)); // First update assigns six hours of value
+    : new Date(currentTime.getTime() - initialValueDuration); // First update assigns a fixed amount of value
 
   const hoursSinceUpdate = Math.floor((currentTime - lastUpdate) / HOUR);
   const daysInMonth = new Date(currentTime.getFullYear(), currentTime.getMonth() + 1, 0).getDate();
@@ -139,7 +140,7 @@ exports.getLastChoreValueUpdate = async function (houseId) {
     .first();
 };
 
-exports.updateChoreValues = async function (houseId, updateTime, pointsPerResident) {
+exports.updateChoreValues = async function (houseId, updateTime) {
   const intervalScalar = await exports.getChoreValueIntervalScalar(houseId, updateTime);
 
   // If we've updated in the last interval, short-circuit execution
@@ -156,6 +157,20 @@ exports.updateChoreValues = async function (houseId, updateTime, pointsPerReside
   return db('ChoreValue')
     .insert(choreValues)
     .returning('*');
+};
+
+exports.getUpdatedChoreValues = async function (houseId, updateTime) {
+  // By doing it this way, we avoid race conditions
+  const choreValues = await exports.getCurrentChoreValues(houseId, updateTime);
+  const choreValueUpdates = await exports.updateChoreValues(houseId, updateTime, pointsPerResident);
+
+  // O(n**2), too bad
+  choreValues.forEach((choreValue) => {
+    const choreValueUpdate = choreValueUpdates.find((update) => update.choreId === choreValue.id);
+    choreValue.value += (choreValueUpdate) ? choreValueUpdate.value : 0;
+  });
+
+  return choreValues;
 };
 
 // Chore Claims

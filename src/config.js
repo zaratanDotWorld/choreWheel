@@ -1,3 +1,6 @@
-exports.choresPollLength = 24 * 60 * 60 * 1000; // 1 day
-exports.heartsPollLength = 3 * 24 * 60 * 60 * 1000; // 3 days
+const { HOUR, DAY } = require('./constants');
+
+exports.choresPollLength = DAY;
+exports.heartsPollLength = 3 * DAY;
 exports.pointsPerResident = 100;
+exports.initialValueDuration = 72 * HOUR;

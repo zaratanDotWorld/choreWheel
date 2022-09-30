@@ -206,17 +206,7 @@ app.command('/chores-sync', async ({ ack, command, say }) => {
 app.action('chores-claim', async ({ ack, body, action }) => {
   await ack();
 
-  // Update the chore values
-  // By doing it this way, we avoid race conditions
-  const now = new Date();
-  const choreValues = await Chores.getCurrentChoreValues(body.team.id, now);
-  const choreValueUpdates = await Chores.updateChoreValues(body.team.id, now, pointsPerResident);
-
-  // O(n**2), too bad
-  choreValues.forEach((choreValue) => {
-    const choreValueUpdate = choreValueUpdates.find((update) => update.choreId === choreValue.id);
-    choreValue.value += (choreValueUpdate) ? choreValueUpdate.value : 0;
-  });
+  const choreValues = await Chores.getUpdatedChoreValues(body.team.id, new Date(), pointsPerResident);
 
   const view = {
     token: choresOauth.bot.token,

@@ -38,6 +38,7 @@ exports.getPollResults = async function (pollId) {
   return db('PollVote')
     .where({ pollId })
     .whereBetween('updatedAt', [ poll.startTime, poll.endTime ]);
+  // TODO: make sure updatedAt is being set properly
 };
 
 exports.getPollResultCounts = async function (pollId) {
