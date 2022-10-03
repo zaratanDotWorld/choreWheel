@@ -1,0 +1,3 @@
+logs:
+  - name: chores
+    file: /home/ubuntu/mirror/logs/chores.log

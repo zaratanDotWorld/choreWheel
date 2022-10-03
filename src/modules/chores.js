@@ -1,12 +1,10 @@
 const { db } = require('../db');
+const { HOUR, DAY } = require('../constants');
+const { pointsPerResident, initialValueDuration, choresMinVotes } = require('../config');
 
 const Admin = require('./admin');
 const Polls = require('./polls');
-
 const { PowerRanker } = require('./power');
-
-const { HOUR, DAY } = require('../constants');
-const { pointsPerResident, initialValueDuration, choresMinVotes } = require('../config');
 
 // Chores
 

@@ -1,4 +1,4 @@
-/var/log/mirror/chores.log {
+/home/ubuntu/mirror/logs/chores.log {
   daily
   rotate 7
   compress

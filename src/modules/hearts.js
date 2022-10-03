@@ -1,22 +1,20 @@
 const { db } = require('../db');
+const { heartsMinVotesInitial } = require('../config');
 
 const Polls = require('./polls');
 
-const { heartsInitialMinVotes } = require('../config');
-
 // Hearts
 
-exports.getResidentHearts = async function (houseId, slackId) {
+exports.getResidentHearts = async function (houseId, residentId) {
   return db('Heart')
-    .where('houseId', houseId)
-    .where('residentId', slackId)
+    .where({ houseId, residentId })
     .sum('value')
     .first();
 };
 
-exports.generateHearts = async function (houseId, slackId, numHearts) {
+exports.generateHearts = async function (houseId, residentId, numHearts) {
   return db('Heart')
-    .insert({ houseId: houseId, residentId: slackId, value: numHearts })
+    .insert({ houseId: houseId, residentId: residentId, value: numHearts })
     .returning('id');
 };
 
@@ -55,7 +53,7 @@ exports.resolveChallenge = async function (challengeId, resolvedAt) {
 
   // Challangers wins with a majority and a minimum of four votes
   const { yays, nays } = await Polls.getPollResultCounts(pollId);
-  const loser = (yays >= heartsInitialMinVotes && yays > nays)
+  const loser = (yays >= heartsMinVotesInitial && yays > nays)
     ? challenge.challengee
     : challenge.challenger;
 

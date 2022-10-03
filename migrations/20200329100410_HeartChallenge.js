@@ -3,10 +3,10 @@ exports.up = function(knex, Promise) {
         t.increments('id').unsigned().primary();
         t.timestamps(useTimestamps = true, defaultToNow = true, useCamelCase = true);
         t.string('houseId').references('House.slackId').notNull();
-        t.string('challenger').references('Resident.slackId');
-        t.string('challengee').references('Resident.slackId');
+        t.string('challenger').references('Resident.slackId').notNull();
+        t.string('challengee').references('Resident.slackId').notNull();
         t.integer('value');
-        t.integer('pollId').references('Poll.id');
+        t.integer('pollId').references('Poll.id').notNull();
         t.integer('heartId').references('Heart.id');
     });
 };

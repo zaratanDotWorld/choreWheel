@@ -8,7 +8,7 @@ Type=simple
 User=ubuntu
 WorkingDirectory=/home/ubuntu/mirror
 ExecStart=/home/ubuntu/.nvm/versions/node/v16.15.0/bin/node src/bolt/app.js
-StandardOutput=file:/var/log/mirror/chores.log
+StandardOutput=file:/home/ubuntu/mirror/logs/chores.log
 Restart=on-failure
 
 [Install]
