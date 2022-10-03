@@ -355,6 +355,7 @@ describe('Chores', async () => {
       const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, tomorrow);
       expect(resolvedClaim.valid).to.be.true;
       expect(resolvedClaim.value).to.equal(10);
+      expect(resolvedClaim.resolvedAt.getTime()).to.equal(tomorrow.getTime());
     });
 
     it('cannot resolve a claim before the poll closes ', async () => {
