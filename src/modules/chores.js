@@ -6,7 +6,7 @@ const Polls = require('./polls');
 const { PowerRanker } = require('./power');
 
 const { HOUR, DAY } = require('../constants');
-const { pointsPerResident, initialValueDuration } = require('../config');
+const { pointsPerResident, initialValueDuration, choresMinVotes } = require('../config');
 
 // Chores
 
@@ -225,7 +225,7 @@ exports.resolveChoreClaim = async function (claimId, resolvedAt) {
   if (resolvedAt < poll.endTime) { throw new Error('Poll not closed!'); }
 
   const { yays, nays } = await Polls.getPollResultCounts(pollId);
-  const valid = (yays >= 2 && yays > nays);
+  const valid = (yays >= choresMinVotes && yays > nays);
 
   const choreValue = valid
     ? await exports.getCurrentChoreValue(choreClaim.choreId, choreClaim.claimedAt)
