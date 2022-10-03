@@ -1,4 +1,5 @@
-exports.HOUR = 60 * 60 * 1000;
+exports.MINUTE = 60 * 1000;
+exports.HOUR = 60 * exports.MINUTE;
 exports.DAY = 24 * exports.HOUR;
 
 exports.NAY = 0;

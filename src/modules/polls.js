@@ -24,7 +24,8 @@ exports.submitVote = async function (pollId, residentId, submittedAt, vote) {
 
   return db('PollVote')
     .insert({ pollId, encryptedResidentId, submittedAt, vote })
-    .onConflict([ 'pollId', 'encryptedResidentId' ]).merge();
+    .onConflict([ 'pollId', 'encryptedResidentId' ]).merge()
+    .returning('*');
 };
 
 exports.getPollVotes = async function (pollId) {
@@ -37,8 +38,7 @@ exports.getPollResults = async function (pollId) {
   const poll = await exports.getPoll(pollId);
   return db('PollVote')
     .where({ pollId })
-    .whereBetween('updatedAt', [ poll.startTime, poll.endTime ]);
-  // TODO: make sure updatedAt is being set properly
+    .whereBetween('submittedAt', [ poll.startTime, poll.endTime ]);
 };
 
 exports.getPollResultCounts = async function (pollId) {

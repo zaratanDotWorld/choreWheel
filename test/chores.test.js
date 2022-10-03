@@ -6,7 +6,7 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAlmost());
 chai.use(chaiAsPromised);
 
-const { YAY, NAY, DAY, HOUR } = require('../src/constants');
+const { YAY, NAY, DAY, HOUR, MINUTE } = require('../src/constants');
 const { pointsPerResident } = require('../src/config');
 const { sleep } = require('../src/utils');
 const { db } = require('../src/db');
@@ -27,7 +27,9 @@ describe('Chores', async () => {
   let sweeping;
   let restock;
 
-  const POLL_LENGTH = 35;
+  let now;
+  let soon;
+  let tomorrow;
 
   before(async () => {
     await db('Chore').del();
@@ -39,6 +41,10 @@ describe('Chores', async () => {
     [ dishes ] = await Chores.addChore(HOUSE, 'dishes');
     [ sweeping ] = await Chores.addChore(HOUSE, 'sweeping');
     [ restock ] = await Chores.addChore(HOUSE, 'restock');
+
+    now = new Date();
+    soon = new Date(now.getTime() + MINUTE);
+    tomorrow = new Date(now.getTime() + DAY);
   });
 
   afterEach(async () => {
@@ -65,14 +71,13 @@ describe('Chores', async () => {
 
     it('can set and query for chore values in a time range', async () => {
       await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: new Date(), value: 10, ranking: 0, residents: 0 },
-        { choreId: dishes.id, valuedAt: new Date(), value: 5, ranking: 0, residents: 0 },
-        { choreId: sweeping.id, valuedAt: new Date(), value: 20, ranking: 0, residents: 0 }
+        { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 },
+        { choreId: dishes.id, valuedAt: now, value: 5, ranking: 0, residents: 0 },
+        { choreId: sweeping.id, valuedAt: now, value: 20, ranking: 0, residents: 0 }
       ]);
 
-      const now = new Date();
-      const endTime = new Date(now.getTime() + 1000);
-      const startTime = new Date(now.getTime() - 1000);
+      const endTime = new Date(now.getTime() + MINUTE);
+      const startTime = new Date(now.getTime() - MINUTE);
 
       const dishesValue = await Chores.getChoreValue(dishes.id, startTime, endTime);
       expect(dishesValue.sum).to.equal(15);
@@ -83,15 +88,14 @@ describe('Chores', async () => {
 
     it('can set and query for all current chore values', async () => {
       await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: new Date(), value: 10, ranking: 0, residents: 0 },
-        { choreId: dishes.id, valuedAt: new Date(), value: 5, ranking: 0, residents: 0 },
-        { choreId: sweeping.id, valuedAt: new Date(), value: 20, ranking: 0, residents: 0 }
+        { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 },
+        { choreId: dishes.id, valuedAt: now, value: 5, ranking: 0, residents: 0 },
+        { choreId: sweeping.id, valuedAt: now, value: 20, ranking: 0, residents: 0 }
       ]);
 
-      const now = new Date();
-      const currentTime = new Date(now.getTime() + 1000);
+      const soon = new Date(now.getTime() + MINUTE);
 
-      const choreValues = await Chores.getCurrentChoreValues(HOUSE, currentTime);
+      const choreValues = await Chores.getCurrentChoreValues(HOUSE, soon);
       expect(choreValues.find(x => x.id === dishes.id).value).to.equal(15);
       expect(choreValues.find(x => x.id === sweeping.id).value).to.equal(20);
       expect(choreValues.find(x => x.id === restock.id).value).to.equal(0);
@@ -208,44 +212,43 @@ describe('Chores', async () => {
     });
 
     it('can calculate the interval since the last chore valuation', async () => {
-      const firstValuationTime = new Date(2000, 0, 1); // January 1
-      const secondValuationTime = new Date(2000, 0, 2); // January 2
+      const t0 = new Date(2000, 0, 1); // January 1
+      const t1 = new Date(2000, 0, 2); // January 2
 
       await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: firstValuationTime, value: 10, ranking: 0, residents: 0 },
-        { choreId: dishes.id, valuedAt: secondValuationTime, value: 10, ranking: 0, residents: 0 }
+        { choreId: dishes.id, valuedAt: t0, value: 10, ranking: 0, residents: 0 },
+        { choreId: dishes.id, valuedAt: t1, value: 10, ranking: 0, residents: 0 }
       ]);
 
-      const queryTime = new Date(secondValuationTime.getTime() + HOUR); // 1 hour
-      const intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, queryTime);
+      const t2 = new Date(t1.getTime() + HOUR); // 1 hour
+      const intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, t2);
       expect(intervalScalar).to.almost.equal(0.0013440860215053765);
     });
 
     it('can calculate the interval on an hourly basis', async () => {
-      const valuationTime = new Date(2000, 0, 1);
+      const t0 = new Date(2000, 0, 1);
 
       await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: valuationTime, value: 10, ranking: 0, residents: 0 }
+        { choreId: dishes.id, valuedAt: t0, value: 10, ranking: 0, residents: 0 }
       ]);
 
-      let queryTime;
+      const t1 = new Date(t0.getTime() + (HOUR + 10 * MINUTE));
+      const t2 = new Date(t0.getTime() + (HOUR + 45 * MINUTE));
+      const t3 = new Date(t0.getTime() + (HOUR + 60 * MINUTE));
+
       let intervalScalar;
-
-      queryTime = new Date(valuationTime.getTime() + (60 + 10) * 60 * 1000); // 1 hour, 10 minutes
-      intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, queryTime);
+      intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, t1);
       expect(intervalScalar).to.almost.equal(0.0013440860215053765);
 
-      queryTime = new Date(valuationTime.getTime() + (60 + 45) * 60 * 1000); // 1 hour, 45 minutes
-      intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, queryTime);
+      intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, t2);
       expect(intervalScalar).to.almost.equal(0.0013440860215053765);
 
-      queryTime = new Date(valuationTime.getTime() + (60 + 60) * 60 * 1000); // 2 hours
-      intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, queryTime);
+      intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, t3);
       expect(intervalScalar).to.almost.equal(0.002688172043010753);
     });
 
     it('can update chore values, storing useful contextual data', async () => {
-      const choreValues = await Chores.updateChoreValues(HOUSE, new Date());
+      const choreValues = await Chores.updateChoreValues(HOUSE, now);
 
       expect(choreValues[0].ranking).to.almost.equal(0.3333333333333333);
       expect(choreValues[0].residents).to.equal(2);
@@ -257,16 +260,16 @@ describe('Chores', async () => {
       await Chores.setChorePreference(HOUSE, RESIDENT2, sweeping.id, restock.id, 1);
       await sleep(5);
 
-      const updateTime1 = new Date(2000, 3, 10); // April (30 days), first update gives 72 hours of value
-      const updateTime2 = new Date(updateTime1.getTime() + 48 * HOUR); // 48 hours later
+      const t0 = new Date(2000, 3, 10); // April 10 (30 day month), first update gives 72 hours of value
+      const t1 = new Date(t0.getTime() + 48 * HOUR); // 48 hours later
 
-      const intervalScalar1 = await Chores.getChoreValueIntervalScalar(HOUSE, updateTime1);
-      const choreValues1 = await Chores.updateChoreValues(HOUSE, updateTime1);
+      const intervalScalar1 = await Chores.getChoreValueIntervalScalar(HOUSE, t0);
+      const choreValues1 = await Chores.updateChoreValues(HOUSE, t0);
       expect(choreValues1.length).to.equal(3);
       await sleep(5);
 
-      const intervalScalar2 = await Chores.getChoreValueIntervalScalar(HOUSE, updateTime2);
-      const choreValues2 = await Chores.updateChoreValues(HOUSE, updateTime2);
+      const intervalScalar2 = await Chores.getChoreValueIntervalScalar(HOUSE, t1);
+      const choreValues2 = await Chores.updateChoreValues(HOUSE, t1);
       expect(choreValues2.length).to.equal(3);
 
       expect(intervalScalar1 / 3 * 2).to.almost.equal(intervalScalar2); // 72 hours vs 48 hours
@@ -278,15 +281,15 @@ describe('Chores', async () => {
     });
 
     it('can get the current, updated chore values ', async () => {
-      const updateTime1 = new Date(2000, 3, 10); // April (30 days), first update gives 72 hours of value
-      const updateTime2 = new Date(updateTime1.getTime() + 48 * HOUR); // 48 hours later
+      const t0 = new Date(2000, 3, 10); // April 10 (30 day month), first update gives 72 hours of value
+      const t1 = new Date(t0.getTime() + 48 * HOUR); // 48 hours later
 
       // Calculate the initial 72 hour update
-      await Chores.updateChoreValues(HOUSE, updateTime1);
+      await Chores.updateChoreValues(HOUSE, t0);
       await sleep(5);
 
       // Calculate the 48 hour update and return the total value for 120 hours
-      const choreValues = await Chores.getUpdatedChoreValues(HOUSE, updateTime2);
+      const choreValues = await Chores.getUpdatedChoreValues(HOUSE, t1);
       const sumPoints = choreValues.map(cv => cv.value).reduce((sum, val) => sum + val, 0);
       expect(sumPoints).to.almost.equal(pointsPerResident * 2 / 6);
     });
@@ -302,12 +305,11 @@ describe('Chores', async () => {
 
     it('can claim a chore', async () => {
       await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: new Date(), value: 10, ranking: 0, residents: 0 },
-        { choreId: dishes.id, valuedAt: new Date(), value: 5, ranking: 0, residents: 0 }
+        { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 },
+        { choreId: dishes.id, valuedAt: now, value: 5, ranking: 0, residents: 0 }
       ]);
       await sleep(5);
-
-      await Chores.claimChore(dishes.id, RESIDENT1, new Date(), POLL_LENGTH);
+      await Chores.claimChore(dishes.id, RESIDENT1, now, DAY);
       await sleep(5);
 
       const choreClaims = await Chores.getValidChoreClaims(dishes.id);
@@ -316,23 +318,21 @@ describe('Chores', async () => {
     });
 
     it('cannot claim a chore with a zero value', async () => {
-      await expect(Chores.claimChore(dishes.id, RESIDENT1, new Date(), POLL_LENGTH))
+      await expect(Chores.claimChore(dishes.id, RESIDENT1, now, DAY))
         .to.be.rejectedWith('Cannot claim a zero-value chore!');
     });
 
     it('can claim a chore incrementally', async () => {
       // Two separate events
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: new Date(), value: 10, ranking: 0, residents: 0 } ]);
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: new Date(), value: 5, ranking: 0, residents: 0 } ]);
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 } ]);
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 5, ranking: 0, residents: 0 } ]);
+      await sleep(5);
+      await Chores.claimChore(dishes.id, RESIDENT1, now, DAY);
       await sleep(5);
 
-      await Chores.claimChore(dishes.id, RESIDENT1, new Date(), POLL_LENGTH);
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: soon, value: 20, ranking: 0, residents: 0 } ]);
       await sleep(5);
-
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: new Date(), value: 20, ranking: 0, residents: 0 } ]);
-      await sleep(5);
-
-      await Chores.claimChore(dishes.id, RESIDENT2, new Date(), POLL_LENGTH);
+      await Chores.claimChore(dishes.id, RESIDENT2, soon, DAY);
       await sleep(5);
 
       const choreClaims = await Chores.getValidChoreClaims(dishes.id);
@@ -343,159 +343,152 @@ describe('Chores', async () => {
     });
 
     it('can successfully resolve a claim', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: new Date(), value: 10, ranking: 0, residents: 0 } ]);
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 } ]);
+      await sleep(5);
+      const [ choreClaim ] = await Chores.claimChore(dishes.id, RESIDENT1, now, DAY);
       await sleep(5);
 
-      const [ choreClaim ] = await Chores.claimChore(dishes.id, RESIDENT1, new Date(), POLL_LENGTH);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT2, soon, YAY);
       await sleep(5);
 
-      await Polls.submitVote(choreClaim.pollId, RESIDENT1, new Date(), YAY);
-      await Polls.submitVote(choreClaim.pollId, RESIDENT2, new Date(), YAY);
-
-      await sleep(POLL_LENGTH);
-
-      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, new Date());
+      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, tomorrow);
       expect(resolvedClaim.valid).to.be.true;
       expect(resolvedClaim.value).to.equal(10);
     });
 
     it('cannot resolve a claim before the poll closes ', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: new Date(), value: 10, ranking: 0, residents: 0 } ]);
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 } ]);
+      await sleep(5);
+      const [ choreClaim ] = await Chores.claimChore(dishes.id, RESIDENT1, now, DAY);
       await sleep(5);
 
-      const [ choreClaim ] = await Chores.claimChore(dishes.id, RESIDENT1, new Date(), POLL_LENGTH);
-      await sleep(5);
-
-      await expect(Chores.resolveChoreClaim(choreClaim.id, new Date()))
+      await expect(Chores.resolveChoreClaim(choreClaim.id, soon))
         .to.be.rejectedWith('Poll not closed!');
     });
 
     it('cannot resolve a claim twice', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: new Date(), value: 10, ranking: 0, residents: 0 } ]);
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 } ]);
+      await sleep(5);
+      const [ choreClaim ] = await Chores.claimChore(dishes.id, RESIDENT1, now, DAY);
       await sleep(5);
 
-      const [ choreClaim ] = await Chores.claimChore(dishes.id, RESIDENT1, new Date(), POLL_LENGTH);
+      await Chores.resolveChoreClaim(choreClaim.id, tomorrow);
       await sleep(5);
 
-      await sleep(POLL_LENGTH);
-
-      await Chores.resolveChoreClaim(choreClaim.id, new Date());
-      await sleep(5);
-
-      const [ claimResolution ] = await Chores.resolveChoreClaim(choreClaim.id, new Date());
+      const [ claimResolution ] = await Chores.resolveChoreClaim(choreClaim.id, tomorrow);
       expect(claimResolution).to.be.undefined;
     });
 
     it('cannot successfully resolve a claim without two positive votes', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: new Date(), value: 10, ranking: 0, residents: 0 } ]);
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 } ]);
+      await sleep(5);
+      const [ choreClaim ] = await Chores.claimChore(dishes.id, RESIDENT1, now, DAY);
       await sleep(5);
 
-      const [ choreClaim ] = await Chores.claimChore(dishes.id, RESIDENT1, new Date(), POLL_LENGTH);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
       await sleep(5);
 
-      await Polls.submitVote(choreClaim.pollId, RESIDENT1, new Date(), YAY);
-
-      await sleep(POLL_LENGTH);
-
-      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, new Date());
+      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, tomorrow);
       expect(resolvedClaim.valid).to.be.false;
     });
 
     it('cannot successfully resolve a claim without a passing vote', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: new Date(), value: 10, ranking: 0, residents: 0 } ]);
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 } ]);
+      await sleep(5);
+      const [ choreClaim ] = await Chores.claimChore(dishes.id, RESIDENT1, now, DAY);
       await sleep(5);
 
-      const [ choreClaim ] = await Chores.claimChore(dishes.id, RESIDENT1, new Date(), POLL_LENGTH);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT2, soon, YAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT3, soon, NAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT4, soon, NAY);
       await sleep(5);
 
-      await Polls.submitVote(choreClaim.pollId, RESIDENT1, new Date(), YAY);
-      await Polls.submitVote(choreClaim.pollId, RESIDENT2, new Date(), YAY);
-      await Polls.submitVote(choreClaim.pollId, RESIDENT3, new Date(), NAY);
-      await Polls.submitVote(choreClaim.pollId, RESIDENT4, new Date(), NAY);
-
-      await sleep(POLL_LENGTH);
-
-      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, new Date());
+      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, tomorrow);
       expect(resolvedClaim.valid).to.be.false;
     });
 
     it('can claim the incremental value if a prior claim is approved', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: new Date(), value: 10, ranking: 0, residents: 0 } ]);
+      const t0 = new Date();
+      const t1 = new Date(t0.getTime() + MINUTE);
+      const t2 = new Date(t1.getTime() + HOUR);
+      const t3 = new Date(t0.getTime() + DAY);
+      const t4 = new Date(t1.getTime() + DAY);
+
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: t0, value: 10, ranking: 0, residents: 0 } ]);
+      await sleep(5);
+      const [ choreClaim1 ] = await Chores.claimChore(dishes.id, RESIDENT1, t0, DAY);
       await sleep(5);
 
-      const [ choreClaim1 ] = await Chores.claimChore(dishes.id, RESIDENT1, new Date(), POLL_LENGTH);
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: t1, value: 5, ranking: 0, residents: 0 } ]);
+      await sleep(5);
+      const [ choreClaim2 ] = await Chores.claimChore(dishes.id, RESIDENT2, t1, DAY);
       await sleep(5);
 
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: new Date(), value: 5, ranking: 0, residents: 0 } ]);
+      // Both claims pass
+      await Polls.submitVote(choreClaim1.pollId, RESIDENT1, t2, YAY);
+      await Polls.submitVote(choreClaim1.pollId, RESIDENT2, t2, YAY);
+      await Polls.submitVote(choreClaim2.pollId, RESIDENT1, t2, YAY);
+      await Polls.submitVote(choreClaim2.pollId, RESIDENT2, t2, YAY);
       await sleep(5);
 
-      const [ choreClaim2 ] = await Chores.claimChore(dishes.id, RESIDENT2, new Date(), POLL_LENGTH);
-      await sleep(5);
-
-      // Both claims are approved
-      await Polls.submitVote(choreClaim1.pollId, RESIDENT1, new Date(), YAY);
-      await Polls.submitVote(choreClaim1.pollId, RESIDENT2, new Date(), YAY);
-
-      await Polls.submitVote(choreClaim2.pollId, RESIDENT1, new Date(), YAY);
-      await Polls.submitVote(choreClaim2.pollId, RESIDENT2, new Date(), YAY);
-
-      await sleep(POLL_LENGTH);
-
-      const [ resolvedClaim1 ] = await Chores.resolveChoreClaim(choreClaim1.id, new Date());
+      const [ resolvedClaim1 ] = await Chores.resolveChoreClaim(choreClaim1.id, t3);
       expect(resolvedClaim1.valid).to.be.true;
       expect(resolvedClaim1.value).to.equal(10);
 
-      const [ resolvedClaim2 ] = await Chores.resolveChoreClaim(choreClaim2.id, new Date());
+      const [ resolvedClaim2 ] = await Chores.resolveChoreClaim(choreClaim2.id, t4);
       expect(resolvedClaim2.valid).to.be.true;
       expect(resolvedClaim2.value).to.equal(5);
     });
 
     it('can claim the entire value if a prior claim is denied', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: new Date(), value: 10, ranking: 0, residents: 0 } ]);
+      const t0 = new Date();
+      const t1 = new Date(t0.getTime() + MINUTE);
+      const t2 = new Date(t1.getTime() + HOUR);
+      const t3 = new Date(t0.getTime() + DAY);
+      const t4 = new Date(t1.getTime() + DAY);
+
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: t0, value: 10, ranking: 0, residents: 0 } ]);
+      await sleep(5);
+      const [ choreClaim1 ] = await Chores.claimChore(dishes.id, RESIDENT1, t0, DAY);
       await sleep(5);
 
-      const [ choreClaim1 ] = await Chores.claimChore(dishes.id, RESIDENT1, new Date(), POLL_LENGTH);
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: t1, value: 5, ranking: 0, residents: 0 } ]);
       await sleep(5);
-
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: new Date(), value: 5, ranking: 0, residents: 0 } ]);
-      await sleep(5);
-
-      const [ choreClaim2 ] = await Chores.claimChore(dishes.id, RESIDENT2, new Date(), POLL_LENGTH);
+      const [ choreClaim2 ] = await Chores.claimChore(dishes.id, RESIDENT2, t1, DAY);
       await sleep(5);
 
       // First claim is rejected
-      await Polls.submitVote(choreClaim1.pollId, RESIDENT1, new Date(), YAY);
-      await Polls.submitVote(choreClaim1.pollId, RESIDENT2, new Date(), NAY);
+      await Polls.submitVote(choreClaim1.pollId, RESIDENT1, t2, YAY);
+      await Polls.submitVote(choreClaim1.pollId, RESIDENT2, t2, NAY);
 
       // Second claim is approved
-      await Polls.submitVote(choreClaim2.pollId, RESIDENT1, new Date(), YAY);
-      await Polls.submitVote(choreClaim2.pollId, RESIDENT2, new Date(), YAY);
+      await Polls.submitVote(choreClaim2.pollId, RESIDENT1, t2, YAY);
+      await Polls.submitVote(choreClaim2.pollId, RESIDENT2, t2, YAY);
+      await sleep(5);
 
-      await sleep(POLL_LENGTH);
-
-      const [ resolvedClaim1 ] = await Chores.resolveChoreClaim(choreClaim1.id, new Date());
+      const [ resolvedClaim1 ] = await Chores.resolveChoreClaim(choreClaim1.id, t3);
       expect(resolvedClaim1.valid).to.be.false;
       expect(resolvedClaim1.value).to.equal(0);
 
-      const [ resolvedClaim2 ] = await Chores.resolveChoreClaim(choreClaim2.id, new Date());
+      const [ resolvedClaim2 ] = await Chores.resolveChoreClaim(choreClaim2.id, t4);
       expect(resolvedClaim2.valid).to.be.true;
       expect(resolvedClaim2.value).to.equal(15);
     });
 
     it('can query a users valid chore claims within a time range', async () => {
-      await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: new Date(), value: 10, ranking: 0, residents: 0 },
-        { choreId: sweeping.id, valuedAt: new Date(), value: 20, ranking: 0, residents: 0 }
-      ]);
-      await sleep(5);
-
-      await Chores.claimChore(dishes.id, RESIDENT1, new Date(), POLL_LENGTH);
-      await Chores.claimChore(sweeping.id, RESIDENT1, new Date(), POLL_LENGTH);
-      await sleep(5);
-
-      const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const y2k = new Date(2000, 1, 1);
+
+      await db('ChoreValue').insert([
+        { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 },
+        { choreId: sweeping.id, valuedAt: now, value: 20, ranking: 0, residents: 0 }
+      ]);
+      await sleep(5);
+      await Chores.claimChore(dishes.id, RESIDENT1, now, DAY);
+      await Chores.claimChore(sweeping.id, RESIDENT1, now, DAY);
+      await sleep(5);
 
       let choreClaimsValue;
       choreClaimsValue = await Chores.getUserChoreClaims(RESIDENT1, monthStart, now);
@@ -517,8 +510,7 @@ describe('Chores', async () => {
       [ breakCount ] = await db('ChoreBreak').count('*');
       expect(parseInt(breakCount.count)).to.equal(0);
 
-      const now = new Date();
-      await Chores.addChoreBreak(RESIDENT1, now, new Date(now.getTime() + DAY));
+      await Chores.addChoreBreak(RESIDENT1, now, tomorrow);
 
       [ breakCount ] = await db('ChoreBreak').count('*');
       expect(parseInt(breakCount.count)).to.equal(1);
@@ -529,8 +521,7 @@ describe('Chores', async () => {
       [ breakCount ] = await db('ChoreBreak').count('*');
       expect(parseInt(breakCount.count)).to.equal(0);
 
-      const now = new Date();
-      const [ choreBreak ] = await Chores.addChoreBreak(RESIDENT1, now, new Date(now.getTime() + DAY));
+      const [ choreBreak ] = await Chores.addChoreBreak(RESIDENT1, now, tomorrow);
       sleep(5);
 
       [ breakCount ] = await db('ChoreBreak').count('*');
@@ -546,15 +537,13 @@ describe('Chores', async () => {
     it('can exclude inactive residents from the chore valuing', async () => {
       await Admin.addResident(HOUSE, RESIDENT3);
 
-      const now = new Date();
-      const soon = new Date(now.getTime() + 60 * 1000); // One minute from now
-      const later = new Date(now.getTime() + 2 * DAY); // Two days from now
+      const later = new Date(now.getTime() + 2 * DAY);
 
       let residentCount;
       [ residentCount ] = await Chores.getActiveResidentCount(HOUSE, soon);
       expect(parseInt(residentCount.count)).to.equal(3);
 
-      await Chores.addChoreBreak(RESIDENT1, now, new Date(now.getTime() + DAY));
+      await Chores.addChoreBreak(RESIDENT1, now, tomorrow);
       await sleep(5);
 
       [ residentCount ] = await Chores.getActiveResidentCount(HOUSE, soon);
@@ -571,44 +560,47 @@ describe('Chores', async () => {
     });
 
     it('can return the percent of the period a resident is not on break', async () => {
-      const now = new Date(2001, 1, 1); // February, a 28 day month
-      const twoWeeks = new Date(now.getTime() + 14 * DAY);
-      const threeWeeks = new Date(now.getTime() + 21 * DAY);
-      const nextMonth = new Date(now.getTime() + 28 * DAY);
+      const feb1 = new Date(2001, 1, 1); // February, a 28 day month
+      const feb7 = new Date(feb1.getTime() + 7 * DAY);
+      const feb14 = new Date(feb1.getTime() + 14 * DAY);
+      const feb21 = new Date(feb1.getTime() + 21 * DAY);
+      const mar1 = new Date(feb1.getTime() + 28 * DAY);
+      const mar7 = new Date(mar1.getTime() + 7 * DAY);
+      const mar14 = new Date(mar1.getTime() + 14 * DAY);
 
       let activeDays;
 
-      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, now);
+      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.almost.equal(1.0);
 
       // Take the first week off
-      await Chores.addChoreBreak(RESIDENT1, now, new Date(now.getTime() + 7 * DAY));
+      await Chores.addChoreBreak(RESIDENT1, feb1, feb7);
 
-      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, now);
+      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.almost.equal(0.75);
 
       // Take the third week off
-      await Chores.addChoreBreak(RESIDENT1, twoWeeks, new Date(twoWeeks.getTime() + 7 * DAY));
+      await Chores.addChoreBreak(RESIDENT1, feb14, feb21);
 
-      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, now);
+      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.almost.equal(0.5);
 
       // Take time off next month, has no effect
-      await Chores.addChoreBreak(RESIDENT1, nextMonth, new Date(nextMonth.getTime() + 14 * DAY));
+      await Chores.addChoreBreak(RESIDENT1, mar1, mar14);
 
-      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, now);
+      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.almost.equal(0.5);
 
       // Take the first two weeks off, this break overlaps with the first break
-      await Chores.addChoreBreak(RESIDENT1, now, new Date(now.getTime() + 14 * DAY));
+      await Chores.addChoreBreak(RESIDENT1, feb1, feb14);
 
-      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, now);
+      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.almost.equal(0.25);
 
       // Take the last week off, this break stretches into the next month
-      await Chores.addChoreBreak(RESIDENT1, threeWeeks, new Date(threeWeeks.getTime() + 14 * DAY));
+      await Chores.addChoreBreak(RESIDENT1, feb21, mar7);
 
-      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, now);
+      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.almost.equal(0.0);
     });
   });

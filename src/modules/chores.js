@@ -73,7 +73,8 @@ exports.formatPreferencesForRanking = function (preferences) {
 exports.getChoreValue = async function (choreId, startTime, endTime) {
   return db('ChoreValue')
     .where({ choreId })
-    .whereBetween('valuedAt', [ startTime, endTime ])
+    .where('valuedAt', '>', startTime)
+    .where('valuedAt', '<=', endTime)
     .sum('value')
     .first();
 };
