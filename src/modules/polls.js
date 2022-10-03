@@ -34,7 +34,7 @@ exports.getPollVotes = async function (pollId) {
 };
 
 exports.getPollResults = async function (pollId) {
-  // TODO: implement using a join on poll
+  // TODO: implement using a join on poll (there's some timestamp issue)
   const poll = await exports.getPoll(pollId);
   return db('PollVote')
     .where({ pollId })

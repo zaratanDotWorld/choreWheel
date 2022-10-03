@@ -142,14 +142,15 @@ exports.getLastChoreValueUpdate = async function (houseId) {
 };
 
 exports.updateChoreValues = async function (houseId, updateTime) {
+  // TODO: lock tables during this function call
   const intervalScalar = await exports.getChoreValueIntervalScalar(houseId, updateTime);
 
   // If we've updated in the last interval, short-circuit execution
   if (intervalScalar === 0) { return Promise.resolve([]); }
 
   const [ residentCount ] = await exports.getActiveResidentCount(houseId, updateTime);
-  const choreRankings = await exports.getCurrentChoreRankings(houseId);
   const updateScalar = (residentCount.count * pointsPerResident) * intervalScalar;
+  const choreRankings = await exports.getCurrentChoreRankings(houseId);
 
   const choreValues = choreRankings.map(chore => {
     return {
@@ -169,7 +170,7 @@ exports.updateChoreValues = async function (houseId, updateTime) {
 exports.getUpdatedChoreValues = async function (houseId, updateTime) {
   // By doing it this way, we avoid race conditions
   const choreValues = await exports.getCurrentChoreValues(houseId, updateTime);
-  const choreValueUpdates = await exports.updateChoreValues(houseId, updateTime, pointsPerResident);
+  const choreValueUpdates = await exports.updateChoreValues(houseId, updateTime);
 
   // O(n**2), too bad
   choreValues.forEach((choreValue) => {
