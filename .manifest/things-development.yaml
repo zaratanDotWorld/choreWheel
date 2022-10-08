@@ -1,35 +1,45 @@
 display_information:
-  name: Chores-stg
-  description: Chore wheel x1000
-  background_color: "#7a7a7a"
+  name: Things-dev
+  description: House accounts for everyone
+  background_color: "#bb4f35"
+  long_description: Allow for collaborative purchasing out of a shared account. Allows admins to manage a whitelist of items and for residents to make purchases with an auto-scaling quorum based on item price.
 features:
   app_home:
     home_tab_enabled: true
     messages_tab_enabled: true
     messages_tab_read_only_enabled: false
   bot_user:
-    display_name: Chores-stg
+    display_name: Things-dev
     always_online: true
   slash_commands:
-    - command: /chores-add
+    - command: /things-add
       url: https://zaratan.ngrok.io/slack/events
-      description: Add a chore
+      description: Add a thing
+      usage_hint: "[type] [name] [price]"
       should_escape: true
-    - command: /chores-del
+    - command: /things-del
       url: https://zaratan.ngrok.io/slack/events
-      description: Delete a chore
+      description: Delete a thing
+      usage_hint: "[type] [name]"
       should_escape: true
-    - command: /chores-list
+    - command: /things-list
       url: https://zaratan.ngrok.io/slack/events
-      description: List current chores
+      description: List current things
       should_escape: true
-    - command: /chores-channel
+    - command: /things-channel
       url: https://zaratan.ngrok.io/slack/events
-      description: Set the claims channel
+      description: Set the things channel
+      usage_hint: "[name]"
       should_escape: true
-    - command: /chores-sync
+    - command: /things-load
       url: https://zaratan.ngrok.io/slack/events
-      description: Update the active members
+      description: Load money into the house account
+      usage_hint: "[amount]"
+      should_escape: true
+    - command: /things-resolved
+      url: https://zaratan.ngrok.io/slack/events
+      description: Get list of resolved buys
+      usage_hint: "[days]"
       should_escape: true
 oauth_config:
   redirect_urls:

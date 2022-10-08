@@ -12,6 +12,13 @@ exports.updateThing = async function (thingData) {
     .returning('*');
 };
 
+exports.deleteThing = async function (thingId) {
+  return db('Thing')
+    .where({ id: thingId })
+    .update({ active: false })
+    .returning('*');
+};
+
 exports.getThings = async function (houseId) {
   return db('Thing')
     .where({ houseId: houseId, active: true })
@@ -80,4 +87,23 @@ exports.resolveThingBuy = async function (buyId, resolvedAt) {
     .where({ id: buyId, resolvedAt: null }) // Cannot resolve twice
     .update({ resolvedAt, valid })
     .returning('*');
+};
+
+exports.getResolvableThingBuys = async function (houseId, currentTime) {
+  return db('ThingBuy')
+    .join('Poll', 'ThingBuy.pollId', 'Poll.id')
+    .where('ThingBuy.houseId', houseId)
+    .where('Poll.endTime', '<=', currentTime)
+    .where('ThingBuy.resolvedAt', null)
+    .select('*');
+};
+
+exports.getResolvedThingBuys = async function (houseId, startTime, endTime) {
+  return db('ThingBuy')
+    .join('Thing', 'ThingBuy.thingId', 'Thing.id')
+    .where('ThingBuy.houseId', houseId)
+    .where('ThingBuy.resolvedAt', '>', startTime)
+    .where('ThingBuy.resolvedAt', '<=', endTime)
+    .orderBy('ThingBuy.resolvedAt', 'asc')
+    .select('*');
 };

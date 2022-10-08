@@ -15,7 +15,7 @@ exports.getResidentHearts = async function (houseId, residentId) {
 exports.generateHearts = async function (houseId, residentId, numHearts) {
   return db('Heart')
     .insert({ houseId: houseId, residentId: residentId, value: numHearts })
-    .returning('id');
+    .returning('*');
 };
 
 // Challenges
@@ -31,7 +31,7 @@ exports.initiateChallenge = async function (houseId, challenger, challengee, num
       value: numHearts,
       pollId: poll.id
     })
-    .returning([ 'id', 'pollId' ]);
+    .returning('*');
 };
 
 exports.getChallenge = async function (challengeId) {
@@ -62,5 +62,5 @@ exports.resolveChallenge = async function (challengeId, resolvedAt) {
   return db('HeartChallenge')
     .where({ id: challengeId })
     .update({ heartId: heart.id })
-    .returning([ 'heartId' ]);
+    .returning('*');
 };

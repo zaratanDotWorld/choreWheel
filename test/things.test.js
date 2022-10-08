@@ -12,7 +12,7 @@ const Things = require('../src/modules/things');
 const Polls = require('../src/modules/polls');
 const Admin = require('../src/modules/admin');
 
-describe.only('Things', async () => {
+describe('Things', async () => {
   const HOUSE = 'house123';
 
   const RESIDENT1 = 'RESIDENT1';
@@ -51,21 +51,21 @@ describe.only('Things', async () => {
 
   describe('managing the list', async () => {
     it('can manage items on the list', async () => {
-      await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: SOAP, price: 10 });
-      await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, price: 75 });
+      const [ soap ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: SOAP, value: 10 });
+      await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, value: 75 });
       await sleep(5);
 
       let things;
       things = await Things.getThings(HOUSE);
       expect(things.length).to.equal(2);
 
-      await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: SOAP, active: false });
-      await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, price: 20 });
+      await Things.deleteThing(soap.id);
+      await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, value: 20 });
       await sleep(5);
 
       things = await Things.getThings(HOUSE);
       expect(things.length).to.equal(1);
-      expect(things.find(thing => thing.name === RICE).price).to.equal(20);
+      expect(things.find(thing => thing.name === RICE).value).to.equal(20);
     });
   });
 
@@ -74,8 +74,8 @@ describe.only('Things', async () => {
     let rice;
 
     beforeEach(async () => {
-      [ soap ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: SOAP, price: 10 });
-      [ rice ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, price: 75 });
+      [ soap ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: SOAP, value: 10 });
+      [ rice ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, value: 75 });
     });
 
     it('can buy a thing from the list', async () => {
@@ -177,6 +177,41 @@ describe.only('Things', async () => {
 
       [ buy ] = await Things.resolveThingBuy(buy.id, tomorrow);
       expect(buy).to.be.undefined;
+    });
+
+    it('can get a list of resolvable buys', async () => {
+      await Things.loadHouseAccount(HOUSE, now, 100);
+      await sleep(5);
+
+      await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
+      await sleep(5);
+
+      let resolvableBuys;
+      resolvableBuys = await Things.getResolvableThingBuys(HOUSE, soon);
+      expect(resolvableBuys.length).to.equal(0);
+
+      resolvableBuys = await Things.getResolvableThingBuys(HOUSE, tomorrow);
+      expect(resolvableBuys.length).to.equal(1);
+    });
+
+    it('can get a list of resolved buys', async () => {
+      await Things.loadHouseAccount(HOUSE, now, 100);
+      await sleep(5);
+
+      const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
+
+      await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
+      await sleep(5);
+
+      let resolvedBuys;
+      resolvedBuys = await Things.getResolvedThingBuys(HOUSE, now, tomorrow);
+      expect(resolvedBuys.length).to.equal(0);
+
+      await Things.resolveThingBuy(buy.id, tomorrow);
+      await sleep(5);
+
+      resolvedBuys = await Things.getResolvedThingBuys(HOUSE, now, tomorrow);
+      expect(resolvedBuys.length).to.equal(1);
     });
   });
 });

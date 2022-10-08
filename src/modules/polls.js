@@ -6,7 +6,7 @@ exports.createPoll = async function (startTime, duration) {
   const endTime = new Date(startTime.getTime() + duration);
   return db('Poll')
     .insert({ startTime, endTime })
-    .returning('id');
+    .returning('*');
 };
 
 exports.getPoll = async function (pollId) {
