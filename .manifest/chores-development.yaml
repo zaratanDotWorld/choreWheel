@@ -1,0 +1,54 @@
+display_information:
+  name: Chores-dev
+  description: Chore wheel x1000
+  background_color: "#7a7a7a"
+features:
+  app_home:
+    home_tab_enabled: true
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
+  bot_user:
+    display_name: Chores-dev
+    always_online: true
+  slash_commands:
+    - command: /chores-add
+      url: https://zaratan.ngrok.io/slack/events
+      description: Add a chore
+      should_escape: true
+    - command: /chores-del
+      url: https://zaratan.ngrok.io/slack/events
+      description: Delete a chore
+      should_escape: true
+    - command: /chores-list
+      url: https://zaratan.ngrok.io/slack/events
+      description: List current chores
+      should_escape: true
+    - command: /chores-channel
+      url: https://zaratan.ngrok.io/slack/events
+      description: Set the claims channel
+      should_escape: true
+    - command: /chores-sync
+      url: https://zaratan.ngrok.io/slack/events
+      description: Update the active members
+      should_escape: true
+oauth_config:
+  redirect_urls:
+    - https://zaratan.ngrok.io/slack/oauth_redirect
+  scopes:
+    bot:
+      - channels:history
+      - channels:read
+      - chat:write
+      - commands
+      - users:read
+settings:
+  event_subscriptions:
+    request_url: https://zaratan.ngrok.io/slack/events
+    bot_events:
+      - app_home_opened
+  interactivity:
+    is_enabled: true
+    request_url: https://zaratan.ngrok.io/slack/events
+  org_deploy_enabled: true
+  socket_mode_enabled: false
+  token_rotation_enabled: false

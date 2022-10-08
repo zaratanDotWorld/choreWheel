@@ -212,7 +212,7 @@ exports.claimChore = async function (choreId, slackId, claimedAt, duration) {
       value: choreValue.sum,
       pollId: poll.id
     })
-    .returning([ 'id', 'pollId' ]);
+    .returning('*');
 };
 
 exports.resolveChoreClaim = async function (claimId, resolvedAt) {
@@ -233,7 +233,7 @@ exports.resolveChoreClaim = async function (claimId, resolvedAt) {
   return db('ChoreClaim')
     .where({ id: claimId, resolvedAt: null }) // Cannot resolve twice
     .update({ value: choreValue.sum, resolvedAt: resolvedAt, valid: valid })
-    .returning([ 'value', 'valid' ]);
+    .returning('*');
 };
 
 exports.getUserChoreClaims = async function (residentId, startTime, endTime) {

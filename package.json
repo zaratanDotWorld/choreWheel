@@ -8,9 +8,9 @@
   "license": "UNLICENSED",
   "scripts": {
     "prepare": "husky install",
-    "start": "node src/bolt/app.js",
+    "app:chores": "node src/bolt/chores.js",
+    "app:things": "node src/bolt/things.js",
     "start:ngrok": "ngrok http --region=us --hostname=zaratan.ngrok.io 3000",
-    "start:apprunner": "npx knex migrate:latest; npm start",
     "pretest": "npx knex migrate:rollback --env test; npx knex migrate:latest --env test",
     "test": "NODE_ENV=test mocha --exit",
     "pretest:coverage": "npx knex migrate:rollback --env test; npx knex migrate:latest --env test",

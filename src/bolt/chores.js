@@ -21,9 +21,8 @@ const home = {
   path: '/',
   method: [ 'GET' ],
   handler: async (_, res) => {
-    const numHouses = await Admin.getNumHouses();
     res.writeHead(200);
-    res.end(`Number of houses: ${numHouses.count}`);
+    res.end('Welcome to Mirror - Chores!');
   }
 };
 
@@ -38,9 +37,9 @@ const healthCheck = {
 
 const app = new App({
   logLevel: LogLevel.DEBUG,
-  signingSecret: process.env.SLACK_SIGNING_SECRET,
-  clientId: process.env.SLACK_CLIENT_ID,
-  clientSecret: process.env.SLACK_CLIENT_SECRET,
+  signingSecret: process.env.CHORES_SIGNING_SECRET,
+  clientId: process.env.CHORES_CLIENT_ID,
+  clientSecret: process.env.CHORES_CLIENT_SECRET,
   stateSecret: process.env.STATE_SECRET,
   customRoutes: [ home, healthCheck ],
   scopes: [
@@ -116,7 +115,7 @@ app.command('/chores-channel', async ({ ack, command, say }) => {
     res = await app.client.conversations.list({ token: choresOauth.bot.token });
     const channelId = res.channels.filter(channel => channel.name === channelName)[0].id;
 
-    await Admin.setChoreClaimsChannel(command.team_id, channelId);
+    await Admin.updateHouse({ slackId: command.team.id, choresChannel: channelId });
 
     text = `Chore claims channel set to ${channelName} :fire:\nPlease add the Chores bot to the channel`;
     console.log(`Set chore claims channel to ${channelName}`);
@@ -346,9 +345,9 @@ app.action(/poll-vote/, async ({ ack, body, action }) => {
 // Launch the app
 
 (async () => {
-  const port = process.env.PORT || 3000;
+  const port = process.env.CHORES_PORT || 3000;
   await app.start(port);
-  console.log(`⚡️ Bolt app is running on port ${port} in the ${process.env.NODE_ENV} environment`);
+  console.log(`⚡️ Chores app is running on port ${port} in the ${process.env.NODE_ENV} environment`);
 })();
 
 // Fin

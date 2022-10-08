@@ -21,12 +21,6 @@ exports.getNumHouses = async function () {
     .first();
 };
 
-exports.setChoreClaimsChannel = async function (houseId, channelId) {
-  return db('House')
-    .where({ slackId: houseId })
-    .update({ choresChannel: channelId });
-};
-
 // Residents
 
 exports.addResident = async function (houseId, slackId) {

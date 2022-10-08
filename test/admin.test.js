@@ -65,13 +65,18 @@ describe('Admin', async () => {
       expect(parseInt(numHouses.count)).to.equal(2);
     });
 
-    it('can get house auth info', async () => {
-      const authInfo = { token: 'value' };
-      await Admin.updateHouse({ slackId: HOUSE1, choresOauth: authInfo });
+    it('can update house info', async () => {
+      const choresChannel = 'choresChannel';
+      const thingsChannel = 'thingsChannel';
+
+      await Admin.updateHouse({ slackId: HOUSE1, choresChannel: choresChannel });
+      await sleep(5);
+      await Admin.updateHouse({ slackId: HOUSE1, thingsChannel: thingsChannel });
       await sleep(5);
 
-      const { choresOauth } = await Admin.getHouse(HOUSE1);
-      expect(choresOauth.token).to.equal('value');
+      const house = await Admin.getHouse(HOUSE1);
+      expect(house.choresChannel).to.equal(choresChannel);
+      expect(house.thingsChannel).to.equal(thingsChannel);
     });
   });
 
