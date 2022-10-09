@@ -9,44 +9,27 @@ exports.formatChoreName = function (text) {
 };
 
 exports.choresHomeView = function (balance, owed) {
-  const mainText = 'We use Chores to keep the house a nice place to live.\n\n' +
+  const textA = 'We use Chores to keep the house a nice place to live.\n\n' +
     'Instead of a chore wheel or schedule, everyone owes *100 points* per month. ' +
     'You earn points by doing the chores you want, on your terms.\n\n' +
     'The points for a chore go up every hour until someone claims them, then resets to 0. ' +
     'Chores gain points at different speeds, depending on your priorities, which you can change.\n\n' +
     'Claims are verified by the house via emoji vote, and require at least *two* thumbs-up votes.';
 
+  const textB = `*You've earned ${balance.toFixed(1)} points this month, out of ${parseInt(owed)} owed :muscle:*`;
+
   return {
     type: 'home',
     blocks: [
-      {
-        type: 'header',
-        text: { type: 'plain_text', text: 'Welcome to Chores :gloves:', emoji: true }
-      },
-      {
-        type: 'section',
-        text: { type: 'mrkdwn', text: mainText }
-      },
-      {
-        type: 'divider'
-      },
-      {
-        type: 'section',
-        text: { type: 'mrkdwn', text: `*You've earned ${balance.toFixed(1)} points this month, out of ${parseInt(owed)} owed :muscle:*` }
-      },
+      { type: 'header', text: { type: 'plain_text', text: 'Welcome to Chores :gloves:', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: textA } },
+      { type: 'divider' },
+      { type: 'section', text: { type: 'mrkdwn', text: textB } },
       {
         type: 'actions',
         elements: [
-          {
-            type: 'button',
-            action_id: 'chores-claim',
-            text: { type: 'plain_text', text: 'Claim a chore', emoji: true }
-          },
-          {
-            type: 'button',
-            action_id: 'chores-rank',
-            text: { type: 'plain_text', text: 'Set chore priorities', emoji: true }
-          }
+          { type: 'button', action_id: 'chores-claim', text: { type: 'plain_text', text: 'Claim a chore', emoji: true } },
+          { type: 'button', action_id: 'chores-rank', text: { type: 'plain_text', text: 'Set chore priorities', emoji: true } }
         ]
       }
     ]
@@ -112,14 +95,8 @@ exports.choresRankView = function (chores) {
     submit: { type: 'plain_text', text: 'Submit', emoji: true },
     close: { type: 'plain_text', text: 'Cancel', emoji: true },
     blocks: [
-      {
-        type: 'header',
-        text: { type: 'plain_text', text: 'Update your chore preferences ', emoji: true }
-      },
-      {
-        type: 'section',
-        text: { type: 'plain_text', text: mainText, emoji: true }
-      },
+      { type: 'header', text: { type: 'plain_text', text: 'Update your chore preferences ', emoji: true } },
+      { type: 'section', text: { type: 'plain_text', text: mainText, emoji: true } },
       {
         type: 'input',
         label: { type: 'plain_text', text: 'Chore to prioritize', emoji: true },
@@ -147,23 +124,11 @@ exports.choresRankView = function (chores) {
           type: 'radio_buttons',
           action_id: 'strength',
           options: [
-            {
-              text: { type: 'plain_text', text: 'Strong', emoji: true },
-              value: '1.0'
-            },
-            {
-              text: { type: 'plain_text', text: 'Mild', emoji: true },
-              value: '0.7'
-            },
-            {
-              text: { type: 'plain_text', text: 'Neutral', emoji: true },
-              value: '0.5'
-            }
+            { text: { type: 'plain_text', text: 'Strong', emoji: true }, value: '1.0' },
+            { text: { type: 'plain_text', text: 'Mild', emoji: true }, value: '0.7' },
+            { text: { type: 'plain_text', text: 'Neutral', emoji: true }, value: '0.5' }
           ],
-          initial_option: {
-            text: { type: 'plain_text', text: 'Mild', emoji: true },
-            value: '0.7'
-          }
+          initial_option: { text: { type: 'plain_text', text: 'Mild', emoji: true }, value: '0.7' }
         }
       }
     ]
