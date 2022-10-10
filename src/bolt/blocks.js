@@ -12,9 +12,8 @@ exports.choresHomeView = function (balance, owed) {
   const textA = 'We use Chores to keep the house a nice place to live.\n\n' +
     'Instead of a chore wheel or schedule, everyone owes *100 points* per month. ' +
     'You earn points by doing the chores you want, on your terms.\n\n' +
-    'The points for a chore go up every hour until someone claims them, then resets to 0. ' +
-    'Chores gain points at different speeds, depending on your priorities, which you can change.\n\n' +
-    'Claims are verified by the house via emoji vote, and require at least *two* thumbs-up votes.';
+    'The points for a chore go up every hour until someone claims them, then resets. ' +
+    'Chores gain points at different speeds, depending on your priorities, which you can change.';
 
   const textB = `*You've earned ${balance.toFixed(1)} points this month, out of ${parseInt(owed)} owed :muscle:*`;
 
@@ -44,6 +43,9 @@ exports.choresClaimView = function (chores) {
     };
   });
 
+  const mainText = 'Claims are verified by the house via emoji vote, and require at least *two* thumbs-up votes. ' +
+    'Posting a picture of the work you did in the channel or thread will help others verify your claim.';
+
   return {
     type: 'modal',
     callback_id: 'chores-claim-callback',
@@ -51,9 +53,11 @@ exports.choresClaimView = function (chores) {
     submit: { type: 'plain_text', text: 'Claim', emoji: true },
     close: { type: 'plain_text', text: 'Cancel', emoji: true },
     blocks: [
+      { type: 'header', text: { type: 'plain_text', text: 'Claim a chore', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
       {
         type: 'input',
-        label: { type: 'plain_text', text: 'Claim a chore', emoji: true },
+        label: { type: 'plain_text', text: 'Chore to claim', emoji: true },
         element: {
           type: 'static_select',
           action_id: 'options',
@@ -95,8 +99,8 @@ exports.choresRankView = function (chores) {
     submit: { type: 'plain_text', text: 'Submit', emoji: true },
     close: { type: 'plain_text', text: 'Cancel', emoji: true },
     blocks: [
-      { type: 'header', text: { type: 'plain_text', text: 'Update your chore preferences ', emoji: true } },
-      { type: 'section', text: { type: 'plain_text', text: mainText, emoji: true } },
+      { type: 'header', text: { type: 'plain_text', text: 'Set chore priorities', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
       {
         type: 'input',
         label: { type: 'plain_text', text: 'Chore to prioritize', emoji: true },
@@ -201,7 +205,7 @@ exports.thingsBuyView = function (things) {
     close: { type: 'plain_text', text: 'Cancel', emoji: true },
     blocks: [
       { type: 'header', text: { type: 'plain_text', text: 'Buy a thing', emoji: true } },
-      { type: 'section', text: { type: 'plain_text', text: mainText, emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
       {
         type: 'input',
         label: { type: 'plain_text', text: 'Thing to buy', emoji: true },
