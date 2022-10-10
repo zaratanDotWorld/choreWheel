@@ -13,37 +13,37 @@ features:
     always_online: true
   slash_commands:
     - command: /things-add
-      url: https://mirror.zaratan.world/slack/events
+      url: https://things.mirror.zaratan.world/slack/events
       description: Add a thing
       usage_hint: "[type] [name] [price]"
       should_escape: true
     - command: /things-del
-      url: https://mirror.zaratan.world/slack/events
+      url: https://things.mirror.zaratan.world/slack/events
       description: Delete a thing
       usage_hint: "[type] [name]"
       should_escape: true
     - command: /things-list
-      url: https://mirror.zaratan.world/slack/events
+      url: https://things.mirror.zaratan.world/slack/events
       description: List current things
       should_escape: true
     - command: /things-channel
-      url: https://mirror.zaratan.world/slack/events
+      url: https://things.mirror.zaratan.world/slack/events
       description: Set the things channel
       usage_hint: "[name]"
       should_escape: true
     - command: /things-load
-      url: https://mirror.zaratan.world/slack/events
+      url: https://things.mirror.zaratan.world/slack/events
       description: Load money into the house account
       usage_hint: "[amount]"
       should_escape: true
     - command: /things-resolved
-      url: https://mirror.zaratan.world/slack/events
+      url: https://things.mirror.zaratan.world/slack/events
       description: Get list of resolved buys
       usage_hint: "[days]"
       should_escape: true
 oauth_config:
   redirect_urls:
-    - https://mirror.zaratan.world/slack/oauth_redirect
+    - https://things.mirror.zaratan.world/slack/oauth_redirect
   scopes:
     bot:
       - channels:history
@@ -53,12 +53,12 @@ oauth_config:
       - users:read
 settings:
   event_subscriptions:
-    request_url: https://mirror.zaratan.world/slack/events
+    request_url: https://things.mirror.zaratan.world/slack/events
     bot_events:
       - app_home_opened
   interactivity:
     is_enabled: true
-    request_url: https://mirror.zaratan.world/slack/events
+    request_url: https://things.mirror.zaratan.world/slack/events
   org_deploy_enabled: true
   socket_mode_enabled: false
   token_rotation_enabled: false

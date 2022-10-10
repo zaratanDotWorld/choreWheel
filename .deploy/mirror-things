@@ -1,0 +1,7 @@
+/home/ubuntu/mirror/logs/things.log {
+  daily
+  rotate 7
+  compress
+  missingok
+  notifempty
+}

@@ -12,28 +12,28 @@ features:
     always_online: true
   slash_commands:
     - command: /chores-add
-      url: https://mirror.zaratan.world/slack/events
+      url: https://chores.mirror.zaratan.world/slack/events
       description: Add a chore
       should_escape: true
     - command: /chores-del
-      url: https://mirror.zaratan.world/slack/events
+      url: https://chores.mirror.zaratan.world/slack/events
       description: Delete a chore
       should_escape: true
     - command: /chores-list
-      url: https://mirror.zaratan.world/slack/events
+      url: https://chores.mirror.zaratan.world/slack/events
       description: List current chores
       should_escape: true
     - command: /chores-channel
-      url: https://mirror.zaratan.world/slack/events
+      url: https://chores.mirror.zaratan.world/slack/events
       description: Set the claims channel
       should_escape: true
     - command: /chores-sync
-      url: https://mirror.zaratan.world/slack/events
+      url: https://chores.mirror.zaratan.world/slack/events
       description: Update the active members
       should_escape: true
 oauth_config:
   redirect_urls:
-    - https://mirror.zaratan.world/slack/oauth_redirect
+    - https://chores.mirror.zaratan.world/slack/oauth_redirect
   scopes:
     bot:
       - channels:history
@@ -43,12 +43,12 @@ oauth_config:
       - users:read
 settings:
   event_subscriptions:
-    request_url: https://mirror.zaratan.world/slack/events
+    request_url: https://chores.mirror.zaratan.world/slack/events
     bot_events:
       - app_home_opened
   interactivity:
     is_enabled: true
-    request_url: https://mirror.zaratan.world/slack/events
+    request_url: https://chores.mirror.zaratan.world/slack/events
   org_deploy_enabled: true
   socket_mode_enabled: false
   token_rotation_enabled: false
