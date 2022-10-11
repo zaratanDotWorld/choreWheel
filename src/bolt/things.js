@@ -247,7 +247,8 @@ app.view('things-buy-callback', async ({ ack, body }) => {
   const houseId = body.team.id;
 
   // // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-  const blockId = body.view.blocks[2].block_id;
+  const blockIndex = body.view.blocks.length - 1;
+  const blockId = body.view.blocks[blockIndex].block_id;
   const [ thingId, thingName, thingValue ] = body.view.state.values[blockId].options.selected_option.value.split('|');
 
   const { thingsChannel } = await Admin.getHouse(houseId);

@@ -106,6 +106,7 @@ app.command('/chores-channel', async ({ ack, command, say }) => {
   await ack();
 
   const channelName = command.text;
+  const houseId = command.team_id;
   const userInfo = await getUser(command.user_id);
 
   let text;
@@ -115,7 +116,7 @@ app.command('/chores-channel', async ({ ack, command, say }) => {
     res = await app.client.conversations.list({ token: choresOauth.bot.token });
     const channelId = res.channels.filter(channel => channel.name === channelName)[0].id;
 
-    await Admin.updateHouse({ slackId: command.team.id, choresChannel: channelId });
+    await Admin.updateHouse({ slackId: houseId, choresChannel: channelId });
 
     text = `Chore claims channel set to ${channelName} :fire:\nPlease add the Chores bot to the channel`;
     console.log(`Set chore claims channel to ${channelName}`);
@@ -220,12 +221,15 @@ app.action('chores-claim', async ({ ack, body, action }) => {
 app.view('chores-claim-callback', async ({ ack, body }) => {
   await ack();
 
+  const residentId = body.user.id;
+  const houseId = body.team.id;
+
   // // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-  const blockId = body.view.blocks[0].block_id;
+  const blockIndex = body.view.blocks.length - 1;
+  const blockId = body.view.blocks[blockIndex].block_id;
   const [ choreId, choreName, choreValue ] = body.view.state.values[blockId].options.selected_option.value.split('|');
 
-  const residentId = body.user.id;
-  const { choresChannel } = await Admin.getHouse(body.team.id);
+  const { choresChannel } = await Admin.getHouse(houseId);
 
   // TODO: Return error to user (not console) if channel is not set
   if (choresChannel === null) { throw new Error('Chores channel not set!'); }
