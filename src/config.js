@@ -4,7 +4,7 @@ const { HOUR, DAY } = require('./constants');
 exports.choresPollLength = DAY;
 exports.choresMinVotes = 2;
 exports.pointsPerResident = 100;
-exports.initialValueDuration = 72 * HOUR;
+exports.bootstrapDuration = 72 * HOUR;
 
 // Hearts
 exports.heartsPollLength = 3 * DAY;

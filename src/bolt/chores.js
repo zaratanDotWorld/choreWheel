@@ -26,22 +26,13 @@ const home = {
   }
 };
 
-const healthCheck = {
-  path: '/healthcheck',
-  method: [ 'GET' ],
-  handler: (_, res) => {
-    res.writeHead(200);
-    res.end('Health check successful!');
-  }
-};
-
 const app = new App({
-  logLevel: LogLevel.DEBUG,
+  logLevel: LogLevel.INFO,
   signingSecret: process.env.CHORES_SIGNING_SECRET,
   clientId: process.env.CHORES_CLIENT_ID,
   clientSecret: process.env.CHORES_CLIENT_SECRET,
   stateSecret: process.env.STATE_SECRET,
-  customRoutes: [ home, healthCheck ],
+  customRoutes: [ home ],
   scopes: [
     'channels:history', 'channels:read',
     'chat:write',
@@ -72,7 +63,7 @@ app.event('app_home_opened', async ({ body, event }) => {
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const userChorePoints = await Chores.getUserChoreClaims(event.user, monthStart, now);
+    const userChorePoints = await Chores.getUserChorePoints(event.user, monthStart, now);
     const userActivePercentage = await Chores.getActiveResidentPercentage(event.user, now);
 
     const data = {
@@ -237,7 +228,7 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   // Get chore points to date
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const userChorePoints = await Chores.getUserChoreClaims(residentId, monthStart, now);
+  const userChorePoints = await Chores.getUserChorePoints(residentId, monthStart, now);
 
   // Perform the claim
   const [ claim ] = await Chores.claimChore(choreId, residentId, now, choresPollLength);
@@ -281,6 +272,9 @@ app.action('chores-rank', async ({ ack, body, action }) => {
 app.view('chores-rank-callback', async ({ ack, body }) => {
   await ack();
 
+  const residentId = body.user.id;
+  const houseId = body.team.id;
+
   // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
 
   const targetBlockId = body.view.blocks[2].block_id;
@@ -308,10 +302,10 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
     preference = 1.0 - Number(strength);
   }
 
-  const { choresChannel } = await Admin.getHouse(body.team.id);
+  const { choresChannel } = await Admin.getHouse(houseId);
 
   // Perform the update
-  await Chores.setChorePreference(body.team.id, body.user.id, alphaChoreId, betaChoreId, preference);
+  await Chores.setChorePreference(houseId, residentId, alphaChoreId, betaChoreId, preference);
 
   const message = {
     token: choresOauth.bot.token,
@@ -321,6 +315,53 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
 
   res = await app.client.chat.postMessage(message);
   console.log(`Chore preference updated, ${alphaChoreId} vs ${betaChoreId} at ${preference}`);
+});
+
+// Gift flow
+
+app.action('chores-gift', async ({ ack, body, action }) => {
+  await ack();
+
+  const residentId = body.user.id;
+  const lastChoreclaim = await Chores.getLatestChoreClaim(residentId);
+
+  const view = {
+    token: choresOauth.bot.token,
+    trigger_id: body.trigger_id,
+    view: blocks.choresGiftView(lastChoreclaim.value)
+  };
+
+  res = await app.client.views.open(view);
+  console.log(`Chores-gift opened with id ${res.view.id}`);
+});
+
+app.view('chores-gift-callback', async ({ ack, body }) => {
+  await ack();
+
+  const residentId = body.user.id;
+  const houseId = body.team.id;
+
+  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
+
+  const recipientBlockId = body.view.blocks[2].block_id;
+  const valueBlockId = body.view.blocks[3].block_id;
+
+  const recipientId = body.view.state.values[recipientBlockId].recipient.selected_users[0];
+  const value = body.view.state.values[valueBlockId].value.value;
+
+  const { choresChannel } = await Admin.getHouse(houseId);
+
+  // Perform the update
+  await Chores.giftChorePoints(residentId, recipientId, new Date(), Number(value));
+
+  const message = {
+    token: choresOauth.bot.token,
+    channel: choresChannel,
+    text: `<@${residentId}> just gifted <@${recipientId}> *${value} chore points* :sparkling_heart:`
+  };
+
+  res = await app.client.chat.postMessage(message);
+  console.log('Chore points gifted');
 });
 
 // Voting flow

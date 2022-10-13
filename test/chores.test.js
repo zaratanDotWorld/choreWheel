@@ -491,12 +491,12 @@ describe('Chores', async () => {
       await Chores.claimChore(sweeping.id, RESIDENT1, now, DAY);
       await sleep(5);
 
-      let choreClaimsValue;
-      choreClaimsValue = await Chores.getUserChoreClaims(RESIDENT1, monthStart, now);
-      expect(choreClaimsValue.sum).to.equal(30);
+      let chorePoints;
+      chorePoints = await Chores.getUserChorePoints(RESIDENT1, monthStart, now);
+      expect(chorePoints.sum).to.equal(30);
 
-      choreClaimsValue = await Chores.getUserChoreClaims(RESIDENT1, y2k, monthStart);
-      expect(choreClaimsValue.sum).to.equal(null);
+      chorePoints = await Chores.getUserChorePoints(RESIDENT1, y2k, monthStart);
+      expect(chorePoints.sum).to.equal(null);
     });
   });
 
@@ -603,6 +603,47 @@ describe('Chores', async () => {
 
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.almost.equal(0.0);
+    });
+  });
+
+  describe('managing chore point gifts', async () => {
+    beforeEach(async () => {
+      await Admin.addResident(HOUSE, RESIDENT1);
+      await Admin.addResident(HOUSE, RESIDENT2);
+    });
+
+    it('can gift chore points', async () => {
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 } ]);
+      await sleep(5);
+      await Chores.claimChore(dishes.id, RESIDENT1, now, DAY);
+      await sleep(5);
+
+      await Chores.giftChorePoints(RESIDENT1, RESIDENT2, now, 6);
+      await sleep(5);
+
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const chorePoints1 = await Chores.getUserChorePoints(RESIDENT1, monthStart, now);
+      const chorePoints2 = await Chores.getUserChorePoints(RESIDENT2, monthStart, now);
+      expect(chorePoints1.sum).to.equal(4);
+      expect(chorePoints2.sum).to.equal(6);
+    });
+
+    it('cannot gift more than the most recent claim', async () => {
+      await db('ChoreValue').insert([
+        { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 },
+        { choreId: sweeping.id, valuedAt: now, value: 5, ranking: 0, residents: 0 }
+      ]);
+      await sleep(5);
+      await Chores.claimChore(dishes.id, RESIDENT1, now, DAY);
+      await sleep(5);
+      await Chores.claimChore(sweeping.id, RESIDENT1, soon, DAY);
+      await sleep(5);
+
+      const err = 'update "ChoreClaim" set "value" = $1 where "id" = $2 - ' +
+        'new row for relation "ChoreClaim" violates check constraint "ChoreClaim_value_check"';
+
+      await expect(Chores.giftChorePoints(RESIDENT1, RESIDENT2, soon, 6))
+        .to.be.rejectedWith(err);
     });
   });
 });
