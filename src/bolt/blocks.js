@@ -20,7 +20,7 @@ exports.choresHomeView = function (balance, owed) {
   return {
     type: 'home',
     blocks: [
-      { type: 'header', text: { type: 'plain_text', text: 'Welcome to Chores :gloves:', emoji: true } },
+      { type: 'header', text: { type: 'plain_text', text: 'Welcome to Chores', emoji: true } },
       { type: 'section', text: { type: 'mrkdwn', text: textA } },
       { type: 'divider' },
       { type: 'section', text: { type: 'mrkdwn', text: textB } },
@@ -28,7 +28,8 @@ exports.choresHomeView = function (balance, owed) {
         type: 'actions',
         elements: [
           { type: 'button', action_id: 'chores-claim', text: { type: 'plain_text', text: 'Claim a chore', emoji: true } },
-          { type: 'button', action_id: 'chores-rank', text: { type: 'plain_text', text: 'Set chore priorities', emoji: true } }
+          { type: 'button', action_id: 'chores-rank', text: { type: 'plain_text', text: 'Set chore priorities', emoji: true } },
+          { type: 'button', action_id: 'chores-gift', text: { type: 'plain_text', text: 'Gift chore points', emoji: true } }
         ]
       }
     ]
@@ -95,7 +96,7 @@ exports.choresRankView = function (chores) {
   return {
     type: 'modal',
     callback_id: 'chores-rank-callback',
-    title: { type: 'plain_text', text: 'Chores :gloves:', emoji: true },
+    title: { type: 'plain_text', text: 'Chores', emoji: true },
     submit: { type: 'plain_text', text: 'Submit', emoji: true },
     close: { type: 'plain_text', text: 'Cancel', emoji: true },
     blocks: [
@@ -133,6 +134,40 @@ exports.choresRankView = function (chores) {
             { text: { type: 'plain_text', text: 'Neutral', emoji: true }, value: '0.5' }
           ],
           initial_option: { text: { type: 'plain_text', text: 'Mild', emoji: true }, value: '0.7' }
+        }
+      }
+    ]
+  };
+};
+
+exports.choresGiftView = function (maxValue) {
+  const mainText = `Choose a recipient. You can gift up to a maximum of *${maxValue.toFixed(1)} points* (the remaining value of your last claim).`;
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-gift-callback',
+    title: { type: 'plain_text', text: 'Chores', emoji: true },
+    submit: { type: 'plain_text', text: 'Submit', emoji: true },
+    close: { type: 'plain_text', text: 'Cancel', emoji: true },
+    blocks: [
+      { type: 'header', text: { type: 'plain_text', text: 'Gift chore points', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Gift recipient', emoji: true },
+        element: {
+          type: 'multi_users_select',
+          placeholder: { type: 'plain_text', text: 'Choose a resident', emoji: true },
+          action_id: 'recipient'
+        }
+      },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Number of points', emoji: true },
+        element: {
+          type: 'plain_text_input',
+          placeholder: { type: 'plain_text', text: 'Enter a number', emoji: true },
+          action_id: 'value'
         }
       }
     ]

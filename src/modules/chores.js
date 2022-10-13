@@ -1,6 +1,6 @@
 const { db } = require('../db');
 const { HOUR, DAY } = require('../constants');
-const { pointsPerResident, initialValueDuration, choresMinVotes } = require('../config');
+const { pointsPerResident, bootstrapDuration, choresMinVotes } = require('../config');
 
 const Admin = require('./admin');
 const Polls = require('./polls');
@@ -119,7 +119,7 @@ exports.getChoreValueIntervalScalar = async function (houseId, currentTime) {
   const lastChoreValue = await exports.getLastChoreValueUpdate(houseId);
   const lastUpdate = (lastChoreValue !== undefined)
     ? lastChoreValue.valuedAt
-    : new Date(currentTime.getTime() - initialValueDuration); // First update assigns a fixed amount of value
+    : new Date(currentTime.getTime() - bootstrapDuration); // First update assigns a fixed amount of value
 
   const hoursSinceUpdate = Math.floor((currentTime - lastUpdate) / HOUR);
   const daysInMonth = new Date(currentTime.getFullYear(), currentTime.getMonth() + 1, 0).getDate();
@@ -198,9 +198,7 @@ exports.getValidChoreClaims = async function (choreId) {
 exports.claimChore = async function (choreId, slackId, claimedAt, duration) {
   const choreValue = await exports.getCurrentChoreValue(choreId, claimedAt);
 
-  if (choreValue.sum === null) {
-    throw new Error('Cannot claim a zero-value chore!');
-  }
+  if (choreValue.sum === null) { throw new Error('Cannot claim a zero-value chore!'); }
 
   const [ poll ] = await Polls.createPoll(claimedAt, duration);
 
@@ -236,13 +234,15 @@ exports.resolveChoreClaim = async function (claimId, resolvedAt) {
     .returning('*');
 };
 
-exports.getUserChoreClaims = async function (residentId, startTime, endTime) {
+exports.getUserChorePoints = async function (residentId, startTime, endTime) {
   return db('ChoreClaim')
     .where({ claimedBy: residentId, valid: true })
     .whereBetween('claimedAt', [ startTime, endTime ])
     .sum('value')
     .first();
 };
+
+// Chore Breaks
 
 exports.addChoreBreak = async function (residentId, startDate, endDate) {
   return db('ChoreBreak')
@@ -292,4 +292,33 @@ exports.getActiveResidentPercentage = async function (residentId, now) {
   }
   const numActiveDays = Array.from(activeDays.values()).filter(active => active).length;
   return numActiveDays / daysInMonth;
+};
+
+// Chore Point Gifting
+
+exports.getLatestChoreClaim = async function (residentId) {
+  return db('ChoreClaim')
+    .where({ claimedBy: residentId, valid: true })
+    .whereNot({ choreId: null })
+    .orderBy('claimedAt', 'desc')
+    .first();
+};
+
+exports.giftChorePoints = async function (gifterId, recipientId, giftedAt, value) {
+  const choreClaim = await exports.getLatestChoreClaim(gifterId);
+
+  return db.transaction(async trx => {
+    await trx('ChoreClaim')
+      .where({ id: choreClaim.id })
+      .update({ value: choreClaim.value - value });
+
+    await trx('ChoreClaim')
+      .insert({
+        claimedBy: recipientId,
+        claimedAt: giftedAt,
+        value: value,
+        pollId: choreClaim.pollId
+      })
+      .returning('*');
+  });
 };
