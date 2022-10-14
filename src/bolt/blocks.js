@@ -177,24 +177,25 @@ exports.choresGiftView = function (maxValue) {
 // Things Views
 
 exports.parseThingAdd = function (text) {
-  // [type] [name] [price]
-  const words = voca(text).trim().titleCase().split(' ');
-  const type = words[0];
-  const name = words.slice(1, words.length - 1).join(' ');
-  const value = words[words.length - 1];
-  return { type, name, value };
+  // [type]-[name]-[quantity]-[value]
+  let [ type, name, quantity, value ] = text.split('-');
+  type = voca(type).trim().titleCase().value();
+  name = voca(name).trim().titleCase().value();
+  quantity = voca(quantity).trim().lowerCase().value();
+  value = voca(value).trim().value();
+  return { type, name, quantity, value };
 };
 
 exports.parseThingDel = function (text) {
-  // [type] [name]
-  const words = voca(text).trim().titleCase().split(' ');
-  const type = words[0];
-  const name = words.slice(1, words.length).join(' ');
+  // [type]-[name]
+  let [ type, name ] = text.split('-');
+  type = voca(type).trim().titleCase().value();
+  name = voca(name).trim().titleCase().value();
   return { type, name };
 };
 
 exports.formatThing = function (thing) {
-  return `${thing.type} - ${thing.name} ($${thing.value})`;
+  return `${thing.type}: ${thing.name} - ${thing.quantity} ($${thing.value})`;
 };
 
 exports.thingsHomeView = function (balance) {
