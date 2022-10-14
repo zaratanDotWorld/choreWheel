@@ -1,6 +1,6 @@
 /home/ubuntu/mirror/logs/things.log {
-  daily
-  rotate 7
+  weekly
+  rotate 4
   compress
   missingok
   notifempty

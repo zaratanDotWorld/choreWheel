@@ -1,4 +1,4 @@
-/home/ubuntu/mirror/logs/chores.log {
+/home/ubuntu/mirror/logs/hearts.log {
   weekly
   rotate 4
   compress
