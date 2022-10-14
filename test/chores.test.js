@@ -8,7 +8,7 @@ chai.use(chaiAsPromised);
 
 const { YAY, NAY, DAY, HOUR, MINUTE } = require('../src/constants');
 const { pointsPerResident, inflationFactor } = require('../src/config');
-const { sleep } = require('../src/utils');
+const { sleep, getMonthStart } = require('../src/utils');
 const { db } = require('../src/db');
 
 const Chores = require('../src/modules/chores');
@@ -479,7 +479,7 @@ describe('Chores', async () => {
     });
 
     it('can query a users valid chore claims within a time range', async () => {
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthStart = getMonthStart(now);
       const y2k = new Date(2000, 1, 1);
 
       await db('ChoreValue').insert([
@@ -627,7 +627,7 @@ describe('Chores', async () => {
       await Chores.giftChorePoints(RESIDENT1, RESIDENT2, now, 6);
       await sleep(5);
 
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthStart = getMonthStart(now);
       const chorePoints1 = await Chores.getAllChorePoints(RESIDENT1, monthStart, now);
       const chorePoints2 = await Chores.getAllChorePoints(RESIDENT2, monthStart, now);
       expect(chorePoints1.sum).to.equal(4);

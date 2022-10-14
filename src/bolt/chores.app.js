@@ -8,7 +8,7 @@ const Admin = require('../modules/admin');
 
 const { choresPollLength, pointsPerResident } = require('../config');
 const { YAY, DAY } = require('../constants');
-const { sleep } = require('../utils');
+const { sleep, getMonthStart } = require('../utils');
 
 const blocks = require('./blocks');
 
@@ -62,7 +62,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     console.log(`Added resident ${event.user}`);
 
     const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthStart = getMonthStart(now);
     const userChorePoints = await Chores.getAllChorePoints(event.user, monthStart, now);
     const userActivePercentage = await Chores.getActiveResidentPercentage(event.user, now);
 

@@ -5,8 +5,9 @@ exports.up = function(knex, Promise) {
         t.string('houseId').references('House.slackId').notNull();
         t.string('challenger').references('Resident.slackId').notNull();
         t.string('challengee').references('Resident.slackId').notNull();
-        t.integer('value');
+        t.integer('value').notNull();
         t.integer('pollId').references('Poll.id').notNull();
+        t.timestamp('resolvedAt');
         t.integer('heartId').references('Heart.id');
     });
 };
