@@ -15,12 +15,12 @@ features:
     - command: /things-add
       url: https://zaratan.ngrok.io/slack/events
       description: Add a thing
-      usage_hint: "[type] [name] [price]"
+      usage_hint: "[type]-[name]-[quantity]-[price]"
       should_escape: true
     - command: /things-del
       url: https://zaratan.ngrok.io/slack/events
       description: Delete a thing
-      usage_hint: "[type] [name]"
+      usage_hint: "[type]-[name]"
       should_escape: true
     - command: /things-list
       url: https://zaratan.ngrok.io/slack/events

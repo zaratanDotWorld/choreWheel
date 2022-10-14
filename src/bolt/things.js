@@ -137,8 +137,8 @@ app.command('/things-add', async ({ ack, command, say }) => {
 
   if (userInfo.user.is_admin) {
     const active = true;
-    const { type, name, value } = blocks.parseThingAdd(command.text);
-    const [ thing ] = await Things.updateThing({ houseId, type, name, value, active });
+    const { type, name, quantity, value } = blocks.parseThingAdd(command.text);
+    const [ thing ] = await Things.updateThing({ houseId, type, name, quantity, value, active });
 
     text = `${blocks.formatThing(thing)} added to the things list :star-struck:`;
     console.log(`Added thing ${blocks.formatThing(thing)}`);
