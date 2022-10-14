@@ -1,5 +1,5 @@
 [Unit]
-Description=Things by Mirror
+Description=Hearts by Mirror
 Documentation=https://github.com/kronosapiens/mirror/wiki
 After=network.target
 
@@ -7,8 +7,8 @@ After=network.target
 Type=simple
 User=ubuntu
 WorkingDirectory=/home/ubuntu/mirror
-ExecStart=/home/ubuntu/.nvm/versions/node/v16.15.0/bin/node src/bolt/things.app.js
-StandardOutput=file:/home/ubuntu/mirror/logs/things.log
+ExecStart=/home/ubuntu/.nvm/versions/node/v16.15.0/bin/node src/bolt/hearts.app.js
+StandardOutput=file:/home/ubuntu/mirror/logs/hearts.log
 Restart=on-failure
 
 [Install]

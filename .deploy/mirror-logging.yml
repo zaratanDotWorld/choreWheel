@@ -3,3 +3,5 @@ logs:
     file: /home/ubuntu/mirror/logs/chores.log
   - name: things
     file: /home/ubuntu/mirror/logs/things.log
+  - name: hearts
+    file: /home/ubuntu/mirror/logs/hearts.log
