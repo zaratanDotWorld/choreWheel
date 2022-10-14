@@ -7,7 +7,7 @@ chai.use(chaiAlmost());
 chai.use(chaiAsPromised);
 
 const { YAY, NAY, DAY, HOUR, MINUTE } = require('../src/constants');
-const { pointsPerResident } = require('../src/config');
+const { pointsPerResident, inflationFactor } = require('../src/config');
 const { sleep } = require('../src/utils');
 const { db } = require('../src/db');
 
@@ -277,7 +277,7 @@ describe('Chores', async () => {
 
       const sumPoints1 = choreValues1.map(cv => cv.value).reduce((sum, val) => sum + val, 0);
       const sumPoints2 = choreValues2.map(cv => cv.value).reduce((sum, val) => sum + val, 0);
-      expect(sumPoints1 + sumPoints2).to.almost.equal(pointsPerResident * 2 / 6);
+      expect(sumPoints1 + sumPoints2).to.almost.equal(pointsPerResident * 2 / 6 * inflationFactor);
     });
 
     it('can get the current, updated chore values ', async () => {
@@ -291,7 +291,7 @@ describe('Chores', async () => {
       // Calculate the 48 hour update and return the total value for 120 hours
       const choreValues = await Chores.getUpdatedChoreValues(HOUSE, t1);
       const sumPoints = choreValues.map(cv => cv.value).reduce((sum, val) => sum + val, 0);
-      expect(sumPoints).to.almost.equal(pointsPerResident * 2 / 6);
+      expect(sumPoints).to.almost.equal(pointsPerResident * 2 / 6 * inflationFactor);
     });
   });
 
