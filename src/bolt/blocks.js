@@ -280,6 +280,103 @@ exports.thingsBuyCallbackView = function (residentId, thingName, thingValue, hou
   ];
 };
 
+// Hearts
+
+exports.heartEmoji = function (numHearts) {
+  if (numHearts <= 2) {
+    return ':broken_heart:';
+  } else if (numHearts <= 5) {
+    return ':heart:';
+  } else {
+    return ':heart_on_fire:';
+  }
+};
+
+exports.heartsHomeView = function (numHearts) {
+  const textA = 'We use Hearts to keep each other accountable.\n\n' +
+    'Everyone starts with five hearts. We lose hearts when we fail to uphold our commitments, ' +
+    'and we earn them back over time (one per month), and by exceeding expectations.';
+
+  const textB = `You have *${numHearts}* hearts: ${exports.heartEmoji(numHearts).repeat(numHearts)}`;
+
+  return {
+    type: 'home',
+    blocks: [
+      { type: 'header', text: { type: 'plain_text', text: 'Welcome to Hearts', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: textA } },
+      { type: 'divider' },
+      { type: 'section', text: { type: 'mrkdwn', text: textB } },
+      {
+        type: 'actions',
+        elements: [
+          { type: 'button', action_id: 'hearts-challenge', text: { type: 'plain_text', text: 'Issue a challenge', emoji: true } }
+        ]
+      }
+    ]
+  };
+};
+
+exports.heartsChallengeView = function () {
+  const mainText = 'Choose someone to challenge, a number of hearts, and explain the circumstance. ' +
+    'The issue will go to a house vote, and the loser (potentially you) will lose hearts.\n\n' +
+    'If the challengee has three or more hearts, you need a minimum of *four* positive votes. ' +
+    'If they have only one or two hearts left, you need a minimum of *seven* positive votes. ' +
+    'So please make sure you\'ve spoken to others about the issue before raising a challenge.\n\n' +
+    '*<https://github.com/kronosapiens/mirror/wiki/Conflict-Resolution|Click here>* for more information about conflict resolution.';
+
+  return {
+    type: 'modal',
+    callback_id: 'hearts-challenge-callback',
+    title: { type: 'plain_text', text: 'Hearts', emoji: true },
+    submit: { type: 'plain_text', text: 'Submit', emoji: true },
+    close: { type: 'plain_text', text: 'Cancel', emoji: true },
+    blocks: [
+      { type: 'header', text: { type: 'plain_text', text: 'Issue a challenge', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Challengee', emoji: true },
+        element: {
+          type: 'multi_users_select',
+          placeholder: { type: 'plain_text', text: 'Choose a resident', emoji: true },
+          action_id: 'challengee'
+        }
+      },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Number of hearts', emoji: true },
+        element: {
+          type: 'plain_text_input',
+          placeholder: { type: 'plain_text', text: 'Enter a number', emoji: true },
+          action_id: 'hearts'
+        }
+      },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Circumstance', emoji: true },
+        element: {
+          type: 'plain_text_input',
+          multiline: true,
+          placeholder: { type: 'plain_text', text: 'Explain the circumstance as best you can', emoji: true },
+          action_id: 'circumstance'
+        }
+      }
+    ]
+  };
+};
+
+exports.heartsChallengeCallbackView = function (challengerId, challengeeId, numHearts, circumstance, pollId, pollDuration) {
+  const textA = `*<@${challengerId}>* challenged *<@${challengeeId}>* for *${numHearts} hearts*, due to the following circumstance:`;
+  const textB = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / HOUR} hours`;
+
+  return [
+    { type: 'section', text: { type: 'mrkdwn', text: textA } },
+    { type: 'section', text: { type: 'mrkdwn', text: `_${circumstance}_` } },
+    { type: 'section', text: { type: 'mrkdwn', text: textB } },
+    { type: 'actions', elements: exports.makeVoteButtons(pollId, 1, 0) }
+  ];
+};
+
 // Polls Views (utils)
 
 exports.makeVoteButtons = function (pollId, upvoteCount, downvoteCount) {

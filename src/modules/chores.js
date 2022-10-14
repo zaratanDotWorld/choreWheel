@@ -5,6 +5,7 @@ const { pointsPerResident, inflationFactor, bootstrapDuration, choresMinVotes } 
 const Admin = require('./admin');
 const Polls = require('./polls');
 const { PowerRanker } = require('./power');
+const { getMonthStart, getMonthEnd } = require('../utils');
 
 // Chores
 
@@ -117,7 +118,7 @@ exports.getChoreValueIntervalScalar = async function (houseId, currentTime) {
     : new Date(currentTime.getTime() - bootstrapDuration); // First update assigns a fixed amount of value
 
   const hoursSinceUpdate = Math.floor((currentTime - lastUpdate) / HOUR);
-  const daysInMonth = new Date(currentTime.getFullYear(), currentTime.getMonth() + 1, 0).getDate();
+  const daysInMonth = getMonthEnd(currentTime).getDate();
   const hoursInMonth = 24 * daysInMonth;
 
   // TODO: handle scenario where interval spans 2 months
@@ -273,8 +274,8 @@ exports.getActiveResidentCount = async function (houseId, now) {
 
 exports.getActiveResidentPercentage = async function (residentId, now) {
   // TODO: implement this more efficiently... currently O(n) but could probably be O(1)
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const monthStart = getMonthStart(now);
+  const monthEnd = getMonthEnd(now);
   const daysInMonth = monthEnd.getDate();
   const activeDays = new Map([ ...Array(daysInMonth).keys() ].map(day => [ day, true ]));
 

@@ -4,7 +4,8 @@ exports.up = function(knex, Promise) {
         t.timestamps(useTimestamps = true, defaultToNow = true, useCamelCase = true);
         t.string('houseId').references('House.slackId').notNull();
         t.string('residentId').references('Resident.slackId').notNull();
-        t.float('value');
+        t.timestamp('generatedAt').notNull();
+        t.float('value').notNull();
     });
 };
 

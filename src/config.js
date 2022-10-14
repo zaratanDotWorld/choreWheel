@@ -9,6 +9,7 @@ exports.inflationFactor = 1.10;
 
 // Hearts
 exports.heartsPollLength = 3 * DAY;
+exports.heartsBaseline = 5;
 exports.heartsMinVotesInitial = 4; // For removing initial hearts
 exports.heartsMinVotesFinal = 7; // For removing the final two hearts
 
