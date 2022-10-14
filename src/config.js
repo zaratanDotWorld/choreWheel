@@ -5,6 +5,7 @@ exports.choresPollLength = DAY;
 exports.choresMinVotes = 2;
 exports.pointsPerResident = 100;
 exports.bootstrapDuration = 72 * HOUR;
+exports.inflationFactor = 1;
 
 // Hearts
 exports.heartsPollLength = 3 * DAY;

@@ -1,6 +1,6 @@
 const { db } = require('../db');
 const { HOUR, DAY } = require('../constants');
-const { pointsPerResident, bootstrapDuration, choresMinVotes } = require('../config');
+const { pointsPerResident, inflationFactor, bootstrapDuration, choresMinVotes } = require('../config');
 
 const Admin = require('./admin');
 const Polls = require('./polls');
@@ -110,11 +110,6 @@ exports.getCurrentChoreRankings = async function (houseId) {
   });
 };
 
-exports.getChoreValueScalar = async function (houseId, updateInterval) {
-  const residents = await Admin.getResidents(houseId);
-  return (residents.length * pointsPerResident) * updateInterval;
-};
-
 exports.getChoreValueIntervalScalar = async function (houseId, currentTime) {
   const lastChoreValue = await exports.getLastChoreValueUpdate(houseId);
   const lastUpdate = (lastChoreValue !== undefined)
@@ -147,7 +142,7 @@ exports.updateChoreValues = async function (houseId, updateTime) {
   if (intervalScalar === 0) { return Promise.resolve([]); }
 
   const [ residentCount ] = await exports.getActiveResidentCount(houseId, updateTime);
-  const updateScalar = (residentCount.count * pointsPerResident) * intervalScalar;
+  const updateScalar = (residentCount.count * pointsPerResident) * intervalScalar * inflationFactor;
   const choreRankings = await exports.getCurrentChoreRankings(houseId);
 
   const choreValues = choreRankings.map(chore => {
