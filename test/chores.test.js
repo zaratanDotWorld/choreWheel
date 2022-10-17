@@ -492,10 +492,16 @@ describe('Chores', async () => {
       await sleep(5);
 
       let chorePoints;
-      chorePoints = await Chores.getUserChorePoints(RESIDENT1, monthStart, now);
+      // Can get all chore points this month
+      chorePoints = await Chores.getAllChorePoints(RESIDENT1, monthStart, now);
       expect(chorePoints.sum).to.equal(30);
 
-      chorePoints = await Chores.getUserChorePoints(RESIDENT1, y2k, monthStart);
+      // Can get chore-specific points this month
+      chorePoints = await Chores.getChorePoints(RESIDENT1, dishes.id, monthStart, now);
+      expect(chorePoints.sum).to.equal(10);
+
+      // But nothing next month
+      chorePoints = await Chores.getAllChorePoints(RESIDENT1, y2k, monthStart);
       expect(chorePoints.sum).to.equal(null);
     });
   });
@@ -622,8 +628,8 @@ describe('Chores', async () => {
       await sleep(5);
 
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      const chorePoints1 = await Chores.getUserChorePoints(RESIDENT1, monthStart, now);
-      const chorePoints2 = await Chores.getUserChorePoints(RESIDENT2, monthStart, now);
+      const chorePoints1 = await Chores.getAllChorePoints(RESIDENT1, monthStart, now);
+      const chorePoints2 = await Chores.getAllChorePoints(RESIDENT2, monthStart, now);
       expect(chorePoints1.sum).to.equal(4);
       expect(chorePoints2.sum).to.equal(6);
     });

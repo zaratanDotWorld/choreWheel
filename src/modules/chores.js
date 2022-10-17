@@ -229,7 +229,15 @@ exports.resolveChoreClaim = async function (claimId, resolvedAt) {
     .returning('*');
 };
 
-exports.getUserChorePoints = async function (residentId, startTime, endTime) {
+exports.getChorePoints = async function (residentId, choreId, startTime, endTime) {
+  return db('ChoreClaim')
+    .where({ claimedBy: residentId, choreId: choreId, valid: true })
+    .whereBetween('claimedAt', [ startTime, endTime ])
+    .sum('value')
+    .first();
+};
+
+exports.getAllChorePoints = async function (residentId, startTime, endTime) {
   return db('ChoreClaim')
     .where({ claimedBy: residentId, valid: true })
     .whereBetween('claimedAt', [ startTime, endTime ])

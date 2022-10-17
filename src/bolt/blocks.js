@@ -70,8 +70,21 @@ exports.choresClaimView = function (chores) {
   };
 };
 
-exports.choresClaimCallbackView = function (residentId, choreName, choreValue, pollId, pollDuration) {
-  const textA = `*<@${residentId}>* did *${choreName}* for *${choreValue.toFixed(1)} points* :sparkles::sparkles:`;
+exports.getAchievementEmoji = function (totalValue) {
+  if (totalValue >= 500) {
+    return ':first_place_medal:';
+  } else if (totalValue >= 100) {
+    return ':second_place_medal:';
+  } else if (totalValue >= 20) {
+    return ':third_place_medal:';
+  } else {
+    return ':sparkles:';
+  }
+};
+
+exports.choresClaimCallbackView = function (residentId, choreName, claimValue, totalValue, pollId, pollDuration) {
+  const emoji = exports.getAchievementEmoji(totalValue);
+  const textA = `*<@${residentId}>* did *${choreName}* for *${claimValue.toFixed(1)} points* ${emoji}:sparkles:`;
   const textB = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / HOUR} hours`;
 
   return [

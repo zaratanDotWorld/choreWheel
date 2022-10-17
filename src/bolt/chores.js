@@ -7,7 +7,7 @@ const Polls = require('../modules/polls');
 const Admin = require('../modules/admin');
 
 const { choresPollLength, pointsPerResident } = require('../config');
-const { YAY } = require('../constants');
+const { YAY, DAY } = require('../constants');
 const { sleep } = require('../utils');
 
 const blocks = require('./blocks');
@@ -63,7 +63,7 @@ app.event('app_home_opened', async ({ body, event }) => {
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const userChorePoints = await Chores.getUserChorePoints(event.user, monthStart, now);
+    const userChorePoints = await Chores.getAllChorePoints(event.user, monthStart, now);
     const userActivePercentage = await Chores.getActiveResidentPercentage(event.user, now);
 
     const data = {
@@ -225,8 +225,12 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   // TODO: Return error to user (not console) if channel is not set
   if (choresChannel === null) { throw new Error('Chores channel not set!'); }
 
-  // Perform the claim
+  // Get chore points over last six months
   const now = new Date();
+  const sixMonths = new Date(now.getTime() - 180 * DAY);
+  const recentPoints = await Chores.getChorePoints(residentId, choreId, sixMonths, now);
+
+  // Perform the claim
   const [ claim ] = await Chores.claimChore(choreId, residentId, now, choresPollLength);
   await Polls.submitVote(claim.pollId, residentId, now, YAY);
 
@@ -234,7 +238,14 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
     token: choresOauth.bot.token,
     channel: choresChannel,
     text: 'Someone just completed a chore',
-    blocks: blocks.choresClaimCallbackView(residentId, choreName, Number(choreValue), claim.pollId, choresPollLength)
+    blocks: blocks.choresClaimCallbackView(
+      residentId,
+      choreName,
+      Number(choreValue),
+      (recentPoints.sum || 0) + Number(choreValue),
+      claim.pollId,
+      choresPollLength
+    )
   };
 
   res = await app.client.chat.postMessage(message);
