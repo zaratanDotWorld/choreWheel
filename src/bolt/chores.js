@@ -225,12 +225,8 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   // TODO: Return error to user (not console) if channel is not set
   if (choresChannel === null) { throw new Error('Chores channel not set!'); }
 
-  // Get chore points to date
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const userChorePoints = await Chores.getUserChorePoints(residentId, monthStart, now);
-
   // Perform the claim
+  const now = new Date();
   const [ claim ] = await Chores.claimChore(choreId, residentId, now, choresPollLength);
   await Polls.submitVote(claim.pollId, residentId, now, YAY);
 
@@ -238,14 +234,7 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
     token: choresOauth.bot.token,
     channel: choresChannel,
     text: 'Someone just completed a chore',
-    blocks: blocks.choresClaimCallbackView(
-      residentId,
-      choreName,
-      Number(choreValue),
-      (userChorePoints.sum || 0) + Number(choreValue),
-      claim.pollId,
-      choresPollLength
-    )
+    blocks: blocks.choresClaimCallbackView(residentId, choreName, Number(choreValue), claim.pollId, choresPollLength)
   };
 
   res = await app.client.chat.postMessage(message);
@@ -357,7 +346,7 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
   const message = {
     token: choresOauth.bot.token,
     channel: choresChannel,
-    text: `<@${residentId}> just gifted <@${recipientId}> *${value} chore points* :sparkling_heart:`
+    text: `<@${residentId}> just gifted <@${recipientId}> *${value} points* :sparkling_heart:`
   };
 
   res = await app.client.chat.postMessage(message);
@@ -372,15 +361,15 @@ app.action(/poll-vote/, async ({ ack, body, action }) => {
   // // Submit the vote
   const [ pollId, value ] = action.value.split('|');
   await Polls.submitVote(pollId, body.user.id, new Date(), value);
-
   await sleep(5);
 
   const { yays, nays } = await Polls.getPollResultCounts(pollId);
 
   // Update the vote counts
+  const blockIndex = body.message.blocks.length - 1;
   body.message.token = choresOauth.bot.token;
   body.message.channel = body.channel.id;
-  body.message.blocks[2].elements = blocks.makeVoteButtons(pollId, yays, nays);
+  body.message.blocks[blockIndex].elements = blocks.makeVoteButtons(pollId, yays, nays);
 
   await app.client.chat.update(body.message);
 

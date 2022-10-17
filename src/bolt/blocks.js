@@ -70,9 +70,8 @@ exports.choresClaimView = function (chores) {
   };
 };
 
-exports.choresClaimCallbackView = function (residentId, choreName, choreValue, totalValue, pollId, pollDuration) {
-  const textA = `*<@${residentId}>* did *${choreName}* for *${choreValue.toFixed(1)} points*. ` +
-    `That's *${totalValue.toFixed(1)}* points this month :sparkles::sparkles:`;
+exports.choresClaimCallbackView = function (residentId, choreName, choreValue, pollId, pollDuration) {
+  const textA = `*<@${residentId}>* did *${choreName}* for *${choreValue.toFixed(1)} points* :sparkles::sparkles:`;
   const textB = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / HOUR} hours`;
 
   return [
