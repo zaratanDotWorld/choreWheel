@@ -645,11 +645,11 @@ describe('Chores', async () => {
       await Chores.claimChore(sweeping.id, RESIDENT1, soon, DAY);
       await sleep(5);
 
-      const err = 'update "ChoreClaim" set "value" = $1 where "id" = $2 - ' +
+      const dbError = 'update "ChoreClaim" set "value" = $1 where "id" = $2 - ' +
         'new row for relation "ChoreClaim" violates check constraint "ChoreClaim_value_check"';
 
       await expect(Chores.giftChorePoints(RESIDENT1, RESIDENT2, soon, 6))
-        .to.be.rejectedWith(err);
+        .to.be.rejectedWith(dbError);
     });
   });
 });
