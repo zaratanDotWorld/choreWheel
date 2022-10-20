@@ -61,12 +61,6 @@ exports.setChorePreference = async function (houseId, slackId, alphaChoreId, bet
     .onConflict([ 'houseId', 'residentId', 'alphaChoreId', 'betaChoreId' ]).merge();
 };
 
-exports.formatPreferencesForRanking = function (preferences) {
-  return preferences.map(p => {
-    return { alpha: p.alphaChoreId, beta: p.betaChoreId, preference: p.preference };
-  });
-};
-
 // Chore Values
 
 exports.getChoreValue = async function (choreId, startTime, endTime) {
@@ -99,11 +93,15 @@ exports.getCurrentChoreValues = async function (houseId, currentTime) {
 
 exports.getCurrentChoreRankings = async function (houseId) {
   const chores = await exports.getChores(houseId);
-  const preferences = await exports.getActiveChorePreferences(houseId);
   const residents = await Admin.getResidents(houseId);
+  const preferences = await exports.getActiveChorePreferences(houseId);
 
-  const formattedPreferences = exports.formatPreferencesForRanking(preferences);
-  const powerRanker = new PowerRanker(chores, formattedPreferences, residents.length);
+  const choresSet = new Set(chores.map(c => c.id));
+  const formattedPreferences = preferences.map(p => {
+    return { alpha: p.alphaChoreId, beta: p.betaChoreId, preference: p.preference };
+  });
+
+  const powerRanker = new PowerRanker(choresSet, formattedPreferences, residents.length);
   const rankings = powerRanker.run(d = 0.8); // eslint-disable-line no-undef
 
   return chores.map(chore => {

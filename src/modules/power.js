@@ -1,17 +1,15 @@
 const linAlg = require('linear-algebra')();
 
 class PowerRanker {
-  items;
-  preferences;
-  matrix;
-  verbose;
+  items; // Set({ id })
+  matrix; // linAlg.Matrix
+  verbose; // bool
 
   constructor (items, preferences, numResidents, verbose = false) {
-    if (items.length < 2) { throw new Error('PowerRanker: Cannot rank less than two items'); }
+    if (items.size < 2) { throw new Error('PowerRanker: Cannot rank less than two items'); }
 
-    this.items = items; // [{ id, name }]
-    this.preferences = preferences; // [{ alpha, beta, preference }]
-    this.matrix = this.toMatrix(this.items, this.preferences, numResidents);
+    this.items = items;
+    this.matrix = this.toMatrix(this.items, preferences, numResidents);
     this.verbose = verbose;
 
     this.log('Matrix initialized');
@@ -37,7 +35,7 @@ class PowerRanker {
 
   // O(preferences)
   toMatrix (items, preferences, numResidents) { // [{ alpha, beta, preference }]
-    const n = items.length;
+    const n = items.size;
     const itemMap = this.#toitemMap(items);
 
     // Initialise the matrix with (implicit) neutral preferences
@@ -94,17 +92,12 @@ class PowerRanker {
 
   // Internal
 
-  #toitemMap (items) { // [{ id, name }]
-    const itemSet = this.#toItemSet(items);
+  #toitemMap (items) { // { id }
     return new Map(
-      Array.from(itemSet)
+      Array.from(items)
         .sort((a, b) => a - b) // Javascript is the worst
         .map((item, ix) => [ item, ix ]) // ItemName -> MatrixIdx
     );
-  }
-
-  #toItemSet (items) { // [{ id, name }]
-    return new Set(items.map(i => i.id));
   }
 
   #norm (array) {
