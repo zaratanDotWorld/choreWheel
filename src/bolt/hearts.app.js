@@ -145,6 +145,29 @@ app.command('/hearts-channel', async ({ ack, command, say }) => {
   await app.client.chat.postEphemeral(message);
 });
 
+app.command('/hearts-sync', async ({ ack, command, say }) => {
+  await ack();
+
+  const SLACKBOT = 'USLACKBOT';
+
+  const now = new Date();
+  const houseId = command.team_id;
+  const workspaceMembers = await app.client.users.list({ token: heartsOauth.bot.token });
+
+  for (const member of workspaceMembers.members) {
+    if (!member.is_bot & member.id !== SLACKBOT) {
+      await Admin.updateResident(houseId, member.id, !member.deleted, member.real_name);
+      await Hearts.initialiseResident(houseId, member.id, now);
+    }
+  }
+
+  const residents = await Admin.getResidents(houseId);
+
+  const text = `Synced workspace, ${residents.length} active residents found`;
+  const message = prepareEphemeral(command, text);
+  await app.client.chat.postEphemeral(message);
+});
+
 // Challenge flow
 
 app.action('hearts-challenge', async ({ ack, body, action }) => {
