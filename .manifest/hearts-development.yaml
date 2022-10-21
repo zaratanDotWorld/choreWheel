@@ -27,6 +27,7 @@ oauth_config:
       - chat:write
       - commands
       - users:read
+      - reactions:write
 settings:
   event_subscriptions:
     request_url: https://zaratan.ngrok.io/slack/events

@@ -37,7 +37,8 @@ const app = new App({
     'channels:history', 'channels:read',
     'chat:write',
     'commands',
-    'users:read'
+    'users:read',
+    'reactions:write'
   ],
   installationStore: {
     storeInstallation: async (installation) => {
@@ -65,23 +66,37 @@ app.event('app_home_opened', async ({ body, event }) => {
     console.log(`Added resident ${residentId}`);
 
     const now = new Date();
+
     await Hearts.initialiseResident(houseId, residentId, now);
     await sleep(5);
+    await Hearts.regenerateHearts(houseId, residentId, now);
+    await sleep(5);
 
-    const hearts = await Hearts.getResidentHearts(residentId, now);
+    const hearts = await Hearts.getHearts(houseId, residentId, now);
 
     const data = {
       token: heartsOauth.bot.token,
       user_id: residentId,
       view: blocks.heartsHomeView(hearts.sum || 0)
     };
-    await app.client.views.publish(data);
+    res = await app.client.views.publish(data);
 
-    // // This is where we resolve any challenges, transparently to the resident
-    // const resolvableBuys = await Hearts.getResolvableHeartBuys(houseId, now);
-    // for (const challenge of resolvableBuys) {
-    //   await Hearts.resolveHeartBuy(challenge.id, now);
-    //   console.log(`Resolved HeartBuy ${challenge.id}`);
+    // This bookkeeping is done asynchronously
+    const [ karmaHeart ] = await Hearts.generateKarmaHeart(houseId, now);
+    if (karmaHeart !== undefined) {
+      const { heartsChannel } = await Admin.getHouse(houseId);
+      const message = {
+        token: heartsOauth.bot.token,
+        channel: heartsChannel,
+        text: `<@${karmaHeart.residentId}> is last month's karma winner :heart_on_fire:`
+      };
+      res = await app.client.chat.postMessage(message);
+    }
+
+    // const resolvableChallenges = await Hearts.getResolvableHeartChallenges(houseId, now);
+    // for (const challenge of resolvableChallenges) {
+    //   await Hearts.resolveHeartChallenge(challenge.id, now);
+    //   console.log(`Resolved HeartChallenge ${challenge.id}`);
     // }
   }
 });
@@ -205,14 +220,36 @@ app.action(/poll-vote/, async ({ ack, body, action }) => {
   const { yays, nays } = await Polls.getPollResultCounts(pollId);
 
   // Update the vote counts
-  const numBlocks = body.message.blocks.length;
+  const buttonsIndex = body.message.blocks.length - 1;
   body.message.token = heartsOauth.bot.token;
   body.message.channel = channelId;
-  body.message.blocks[numBlocks - 1].elements = blocks.makeVoteButtons(pollId, yays, nays);
+  body.message.blocks[buttonsIndex].elements = blocks.makeVoteButtons(pollId, yays, nays);
 
   await app.client.chat.update(body.message);
 
   console.log(`Poll ${pollId} updated`);
+});
+
+// Karma flow
+
+app.event('message', async ({ payload }) => {
+  const regex = /<@(\w+)>\s*\+\+/;
+  const matches = regex.exec(payload.text);
+
+  if (matches !== null) {
+    const houseId = payload.team;
+    const giverId = payload.user;
+    const receiverId = matches[1];
+
+    await Hearts.giveKarma(houseId, giverId, receiverId, new Date());
+
+    await app.client.reactions.add({
+      token: heartsOauth.bot.token,
+      channel: payload.channel,
+      timestamp: payload.event_ts,
+      name: 'sparkles'
+    });
+  }
 });
 
 // Launch the app
