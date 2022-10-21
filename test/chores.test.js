@@ -7,11 +7,12 @@ chai.use(chaiAlmost());
 chai.use(chaiAsPromised);
 
 const { YAY, NAY, DAY, HOUR, MINUTE } = require('../src/constants');
-const { pointsPerResident, inflationFactor } = require('../src/config');
-const { sleep, getMonthStart } = require('../src/utils');
+const { pointsPerResident, inflationFactor, penaltyDelay } = require('../src/config');
+const { sleep, getMonthStart, getNextMonthStart } = require('../src/utils');
 const { db } = require('../src/db');
 
 const Chores = require('../src/modules/chores');
+const Hearts = require('../src/modules/hearts');
 const Polls = require('../src/modules/polls');
 const Admin = require('../src/modules/admin');
 
@@ -53,6 +54,7 @@ describe('Chores', async () => {
     await db('ChoreValue').del();
     await db('ChorePref').del();
     await db('PollVote').del();
+    await db('Heart').del();
     await db('Poll').del();
     await db('Resident').del();
   });
@@ -503,6 +505,77 @@ describe('Chores', async () => {
       // But nothing next month
       chorePoints = await Chores.getAllChorePoints(RESIDENT1, y2k, monthStart);
       expect(chorePoints.sum).to.equal(null);
+    });
+
+    it('can calculate chore penalties', async () => {
+      await db('ChoreValue').insert([
+        { choreId: dishes.id, valuedAt: now, value: 96, ranking: 0, residents: 0 },
+        { choreId: sweeping.id, valuedAt: now, value: 95, ranking: 0, residents: 0 },
+        { choreId: restock.id, valuedAt: now, value: 94, ranking: 0, residents: 0 }
+      ]);
+      await sleep(5);
+      await Chores.claimChore(dishes.id, RESIDENT1, now, DAY);
+      await Chores.claimChore(sweeping.id, RESIDENT2, now, DAY);
+      await Chores.claimChore(restock.id, RESIDENT3, now, DAY);
+      await sleep(5);
+
+      let penalty;
+      const penaltyTime = new Date(getNextMonthStart(now).getTime() + penaltyDelay);
+
+      penalty = await Chores.calculatePenalty(RESIDENT1, penaltyTime);
+      expect(penalty).to.almost.equal(0);
+
+      penalty = await Chores.calculatePenalty(RESIDENT2, penaltyTime);
+      expect(penalty).to.almost.equal(0.25);
+
+      penalty = await Chores.calculatePenalty(RESIDENT3, penaltyTime);
+      expect(penalty).to.almost.equal(0.25);
+    });
+
+    it('can add a penalty at the right time', async () => {
+      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
+
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 75, ranking: 0, residents: 0 } ]);
+      await sleep(5);
+      await Chores.claimChore(dishes.id, RESIDENT1, now, DAY);
+      await sleep(5);
+
+      let penaltyHeart;
+      const penaltyTime = new Date(getNextMonthStart(now).getTime() + penaltyDelay);
+      const beforeTime = new Date(penaltyTime.getTime() - 1);
+
+      [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, beforeTime);
+      expect(penaltyHeart).to.be.undefined;
+      await sleep(5);
+
+      [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
+      expect(penaltyHeart.value).to.almost.equal(-1.25);
+      await sleep(5);
+
+      [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
+      expect(penaltyHeart).to.be.undefined;
+    });
+
+    it('cannot penalize before initialized', async () => {
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 75, ranking: 0, residents: 0 } ]);
+      await sleep(5);
+      await Chores.claimChore(dishes.id, RESIDENT1, now, DAY);
+      await sleep(5);
+
+      let penaltyHeart;
+      const penaltyTime = new Date(getNextMonthStart(now).getTime() + penaltyDelay);
+
+      // No penalty before initialized
+      [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
+      expect(penaltyHeart).to.be.undefined;
+      await sleep(5);
+
+      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
+      await sleep(5);
+
+      [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
+      expect(penaltyHeart.value).to.almost.equal(-1.25);
+      await sleep(5);
     });
   });
 

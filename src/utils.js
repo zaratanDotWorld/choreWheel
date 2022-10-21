@@ -1,3 +1,5 @@
+const { DAY } = require('./constants');
+
 exports.sleep = function (ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
@@ -8,4 +10,11 @@ exports.getMonthStart = function (date) {
 
 exports.getMonthEnd = function (date) {
   return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+};
+
+exports.getPrevMonthEnd = function (date) {
+  return new Date(exports.getMonthStart(date).getTime() - DAY);
+};
+exports.getNextMonthStart = function (date) {
+  return new Date(exports.getMonthEnd(date).getTime() + DAY);
 };
