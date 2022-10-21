@@ -256,5 +256,13 @@ describe('Hearts', async () => {
       await expect(Hearts.resolveChallenge(challenge.id))
         .to.be.rejectedWith('Challenge already resolved!');
     });
+
+    it('cannot challenge oneself', async () => {
+      const dbError = 'HeartChallenge" ("challengeeId", "challengerId", "houseId", "pollId", "value") values ($1, $2, $3, $4, $5) returning * - ' +
+        'new row for relation "HeartChallenge" violates check constraint "HeartChallenge_check';
+
+      await expect(Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT1, 1, now))
+        .to.be.rejectedWith(dbError);
+    });
   });
 });

@@ -45,14 +45,14 @@ exports.regenerateHearts = async function (houseId, residentId, currentTime) {
 
 // Challenges
 
-exports.issueChallenge = async function (houseId, challenger, challengee, numHearts, challengeTime) {
+exports.issueChallenge = async function (houseId, challengerId, challengeeId, numHearts, challengeTime) {
   const [ poll ] = await Polls.createPoll(challengeTime, heartsPollLength);
 
   return db('HeartChallenge')
     .insert({
       houseId: houseId,
-      challenger: challenger,
-      challengee: challengee,
+      challengerId: challengerId,
+      challengeeId: challengeeId,
       value: numHearts,
       pollId: poll.id
     })
@@ -79,8 +79,8 @@ exports.resolveChallenge = async function (challengeId, resolvedAt) {
   // Challangers wins with a majority and a minimum of four votes
   const { yays, nays } = await Polls.getPollResultCounts(pollId);
   const loser = (yays >= heartsMinVotesInitial && yays > nays)
-    ? challenge.challengee
-    : challenge.challenger;
+    ? challenge.challengeeId
+    : challenge.challengerId;
 
   const [ heart ] = await exports.generateHearts(challenge.houseId, loser, -challenge.value, resolvedAt);
 
