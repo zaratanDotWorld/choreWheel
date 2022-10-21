@@ -58,20 +58,27 @@ const app = new App({
 
 app.event('app_home_opened', async ({ body, event }) => {
   if (event.tab === 'home') {
-    await Admin.addResident(body.team_id, event.user);
-    console.log(`Added resident ${event.user}`);
+    const houseId = body.team_id;
+    const residentId = event.user;
+
+    await Admin.addResident(houseId, residentId);
+    console.log(`Added resident ${residentId}`);
 
     const now = new Date();
     const monthStart = getMonthStart(now);
-    const userChorePoints = await Chores.getAllChorePoints(event.user, monthStart, now);
-    const userActivePercentage = await Chores.getActiveResidentPercentage(event.user, now);
+    const userChorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
+    const userActivePercentage = await Chores.getActiveResidentPercentage(residentId, now);
 
     const data = {
       token: choresOauth.bot.token,
-      user_id: event.user,
+      user_id: residentId,
       view: blocks.choresHomeView(userChorePoints.sum || 0, userActivePercentage * pointsPerResident)
     };
     await app.client.views.publish(data);
+
+    // This bookkeeping is done asynchronously
+    // TODO: resolve chore claims
+    await Chores.addChorePenalty(houseId, residentId, now);
   }
 });
 

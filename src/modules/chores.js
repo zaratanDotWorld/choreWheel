@@ -1,11 +1,21 @@
 const { db } = require('../db');
 const { HOUR, DAY } = require('../constants');
-const { pointsPerResident, inflationFactor, bootstrapDuration, choresMinVotes } = require('../config');
+const { getMonthStart, getMonthEnd, getPrevMonthEnd } = require('../utils');
+
+const {
+  pointsPerResident,
+  inflationFactor,
+  bootstrapDuration,
+  choresMinVotes,
+  penaltyIncrement,
+  penaltySize,
+  penaltyDelay
+} = require('../config');
 
 const Admin = require('./admin');
+const Hearts = require('./hearts');
 const Polls = require('./polls');
 const { PowerRanker } = require('./power');
-const { getMonthStart, getMonthEnd } = require('../utils');
 
 // Chores
 
@@ -285,6 +295,8 @@ exports.getActiveResidentPercentage = async function (residentId, now) {
     })
     .select('*');
 
+  // TODO: truncate if break spans into previous or next month
+
   for (const choreBreak of choreBreaks) {
     let startDate = choreBreak.startDate;
     while (startDate < choreBreak.endDate) {
@@ -294,6 +306,33 @@ exports.getActiveResidentPercentage = async function (residentId, now) {
   }
   const numActiveDays = Array.from(activeDays.values()).filter(active => active).length;
   return numActiveDays / daysInMonth;
+};
+
+exports.addChorePenalty = async function (houseId, residentId, currentTime) {
+  const monthStart = getMonthStart(currentTime);
+  const penaltyTime = new Date(monthStart.getTime() + penaltyDelay);
+  if (currentTime < penaltyTime) { return []; }
+
+  const penalty = await Hearts.getHeart(houseId, residentId, penaltyTime);
+  if (penalty === undefined) {
+    const hearts = await Hearts.getHearts(houseId, residentId, penaltyTime);
+    if (hearts.sum === null) { return []; } // Don't penalize if not initialized
+
+    const penaltyAmount = await exports.calculatePenalty(residentId, penaltyTime);
+    return Hearts.generateHearts(houseId, residentId, -penaltyAmount, penaltyTime);
+  } else {
+    return [];
+  }
+};
+
+exports.calculatePenalty = async function (residentId, penaltyTime) {
+  const prevMonthEnd = getPrevMonthEnd(penaltyTime);
+  const prevMonthStart = getMonthStart(prevMonthEnd);
+  const chorePoints = await exports.getAllChorePoints(residentId, prevMonthStart, prevMonthEnd);
+
+  const deficiency = Math.max(pointsPerResident - chorePoints.sum, 0);
+  const truncatedDeficiency = Math.floor(deficiency / penaltyIncrement) * penaltyIncrement;
+  return truncatedDeficiency / penaltySize;
 };
 
 // Chore Point Gifting
