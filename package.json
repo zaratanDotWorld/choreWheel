@@ -12,7 +12,7 @@
     "app:things": "node src/bolt/things.app.js",
     "app:hearts": "node src/bolt/hearts.app.js",
     "start:ngrok": "ngrok http --region=us --hostname=zaratan.ngrok.io 3000",
-    "pretest": "npx knex migrate:rollback --env test; npx knex migrate:latest --env test",
+    "pretest": "npx knex migrate:rollback --all --env test; npx knex migrate:latest --env test",
     "test": "NODE_ENV=test mocha --exit",
     "pretest:coverage": "npx knex migrate:rollback --env test; npx knex migrate:latest --env test",
     "test:coverage": "NODE_ENV=test nyc --check-coverage mocha --exit",
