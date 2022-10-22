@@ -21,26 +21,28 @@ npm i
 ```
 
 Now create a `.env` file with the necessary secret information,
-and set up the various configuration files as described below.
+and set up the various configuration files as described below, or run
+`sudo ./setup.sh`.
 
-#### `mirror-chores.service`
+#### `mirror-*.service`
 
-The `systemd` config file for running the Chores app. Sudo copy this file to `/etc/systemd/system/`
-and run `systemctl daemon-reload` to load the configuration file, and run `mkdir logs` in
+The `systemd` config file for running the apps.
+Run `sudo cp .deploy/mirror-*.service /etc/systemd/system/` and then
+`systemctl daemon-reload` to load the configuration file, and run `mkdir logs` in
 the root directory of the repository to set up the logs folder. The service can then be
-managed using `systemctl {start, stop, restart, status} mirror-chores` as needed. In order
-to run these commands, you must explicitly set a password for the user. This can be done
-using `sudo passwd <username>`.
+managed using `systemctl {start, stop, restart, status} mirror-chores` as needed.
 
-#### `mirror-chores`
+In order to run these commands, you must explicitly set a password for the
+user. This can be done using `sudo passwd <username>`.
 
-The `logrotate` config file for the Chores app, used to manage log rotation
-and preserve the memory of the EC2 instance. Sudo copy this file to `/etc/logrotate.d/`.
-Ultimately the instance logs don't matter since the logs are transferred to
-Cloudwatch, we just don't want the logs clunking up the instance.
+#### `mirror-*.conf`
 
-#### `logging.yml`
+The `logrotate` config files for the apps, used to manage log rotation
+and preserve the memory of the EC2 instance. Run
+`sudo cp .deploy/mirror-*.conf /etc/logrotate.d/`.
+
+#### `mirror-logging.yml`
 
 We use New Relic for application monitoring. Application logs are exported to
-New Relic's service using the configuration found in this file. Copy this file
-to `/etc/newrelic-infra/logging.d/` to begin exporting logs.
+New Relic's service using the configuration found in this file. Run
+`sudo cp .deploy/mirror-logging.yml /etc/newrelic-infra/logging.d/` to begin exporting logs.

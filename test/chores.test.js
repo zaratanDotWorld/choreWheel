@@ -575,7 +575,6 @@ describe('Chores', async () => {
 
       [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
       expect(penaltyHeart.value).to.almost.equal(-1.25);
-      await sleep(5);
     });
   });
 
