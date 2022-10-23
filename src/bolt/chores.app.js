@@ -325,6 +325,26 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   console.log(`Chore preference updated, ${alphaChoreId} vs ${betaChoreId} at ${preference}`);
 });
 
+// Break flow
+
+app.action('chores-break', async ({ ack, body }) => {
+  await ack();
+
+  const view = {
+    token: choresOauth.bot.token,
+    trigger_id: body.trigger_id,
+    view: blocks.choresBreakView(new Date())
+  };
+
+  res = await app.client.views.open(view);
+  console.log(`Chores-break opened with id ${res.view.id}`);
+});
+
+app.view('chores-break-callback', async ({ ack, body }) => {
+  await ack();
+  console.log(body);
+});
+
 // Gift flow
 
 app.action('chores-gift', async ({ ack, body }) => {
