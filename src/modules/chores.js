@@ -1,6 +1,6 @@
 const { db } = require('../db');
 const { HOUR, DAY } = require('../constants');
-const { getMonthStart, getMonthEnd, getPrevMonthEnd } = require('../utils');
+const { getMonthStart, getMonthEnd, getPrevMonthEnd, getNextMonthStart } = require('../utils');
 
 const {
   pointsPerResident,
@@ -284,8 +284,6 @@ exports.getActiveResidentPercentage = async function (residentId, now) {
   // TODO: implement this more efficiently... currently O(n) but could probably be O(1)
   const monthStart = getMonthStart(now);
   const monthEnd = getMonthEnd(now);
-  const daysInMonth = monthEnd.getDate();
-  const activeDays = new Map([ ...Array(daysInMonth).keys() ].map(day => [ day, true ]));
 
   const choreBreaks = await db('ChoreBreak')
     .where({ residentId })
@@ -295,11 +293,13 @@ exports.getActiveResidentPercentage = async function (residentId, now) {
     })
     .select('*');
 
-  // TODO: truncate if break spans into previous or next month
+  const daysInMonth = monthEnd.getDate();
+  const activeDays = new Map([ ...Array(daysInMonth).keys() ].map(day => [ day, true ]));
 
   for (const choreBreak of choreBreaks) {
-    let startDate = choreBreak.startDate;
-    while (startDate < choreBreak.endDate) {
+    let startDate = new Date(Math.max(choreBreak.startDate, monthStart));
+    const endDate = new Date(Math.min(choreBreak.endDate, getNextMonthStart(monthEnd)));
+    while (startDate < endDate) {
       activeDays.set(startDate.getDate() - 1, false);
       startDate = new Date(startDate.getTime() + DAY);
     }

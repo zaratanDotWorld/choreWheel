@@ -640,12 +640,12 @@ describe('Chores', async () => {
 
     it('can return the percent of the period a resident is not on break', async () => {
       const feb1 = new Date(2001, 1, 1); // February, a 28 day month
-      const feb7 = new Date(feb1.getTime() + 7 * DAY);
-      const feb14 = new Date(feb1.getTime() + 14 * DAY);
-      const feb21 = new Date(feb1.getTime() + 21 * DAY);
+      const feb8 = new Date(feb1.getTime() + 7 * DAY);
+      const feb15 = new Date(feb1.getTime() + 14 * DAY);
+      const feb22 = new Date(feb1.getTime() + 21 * DAY);
       const mar1 = new Date(feb1.getTime() + 28 * DAY);
-      const mar7 = new Date(mar1.getTime() + 7 * DAY);
-      const mar14 = new Date(mar1.getTime() + 14 * DAY);
+      const mar8 = new Date(mar1.getTime() + 7 * DAY);
+      const mar15 = new Date(mar1.getTime() + 14 * DAY);
 
       let activeDays;
 
@@ -653,34 +653,49 @@ describe('Chores', async () => {
       expect(activeDays).to.almost.equal(1.0);
 
       // Take the first week off
-      await Chores.addChoreBreak(RESIDENT1, feb1, feb7);
-
+      await Chores.addChoreBreak(RESIDENT1, feb1, feb8);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.almost.equal(0.75);
 
       // Take the third week off
-      await Chores.addChoreBreak(RESIDENT1, feb14, feb21);
-
+      await Chores.addChoreBreak(RESIDENT1, feb15, feb22);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.almost.equal(0.5);
 
       // Take time off next month, has no effect
-      await Chores.addChoreBreak(RESIDENT1, mar1, mar14);
-
+      await Chores.addChoreBreak(RESIDENT1, mar1, mar15);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.almost.equal(0.5);
 
       // Take the first two weeks off, this break overlaps with the first break
-      await Chores.addChoreBreak(RESIDENT1, feb1, feb14);
-
+      await Chores.addChoreBreak(RESIDENT1, feb1, feb15);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.almost.equal(0.25);
 
       // Take the last week off, this break stretches into the next month
-      await Chores.addChoreBreak(RESIDENT1, feb21, mar7);
-
+      await Chores.addChoreBreak(RESIDENT1, feb22, mar8);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.almost.equal(0.0);
+    });
+
+    it('can consider only the parts of breakas in the current month', async () => {
+      const feb1 = new Date(2001, 1, 1); // February, a 28 day month
+      const feb8 = new Date(feb1.getTime() + 7 * DAY);
+      const feb22 = new Date(feb1.getTime() + 21 * DAY);
+      const mar8 = new Date(feb1.getTime() + 35 * DAY);
+      const jan25 = new Date(feb1.getTime() - 7 * DAY);
+
+      let activeDays;
+
+      // Overlap last and first weeks
+      await Chores.addChoreBreak(RESIDENT1, jan25, feb8);
+      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
+      expect(activeDays).to.almost.equal(0.75);
+
+      // Overlap last and first weeks
+      await Chores.addChoreBreak(RESIDENT1, feb22, mar8);
+      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
+      expect(activeDays).to.almost.equal(0.50);
     });
   });
 
