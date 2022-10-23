@@ -100,7 +100,7 @@ function prepareEphemeral (command, text) {
   };
 }
 
-app.command('/chores-channel', async ({ ack, command, say }) => {
+app.command('/chores-channel', async ({ ack, command }) => {
   await ack();
 
   const channelName = command.text;
@@ -126,7 +126,7 @@ app.command('/chores-channel', async ({ ack, command, say }) => {
   await app.client.chat.postEphemeral(message);
 });
 
-app.command('/chores-add', async ({ ack, command, say }) => {
+app.command('/chores-add', async ({ ack, command }) => {
   await ack();
 
   const userInfo = await getUser(command.user_id);
@@ -147,7 +147,7 @@ app.command('/chores-add', async ({ ack, command, say }) => {
   await app.client.chat.postEphemeral(message);
 });
 
-app.command('/chores-del', async ({ ack, command, say }) => {
+app.command('/chores-del', async ({ ack, command }) => {
   await ack();
 
   const userInfo = await getUser(command.user_id);
@@ -168,7 +168,7 @@ app.command('/chores-del', async ({ ack, command, say }) => {
   await app.client.chat.postEphemeral(message);
 });
 
-app.command('/chores-list', async ({ ack, command, say }) => {
+app.command('/chores-list', async ({ ack, command }) => {
   await ack();
 
   const choresRankings = await Chores.getCurrentChoreRankings(command.team_id);
@@ -179,7 +179,7 @@ app.command('/chores-list', async ({ ack, command, say }) => {
   await app.client.chat.postEphemeral(message);
 });
 
-app.command('/chores-sync', async ({ ack, command, say }) => {
+app.command('/chores-sync', async ({ ack, command }) => {
   await ack();
 
   const SLACKBOT = 'USLACKBOT';
@@ -201,7 +201,7 @@ app.command('/chores-sync', async ({ ack, command, say }) => {
 
 // Claim flow
 
-app.action('chores-claim', async ({ ack, body, action }) => {
+app.action('chores-claim', async ({ ack, body }) => {
   await ack();
 
   const choreValues = await Chores.getUpdatedChoreValues(body.team.id, new Date(), pointsPerResident);
@@ -262,7 +262,7 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
 
 // Ranking flow
 
-app.action('chores-rank', async ({ ack, body, action }) => {
+app.action('chores-rank', async ({ ack, body }) => {
   await ack();
 
   const chores = await Chores.getChores(body.team.id);
@@ -327,7 +327,7 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
 
 // Gift flow
 
-app.action('chores-gift', async ({ ack, body, action }) => {
+app.action('chores-gift', async ({ ack, body }) => {
   await ack();
 
   const residentId = body.user.id;

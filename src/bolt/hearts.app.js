@@ -119,7 +119,7 @@ function prepareEphemeral (command, text) {
   };
 }
 
-app.command('/hearts-channel', async ({ ack, command, say }) => {
+app.command('/hearts-channel', async ({ ack, command }) => {
   await ack();
 
   const channelName = command.text;
@@ -145,7 +145,7 @@ app.command('/hearts-channel', async ({ ack, command, say }) => {
   await app.client.chat.postEphemeral(message);
 });
 
-app.command('/hearts-sync', async ({ ack, command, say }) => {
+app.command('/hearts-sync', async ({ ack, command }) => {
   await ack();
 
   const SLACKBOT = 'USLACKBOT';
@@ -170,7 +170,7 @@ app.command('/hearts-sync', async ({ ack, command, say }) => {
 
 // Challenge flow
 
-app.action('hearts-challenge', async ({ ack, body, action }) => {
+app.action('hearts-challenge', async ({ ack, body }) => {
   await ack();
 
   const view = {
