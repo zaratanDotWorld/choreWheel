@@ -31,7 +31,8 @@ exports.choresHomeView = function (balance, owed) {
         elements: [
           { type: 'button', action_id: 'chores-claim', text: { type: 'plain_text', text: 'Claim a chore', emoji: true } },
           { type: 'button', action_id: 'chores-rank', text: { type: 'plain_text', text: 'Set chore priorities', emoji: true } },
-          { type: 'button', action_id: 'chores-gift', text: { type: 'plain_text', text: 'Gift chore points', emoji: true } }
+          { type: 'button', action_id: 'chores-gift', text: { type: 'plain_text', text: 'Gift chore points', emoji: true } },
+          { type: 'button', action_id: 'chores-break', text: { type: 'plain_text', text: 'Take a break', emoji: true } }
         ]
       }
     ]
@@ -148,6 +149,45 @@ exports.choresRankView = function (chores) {
             { text: { type: 'plain_text', text: 'Neutral', emoji: true }, value: '0.5' }
           ],
           initial_option: { text: { type: 'plain_text', text: 'Mild', emoji: true }, value: '0.7' }
+        }
+      }
+    ]
+  };
+};
+
+exports.choresBreakView = function (currentTime) {
+  const formattedTime = `${currentTime.getFullYear()}-${currentTime.getMonth() + 1}-${currentTime.getDate()}`;
+  const mainText = 'Take a chore break when you go out of town, ' +
+    'and you won\'t owe points for the days that you\'re gone.\n\n' +
+    'Breaks must be at least *3 days* and can\'t be added retroactively, so don\'t forget!';
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-break-callback',
+    title: { type: 'plain_text', text: 'Chores', emoji: true },
+    submit: { type: 'plain_text', text: 'Submit', emoji: true },
+    close: { type: 'plain_text', text: 'Cancel', emoji: true },
+    blocks: [
+      { type: 'header', text: { type: 'plain_text', text: 'Take a break', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Break start', emoji: true },
+        element: {
+          type: 'datepicker',
+          initial_date: formattedTime,
+          placeholder: { type: 'plain_text', text: 'Select a date', emoji: true },
+          action_id: 'break-start'
+        }
+      },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Break end', emoji: true },
+        element: {
+          type: 'datepicker',
+          initial_date: formattedTime,
+          placeholder: { type: 'plain_text', text: 'Select a date', emoji: true },
+          action_id: 'break-end'
         }
       }
     ]
