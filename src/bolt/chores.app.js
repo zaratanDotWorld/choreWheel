@@ -6,7 +6,7 @@ const Chores = require('../modules/chores');
 const Polls = require('../modules/polls');
 const Admin = require('../modules/admin');
 
-const { choresPollLength, pointsPerResident } = require('../config');
+const { choresPollLength, pointsPerResident, displayThreshold } = require('../config');
 const { YAY, DAY } = require('../constants');
 const { sleep, getMonthStart } = require('../utils');
 
@@ -205,11 +205,12 @@ app.action('chores-claim', async ({ ack, body, action }) => {
   await ack();
 
   const choreValues = await Chores.getUpdatedChoreValues(body.team.id, new Date(), pointsPerResident);
+  const filteredChoreValues = choreValues.filter(choreValue => choreValue.value >= displayThreshold);
 
   const view = {
     token: choresOauth.bot.token,
     trigger_id: body.trigger_id,
-    view: blocks.choresClaimView(choreValues)
+    view: blocks.choresClaimView(filteredChoreValues)
   };
 
   res = await app.client.views.open(view);

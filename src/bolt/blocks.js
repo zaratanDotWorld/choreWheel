@@ -1,6 +1,7 @@
 const voca = require('voca');
 
 const { HOUR } = require('../constants');
+const { pointPrecision } = require('../config');
 
 // Chores Views
 
@@ -15,7 +16,8 @@ exports.choresHomeView = function (balance, owed) {
     'The points for a chore go up every hour until someone claims them, then resets. ' +
     'Chores gain points at different speeds, depending on your priorities, which you can change.';
 
-  const textB = `*You've earned ${balance.toFixed(1)} points this month, out of ${parseInt(owed)} owed :muscle:*`;
+  const textB = `*You've earned ${balance.toFixed(pointPrecision)} points this month, ` +
+    `out of ${parseInt(owed)} owed :muscle:*`;
 
   return {
     type: 'home',
@@ -40,7 +42,7 @@ exports.choresClaimView = function (chores) {
   const mappedChores = chores.map((chore) => {
     return {
       value: `${chore.id}|${chore.name}|${chore.value}`,
-      text: { type: 'plain_text', text: `${chore.name} - ${chore.value.toFixed(1)} points`, emoji: true }
+      text: { type: 'plain_text', text: `${chore.name} - ${chore.value.toFixed(pointPrecision)} points`, emoji: true }
     };
   });
 
@@ -84,7 +86,7 @@ exports.getAchievementEmoji = function (totalValue) {
 
 exports.choresClaimCallbackView = function (residentId, choreName, claimValue, totalValue, pollId, pollDuration) {
   const emoji = exports.getAchievementEmoji(totalValue);
-  const textA = `*<@${residentId}>* did *${choreName}* for *${claimValue.toFixed(1)} points* ${emoji}:sparkles:`;
+  const textA = `*<@${residentId}>* did *${choreName}* for *${claimValue.toFixed(pointPrecision)} points* ${emoji}:sparkles:`;
   const textB = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / HOUR} hours`;
 
   return [
@@ -153,7 +155,8 @@ exports.choresRankView = function (chores) {
 };
 
 exports.choresGiftView = function (maxValue) {
-  const mainText = `Choose a recipient. You can gift up to a maximum of *${maxValue.toFixed(1)} points* (the remaining value of your last claim).`;
+  const mainText = 'Choose a recipient. You can gift up to a maximum of ' +
+    `*${maxValue.toFixed(pointPrecision)} points* (the remaining value of your last claim).`;
 
   return {
     type: 'modal',
