@@ -101,7 +101,7 @@ function prepareEphemeral (command, text) {
   };
 }
 
-app.command('/things-channel', async ({ ack, command, say }) => {
+app.command('/things-channel', async ({ ack, command }) => {
   await ack();
 
   const channelName = command.text;
@@ -127,7 +127,7 @@ app.command('/things-channel', async ({ ack, command, say }) => {
   await app.client.chat.postEphemeral(message);
 });
 
-app.command('/things-add', async ({ ack, command, say }) => {
+app.command('/things-add', async ({ ack, command }) => {
   await ack();
 
   const houseId = command.team_id;
@@ -150,7 +150,7 @@ app.command('/things-add', async ({ ack, command, say }) => {
   await app.client.chat.postEphemeral(message);
 });
 
-app.command('/things-del', async ({ ack, command, say }) => {
+app.command('/things-del', async ({ ack, command }) => {
   await ack();
 
   const houseId = command.team_id;
@@ -173,7 +173,7 @@ app.command('/things-del', async ({ ack, command, say }) => {
   await app.client.chat.postEphemeral(message);
 });
 
-app.command('/things-list', async ({ ack, command, say }) => {
+app.command('/things-list', async ({ ack, command }) => {
   await ack();
 
   const houseId = command.team_id;
@@ -186,7 +186,7 @@ app.command('/things-list', async ({ ack, command, say }) => {
   await app.client.chat.postEphemeral(message);
 });
 
-app.command('/things-load', async ({ ack, command, say }) => {
+app.command('/things-load', async ({ ack, command }) => {
   await ack();
 
   const houseId = command.team_id;
@@ -207,7 +207,7 @@ app.command('/things-load', async ({ ack, command, say }) => {
   await app.client.chat.postEphemeral(message);
 });
 
-app.command('/things-resolved', async ({ ack, command, say }) => {
+app.command('/things-resolved', async ({ ack, command }) => {
   await ack();
 
   const houseId = command.team_id;
@@ -225,7 +225,7 @@ app.command('/things-resolved', async ({ ack, command, say }) => {
 
 // Buy flow
 
-app.action('things-buy', async ({ ack, body, action }) => {
+app.action('things-buy', async ({ ack, body }) => {
   await ack();
 
   const things = await Things.getThings(body.team.id);
