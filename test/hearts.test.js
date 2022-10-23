@@ -4,9 +4,9 @@ const chaiAsPromised = require('chai-as-promised');
 
 chai.use(chaiAsPromised);
 
-const { NAY, YAY, HOUR, DAY } = require('../src/constants');
-const { heartsPollLength, heartsBaseline, karmaMaxHearts } = require('../src/config');
-const { sleep } = require('../src/utils');
+const { NAY, YAY, HOUR } = require('../src/constants');
+const { heartsPollLength, heartsBaseline, karmaMaxHearts, karmaDelay } = require('../src/config');
+const { sleep, getNextMonthStart } = require('../src/utils');
 const { db } = require('../src/db');
 
 const Hearts = require('../src/modules/hearts');
@@ -23,7 +23,7 @@ describe('Hearts', async () => {
   const RESIDENT5 = 'RESIDENT5';
 
   let now;
-  let later;
+  let challengeEnd;
   let nextMonth;
   let twoMonths;
 
@@ -40,9 +40,9 @@ describe('Hearts', async () => {
     await Admin.addResident(HOUSE, RESIDENT5);
 
     now = new Date();
-    later = new Date(now.getTime() + heartsPollLength);
-    nextMonth = new Date(now.getTime() + 35 * DAY);
-    twoMonths = new Date(now.getTime() + 70 * DAY);
+    challengeEnd = new Date(now.getTime() + heartsPollLength);
+    nextMonth = getNextMonthStart(now);
+    twoMonths = getNextMonthStart(nextMonth);
   });
 
   afterEach(async () => {
@@ -154,7 +154,7 @@ describe('Hearts', async () => {
     it('cannot regenerate hearts if full', async () => {
       let hearts;
 
-      await Hearts.generateHearts(HOUSE, RESIDENT1, 5, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
       await sleep(5);
 
       hearts = await Hearts.getHearts(HOUSE, RESIDENT1, now);
@@ -183,8 +183,8 @@ describe('Hearts', async () => {
 
   describe('making challenges', async () => {
     it('can resolve a challenge where the challenger wins', async () => {
-      await Hearts.generateHearts(HOUSE, RESIDENT1, 5, now);
-      await Hearts.generateHearts(HOUSE, RESIDENT2, 5, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT2, now);
 
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
       await sleep(5);
@@ -196,18 +196,18 @@ describe('Hearts', async () => {
       await Polls.submitVote(challenge.pollId, RESIDENT5, now, YAY);
       await sleep(5);
 
-      await Hearts.resolveChallenge(challenge.id, later);
+      await Hearts.resolveChallenge(challenge.id, challengeEnd);
       await sleep(5);
 
-      const hearts1 = await Hearts.getHearts(HOUSE, RESIDENT1, later);
-      const hearts2 = await Hearts.getHearts(HOUSE, RESIDENT2, later);
+      const hearts1 = await Hearts.getHearts(HOUSE, RESIDENT1, challengeEnd);
+      const hearts2 = await Hearts.getHearts(HOUSE, RESIDENT2, challengeEnd);
       expect(hearts1.sum).to.equal(5);
       expect(hearts2.sum).to.equal(4);
     });
 
     it('can resolve a challenge where the challenger loses', async () => {
-      await Hearts.generateHearts(HOUSE, RESIDENT1, 5, now);
-      await Hearts.generateHearts(HOUSE, RESIDENT2, 5, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT2, now);
 
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
       await sleep(5);
@@ -217,18 +217,18 @@ describe('Hearts', async () => {
       await Polls.submitVote(challenge.pollId, RESIDENT3, now, NAY);
       await sleep(5);
 
-      await Hearts.resolveChallenge(challenge.id, later);
+      await Hearts.resolveChallenge(challenge.id, challengeEnd);
       await sleep(5);
 
-      const hearts1 = await Hearts.getHearts(HOUSE, RESIDENT1, later);
-      const hearts2 = await Hearts.getHearts(HOUSE, RESIDENT2, later);
+      const hearts1 = await Hearts.getHearts(HOUSE, RESIDENT1, challengeEnd);
+      const hearts2 = await Hearts.getHearts(HOUSE, RESIDENT2, challengeEnd);
       expect(hearts1.sum).to.equal(4);
       expect(hearts2.sum).to.equal(5);
     });
 
     it('can resolve a challenge where the quorum is not reached', async () => {
-      await Hearts.generateHearts(HOUSE, RESIDENT1, 5, now);
-      await Hearts.generateHearts(HOUSE, RESIDENT2, 5, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT2, now);
 
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
       await sleep(5);
@@ -238,20 +238,20 @@ describe('Hearts', async () => {
       await Polls.submitVote(challenge.pollId, RESIDENT3, now, YAY);
       await sleep(5);
 
-      await Hearts.resolveChallenge(challenge.id, later);
+      await Hearts.resolveChallenge(challenge.id, challengeEnd);
       await sleep(5);
 
-      const hearts1 = await Hearts.getHearts(HOUSE, RESIDENT1, later);
-      const hearts2 = await Hearts.getHearts(HOUSE, RESIDENT2, later);
+      const hearts1 = await Hearts.getHearts(HOUSE, RESIDENT1, challengeEnd);
+      const hearts2 = await Hearts.getHearts(HOUSE, RESIDENT2, challengeEnd);
       expect(hearts1.sum).to.equal(4);
       expect(hearts2.sum).to.equal(5);
     });
 
     it('cannot resolve a challenge before the poll is closed', async () => {
-      const later = new Date(now.getTime() + HOUR);
+      const soon = new Date(now.getTime() + HOUR);
 
-      await Hearts.generateHearts(HOUSE, RESIDENT1, 5, now);
-      await Hearts.generateHearts(HOUSE, RESIDENT2, 5, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT2, now);
 
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
       await sleep(5);
@@ -261,13 +261,13 @@ describe('Hearts', async () => {
       await Polls.submitVote(challenge.pollId, RESIDENT3, now, YAY);
       await sleep(5);
 
-      await expect(Hearts.resolveChallenge(challenge.id, later))
+      await expect(Hearts.resolveChallenge(challenge.id, soon))
         .to.be.rejectedWith('Poll not closed!');
     });
 
     it('cannot resolve a challenge twice', async () => {
-      await Hearts.generateHearts(HOUSE, RESIDENT1, 5, now);
-      await Hearts.generateHearts(HOUSE, RESIDENT2, 5, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT2, now);
 
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
       await sleep(5);
@@ -277,10 +277,10 @@ describe('Hearts', async () => {
       await Polls.submitVote(challenge.pollId, RESIDENT3, now, YAY);
       await sleep(5);
 
-      await Hearts.resolveChallenge(challenge.id, later);
+      await Hearts.resolveChallenge(challenge.id, challengeEnd);
       await sleep(5);
 
-      await expect(Hearts.resolveChallenge(challenge.id, later))
+      await expect(Hearts.resolveChallenge(challenge.id, challengeEnd))
         .to.be.rejectedWith('Challenge already resolved!');
     });
 
@@ -294,12 +294,20 @@ describe('Hearts', async () => {
   });
 
   describe('using karma', async () => {
+    let nextMonthKarma;
+    let twoMonthsKarma;
+
+    before(async () => {
+      nextMonthKarma = new Date(nextMonth.getTime() + karmaDelay);
+      twoMonthsKarma = new Date(twoMonths.getTime() + karmaDelay);
+    });
+
     it('can give karma to a resident', async () => {
       await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT2, now);
       await Hearts.giveKarma(HOUSE, RESIDENT2, RESIDENT3, now);
       await sleep(5);
 
-      const karma = await Hearts.getKarma(HOUSE, now, later);
+      const karma = await Hearts.getKarma(HOUSE, now, challengeEnd);
       expect(karma.length).to.equal(2);
     });
 
@@ -316,7 +324,7 @@ describe('Hearts', async () => {
       await Hearts.giveKarma(HOUSE, RESIDENT2, RESIDENT3, now);
       await sleep(5);
 
-      const rankings = await Hearts.getKarmaRankings(HOUSE, now, later);
+      const rankings = await Hearts.getKarmaRankings(HOUSE, now, challengeEnd);
       expect(rankings[0].slackId).to.equal(RESIDENT3);
     });
 
@@ -332,20 +340,20 @@ describe('Hearts', async () => {
       expect(karmaHeart).to.be.undefined;
 
       // This month we give a karma heart
-      [ karmaHeart ] = await Hearts.generateKarmaHeart(HOUSE, nextMonth);
+      [ karmaHeart ] = await Hearts.generateKarmaHeart(HOUSE, nextMonthKarma);
       expect(karmaHeart.residentId).to.equal(RESIDENT3);
       expect(karmaHeart.value).to.equal(1);
 
       // But not twice
-      [ karmaHeart ] = await Hearts.generateKarmaHeart(HOUSE, nextMonth);
+      [ karmaHeart ] = await Hearts.generateKarmaHeart(HOUSE, nextMonthKarma);
       expect(karmaHeart).to.be.undefined;
 
       // If they're at the limit, they get less
-      await Hearts.generateHearts(HOUSE, RESIDENT4, karmaMaxHearts - 0.5, nextMonth);
-      await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT4, nextMonth);
+      await Hearts.generateHearts(HOUSE, RESIDENT4, karmaMaxHearts - 0.5, nextMonthKarma);
+      await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT4, nextMonthKarma);
       await sleep(5);
 
-      [ karmaHeart ] = await Hearts.generateKarmaHeart(HOUSE, twoMonths);
+      [ karmaHeart ] = await Hearts.generateKarmaHeart(HOUSE, twoMonthsKarma);
       expect(karmaHeart.residentId).to.equal(RESIDENT4);
       expect(karmaHeart.value).to.equal(0.5);
     });
