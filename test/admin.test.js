@@ -4,7 +4,7 @@ const chaiAsPromised = require('chai-as-promised');
 
 chai.use(chaiAsPromised);
 
-const { sleep } = require('../src/utils');
+const { sleep, getMonthStart, getMonthEnd, getNextMonthStart, getPrevMonthEnd } = require('../src/utils');
 const { db } = require('../src/db');
 
 const Admin = require('../src/modules/admin');
@@ -130,6 +130,39 @@ describe('Admin', async () => {
 
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(0);
+    });
+  });
+
+  describe('utility functions', async () => {
+    it('can manipulate timestamps correctly', async () => {
+      const feb1 = new Date(2022, 1, 1);
+      const feb14 = new Date(2022, 1, 14);
+      const feb28 = new Date(2022, 1, 28);
+      const mar1 = new Date(2022, 2, 1);
+      const mar15 = new Date(2022, 2, 15);
+      const mar31 = new Date(2022, 2, 31);
+
+      expect(getMonthStart(feb1).getTime()).to.equal(feb1.getTime());
+      expect(getMonthStart(feb14).getTime()).to.equal(feb1.getTime());
+      expect(getMonthStart(feb28).getTime()).to.equal(feb1.getTime());
+      expect(getMonthStart(mar1).getTime()).to.equal(mar1.getTime());
+      expect(getMonthStart(mar15).getTime()).to.equal(mar1.getTime());
+      expect(getMonthStart(mar31).getTime()).to.equal(mar1.getTime());
+
+      expect(getMonthEnd(feb1).getTime()).to.equal(feb28.getTime());
+      expect(getMonthEnd(feb14).getTime()).to.equal(feb28.getTime());
+      expect(getMonthEnd(feb28).getTime()).to.equal(feb28.getTime());
+      expect(getMonthEnd(mar1).getTime()).to.equal(mar31.getTime());
+      expect(getMonthEnd(mar15).getTime()).to.equal(mar31.getTime());
+      expect(getMonthEnd(mar31).getTime()).to.equal(mar31.getTime());
+
+      expect(getPrevMonthEnd(mar1).getTime()).to.equal(feb28.getTime());
+      expect(getPrevMonthEnd(mar15).getTime()).to.equal(feb28.getTime());
+      expect(getPrevMonthEnd(mar31).getTime()).to.equal(feb28.getTime());
+
+      expect(getNextMonthStart(feb1).getTime()).to.equal(mar1.getTime());
+      expect(getNextMonthStart(feb14).getTime()).to.equal(mar1.getTime());
+      expect(getNextMonthStart(feb28).getTime()).to.equal(mar1.getTime());
     });
   });
 });
