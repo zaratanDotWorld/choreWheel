@@ -532,6 +532,39 @@ describe('Chores', async () => {
       expect(penalty).to.almost.equal(0.25);
     });
 
+    it('can calculate chore penalties, taking into account chore breaks', async () => {
+      const feb1 = new Date(2001, 1, 1); // February, a 28 day month
+      const feb15 = new Date(feb1.getTime() + 14 * DAY);
+
+      await db('ChoreValue').insert([
+        { choreId: dishes.id, valuedAt: feb1, value: 60, ranking: 0, residents: 0 },
+        { choreId: sweeping.id, valuedAt: feb1, value: 50, ranking: 0, residents: 0 },
+        { choreId: restock.id, valuedAt: feb1, value: 40, ranking: 0, residents: 0 }
+      ]);
+      await sleep(5);
+      await Chores.claimChore(dishes.id, RESIDENT1, feb1, DAY);
+      await Chores.claimChore(sweeping.id, RESIDENT2, feb1, DAY);
+      await Chores.claimChore(restock.id, RESIDENT3, feb1, DAY);
+
+      // Everyone takes half the month off
+      await Chores.addChoreBreak(RESIDENT1, feb1, feb15);
+      await Chores.addChoreBreak(RESIDENT2, feb1, feb15);
+      await Chores.addChoreBreak(RESIDENT3, feb1, feb15);
+      await sleep(5);
+
+      let penalty;
+      const penaltyTime = new Date(getNextMonthStart(feb1).getTime() + penaltyDelay);
+
+      penalty = await Chores.calculatePenalty(RESIDENT1, penaltyTime);
+      expect(penalty).to.almost.equal(0);
+
+      penalty = await Chores.calculatePenalty(RESIDENT2, penaltyTime);
+      expect(penalty).to.almost.equal(0);
+
+      penalty = await Chores.calculatePenalty(RESIDENT3, penaltyTime);
+      expect(penalty).to.almost.equal(0.5);
+    });
+
     it('can add a penalty at the right time', async () => {
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
 

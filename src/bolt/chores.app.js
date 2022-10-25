@@ -66,13 +66,13 @@ app.event('app_home_opened', async ({ body, event }) => {
 
     const now = new Date();
     const monthStart = getMonthStart(now);
-    const userChorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
-    const userActivePercentage = await Chores.getActiveResidentPercentage(residentId, now);
+    const chorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
+    const activePercentage = await Chores.getActiveResidentPercentage(residentId, now);
 
     const data = {
       token: choresOauth.bot.token,
       user_id: residentId,
-      view: blocks.choresHomeView(userChorePoints.sum || 0, userActivePercentage * pointsPerResident)
+      view: blocks.choresHomeView(chorePoints.sum || 0, activePercentage * pointsPerResident)
     };
     await app.client.views.publish(data);
 
