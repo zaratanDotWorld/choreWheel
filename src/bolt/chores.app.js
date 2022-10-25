@@ -7,7 +7,7 @@ const Polls = require('../modules/polls');
 const Admin = require('../modules/admin');
 
 const { choresPollLength, pointsPerResident, displayThreshold } = require('../config');
-const { YAY, DAY } = require('../constants');
+const { YAY, MINUTE, DAY } = require('../constants');
 const { sleep, getMonthStart } = require('../utils');
 
 const blocks = require('./blocks');
@@ -342,7 +342,46 @@ app.action('chores-break', async ({ ack, body }) => {
 
 app.view('chores-break-callback', async ({ ack, body }) => {
   await ack();
-  console.log(body);
+
+  const residentId = body.user.id;
+  const houseId = body.team.id;
+
+  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
+
+  const breakStartId = body.view.blocks[2].block_id;
+  const breakEndId = body.view.blocks[3].block_id;
+
+  const now = new Date();
+  const breakStartUtc = new Date(body.view.state.values[breakStartId].date.selected_date);
+  const breakEndUtc = new Date(body.view.state.values[breakEndId].date.selected_date);
+
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const breakStart = new Date(breakStartUtc.getTime() + now.getTimezoneOffset() * MINUTE);
+  const breakEnd = new Date(breakEndUtc.getTime() + now.getTimezoneOffset() * MINUTE);
+  const breakDays = parseInt((breakEnd - breakStart) / DAY);
+
+  let message;
+  if (breakStart < todayStart || breakDays < 3) {
+    message = {
+      token: choresOauth.bot.token,
+      channel: residentId,
+      text: 'Not a valid chore break :slightly_frowning_face:'
+    };
+  } else {
+    // Record the break
+    await Chores.addChoreBreak(residentId, breakStart, breakEnd);
+    const { choresChannel } = await Admin.getHouse(houseId);
+
+    message = {
+      token: choresOauth.bot.token,
+      channel: choresChannel,
+      text: `<@${residentId}> is taking a *${breakDays}-day* break ` +
+        `starting ${breakStart.toDateString()} :beach_with_umbrella:`
+    };
+  }
+
+  res = await app.client.chat.postMessage(message);
+  console.log('Chore break added');
 });
 
 // Gift flow
