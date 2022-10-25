@@ -177,7 +177,7 @@ exports.choresBreakView = function (currentTime) {
           type: 'datepicker',
           initial_date: formattedTime,
           placeholder: { type: 'plain_text', text: 'Select a date', emoji: true },
-          action_id: 'break-start'
+          action_id: 'date'
         }
       },
       {
@@ -187,7 +187,7 @@ exports.choresBreakView = function (currentTime) {
           type: 'datepicker',
           initial_date: formattedTime,
           placeholder: { type: 'plain_text', text: 'Select a date', emoji: true },
-          action_id: 'break-end'
+          action_id: 'date'
         }
       }
     ]
