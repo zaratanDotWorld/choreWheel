@@ -16,10 +16,14 @@ module.exports = {
     'no-unused-expressions': 0,
     'no-unused-vars': [ 2, 'local' ],
     'object-shorthand': [ 1, 'consistent-as-needed' ],
-    'array-bracket-spacing': [ 2, 'always' ]
+    'array-bracket-spacing': [ 2, 'always' ],
+    'no-only-tests/no-only-tests': [ 2, { fix: true } ]
   },
   ignorePatterns: [
     'migrations',
     'seeds'
+  ],
+  plugins: [
+    'no-only-tests'
   ]
 };
