@@ -1,7 +1,15 @@
 const voca = require('voca');
 
 const { HOUR } = require('../constants');
-const { pointPrecision } = require('../config');
+
+const {
+  pointPrecision,
+  heartsMinVotesInitial,
+  thingsMinVotesScalar,
+  choresPollLength,
+  thingsPollLength,
+  heartsPollLength
+} = require('../config');
 
 // Chores Views
 
@@ -13,11 +21,11 @@ exports.choresHomeView = function (balance, owed) {
   const textA = 'We use Chores to keep the house a nice place to live.\n\n' +
     'Instead of a chore wheel or schedule, everyone owes *100 points* per month. ' +
     'You earn points by doing the chores you want, on your terms.\n\n' +
-    'The points for a chore go up every hour until someone claims them, then resets. ' +
+    'The points for a chore go up every hour until someone claims them. ' +
     'Chores gain points at different speeds, depending on your priorities, which you can change.';
 
   const textB = `*You've earned ${balance.toFixed(pointPrecision)} points this month, ` +
-    `out of ${parseInt(owed)} owed :muscle:*`;
+    `out of ${parseInt(owed)} owed :muscle::skin-tone-4:*`;
 
   return {
     type: 'home',
@@ -42,7 +50,7 @@ exports.choresHomeView = function (balance, owed) {
 exports.choresClaimView = function (chores) {
   const mappedChores = chores.map((chore) => {
     return {
-      value: `${chore.id}|${chore.name}|${chore.value}`,
+      value: `${chore.id}|${chore.name}`,
       text: { type: 'plain_text', text: `${chore.name} - ${chore.value.toFixed(pointPrecision)} points`, emoji: true }
     };
   });
@@ -85,15 +93,19 @@ exports.getAchievementEmoji = function (totalValue) {
   }
 };
 
-exports.choresClaimCallbackView = function (residentId, choreName, claimValue, totalValue, pollId, pollDuration) {
-  const emoji = exports.getAchievementEmoji(totalValue);
-  const textA = `*<@${residentId}>* did *${choreName}* for *${claimValue.toFixed(pointPrecision)} points* ${emoji}:sparkles:`;
-  const textB = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / HOUR} hours`;
+exports.choresClaimCallbackView = function (claim, choreName, priorPoints) {
+  const currentPoints = priorPoints + claim.value;
+  const emoji = exports.getAchievementEmoji(currentPoints);
+
+  const textA = `*<@${claim.claimedBy}>* did *${choreName}* for ` +
+    `*${claim.value.toFixed(pointPrecision)} points* ${emoji}:sparkles:`;
+  const textB = '*2 endorsements* are required to pass, ' +
+    `voting closes in *${choresPollLength / HOUR} hours*`;
 
   return [
     { type: 'section', text: { type: 'mrkdwn', text: textA } },
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
-    { type: 'actions', elements: exports.makeVoteButtons(pollId, 1, 0) }
+    { type: 'actions', elements: exports.makeVoteButtons(claim.pollId, 1, 0) }
   ];
 };
 
@@ -311,15 +323,19 @@ exports.thingsBuyView = function (things) {
   };
 };
 
-exports.thingsBuyCallbackView = function (residentId, thing, previousBalance, pollId, pollDuration) {
-  const textA = `*<@${residentId}>* bought *${thing.name} - ${thing.quantity}* for *$${thing.value}*. ` +
-    `There's *$${previousBalance - thing.value}* left in the house account :fire:`;
-  const textB = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / HOUR} hours`;
+exports.thingsBuyCallbackView = function (buy, thing, priorBalance) {
+  const pollQuorum = Math.ceil(thing.value / thingsMinVotesScalar);
+  const currentBalance = priorBalance - thing.value;
+
+  const textA = `*<@${buy.boughtBy}>* bought *${thing.name} - ${thing.quantity}* for *$${thing.value}*. ` +
+    `There's *$${currentBalance}* left in the house account :fire:`;
+  const textB = `*${pollQuorum} endorsement(s)* are required to pass, ` +
+    `voting closes in *${thingsPollLength / HOUR} hours*`;
 
   return [
     { type: 'section', text: { type: 'mrkdwn', text: textA } },
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
-    { type: 'actions', elements: exports.makeVoteButtons(pollId, 1, 0) }
+    { type: 'actions', elements: exports.makeVoteButtons(buy.pollId, 1, 0) }
   ];
 };
 
@@ -408,15 +424,17 @@ exports.heartsChallengeView = function () {
   };
 };
 
-exports.heartsChallengeCallbackView = function (challengerId, challengeeId, numHearts, circumstance, pollId, pollDuration) {
-  const textA = `*<@${challengerId}>* challenged *<@${challengeeId}>* for *${numHearts} hearts*, due to the following circumstance:`;
-  const textB = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / HOUR} hours`;
+exports.heartsChallengeCallbackView = function (challenge, circumstance) {
+  const textA = `*<@${challenge.challengerId}>* challenged *<@${challenge.challengeeId}>* ` +
+    `for *${challenge.value} heart(s)*, due to the following circumstance:`;
+  const textB = `*${heartsMinVotesInitial} endorsements* are required to pass, ` +
+    `voting closes in *${heartsPollLength / HOUR} hours*`;
 
   return [
     { type: 'section', text: { type: 'mrkdwn', text: textA } },
     { type: 'section', text: { type: 'mrkdwn', text: `_${circumstance}_` } },
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
-    { type: 'actions', elements: exports.makeVoteButtons(pollId, 1, 0) }
+    { type: 'actions', elements: exports.makeVoteButtons(challenge.pollId, 1, 0) }
   ];
 };
 

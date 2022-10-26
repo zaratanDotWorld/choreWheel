@@ -6,7 +6,6 @@ const Things = require('../modules/things');
 const Polls = require('../modules/polls');
 const Admin = require('../modules/admin');
 
-const { thingsPollLength } = require('../config');
 const { YAY, DAY } = require('../constants');
 const { sleep } = require('../utils');
 
@@ -268,13 +267,7 @@ app.view('things-buy-callback', async ({ ack, body }) => {
     token: thingsOauth.bot.token,
     channel: thingsChannel,
     text: 'Someone just bought a thing',
-    blocks: blocks.thingsBuyCallbackView(
-      residentId,
-      thing,
-      balance.sum,
-      buy.pollId,
-      thingsPollLength
-    )
+    blocks: blocks.thingsBuyCallbackView(buy, thing, balance.sum)
   };
 
   res = await app.client.chat.postMessage(message);
