@@ -4,7 +4,8 @@ const chaiAsPromised = require('chai-as-promised');
 
 chai.use(chaiAsPromised);
 
-const { NAY, YAY, DAY, HOUR } = require('../src/constants');
+const { NAY, YAY, HOUR } = require('../src/constants');
+const { thingsPollLength } = require('../src/config');
 const { sleep } = require('../src/utils');
 const { db } = require('../src/db');
 
@@ -25,7 +26,7 @@ describe('Things', async () => {
 
   let now;
   let soon;
-  let tomorrow;
+  let challengeEnd;
 
   before(async () => {
     await db('Thing').del();
@@ -39,7 +40,7 @@ describe('Things', async () => {
 
     now = new Date();
     soon = new Date(now.getTime() + HOUR);
-    tomorrow = new Date(now.getTime() + DAY);
+    challengeEnd = new Date(now.getTime() + thingsPollLength);
   });
 
   afterEach(async () => {
@@ -112,15 +113,15 @@ describe('Things', async () => {
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
       await sleep(5);
 
-      await Things.resolveThingBuy(buy.id, tomorrow);
+      await Things.resolveThingBuy(buy.id, challengeEnd);
       await sleep(5);
 
-      const balance = await Things.getHouseBalance(HOUSE, tomorrow);
+      const balance = await Things.getHouseBalance(HOUSE, challengeEnd);
       expect(balance.sum).to.equal(90);
 
       buy = await Things.getThingBuy(buy.id);
       expect(buy.valid).to.be.true;
-      expect(buy.resolvedAt.getTime()).to.equal(tomorrow.getTime());
+      expect(buy.resolvedAt.getTime()).to.equal(challengeEnd.getTime());
     });
 
     it('can reject a buy', async () => {
@@ -133,15 +134,15 @@ describe('Things', async () => {
       await Polls.submitVote(buy.pollId, RESIDENT2, now, NAY);
       await sleep(5);
 
-      await Things.resolveThingBuy(buy.id, tomorrow);
+      await Things.resolveThingBuy(buy.id, challengeEnd);
       await sleep(5);
 
-      const balance = await Things.getHouseBalance(HOUSE, tomorrow);
+      const balance = await Things.getHouseBalance(HOUSE, challengeEnd);
       expect(balance.sum).to.equal(100);
 
       buy = await Things.getThingBuy(buy.id);
       expect(buy.valid).to.be.false;
-      expect(buy.resolvedAt.getTime()).to.equal(tomorrow.getTime());
+      expect(buy.resolvedAt.getTime()).to.equal(challengeEnd.getTime());
     });
 
     it('can negate a buy if quorum is not reached', async () => {
@@ -154,7 +155,7 @@ describe('Things', async () => {
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
       await sleep(5);
 
-      await Things.resolveThingBuy(buy.id, tomorrow);
+      await Things.resolveThingBuy(buy.id, challengeEnd);
       await sleep(5);
 
       buy = await Things.getThingBuy(buy.id);
@@ -180,10 +181,10 @@ describe('Things', async () => {
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
       await sleep(5);
 
-      await Things.resolveThingBuy(buy.id, tomorrow);
+      await Things.resolveThingBuy(buy.id, challengeEnd);
       await sleep(5);
 
-      [ buy ] = await Things.resolveThingBuy(buy.id, tomorrow);
+      [ buy ] = await Things.resolveThingBuy(buy.id, challengeEnd);
       expect(buy).to.be.undefined;
     });
 
@@ -198,7 +199,7 @@ describe('Things', async () => {
       resolvableBuys = await Things.getResolvableThingBuys(HOUSE, soon);
       expect(resolvableBuys.length).to.equal(0);
 
-      resolvableBuys = await Things.getResolvableThingBuys(HOUSE, tomorrow);
+      resolvableBuys = await Things.getResolvableThingBuys(HOUSE, challengeEnd);
       expect(resolvableBuys.length).to.equal(1);
     });
 
@@ -212,13 +213,13 @@ describe('Things', async () => {
       await sleep(5);
 
       let resolvedBuys;
-      resolvedBuys = await Things.getResolvedThingBuys(HOUSE, now, tomorrow);
+      resolvedBuys = await Things.getResolvedThingBuys(HOUSE, now, challengeEnd);
       expect(resolvedBuys.length).to.equal(0);
 
-      await Things.resolveThingBuy(buy.id, tomorrow);
+      await Things.resolveThingBuy(buy.id, challengeEnd);
       await sleep(5);
 
-      resolvedBuys = await Things.getResolvedThingBuys(HOUSE, now, tomorrow);
+      resolvedBuys = await Things.getResolvedThingBuys(HOUSE, now, challengeEnd);
       expect(resolvedBuys.length).to.equal(1);
     });
   });

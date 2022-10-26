@@ -9,7 +9,8 @@ const {
   choresMinVotes,
   penaltyIncrement,
   penaltySize,
-  penaltyDelay
+  penaltyDelay,
+  choresPollLength
 } = require('../config');
 
 const Admin = require('./admin');
@@ -199,12 +200,12 @@ exports.getValidChoreClaims = async function (choreId) {
     .andWhere({ choreId });
 };
 
-exports.claimChore = async function (choreId, slackId, claimedAt, duration) {
+exports.claimChore = async function (choreId, slackId, claimedAt) {
   const choreValue = await exports.getCurrentChoreValue(choreId, claimedAt);
 
   if (choreValue.sum === null) { throw new Error('Cannot claim a zero-value chore!'); }
 
-  const [ poll ] = await Polls.createPoll(claimedAt, duration);
+  const [ poll ] = await Polls.createPoll(claimedAt, choresPollLength);
 
   return db('ChoreClaim')
     .insert({
