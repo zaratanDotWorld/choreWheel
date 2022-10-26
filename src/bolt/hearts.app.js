@@ -6,7 +6,6 @@ const Hearts = require('../modules/hearts');
 const Polls = require('../modules/polls');
 const Admin = require('../modules/admin');
 
-const { heartsPollLength } = require('../config');
 const { YAY } = require('../constants');
 const { sleep } = require('../utils');
 
@@ -212,14 +211,7 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
     token: heartsOauth.bot.token,
     channel: heartsChannel,
     text: 'Someone just issued a hearts challenge',
-    blocks: blocks.heartsChallengeCallbackView(
-      residentId,
-      challengeeId,
-      numHearts,
-      circumstance,
-      challenge.pollId,
-      heartsPollLength
-    )
+    blocks: blocks.heartsChallengeCallbackView(challenge, circumstance)
   };
 
   res = await app.client.chat.postMessage(message);

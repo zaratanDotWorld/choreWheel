@@ -192,7 +192,7 @@ describe('Things', async () => {
       await Things.loadHouseAccount(HOUSE, now, 100);
       await sleep(5);
 
-      await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
+      const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
       await sleep(5);
 
       let resolvableBuys;
@@ -201,6 +201,13 @@ describe('Things', async () => {
 
       resolvableBuys = await Things.getResolvableThingBuys(HOUSE, challengeEnd);
       expect(resolvableBuys.length).to.equal(1);
+
+      // But not once it is resolved
+      await Things.resolveThingBuy(buy.id, challengeEnd);
+      await sleep(5);
+
+      resolvableBuys = await Things.getResolvableThingBuys(HOUSE, challengeEnd);
+      expect(resolvableBuys.length).to.equal(0);
     });
 
     it('can get a list of resolved buys', async () => {

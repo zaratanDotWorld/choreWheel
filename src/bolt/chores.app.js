@@ -6,7 +6,7 @@ const Chores = require('../modules/chores');
 const Polls = require('../modules/polls');
 const Admin = require('../modules/admin');
 
-const { choresPollLength, pointsPerResident, displayThreshold } = require('../config');
+const { pointsPerResident, displayThreshold } = require('../config');
 const { YAY, MINUTE, DAY } = require('../constants');
 const { sleep, getMonthStart } = require('../utils');
 
@@ -226,7 +226,7 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   // // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
   const blockIndex = body.view.blocks.length - 1;
   const blockId = body.view.blocks[blockIndex].block_id;
-  const [ choreId, choreName, choreValue ] = body.view.state.values[blockId].options.selected_option.value.split('|');
+  const [ choreId, choreName ] = body.view.state.values[blockId].options.selected_option.value.split('|');
 
   const { choresChannel } = await Admin.getHouse(houseId);
 
@@ -239,21 +239,14 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const recentPoints = await Chores.getChorePoints(residentId, choreId, sixMonths, now);
 
   // Perform the claim
-  const [ claim ] = await Chores.claimChore(choreId, residentId, now, choresPollLength);
+  const [ claim ] = await Chores.claimChore(choreId, residentId, now);
   await Polls.submitVote(claim.pollId, residentId, now, YAY);
 
   const message = {
     token: choresOauth.bot.token,
     channel: choresChannel,
     text: 'Someone just completed a chore',
-    blocks: blocks.choresClaimCallbackView(
-      residentId,
-      choreName,
-      Number(choreValue),
-      (recentPoints.sum || 0) + Number(choreValue),
-      claim.pollId,
-      choresPollLength
-    )
+    blocks: blocks.choresClaimCallbackView(claim, choreName, recentPoints.sum || 0)
   };
 
   res = await app.client.chat.postMessage(message);
