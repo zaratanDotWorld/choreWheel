@@ -67,6 +67,14 @@ describe('Things', async () => {
       expect(things.length).to.equal(1);
       expect(things.find(thing => thing.name === RICE).value).to.equal(20);
     });
+
+    it('can get a thing by id', async () => {
+      const [ soap ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: SOAP, value: 10 });
+      await sleep(5);
+
+      const thing = await Things.getThing(soap.id);
+      expect(thing.name).to.equal(soap.name);
+    });
   });
 
   describe('buying things from the list', async () => {

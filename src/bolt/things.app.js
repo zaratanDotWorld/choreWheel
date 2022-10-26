@@ -249,7 +249,7 @@ app.view('things-buy-callback', async ({ ack, body }) => {
   // // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
   const blockIndex = body.view.blocks.length - 1;
   const blockId = body.view.blocks[blockIndex].block_id;
-  const [ thingId, thingName, thingValue ] = body.view.state.values[blockId].options.selected_option.value.split('|');
+  const thingId = parseInt(body.view.state.values[blockId].options.selected_option.value);
 
   const { thingsChannel } = await Admin.getHouse(houseId);
 
@@ -259,7 +259,9 @@ app.view('things-buy-callback', async ({ ack, body }) => {
   // Perform the buy
   const now = new Date();
   const balance = await Things.getHouseBalance(houseId, now);
-  const [ buy ] = await Things.buyThing(houseId, thingId, residentId, now, thingValue);
+  const thing = await Things.getThing(thingId);
+
+  const [ buy ] = await Things.buyThing(houseId, thing.id, residentId, now, thing.value);
   await Polls.submitVote(buy.pollId, residentId, now, YAY);
 
   const message = {
@@ -268,9 +270,8 @@ app.view('things-buy-callback', async ({ ack, body }) => {
     text: 'Someone just bought a thing',
     blocks: blocks.thingsBuyCallbackView(
       residentId,
-      thingName,
-      Number(thingValue),
-      balance.sum - Number(thingValue),
+      thing,
+      balance.sum,
       buy.pollId,
       thingsPollLength
     )

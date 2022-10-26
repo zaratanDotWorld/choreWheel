@@ -280,7 +280,7 @@ exports.thingsHomeView = function (balance) {
 exports.thingsBuyView = function (things) {
   const mappedThings = things.map((thing) => {
     return {
-      value: `${thing.id}|${thing.name}|${thing.value}`,
+      value: `${thing.id}`,
       text: { type: 'plain_text', text: exports.formatThing(thing), emoji: true }
     };
   });
@@ -311,9 +311,9 @@ exports.thingsBuyView = function (things) {
   };
 };
 
-exports.thingsBuyCallbackView = function (residentId, thingName, thingValue, houseBalance, pollId, pollDuration) {
-  const textA = `*<@${residentId}>* bought *${thingName}* for *$${thingValue}*. ` +
-    `There's *$${houseBalance}* left in the house account :fire:`;
+exports.thingsBuyCallbackView = function (residentId, thing, previousBalance, pollId, pollDuration) {
+  const textA = `*<@${residentId}>* bought *${thing.name} - ${thing.quantity}* for *$${thing.value}*. ` +
+    `There's *$${previousBalance - thing.value}* left in the house account :fire:`;
   const textB = `React :+1: to endorse or :-1: to challenge, voting closes in ${pollDuration / HOUR} hours`;
 
   return [

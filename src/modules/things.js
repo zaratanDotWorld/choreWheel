@@ -25,6 +25,13 @@ exports.getThings = async function (houseId) {
     .returning('*');
 };
 
+exports.getThing = async function (thingId) {
+  return db('Thing')
+    .where({ id: thingId })
+    .returning('*')
+    .first();
+};
+
 // Buys
 
 exports.getHouseBalance = async function (houseId, currentTime) {
