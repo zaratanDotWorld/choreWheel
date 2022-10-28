@@ -28,6 +28,18 @@ exports.getHearts = async function (houseId, residentId, currentTime) {
     .first();
 };
 
+exports.getHouseHearts = async function (houseId, currentTime) {
+  return db('Heart')
+    .join('Resident', 'Heart.residentId', 'Resident.slackId')
+    .where('Heart.houseId', houseId)
+    .where('Resident.active', true)
+    .where('generatedAt', '<=', currentTime)
+    .groupBy('residentId')
+    .select('residentId')
+    .sum('value')
+    .orderBy('sum', 'desc');
+};
+
 exports.generateHearts = async function (houseId, residentId, value, generatedAt) {
   return db('Heart')
     .insert({ houseId, residentId, generatedAt, value })

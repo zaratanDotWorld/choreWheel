@@ -368,7 +368,8 @@ exports.heartsHomeView = function (numHearts) {
       {
         type: 'actions',
         elements: [
-          { type: 'button', action_id: 'hearts-challenge', text: { type: 'plain_text', text: 'Issue a challenge', emoji: true } }
+          { type: 'button', action_id: 'hearts-challenge', text: { type: 'plain_text', text: 'Issue a challenge', emoji: true } },
+          { type: 'button', action_id: 'hearts-board', text: { type: 'plain_text', text: 'See current hearts', emoji: true } }
         ]
       }
     ]
@@ -436,6 +437,25 @@ exports.heartsChallengeCallbackView = function (challenge, circumstance) {
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
     { type: 'actions', elements: exports.makeVoteButtons(challenge.pollId, 1, 0) }
   ];
+};
+
+exports.heartsBoardView = function (hearts) {
+  const mainText = 'Current hearts for the house.\n*One or two* hearts is :broken_heart:, ' +
+    '*three to five* is :heart:, and *more than five* is :heart_on_fire:';
+  const heartsText = hearts.map((heart) => `\n\n${exports.heartEmoji(heart.sum)} <@${heart.residentId}>`).join('');
+
+  return {
+    type: 'modal',
+    callback_id: 'hearts-challenge-callback',
+    title: { type: 'plain_text', text: 'Hearts', emoji: true },
+    close: { type: 'plain_text', text: 'Close', emoji: true },
+    blocks: [
+      { type: 'header', text: { type: 'plain_text', text: 'Current hearts', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
+      { type: 'divider' },
+      { type: 'section', text: { type: 'mrkdwn', text: heartsText } }
+    ]
+  };
 };
 
 // Polls Views (utils)

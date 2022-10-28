@@ -218,6 +218,25 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
   console.log(`Challenge ${challenge.id} created with poll ${challenge.pollId}`);
 });
 
+// Board flow
+
+app.action('hearts-board', async ({ ack, body }) => {
+  await ack();
+
+  const houseId = body.team.id;
+
+  const hearts = await Hearts.getHouseHearts(houseId, new Date());
+
+  const view = {
+    token: heartsOauth.bot.token,
+    trigger_id: body.trigger_id,
+    view: blocks.heartsBoardView(hearts)
+  };
+
+  res = await app.client.views.open(view);
+  console.log(`Hearts-board opened with id ${res.view.id}`);
+});
+
 // Voting flow
 
 app.action(/poll-vote/, async ({ ack, body, action }) => {

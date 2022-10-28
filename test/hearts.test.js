@@ -69,6 +69,17 @@ describe('Hearts', async () => {
       expect(hearts3.sum).to.equal(null);
     });
 
+    it('can get hearts for the house at once', async () => {
+      await Hearts.generateHearts(HOUSE, RESIDENT1, 2, now);
+      await Hearts.generateHearts(HOUSE, RESIDENT2, 1, now);
+      await sleep(5);
+
+      const hearts = await Hearts.getHouseHearts(HOUSE, now);
+
+      expect(hearts[0].sum).to.equal(2);
+      expect(hearts[1].sum).to.equal(1);
+    });
+
     it('can aggregate positive and negative hearts', async () => {
       await Hearts.generateHearts(HOUSE, RESIDENT1, 2, now);
       await Hearts.generateHearts(HOUSE, RESIDENT1, 1, now);
