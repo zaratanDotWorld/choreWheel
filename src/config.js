@@ -9,8 +9,7 @@ exports.inflationFactor = 1.10;
 exports.pointPrecision = 0;
 exports.displayThreshold = 1;
 exports.penaltyDelay = 3 * DAY;
-exports.penaltyIncrement = 5;
-exports.penaltySize = 20; // Points per heart
+exports.penaltyIncrement = 10; // Per quarter heart
 
 // Hearts
 exports.heartsPollLength = 3 * DAY;

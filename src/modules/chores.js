@@ -8,7 +8,6 @@ const {
   bootstrapDuration,
   choresMinVotes,
   penaltyIncrement,
-  penaltySize,
   penaltyDelay,
   choresPollLength
 } = require('../config');
@@ -335,7 +334,7 @@ exports.calculatePenalty = async function (residentId, penaltyTime) {
   const pointsOwed = pointsPerResident * activePercentage;
   const deficiency = Math.max(pointsOwed - chorePoints.sum, 0);
   const truncatedDeficiency = Math.floor(deficiency / penaltyIncrement) * penaltyIncrement;
-  return truncatedDeficiency / penaltySize;
+  return truncatedDeficiency / (4 * penaltyIncrement);
 };
 
 // Chore Point Gifting

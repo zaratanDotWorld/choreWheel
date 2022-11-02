@@ -509,9 +509,9 @@ describe('Chores', async () => {
 
     it('can calculate chore penalties', async () => {
       await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: now, value: 96, ranking: 0, residents: 0 },
-        { choreId: sweeping.id, valuedAt: now, value: 95, ranking: 0, residents: 0 },
-        { choreId: restock.id, valuedAt: now, value: 94, ranking: 0, residents: 0 }
+        { choreId: dishes.id, valuedAt: now, value: 91, ranking: 0, residents: 0 },
+        { choreId: sweeping.id, valuedAt: now, value: 90, ranking: 0, residents: 0 },
+        { choreId: restock.id, valuedAt: now, value: 89, ranking: 0, residents: 0 }
       ]);
       await sleep(5);
       await Chores.claimChore(dishes.id, RESIDENT1, now);
@@ -562,13 +562,13 @@ describe('Chores', async () => {
       expect(penalty).to.almost.equal(0);
 
       penalty = await Chores.calculatePenalty(RESIDENT3, penaltyTime);
-      expect(penalty).to.almost.equal(0.5);
+      expect(penalty).to.almost.equal(0.25);
     });
 
     it('can add a penalty at the right time', async () => {
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
 
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 75, ranking: 0, residents: 0 } ]);
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 50, ranking: 0, residents: 0 } ]);
       await sleep(5);
       await Chores.claimChore(dishes.id, RESIDENT1, now);
       await sleep(5);
@@ -590,7 +590,7 @@ describe('Chores', async () => {
     });
 
     it('cannot penalize before initialized', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 75, ranking: 0, residents: 0 } ]);
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 50, ranking: 0, residents: 0 } ]);
       await sleep(5);
       await Chores.claimChore(dishes.id, RESIDENT1, now);
       await sleep(5);
