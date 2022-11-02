@@ -15,6 +15,7 @@ exports.penaltySize = 20; // Points per heart
 // Hearts
 exports.heartsPollLength = 3 * DAY;
 exports.heartsBaseline = 5;
+exports.heartsRegen = 0.5;
 exports.heartsMinVotesInitial = 4; // For removing initial hearts
 exports.heartsMinVotesFinal = 7; // For removing the final two hearts
 exports.karmaDelay = 3 * HOUR;

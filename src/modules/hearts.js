@@ -1,6 +1,6 @@
 const { db } = require('../db');
 const { getMonthStart, getPrevMonthEnd } = require('../utils');
-const { heartsMinVotesInitial, heartsBaseline, heartsPollLength, karmaDelay, karmaMaxHearts } = require('../config');
+const { heartsMinVotesInitial, heartsBaseline, heartsPollLength, karmaDelay, karmaMaxHearts, heartsRegen } = require('../config');
 
 const Admin = require('./admin');
 const Polls = require('./polls');
@@ -62,7 +62,7 @@ exports.regenerateHearts = async function (houseId, residentId, currentTime) {
     const hearts = await exports.getHearts(houseId, residentId, regenTime);
     if (hearts.sum === null) { return []; } // Don't regenerate if not initialized
 
-    const regenAmount = Math.min(1, Math.max(0, heartsBaseline - hearts.sum)); // Bring to baseline
+    const regenAmount = Math.min(heartsRegen, Math.max(0, heartsBaseline - hearts.sum)); // Bring to baseline
     return exports.generateHearts(houseId, residentId, regenAmount, regenTime);
   } else { return []; }
 };
