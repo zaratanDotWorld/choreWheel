@@ -145,21 +145,21 @@ describe('Hearts', async () => {
       await sleep(5);
 
       hearts = await Hearts.getHearts(HOUSE, RESIDENT1, nextMonth);
-      expect(hearts.sum).to.equal(2);
+      expect(hearts.sum).to.equal(1.5);
 
       // But not in the same month
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, nextMonth);
       await sleep(5);
 
       hearts = await Hearts.getHearts(HOUSE, RESIDENT1, nextMonth);
-      expect(hearts.sum).to.equal(2);
+      expect(hearts.sum).to.equal(1.5);
 
       // But yes in another month
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, twoMonths);
       await sleep(5);
 
       hearts = await Hearts.getHearts(HOUSE, RESIDENT1, twoMonths);
-      expect(hearts.sum).to.equal(3);
+      expect(hearts.sum).to.equal(2);
     });
 
     it('cannot regenerate hearts if full', async () => {
