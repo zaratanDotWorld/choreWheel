@@ -8,7 +8,7 @@ exports.bootstrapDuration = 72 * HOUR;
 exports.inflationFactor = 1.10;
 exports.pointPrecision = 0;
 exports.displayThreshold = 1;
-exports.penaltyDelay = 3 * DAY;
+exports.penaltyDelay = exports.choresPollLength + 6 * HOUR;
 exports.penaltyIncrement = 10; // Per quarter heart
 
 // Hearts
