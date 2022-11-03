@@ -109,16 +109,20 @@ exports.choresClaimCallbackView = function (claim, choreName, priorPoints) {
   ];
 };
 
-exports.choresRankView = function (chores) {
-  const mappedChores = chores.map((chore) => {
+exports.choresRankView = function (choreRankings) {
+  const mappedChoreRankings = choreRankings.map((chore) => {
     return {
       value: `${chore.id}|${chore.name}`,
-      text: { type: 'plain_text', text: `${chore.name}`, emoji: true }
+      text: { type: 'plain_text', text: `${chore.name} - ${chore.ranking.toFixed(2)} priority`, emoji: true }
     };
   });
 
-  const mainText = 'Increasing the priority of one chore over another will give it more points over time. ' +
-    'You can express the preference as strong, mild, or neutral (equal value).';
+  const mainText = 'Every hour, chores gain points. ' +
+    'The total points per hour is fixed, but the *relative priority* of chores is not. ' +
+    'Every chore has a priority, and priorities always add up to 1.\n\n' +
+    'You can set your priorities here. Choose a chore to make higher priority, ' +
+    'and one to make lower. Higher-priority chores will gain points faster going forward. ' +
+    'Preferences can be strong, mild, or neutral (equal value).';
 
   return {
     type: 'modal',
@@ -136,7 +140,7 @@ exports.choresRankView = function (chores) {
           type: 'static_select',
           action_id: 'chores',
           placeholder: { type: 'plain_text', text: 'Choose a chore', emoji: true },
-          options: mappedChores
+          options: mappedChoreRankings
         }
       },
       {
@@ -146,7 +150,7 @@ exports.choresRankView = function (chores) {
           type: 'static_select',
           action_id: 'chores',
           placeholder: { type: 'plain_text', text: 'Choose a chore', emoji: true },
-          options: mappedChores
+          options: mappedChoreRankings
         }
       },
       {
