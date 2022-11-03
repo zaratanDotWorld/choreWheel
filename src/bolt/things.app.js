@@ -73,12 +73,13 @@ app.event('app_home_opened', async ({ body, event }) => {
     };
     await app.client.views.publish(data);
 
+    // TODO: fix this
     // This is where we resolve any buys, transparently to the resident
-    const resolvableBuys = await Things.getResolvableThingBuys(houseId, now);
-    for (const buy of resolvableBuys) {
-      await Things.resolveThingBuy(buy.id, now);
-      console.log(`Resolved ThingBuy ${buy.id}`);
-    }
+    // const resolvableBuys = await Things.getResolvableThingBuys(houseId, now);
+    // for (const buy of resolvableBuys) {
+    //   await Things.resolveThingBuy(buy.id, now);
+    //   console.log(`Resolved ThingBuy ${buy.id}`);
+    // }
   }
 });
 
@@ -191,19 +192,21 @@ app.command('/things-load', async ({ ack, command }) => {
   const houseId = command.team_id;
   const userInfo = await getUser(command.user_id);
 
-  let text;
-
   if (userInfo.user.is_admin) {
     const [ thing ] = await Things.loadHouseAccount(houseId, new Date(), command.text);
+    const { thingsChannel } = await Admin.getHouse(houseId);
 
-    text = `$${thing.value} added to the house account :heart_eyes:`;
+    const message = {
+      token: thingsOauth.bot.token,
+      channel: thingsChannel,
+      text: ` <!channel> $${thing.value} was just loaded into the house account :money_with_wings:`
+    };
+    await app.client.chat.postMessage(message);
     console.log(`Added $${thing.value} to house account`);
   } else {
-    text = 'Only admins can load the house account...';
+    const message = prepareEphemeral(command, 'Only admins can load the house account...');
+    await app.client.chat.postEphemeral(message);
   }
-
-  const message = prepareEphemeral(command, text);
-  await app.client.chat.postEphemeral(message);
 });
 
 app.command('/things-resolved', async ({ ack, command }) => {

@@ -274,7 +274,7 @@ exports.thingsHomeView = function (balance) {
     'Anyone can propose a buy, which requires *one* thumbs-up vote per $50. ' +
     'Successful buys are fulfilled within 3-7 days.';
 
-  const textB = `The house has *$${balance}* left in the account :money_with_wings:`;
+  const textB = `The house has *$${balance}* left in the account :moneybag:`;
 
   return {
     type: 'home',
