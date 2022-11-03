@@ -235,7 +235,9 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
 
   // Get chore points over last six months
   const now = new Date();
+  const monthStart = getMonthStart(now);
   const sixMonths = new Date(now.getTime() - 180 * DAY);
+  const monthlyPoints = await Chores.getAllChorePoints(residentId, monthStart, now);
   const recentPoints = await Chores.getChorePoints(residentId, choreId, sixMonths, now);
 
   // Perform the claim
@@ -246,7 +248,12 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
     token: choresOauth.bot.token,
     channel: choresChannel,
     text: 'Someone just completed a chore',
-    blocks: blocks.choresClaimCallbackView(claim, choreName, recentPoints.sum || 0)
+    blocks: blocks.choresClaimCallbackView(
+      claim,
+      choreName,
+      (recentPoints.sum || 0) + claim.value,
+      (monthlyPoints.sum || 0) + claim.value
+    )
   };
 
   res = await app.client.chat.postMessage(message);

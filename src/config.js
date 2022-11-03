@@ -10,6 +10,7 @@ exports.pointPrecision = 0;
 exports.displayThreshold = 1;
 exports.penaltyDelay = exports.choresPollLength + 6 * HOUR;
 exports.penaltyIncrement = 10; // Per quarter heart
+exports.achievementBase = 20;
 
 // Hearts
 exports.heartsPollLength = 3 * DAY;
