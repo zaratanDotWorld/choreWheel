@@ -3,7 +3,9 @@ const voca = require('voca');
 const { HOUR } = require('../constants');
 
 const {
+  pointsPerResident,
   pointPrecision,
+  achievementBase,
   heartsMinVotesInitial,
   thingsMinVotesScalar,
   choresPollLength,
@@ -81,24 +83,29 @@ exports.choresClaimView = function (chores) {
   };
 };
 
-exports.getAchievementEmoji = function (totalValue) {
-  if (totalValue >= 500) {
+exports.getAchievement = function (totalPoints) {
+  if (totalPoints >= achievementBase * 5 * 5) {
     return ':first_place_medal:';
-  } else if (totalValue >= 100) {
+  } else if (totalPoints >= achievementBase * 5) {
     return ':second_place_medal:';
-  } else if (totalValue >= 20) {
+  } else if (totalPoints >= achievementBase) {
     return ':third_place_medal:';
   } else {
-    return ':sparkles:';
+    return '';
   }
 };
 
-exports.choresClaimCallbackView = function (claim, choreName, priorPoints) {
-  const currentPoints = priorPoints + claim.value;
-  const emoji = exports.getAchievementEmoji(currentPoints);
+exports.getSparkles = function (monthlyPoints) {
+  const numSparkles = Math.floor(monthlyPoints / (pointsPerResident / 4));
+  return ':sparkles:'.repeat(numSparkles);
+};
 
-  const textA = `*<@${claim.claimedBy}>* did *${choreName}* for ` +
-    `*${claim.value.toFixed(pointPrecision)} points* ${emoji}:sparkles:`;
+exports.choresClaimCallbackView = function (claim, choreName, totalPoints, monthlyPoints) {
+  const achievement = exports.getAchievement(totalPoints);
+  const sparkles = exports.getSparkles(monthlyPoints);
+
+  const textA = `*<@${claim.claimedBy}>* did *${choreName}* ${achievement} for ` +
+    `*${claim.value.toFixed(pointPrecision)} points* ${sparkles}`;
   const textB = '*2 endorsements* are required to pass, ' +
     `voting closes in *${choresPollLength / HOUR} hours*`;
 
