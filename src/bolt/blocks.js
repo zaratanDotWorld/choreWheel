@@ -120,13 +120,13 @@ exports.choresRankView = function (choreRankings) {
   const mappedChoreRankings = choreRankings.map((chore) => {
     return {
       value: `${chore.id}|${chore.name}`,
-      text: { type: 'plain_text', text: `${chore.name} - ${chore.ranking.toFixed(2)} priority`, emoji: true }
+      text: { type: 'plain_text', text: `${chore.name} - ${(chore.ranking * 100).toFixed(1)} priority`, emoji: true }
     };
   });
 
   const mainText = 'Every hour, chores gain points. ' +
     'The total points per hour is fixed, but the *relative priority* of chores is not. ' +
-    'Every chore has a priority, and priorities always add up to 1.\n\n' +
+    'Every chore has a priority, and priorities always add up to *100*.\n\n' +
     'You can set your priorities here. Choose a chore to make higher priority, ' +
     'and one to make lower. Higher-priority chores will gain points faster going forward. ' +
     'Preferences can be strong, mild, or neutral (equal value).';
