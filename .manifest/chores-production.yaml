@@ -14,10 +14,12 @@ features:
     - command: /chores-add
       url: https://chores.mirror.zaratan.world/slack/events
       description: Add a chore
+      usage_hint: "[name]"
       should_escape: true
     - command: /chores-del
       url: https://chores.mirror.zaratan.world/slack/events
       description: Delete a chore
+      usage_hint: "[name]"
       should_escape: true
     - command: /chores-list
       url: https://chores.mirror.zaratan.world/slack/events
@@ -26,6 +28,7 @@ features:
     - command: /chores-channel
       url: https://chores.mirror.zaratan.world/slack/events
       description: Set the claims channel
+      usage_hint: "[name]"
       should_escape: true
     - command: /chores-sync
       url: https://chores.mirror.zaratan.world/slack/events
