@@ -290,39 +290,42 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   const valueBlockId = body.view.blocks[4].block_id;
 
   const [ targetChoreId, targetChoreName ] = body.view.state.values[targetBlockId].chores.selected_option.value.split('|');
-  const [ sourceChoreId, sourceChoreName ] = body.view.state.values[sourceBlockId].chores.selected_option.value.split('|');
+  const sources = body.view.state.values[sourceBlockId].chores.selected_options;
   const strength = body.view.state.values[valueBlockId].strength.selected_option.value;
 
   let alphaChoreId;
   let betaChoreId;
   let preference;
 
-  // TODO: Return a friendly error if you try to prefer a chore to itself
+  for (const source of sources) {
+    const sourceChoreId = source.value.split('|')[0];
+    if (sourceChoreId === targetChoreId) { continue; }
 
-  // Value flows from source to target, and from beta to alpha
-  if (parseInt(targetChoreId) < parseInt(sourceChoreId)) {
-    alphaChoreId = parseInt(targetChoreId);
-    betaChoreId = parseInt(sourceChoreId);
-    preference = Number(strength);
-  } else {
-    alphaChoreId = parseInt(sourceChoreId);
-    betaChoreId = parseInt(targetChoreId);
-    preference = 1.0 - Number(strength);
+    // Value flows from source to target, and from beta to alpha
+    if (parseInt(targetChoreId) < parseInt(sourceChoreId)) {
+      alphaChoreId = parseInt(targetChoreId);
+      betaChoreId = parseInt(sourceChoreId);
+      preference = Number(strength);
+    } else {
+      alphaChoreId = parseInt(sourceChoreId);
+      betaChoreId = parseInt(targetChoreId);
+      preference = 1.0 - Number(strength);
+    }
+
+    // Perform the update
+    await Chores.setChorePreference(houseId, residentId, alphaChoreId, betaChoreId, preference);
+    console.log(`Chore preference updated, ${alphaChoreId} vs ${betaChoreId} at ${preference}`);
   }
 
   const { choresChannel } = await Admin.getHouse(houseId);
 
-  // Perform the update
-  await Chores.setChorePreference(houseId, residentId, alphaChoreId, betaChoreId, preference);
-
   const message = {
     token: choresOauth.bot.token,
     channel: choresChannel,
-    text: `Someone just prioritized ${targetChoreName} over ${sourceChoreName} :rocket:`
+    text: `Someone just prioritized ${targetChoreName} :rocket:`
   };
 
   res = await app.client.chat.postMessage(message);
-  console.log(`Chore preference updated, ${alphaChoreId} vs ${betaChoreId} at ${preference}`);
 });
 
 // Break flow

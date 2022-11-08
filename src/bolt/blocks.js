@@ -127,9 +127,9 @@ exports.choresRankView = function (choreRankings) {
   const mainText = 'Every hour, chores gain points. ' +
     'The total points per hour is fixed, but the *relative priority* of chores is not. ' +
     'Every chore has a priority, and priorities always add up to *100*.\n\n' +
-    'You can set your priorities here. Choose a chore to make higher priority, ' +
-    'and one to make lower. Higher-priority chores will gain points faster going forward. ' +
-    'Preferences can be strong, mild, or neutral (equal value).';
+    'You can set your priorities here. Choose one chore to make higher priority, ' +
+    'and one (or more) to make lower. The higher-priority chore will gain points faster going forward, ' +
+    'and the effect will be larger the more chores you deprioritize and the stronger your preference.';
 
   return {
     type: 'modal',
@@ -152,11 +152,11 @@ exports.choresRankView = function (choreRankings) {
       },
       {
         type: 'input',
-        label: { type: 'plain_text', text: 'Chore to deprioritize', emoji: true },
+        label: { type: 'plain_text', text: 'Chores to deprioritize', emoji: true },
         element: {
-          type: 'static_select',
+          type: 'multi_static_select',
           action_id: 'chores',
-          placeholder: { type: 'plain_text', text: 'Choose a chore', emoji: true },
+          placeholder: { type: 'plain_text', text: 'Choose some chores', emoji: true },
           options: mappedChoreRankings
         }
       },
@@ -182,7 +182,7 @@ exports.choresBreakView = function (currentTime) {
   const formattedTime = `${currentTime.getFullYear()}-${currentTime.getMonth() + 1}-${currentTime.getDate()}`;
   const mainText = 'Take a chore break when you go out of town, ' +
     'and you won\'t owe points for the days that you\'re gone.\n\n' +
-    'Breaks must be at least *3 days* and can\'t be added retroactively, so don\'t forget!';
+    'Breaks must be at least *3 days long* and can\'t be added retroactively, so don\'t forget!';
 
   return {
     type: 'modal',
@@ -195,7 +195,7 @@ exports.choresBreakView = function (currentTime) {
       { type: 'section', text: { type: 'mrkdwn', text: mainText } },
       {
         type: 'input',
-        label: { type: 'plain_text', text: 'Break start', emoji: true },
+        label: { type: 'plain_text', text: 'Day you leave', emoji: true },
         element: {
           type: 'datepicker',
           initial_date: formattedTime,
@@ -205,7 +205,7 @@ exports.choresBreakView = function (currentTime) {
       },
       {
         type: 'input',
-        label: { type: 'plain_text', text: 'Break end', emoji: true },
+        label: { type: 'plain_text', text: 'Day you return', emoji: true },
         element: {
           type: 'datepicker',
           initial_date: formattedTime,
