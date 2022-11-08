@@ -139,7 +139,7 @@ exports.getKarmaRankings = async function (houseId, startTime, endTime) {
     return { alpha: k.receiverId, beta: k.giverId, preference: 1 };
   });
 
-  const powerRanker = new PowerRanker(residentSet, formattedKarma, residents.length);
+  const powerRanker = new PowerRanker(residentSet, formattedKarma, residents.length, 0);
   const rankings = powerRanker.run();
 
   return residents.map(resident => {

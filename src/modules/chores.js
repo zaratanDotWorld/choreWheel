@@ -9,7 +9,8 @@ const {
   choresMinVotes,
   penaltyIncrement,
   penaltyDelay,
-  choresPollLength
+  choresPollLength,
+  implicitPref
 } = require('../config');
 
 const Admin = require('./admin');
@@ -111,7 +112,7 @@ exports.getCurrentChoreRankings = async function (houseId) {
     return { alpha: p.alphaChoreId, beta: p.betaChoreId, preference: p.preference };
   });
 
-  const powerRanker = new PowerRanker(choresSet, formattedPreferences, residents.length);
+  const powerRanker = new PowerRanker(choresSet, formattedPreferences, residents.length, implicitPref);
   const rankings = powerRanker.run(d = 0.8); // eslint-disable-line no-undef
 
   return chores.map(chore => {

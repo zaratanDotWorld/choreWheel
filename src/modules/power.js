@@ -5,11 +5,11 @@ class PowerRanker {
   matrix; // linAlg.Matrix
   verbose; // bool
 
-  constructor (items, preferences, numResidents, verbose = false) {
+  constructor (items, preferences, numResidents, implicitPref, verbose = false) {
     if (items.size < 2) { throw new Error('PowerRanker: Cannot rank less than two items'); }
 
     this.items = items;
-    this.matrix = this.toMatrix(this.items, preferences, numResidents);
+    this.matrix = this.toMatrix(this.items, preferences, numResidents, implicitPref);
     this.verbose = verbose;
 
     this.log('Matrix initialized');
@@ -34,22 +34,26 @@ class PowerRanker {
   }
 
   // O(preferences)
-  toMatrix (items, preferences, numResidents) { // [{ alpha, beta, preference }]
+  toMatrix (items, preferences, numResidents, implicitPref) { // [{ alpha, beta, preference }]
     const n = items.size;
     const itemMap = this.#toitemMap(items);
 
-    // Initialise the matrix with (implicit) neutral preferences
-    const matrix = linAlg.Matrix.zero(n, n)
-      .plusEach(1).minus(linAlg.Matrix.identity(n)) // Zero on the diagonal, ones everywhere else
-      .mulEach(0.5).mulEach(numResidents); // Scale to .5 per resident
+    // Initialise the matrix with zero on the diagonal, ones everywhere else
+    let matrix = linAlg.Matrix.zero(n, n)
+      .plusEach(1).minus(linAlg.Matrix.identity(n));
 
-    // Add the preferences to the off-diagonals, removing the implicit neutral preference of 0.5
+    // Add implicit neutral preferences, if any
+    if (implicitPref > 0) {
+      matrix = matrix.mulEach(implicitPref).mulEach(numResidents);
+    }
+
+    // Add the preferences to the off-diagonals, removing the implicit neutral preference
     // Recall that preference > 0.5 is flow towards, preference < 0.5 is flow away
     preferences.forEach(p => {
       const alphaIx = itemMap.get(p.alpha);
       const betaIx = itemMap.get(p.beta);
-      matrix.data[betaIx][alphaIx] += (p.preference - 0.5);
-      matrix.data[alphaIx][betaIx] += (1 - p.preference - 0.5);
+      matrix.data[betaIx][alphaIx] += p.preference - implicitPref;
+      matrix.data[alphaIx][betaIx] += (1 - p.preference) - implicitPref;
     });
 
     // Add the diagonals (sums of columns)

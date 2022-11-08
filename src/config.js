@@ -11,6 +11,7 @@ exports.displayThreshold = 1;
 exports.penaltyDelay = exports.choresPollLength + 6 * HOUR;
 exports.penaltyIncrement = 10; // Per quarter heart
 exports.achievementBase = 20;
+exports.implicitPref = 0.25;
 
 // Hearts
 exports.heartsPollLength = 3 * DAY;
