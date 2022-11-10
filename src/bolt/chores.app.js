@@ -287,11 +287,9 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
 
   const targetBlockId = body.view.blocks[2].block_id;
   const sourceBlockId = body.view.blocks[3].block_id;
-  const valueBlockId = body.view.blocks[4].block_id;
 
   const [ targetChoreId, targetChoreName ] = body.view.state.values[targetBlockId].chores.selected_option.value.split('|');
   const sources = body.view.state.values[sourceBlockId].chores.selected_options;
-  const strength = body.view.state.values[valueBlockId].strength.selected_option.value;
 
   let alphaChoreId;
   let betaChoreId;
@@ -305,11 +303,11 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
     if (parseInt(targetChoreId) < parseInt(sourceChoreId)) {
       alphaChoreId = parseInt(targetChoreId);
       betaChoreId = parseInt(sourceChoreId);
-      preference = Number(strength);
+      preference = 1;
     } else {
       alphaChoreId = parseInt(sourceChoreId);
       betaChoreId = parseInt(targetChoreId);
-      preference = 1.0 - Number(strength);
+      preference = 0;
     }
 
     // Perform the update
@@ -322,7 +320,7 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   const message = {
     token: choresOauth.bot.token,
     channel: choresChannel,
-    text: `Someone just prioritized ${targetChoreName} :rocket:`
+    text: `Someone just sped up ${targetChoreName} :rocket:`
   };
 
   res = await app.client.chat.postMessage(message);

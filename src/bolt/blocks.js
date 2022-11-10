@@ -20,11 +20,12 @@ exports.formatChoreName = function (text) {
 };
 
 exports.choresHomeView = function (balance, owed) {
-  const textA = 'We use Chores to keep the house a nice place to live.\n\n' +
+  const docsURI = 'https://github.com/kronosapiens/mirror/wiki/Chores';
+  const textA = `We use *<${docsURI}|Chores>* to keep the house a nice place to live.\n\n` +
     'Instead of a chore wheel or schedule, everyone owes *100 points* per month. ' +
     'You earn points by doing the chores you want, on your terms.\n\n' +
     'The points for a chore go up every hour until someone claims them. ' +
-    'Chores gain points at different speeds, depending on your priorities, which you can change.';
+    'Chores gain points at different speeds, which you can change.';
 
   const textB = `*You've earned ${balance.toFixed(pointPrecision)} points this month, ` +
     `out of ${parseInt(owed)} owed :muscle::skin-tone-4:*`;
@@ -40,7 +41,7 @@ exports.choresHomeView = function (balance, owed) {
         type: 'actions',
         elements: [
           { type: 'button', action_id: 'chores-claim', text: { type: 'plain_text', text: 'Claim a chore', emoji: true } },
-          { type: 'button', action_id: 'chores-rank', text: { type: 'plain_text', text: 'Set chore priorities', emoji: true } },
+          { type: 'button', action_id: 'chores-rank', text: { type: 'plain_text', text: 'Set chore speeds', emoji: true } },
           { type: 'button', action_id: 'chores-gift', text: { type: 'plain_text', text: 'Gift chore points', emoji: true } },
           { type: 'button', action_id: 'chores-break', text: { type: 'plain_text', text: 'Take a break', emoji: true } }
         ]
@@ -120,16 +121,15 @@ exports.choresRankView = function (choreRankings) {
   const mappedChoreRankings = choreRankings.map((chore) => {
     return {
       value: `${chore.id}|${chore.name}`,
-      text: { type: 'plain_text', text: `${chore.name} - ${(chore.ranking * 100).toFixed(1)} priority`, emoji: true }
+      text: { type: 'plain_text', text: `${chore.name} - ${(chore.ranking * 1000).toFixed(0)} speed`, emoji: true }
     };
   });
 
   const mainText = 'Every hour, chores gain points. ' +
-    'The total points per hour is fixed, but the *relative priority* of chores is not. ' +
-    'Every chore has a priority, and priorities always add up to *100*.\n\n' +
-    'You can set your priorities here. Choose one chore to make higher priority, ' +
-    'and one (or more) to make lower. The higher-priority chore will gain points faster going forward, ' +
-    'and the effect will be larger the more chores you deprioritize and the stronger your preference.';
+    'The sum of points across all chores is fixed, but some chores gain points faster than others. ' +
+    'Every chore has a speed, and speeds always add up to *1000*.\n\n' +
+    'You can set chore speeds here. Choose one chore to make faster, ' +
+    'and one (or more) to make slower. The effect will be larger the more chores you slow down.';
 
   return {
     type: 'modal',
@@ -138,11 +138,11 @@ exports.choresRankView = function (choreRankings) {
     submit: { type: 'plain_text', text: 'Submit', emoji: true },
     close: { type: 'plain_text', text: 'Cancel', emoji: true },
     blocks: [
-      { type: 'header', text: { type: 'plain_text', text: 'Set chore priorities', emoji: true } },
+      { type: 'header', text: { type: 'plain_text', text: 'Set chore speeds', emoji: true } },
       { type: 'section', text: { type: 'mrkdwn', text: mainText } },
       {
         type: 'input',
-        label: { type: 'plain_text', text: 'Chore to prioritize', emoji: true },
+        label: { type: 'plain_text', text: 'Chore to speed up', emoji: true },
         element: {
           type: 'static_select',
           action_id: 'chores',
@@ -152,26 +152,12 @@ exports.choresRankView = function (choreRankings) {
       },
       {
         type: 'input',
-        label: { type: 'plain_text', text: 'Chores to deprioritize', emoji: true },
+        label: { type: 'plain_text', text: 'Chores to slow down', emoji: true },
         element: {
           type: 'multi_static_select',
           action_id: 'chores',
           placeholder: { type: 'plain_text', text: 'Choose some chores', emoji: true },
           options: mappedChoreRankings
-        }
-      },
-      {
-        type: 'input',
-        label: { type: 'plain_text', text: 'Preference strength', emoji: true },
-        element: {
-          type: 'radio_buttons',
-          action_id: 'strength',
-          options: [
-            { text: { type: 'plain_text', text: 'Strong', emoji: true }, value: '1.0' },
-            { text: { type: 'plain_text', text: 'Mild', emoji: true }, value: '0.7' },
-            { text: { type: 'plain_text', text: 'Neutral', emoji: true }, value: '0.5' }
-          ],
-          initial_option: { text: { type: 'plain_text', text: 'Mild', emoji: true }, value: '0.7' }
         }
       }
     ]
