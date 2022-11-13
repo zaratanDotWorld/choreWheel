@@ -188,26 +188,32 @@ describe('Things', async () => {
       expect(buy).to.be.undefined;
     });
 
-    it('can get a list of resolvable buys', async () => {
+    it('can resolve buys in bulk', async () => {
       await Things.loadHouseAccount(HOUSE, now, 100);
       await sleep(5);
 
-      const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
+      const [ thingBuy1 ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, 10);
+      const [ thingBuy2 ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
+      const [ thingBuy3 ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, soon, 10);
       await sleep(5);
 
-      let resolvableBuys;
-      resolvableBuys = await Things.getResolvableThingBuys(HOUSE, soon);
-      expect(resolvableBuys.length).to.equal(0);
-
-      resolvableBuys = await Things.getResolvableThingBuys(HOUSE, challengeEnd);
-      expect(resolvableBuys.length).to.equal(1);
-
-      // But not once it is resolved
-      await Things.resolveThingBuy(buy.id, challengeEnd);
+      await Polls.submitVote(thingBuy1.pollId, RESIDENT1, now, YAY);
       await sleep(5);
 
-      resolvableBuys = await Things.getResolvableThingBuys(HOUSE, challengeEnd);
-      expect(resolvableBuys.length).to.equal(0);
+      await Things.resolveThingBuys(HOUSE, challengeEnd);
+
+      const resolvedBuy1 = await Things.getThingBuy(thingBuy1.id);
+      expect(resolvedBuy1.valid).to.be.true;
+      expect(resolvedBuy1.resolvedAt.getTime()).to.equal(challengeEnd.getTime());
+
+      const resolvedBuy2 = await Things.getThingBuy(thingBuy2.id);
+      expect(resolvedBuy2.valid).to.be.false;
+      expect(resolvedBuy2.resolvedAt.getTime()).to.equal(challengeEnd.getTime());
+
+      // This buy was not resolved as poll is not yet closed
+      const resolvedBuy3 = await Things.getThingBuy(thingBuy3.id);
+      expect(resolvedBuy3.valid).to.be.true;
+      expect(resolvedBuy3.resolvedAt).to.equal(null);
     });
 
     it('can get a list of resolved buys', async () => {
