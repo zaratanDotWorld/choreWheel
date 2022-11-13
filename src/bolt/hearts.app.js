@@ -80,7 +80,9 @@ app.event('app_home_opened', async ({ body, event }) => {
     };
     res = await app.client.views.publish(data);
 
-    // This bookkeeping is done asynchronously
+    // This bookkeeping is done asynchronously after returning the view
+    await Hearts.resolveChallenges(houseId, now);
+
     const [ karmaHeart ] = await Hearts.generateKarmaHeart(houseId, now);
     if (karmaHeart !== undefined) {
       const { heartsChannel } = await Admin.getHouse(houseId);
@@ -91,12 +93,6 @@ app.event('app_home_opened', async ({ body, event }) => {
       };
       res = await app.client.chat.postMessage(message);
     }
-
-    // const resolvableChallenges = await Hearts.getResolvableHeartChallenges(houseId, now);
-    // for (const challenge of resolvableChallenges) {
-    //   await Hearts.resolveHeartChallenge(challenge.id, now);
-    //   console.log(`Resolved HeartChallenge ${challenge.id}`);
-    // }
   }
 });
 

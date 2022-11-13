@@ -23,6 +23,7 @@ describe('Hearts', async () => {
   const RESIDENT5 = 'RESIDENT5';
 
   let now;
+  let soon;
   let challengeEnd;
   let nextMonth;
   let twoMonths;
@@ -33,6 +34,7 @@ describe('Hearts', async () => {
     await db('House').del();
 
     now = new Date();
+    soon = new Date(now.getTime() + HOUR);
     challengeEnd = new Date(now.getTime() + heartsPollLength);
     nextMonth = getNextMonthStart(now);
     twoMonths = getNextMonthStart(nextMonth);
@@ -193,10 +195,12 @@ describe('Hearts', async () => {
   });
 
   describe('making challenges', async () => {
-    it('can resolve a challenge where the challenger wins', async () => {
+    beforeEach(async () => {
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
       await Hearts.initialiseResident(HOUSE, RESIDENT2, now);
+    });
 
+    it('can resolve a challenge where the challenger wins', async () => {
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
       await sleep(5);
 
@@ -217,9 +221,6 @@ describe('Hearts', async () => {
     });
 
     it('can resolve a challenge where the challenger loses', async () => {
-      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
-      await Hearts.initialiseResident(HOUSE, RESIDENT2, now);
-
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
       await sleep(5);
 
@@ -238,9 +239,6 @@ describe('Hearts', async () => {
     });
 
     it('can resolve a challenge where the quorum is not reached', async () => {
-      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
-      await Hearts.initialiseResident(HOUSE, RESIDENT2, now);
-
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
       await sleep(5);
 
@@ -258,12 +256,28 @@ describe('Hearts', async () => {
       expect(hearts2.sum).to.equal(5);
     });
 
+    it('can resolve challenges in bulk', async () => {
+      const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
+      await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
+      await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, soon);
+      await sleep(5);
+
+      await Polls.submitVote(challenge.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT3, now, YAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT4, now, YAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT5, now, YAY);
+      await sleep(5);
+
+      await Hearts.resolveChallenges(HOUSE, challengeEnd);
+      await sleep(5);
+
+      const hearts1 = await Hearts.getHearts(HOUSE, RESIDENT1, challengeEnd);
+      const hearts2 = await Hearts.getHearts(HOUSE, RESIDENT2, challengeEnd);
+      expect(hearts1.sum).to.equal(4);
+      expect(hearts2.sum).to.equal(4);
+    });
+
     it('cannot resolve a challenge before the poll is closed', async () => {
-      const soon = new Date(now.getTime() + HOUR);
-
-      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
-      await Hearts.initialiseResident(HOUSE, RESIDENT2, now);
-
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
       await sleep(5);
 
@@ -277,9 +291,6 @@ describe('Hearts', async () => {
     });
 
     it('cannot resolve a challenge twice', async () => {
-      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
-      await Hearts.initialiseResident(HOUSE, RESIDENT2, now);
-
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
       await sleep(5);
 
