@@ -47,7 +47,8 @@ exports.loadHouseAccount = async function (houseId, loadedAt, amount) {
     .insert({
       houseId: houseId,
       boughtAt: loadedAt,
-      value: amount
+      value: amount,
+      resolvedAt: loadedAt
     })
     .returning('*');
 };
@@ -80,7 +81,6 @@ exports.getThingBuy = async function (buyId) {
 
 exports.resolveThingBuy = async function (buyId, resolvedAt) {
   const thingBuy = await exports.getThingBuy(buyId);
-
   const pollId = thingBuy.pollId;
   const poll = await Polls.getPoll(pollId);
 
@@ -96,13 +96,17 @@ exports.resolveThingBuy = async function (buyId, resolvedAt) {
     .returning('*');
 };
 
-exports.getResolvableThingBuys = async function (houseId, currentTime) {
-  return db('ThingBuy')
+exports.resolveThingBuys = async function (houseId, currentTime) {
+  const resolveableThingBuys = await db('ThingBuy')
     .join('Poll', 'ThingBuy.pollId', 'Poll.id')
     .where('ThingBuy.houseId', houseId)
     .where('Poll.endTime', '<=', currentTime)
     .where('ThingBuy.resolvedAt', null)
-    .select('*');
+    .select('ThingBuy.id');
+
+  for (const thingBuy of resolveableThingBuys) {
+    await exports.resolveThingBuy(thingBuy.id, currentTime);
+  }
 };
 
 exports.getResolvedThingBuys = async function (houseId, startTime, endTime) {
@@ -111,6 +115,7 @@ exports.getResolvedThingBuys = async function (houseId, startTime, endTime) {
     .where('ThingBuy.houseId', houseId)
     .where('ThingBuy.resolvedAt', '>', startTime)
     .where('ThingBuy.resolvedAt', '<=', endTime)
+    .whereNot('ThingBuy.pollId', null) // Exclude "load" buys
     .orderBy('ThingBuy.resolvedAt', 'asc')
     .select('*');
 };

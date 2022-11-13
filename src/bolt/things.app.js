@@ -74,13 +74,8 @@ app.event('app_home_opened', async ({ body, event }) => {
     };
     await app.client.views.publish(data);
 
-    // TODO: fix this
-    // This is where we resolve any buys, transparently to the resident
-    // const resolvableBuys = await Things.getResolvableThingBuys(houseId, now);
-    // for (const buy of resolvableBuys) {
-    //   await Things.resolveThingBuy(buy.id, now);
-    //   console.log(`Resolved ThingBuy ${buy.id}`);
-    // }
+    // This bookkeeping is done asynchronously after returning the view
+    await Things.resolveThingBuys(houseId, now);
   }
 });
 
