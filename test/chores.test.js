@@ -8,7 +8,7 @@ chai.use(chaiAsPromised);
 
 const { YAY, NAY, DAY, HOUR, MINUTE } = require('../src/constants');
 const { pointsPerResident, inflationFactor, penaltyDelay, choresPollLength } = require('../src/config');
-const { sleep, getMonthStart, getNextMonthStart } = require('../src/utils');
+const { sleep, getMonthStart, getNextMonthStart, getPrevMonthEnd } = require('../src/utils');
 const { db } = require('../src/db');
 
 const Chores = require('../src/modules/chores');
@@ -312,10 +312,10 @@ describe('Chores', async () => {
 
   describe('claiming chores', async () => {
     beforeEach(async () => {
-      await Admin.addResident(HOUSE, RESIDENT1, now);
-      await Admin.addResident(HOUSE, RESIDENT2, now);
-      await Admin.addResident(HOUSE, RESIDENT3, now);
-      await Admin.addResident(HOUSE, RESIDENT4, now);
+      await Admin.addResident(HOUSE, RESIDENT1, getPrevMonthEnd(now));
+      await Admin.addResident(HOUSE, RESIDENT2, getPrevMonthEnd(now));
+      await Admin.addResident(HOUSE, RESIDENT3, getPrevMonthEnd(now));
+      await Admin.addResident(HOUSE, RESIDENT4, getPrevMonthEnd(now));
     });
 
     it('can claim a chore', async () => {
@@ -546,7 +546,7 @@ describe('Chores', async () => {
     });
 
     it('can calculate chore penalties, taking into account chore breaks', async () => {
-      const feb1 = new Date(2001, 1, 1); // February, a 28 day month
+      const feb1 = new Date(3000, 1, 1); // February, a 28 day month
       const feb15 = new Date(feb1.getTime() + 14 * DAY);
 
       await db('ChoreValue').insert([
@@ -685,7 +685,7 @@ describe('Chores', async () => {
     });
 
     it('can return the percent of the period a resident is not on break', async () => {
-      const feb1 = new Date(2001, 1, 1); // February, a 28 day month
+      const feb1 = new Date(3000, 1, 1); // February, a 28 day month
       const feb8 = new Date(feb1.getTime() + 7 * DAY);
       const feb15 = new Date(feb1.getTime() + 14 * DAY);
       const feb22 = new Date(feb1.getTime() + 21 * DAY);
@@ -724,8 +724,8 @@ describe('Chores', async () => {
       expect(activeDays).to.almost.equal(0.0);
     });
 
-    it('can consider only the parts of breakas in the current month', async () => {
-      const feb1 = new Date(2001, 1, 1); // February, a 28 day month
+    it('can consider only the parts of breaks in the current month', async () => {
+      const feb1 = new Date(3000, 1, 1); // February, a 28 day month
       const feb8 = new Date(feb1.getTime() + 7 * DAY);
       const feb22 = new Date(feb1.getTime() + 21 * DAY);
       const mar8 = new Date(feb1.getTime() + 35 * DAY);
@@ -741,6 +741,26 @@ describe('Chores', async () => {
       // Overlap last and first weeks
       await Chores.addChoreBreak(RESIDENT1, feb22, mar8);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
+      expect(activeDays).to.almost.equal(0.50);
+    });
+
+    it('can consider the resident activeAt when calculating active percentage', async () => {
+      const feb1 = new Date(3000, 1, 1); // February, a 28 day month
+      const feb8 = new Date(feb1.getTime() + 7 * DAY);
+      const feb22 = new Date(feb1.getTime() + 21 * DAY);
+      const mar1 = new Date(feb1.getTime() + 28 * DAY);
+
+      let activeDays;
+
+      await Admin.addResident(HOUSE, RESIDENT3, feb8);
+
+      // activeAt used to create implicit break
+      activeDays = await Chores.getActiveResidentPercentage(RESIDENT3, feb1);
+      expect(activeDays).to.almost.equal(0.75);
+
+      // Can combine with regular breaks
+      await Chores.addChoreBreak(RESIDENT3, feb22, mar1);
+      activeDays = await Chores.getActiveResidentPercentage(RESIDENT3, feb1);
       expect(activeDays).to.almost.equal(0.50);
     });
   });

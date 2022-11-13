@@ -5,7 +5,7 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
 const { HOUR } = require('../src/constants');
-const { sleep, getMonthStart, getMonthEnd, getNextMonthStart, getPrevMonthEnd } = require('../src/utils');
+const { sleep, getMonthStart, getMonthEnd, getNextMonthStart, getPrevMonthEnd, getDateStart } = require('../src/utils');
 const { db } = require('../src/db');
 
 const Admin = require('../src/modules/admin');
@@ -178,6 +178,10 @@ describe('Admin', async () => {
       expect(getNextMonthStart(feb1).getTime()).to.equal(mar1.getTime());
       expect(getNextMonthStart(feb14).getTime()).to.equal(mar1.getTime());
       expect(getNextMonthStart(feb28).getTime()).to.equal(mar1.getTime());
+
+      expect(getDateStart(now).getHours()).to.equal(0);
+      expect(getDateStart(now).getMinutes()).to.equal(0);
+      expect(getDateStart(now).getSeconds()).to.equal(0);
     });
   });
 });
