@@ -373,6 +373,44 @@ describe('Chores', async () => {
       expect(resolvedClaim.resolvedAt.getTime()).to.equal(challengeEnd.getTime());
     });
 
+    it('can successfully resolve many claims at once', async () => {
+      await db('ChoreValue').insert([
+        { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 },
+        { choreId: sweeping.id, valuedAt: now, value: 10, ranking: 0, residents: 0 },
+        { choreId: restock.id, valuedAt: soon, value: 10, ranking: 0, residents: 0 }
+      ]);
+      await sleep(5);
+      const [ choreClaim1 ] = await Chores.claimChore(dishes.id, RESIDENT1, now);
+      const [ choreClaim2 ] = await Chores.claimChore(sweeping.id, RESIDENT1, now);
+      const [ choreClaim3 ] = await Chores.claimChore(restock.id, RESIDENT1, soon);
+      await sleep(5);
+
+      // First poll passes, second fails
+      await Polls.submitVote(choreClaim1.pollId, RESIDENT1, soon, YAY);
+      await Polls.submitVote(choreClaim1.pollId, RESIDENT2, soon, YAY);
+      await Polls.submitVote(choreClaim2.pollId, RESIDENT1, soon, YAY);
+      await Polls.submitVote(choreClaim2.pollId, RESIDENT2, soon, NAY);
+      await sleep(5);
+
+      await Chores.resolveChoreClaims(HOUSE, challengeEnd);
+
+      const resolvedClaim1 = await Chores.getChoreClaim(choreClaim1.id);
+      expect(resolvedClaim1.valid).to.be.true;
+      expect(resolvedClaim1.value).to.equal(10);
+      expect(resolvedClaim1.resolvedAt.getTime()).to.equal(challengeEnd.getTime());
+
+      const resolvedClaim2 = await Chores.getChoreClaim(choreClaim2.id);
+      expect(resolvedClaim2.valid).to.be.false;
+      expect(resolvedClaim2.value).to.equal(0);
+      expect(resolvedClaim2.resolvedAt.getTime()).to.equal(challengeEnd.getTime());
+
+      // This claim was not resolved as poll is not yet closed
+      const resolvedClaim3 = await Chores.getChoreClaim(choreClaim3.id);
+      expect(resolvedClaim3.valid).to.be.true;
+      expect(resolvedClaim3.value).to.equal(10);
+      expect(resolvedClaim3.resolvedAt).to.equal(null);
+    });
+
     it('cannot resolve a claim before the poll closes ', async () => {
       await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 } ]);
       await sleep(5);
