@@ -61,10 +61,11 @@ app.event('app_home_opened', async ({ body, event }) => {
     const houseId = body.team_id;
     const residentId = event.user;
 
-    await Admin.addResident(houseId, residentId);
+    const now = new Date();
+
+    await Admin.addResident(houseId, residentId, now);
     console.log(`Added resident ${residentId}`);
 
-    const now = new Date();
     const monthStart = getMonthStart(now);
     const chorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
     const activePercentage = await Chores.getActiveResidentPercentage(residentId, now);
@@ -184,14 +185,18 @@ app.command('/chores-sync', async ({ ack, command }) => {
 
   const SLACKBOT = 'USLACKBOT';
 
+  const now = new Date();
   const workspaceMembers = await app.client.users.list({ token: choresOauth.bot.token });
 
   for (const member of workspaceMembers.members) {
     if (!member.is_bot & member.id !== SLACKBOT) {
-      await Admin.updateResident(member.team_id, member.id, !member.deleted, member.real_name);
+      member.deleted
+        ? await Admin.deleteResident(member.team_id, member.id)
+        : await Admin.addResident(member.team_id, member.id, now);
     }
   }
 
+  await sleep(5);
   const residents = await Admin.getResidents(workspaceMembers.members[0].team_id);
 
   const text = `Synced workspace, ${residents.length} active residents found`;

@@ -32,17 +32,17 @@ describe('Hearts', async () => {
     await db('Resident').del();
     await db('House').del();
 
-    await Admin.updateHouse({ slackId: HOUSE });
-    await Admin.addResident(HOUSE, RESIDENT1);
-    await Admin.addResident(HOUSE, RESIDENT2);
-    await Admin.addResident(HOUSE, RESIDENT3);
-    await Admin.addResident(HOUSE, RESIDENT4);
-    await Admin.addResident(HOUSE, RESIDENT5);
-
     now = new Date();
     challengeEnd = new Date(now.getTime() + heartsPollLength);
     nextMonth = getNextMonthStart(now);
     twoMonths = getNextMonthStart(nextMonth);
+
+    await Admin.updateHouse({ slackId: HOUSE });
+    await Admin.addResident(HOUSE, RESIDENT1, now);
+    await Admin.addResident(HOUSE, RESIDENT2, now);
+    await Admin.addResident(HOUSE, RESIDENT3, now);
+    await Admin.addResident(HOUSE, RESIDENT4, now);
+    await Admin.addResident(HOUSE, RESIDENT5, now);
   });
 
   afterEach(async () => {

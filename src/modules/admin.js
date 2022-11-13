@@ -23,14 +23,20 @@ exports.getNumHouses = async function () {
 
 // Residents
 
-exports.addResident = async function (houseId, slackId) {
-  return exports.updateResident(houseId, slackId, true, '');
+exports.addResident = async function (houseId, slackId, activeAt) {
+  // TODO: incorporate logic into `onConflict`? Want to update activeAt only if !active
+  const resident = await exports.getResident(slackId);
+  if (resident && resident.active) { return; }
+
+  return db('Resident')
+    .insert({ houseId: houseId, slackId: slackId, active: true, activeAt: activeAt })
+    .onConflict('slackId').merge();
 };
 
-exports.updateResident = async function (houseId, slackId, active, name) {
+exports.deleteResident = async function (houseId, slackId) {
   return db('Resident')
-    .insert({ houseId, slackId, active, name })
-    .onConflict('slackId').merge();
+    .insert({ houseId: houseId, slackId: slackId, active: false })
+    .onConflict('slackId').merge([ 'active' ]);
 };
 
 exports.getResidents = async function (houseId) {
@@ -38,4 +44,11 @@ exports.getResidents = async function (houseId) {
     .select('*')
     .where({ houseId })
     .where('active', true);
+};
+
+exports.getResident = async function (slackId) {
+  return db('Resident')
+    .select('*')
+    .where({ slackId })
+    .first();
 };
