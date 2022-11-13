@@ -61,8 +61,8 @@ describe('Chores', async () => {
 
   describe('managing chore preferences', async () => {
     beforeEach(async () => {
-      await Admin.addResident(HOUSE, RESIDENT1);
-      await Admin.addResident(HOUSE, RESIDENT2);
+      await Admin.addResident(HOUSE, RESIDENT1, now);
+      await Admin.addResident(HOUSE, RESIDENT2, now);
     });
 
     it('can list the existing chores', async () => {
@@ -95,7 +95,7 @@ describe('Chores', async () => {
         { choreId: sweeping.id, valuedAt: now, value: 20, ranking: 0, residents: 0 }
       ]);
 
-      const soon = new Date(now.getTime() + MINUTE);
+      const soon = new Date(now.getTime() + HOUR);
 
       const choreValues = await Chores.getCurrentChoreValues(HOUSE, soon);
       expect(choreValues.find(x => x.id === dishes.id).value).to.equal(15);
@@ -122,7 +122,7 @@ describe('Chores', async () => {
     });
 
     it('can query for active chore preferences', async () => {
-      await Admin.addResident(HOUSE, RESIDENT3);
+      await Admin.addResident(HOUSE, RESIDENT3, now);
       await sleep(5);
 
       await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.0);
@@ -134,14 +134,14 @@ describe('Chores', async () => {
       expect(preferences.length).to.equal(3);
 
       // Remove the third preference
-      await Admin.updateResident(HOUSE, RESIDENT3, false, '');
+      await Admin.deleteResident(HOUSE, RESIDENT3);
       await sleep(5);
 
       preferences = await Chores.getActiveChorePreferences(HOUSE);
       expect(preferences.length).to.equal(2);
 
       // Restore the third preference
-      await Admin.addResident(HOUSE, RESIDENT3);
+      await Admin.addResident(HOUSE, RESIDENT3, now);
       await sleep(5);
 
       preferences = await Chores.getActiveChorePreferences(HOUSE);
@@ -165,8 +165,8 @@ describe('Chores', async () => {
 
   describe('managing chore values', async () => {
     beforeEach(async () => {
-      await Admin.addResident(HOUSE, RESIDENT1);
-      await Admin.addResident(HOUSE, RESIDENT2);
+      await Admin.addResident(HOUSE, RESIDENT1, now);
+      await Admin.addResident(HOUSE, RESIDENT2, now);
     });
 
     it('can return uniform preferences implicitly', async () => {
@@ -312,10 +312,10 @@ describe('Chores', async () => {
 
   describe('claiming chores', async () => {
     beforeEach(async () => {
-      await Admin.addResident(HOUSE, RESIDENT1);
-      await Admin.addResident(HOUSE, RESIDENT2);
-      await Admin.addResident(HOUSE, RESIDENT3);
-      await Admin.addResident(HOUSE, RESIDENT4);
+      await Admin.addResident(HOUSE, RESIDENT1, now);
+      await Admin.addResident(HOUSE, RESIDENT2, now);
+      await Admin.addResident(HOUSE, RESIDENT3, now);
+      await Admin.addResident(HOUSE, RESIDENT4, now);
     });
 
     it('can claim a chore', async () => {
@@ -626,8 +626,8 @@ describe('Chores', async () => {
 
   describe('managing chore breaks', async () => {
     beforeEach(async () => {
-      await Admin.addResident(HOUSE, RESIDENT1);
-      await Admin.addResident(HOUSE, RESIDENT2);
+      await Admin.addResident(HOUSE, RESIDENT1, now);
+      await Admin.addResident(HOUSE, RESIDENT2, now);
     });
 
     it('can add a chore break', async () => {
@@ -660,7 +660,7 @@ describe('Chores', async () => {
     });
 
     it('can exclude inactive residents from the chore valuing', async () => {
-      await Admin.addResident(HOUSE, RESIDENT3);
+      await Admin.addResident(HOUSE, RESIDENT3, now);
 
       const later = new Date(now.getTime() + 2 * DAY);
 
@@ -679,7 +679,7 @@ describe('Chores', async () => {
       expect(parseInt(residentCount.count)).to.equal(3);
 
       // Will also exclude if inactive
-      await Admin.updateResident(HOUSE, RESIDENT3, false, '');
+      await Admin.deleteResident(HOUSE, RESIDENT3);
       [ residentCount ] = await Chores.getActiveResidentCount(HOUSE, later);
       expect(parseInt(residentCount.count)).to.equal(2);
     });
@@ -747,8 +747,8 @@ describe('Chores', async () => {
 
   describe('managing chore point gifts', async () => {
     beforeEach(async () => {
-      await Admin.addResident(HOUSE, RESIDENT1);
-      await Admin.addResident(HOUSE, RESIDENT2);
+      await Admin.addResident(HOUSE, RESIDENT1, now);
+      await Admin.addResident(HOUSE, RESIDENT2, now);
     });
 
     it('can gift chore points', async () => {

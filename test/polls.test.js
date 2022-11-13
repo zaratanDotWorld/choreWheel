@@ -26,13 +26,13 @@ describe('Polls', async () => {
     await db('Resident').del();
     await db('House').del();
 
-    await Admin.updateHouse({ slackId: HOUSE });
-    await Admin.addResident(HOUSE, RESIDENT1);
-    await Admin.addResident(HOUSE, RESIDENT2);
-    await Admin.addResident(HOUSE, RESIDENT3);
-
     now = new Date();
     soon = new Date(now.getTime() + HOUR);
+
+    await Admin.updateHouse({ slackId: HOUSE });
+    await Admin.addResident(HOUSE, RESIDENT1, now);
+    await Admin.addResident(HOUSE, RESIDENT2, now);
+    await Admin.addResident(HOUSE, RESIDENT3, now);
   });
 
   afterEach(async () => {

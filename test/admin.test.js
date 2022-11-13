@@ -4,6 +4,7 @@ const chaiAsPromised = require('chai-as-promised');
 
 chai.use(chaiAsPromised);
 
+const { HOUR } = require('../src/constants');
 const { sleep, getMonthStart, getMonthEnd, getNextMonthStart, getPrevMonthEnd } = require('../src/utils');
 const { db } = require('../src/db');
 
@@ -16,9 +17,15 @@ describe('Admin', async () => {
   const RESIDENT1 = 'RESIDENT1';
   const RESIDENT2 = 'RESIDENT2';
 
+  let now;
+  let soon;
+
   before(async () => {
     await db('Resident').del();
     await db('House').del();
+
+    now = new Date();
+    soon = new Date(now.getTime() + HOUR);
   });
 
   afterEach(async () => {
@@ -91,17 +98,20 @@ describe('Admin', async () => {
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(0);
 
-      await Admin.addResident(HOUSE1, RESIDENT1);
+      await Admin.addResident(HOUSE1, RESIDENT1, now);
       await sleep(5);
 
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(1);
 
-      await Admin.addResident(HOUSE1, RESIDENT2);
+      await Admin.addResident(HOUSE1, RESIDENT2, now);
       await sleep(5);
 
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(2);
+
+      const resident1 = await Admin.getResident(RESIDENT1);
+      expect(resident1.activeAt.getTime()).to.equal(now.getTime());
     });
 
     it('can add a resident idempotently', async () => {
@@ -109,27 +119,32 @@ describe('Admin', async () => {
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(0);
 
-      await Admin.addResident(HOUSE1, RESIDENT1);
-      await Admin.addResident(HOUSE1, RESIDENT1);
+      await Admin.addResident(HOUSE1, RESIDENT1, now);
+      await sleep(5);
+      await Admin.addResident(HOUSE1, RESIDENT1, soon);
       await sleep(5);
 
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(1);
+      expect(residents[0].activeAt.getTime()).to.equal(now.getTime());
     });
 
     it('can delete a resident', async () => {
-      await Admin.addResident(HOUSE1, RESIDENT1);
+      await Admin.addResident(HOUSE1, RESIDENT1, now);
       await sleep(5);
 
       let residents;
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(1);
 
-      await Admin.updateResident(HOUSE1, RESIDENT1, false, '');
+      await Admin.deleteResident(HOUSE1, RESIDENT1);
       await sleep(5);
 
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(0);
+
+      const resident = await Admin.getResident(RESIDENT1);
+      expect(resident.activeAt.getTime()).to.equal(now.getTime());
     });
   });
 
