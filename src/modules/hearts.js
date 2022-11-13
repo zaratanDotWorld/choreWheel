@@ -114,6 +114,19 @@ exports.resolveChallenge = async function (challengeId, resolvedAt) {
     .returning('*');
 };
 
+exports.resolveChallenges = async function (houseId, currentTime) {
+  const resolvableChallenges = await db('HeartChallenge')
+    .join('Poll', 'HeartChallenge.pollId', 'Poll.id')
+    .where('HeartChallenge.houseId', houseId)
+    .where('Poll.endTime', '<=', currentTime)
+    .where('HeartChallenge.resolvedAt', null)
+    .select('HeartChallenge.id');
+
+  for (const challenge of resolvableChallenges) {
+    await exports.resolveChallenge(challenge.id, currentTime);
+  }
+};
+
 // Karma
 
 exports.getKarma = async function (houseId, startTime, endTime) {
