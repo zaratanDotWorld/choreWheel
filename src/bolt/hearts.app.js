@@ -65,7 +65,6 @@ app.event('app_home_opened', async ({ body, event }) => {
     console.log(`Added resident ${residentId}`);
 
     const now = new Date();
-
     await Hearts.initialiseResident(houseId, residentId, now);
     await sleep(5);
     await Hearts.regenerateHearts(houseId, residentId, now);
@@ -140,29 +139,6 @@ app.command('/hearts-channel', async ({ ack, command }) => {
     text = 'Only admins can set the channels...';
   }
 
-  const message = prepareEphemeral(command, text);
-  await app.client.chat.postEphemeral(message);
-});
-
-app.command('/hearts-sync', async ({ ack, command }) => {
-  await ack();
-
-  const SLACKBOT = 'USLACKBOT';
-
-  const now = new Date();
-  const houseId = command.team_id;
-  const workspaceMembers = await app.client.users.list({ token: heartsOauth.bot.token });
-
-  for (const member of workspaceMembers.members) {
-    if (!member.is_bot & member.id !== SLACKBOT) {
-      await Admin.updateResident(houseId, member.id, !member.deleted, member.real_name);
-      await Hearts.initialiseResident(houseId, member.id, now);
-    }
-  }
-
-  const residents = await Admin.getResidents(houseId);
-
-  const text = `Synced workspace, ${residents.length} active residents found`;
   const message = prepareEphemeral(command, text);
   await app.client.chat.postEphemeral(message);
 });
