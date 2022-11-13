@@ -239,6 +239,20 @@ exports.resolveChoreClaim = async function (claimId, resolvedAt) {
     .returning('*');
 };
 
+exports.resolveChoreClaims = async function (houseId, currentTime) {
+  const resolvableChoreClaims = await db('ChoreClaim')
+    .join('Resident', 'ChoreClaim.claimedBy', 'Resident.slackId')
+    .join('Poll', 'ChoreClaim.pollId', 'Poll.id')
+    .where('Resident.houseId', houseId)
+    .where('ChoreClaim.resolvedAt', null)
+    .where('Poll.endTime', '<=', currentTime)
+    .select('ChoreClaim.id');
+
+  for (const choreClaim of resolvableChoreClaims) {
+    await exports.resolveChoreClaim(choreClaim.id, currentTime);
+  }
+};
+
 exports.getChorePoints = async function (residentId, choreId, startTime, endTime) {
   return db('ChoreClaim')
     .where({ claimedBy: residentId, choreId: choreId, valid: true })

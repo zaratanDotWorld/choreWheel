@@ -77,9 +77,9 @@ app.event('app_home_opened', async ({ body, event }) => {
     };
     await app.client.views.publish(data);
 
-    // This bookkeeping is done asynchronously
-    // TODO: resolve chore claims
+    // This bookkeeping is done asynchronously after returning the view
     await Chores.addChorePenalty(houseId, residentId, now);
+    await Chores.resolveChoreClaims(houseId, now);
   }
 });
 
