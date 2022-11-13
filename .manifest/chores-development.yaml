@@ -21,10 +21,6 @@ features:
       description: Delete a chore
       usage_hint: "[name]"
       should_escape: true
-    - command: /chores-list
-      url: https://zaratan.ngrok.io/slack/events
-      description: List current chores
-      should_escape: true
     - command: /chores-channel
       url: https://zaratan.ngrok.io/slack/events
       description: Set the claims channel

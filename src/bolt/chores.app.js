@@ -169,17 +169,6 @@ app.command('/chores-del', async ({ ack, command }) => {
   await app.client.chat.postEphemeral(message);
 });
 
-app.command('/chores-list', async ({ ack, command }) => {
-  await ack();
-
-  const choresRankings = await Chores.getCurrentChoreRankings(command.team_id);
-  const parsedChores = choresRankings.map((chore) => `\n${chore.name} (${chore.ranking.toFixed(2)})`);
-
-  const text = `The current chores and their priority (adding up to 1):${parsedChores}`;
-  const message = prepareEphemeral(command, text);
-  await app.client.chat.postEphemeral(message);
-});
-
 app.command('/chores-sync', async ({ ack, command }) => {
   await ack();
 
