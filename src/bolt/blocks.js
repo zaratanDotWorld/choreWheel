@@ -263,7 +263,8 @@ exports.formatThing = function (thing) {
 };
 
 exports.thingsHomeView = function (balance) {
-  const textA = 'We use Things to spend money together.\n\n' +
+  const docsURI = 'https://github.com/kronosapiens/mirror/wiki/Things';
+  const textA = `We use *<${docsURI}|Things>* to spend money together.\n\n` +
     'Anyone can propose a buy, which requires *one* thumbs-up vote per $50. ' +
     'Successful buys are fulfilled within 3-7 days.';
 
@@ -349,7 +350,8 @@ exports.heartEmoji = function (numHearts) {
 };
 
 exports.heartsHomeView = function (numHearts) {
-  const textA = 'We use Hearts to keep each other accountable.\n\n' +
+  const docsURI = 'https://github.com/kronosapiens/mirror/wiki/Hearts';
+  const textA = `We use *<${docsURI}|Hearts>* to keep each other accountable.\n\n` +
     'Everyone starts with five hearts. We lose hearts when we fail to uphold our commitments, ' +
     'and we earn them back over time (one per month), and by exceeding expectations.';
 
