@@ -64,11 +64,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     const now = new Date();
 
     await Admin.addResident(houseId, residentId, now);
-    console.log(`Added resident ${residentId}`);
-
     await Hearts.initialiseResident(houseId, residentId, now);
-    await sleep(5);
-    await Hearts.regenerateHearts(houseId, residentId, now);
     await sleep(5);
 
     const hearts = await Hearts.getHearts(houseId, residentId, now);
@@ -81,6 +77,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     res = await app.client.views.publish(data);
 
     // This bookkeeping is done asynchronously after returning the view
+    await Hearts.regenerateHearts(houseId, residentId, now);
     await Hearts.resolveChallenges(houseId, now);
 
     const [ karmaHeart ] = await Hearts.generateKarmaHeart(houseId, now);
@@ -166,8 +163,8 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
   const numHeartsBlockId = body.view.blocks[3].block_id;
   const circumstanceBlockId = body.view.blocks[4].block_id;
 
-  const challengeeId = body.view.state.values[challengeeBlockId].challengee.selected_users[0];
-  const numHearts = body.view.state.values[numHeartsBlockId].hearts.value;
+  const challengeeId = body.view.state.values[challengeeBlockId].challengee.selected_user;
+  const numHearts = body.view.state.values[numHeartsBlockId].hearts.selected_option.value;
   const circumstance = body.view.state.values[circumstanceBlockId].circumstance.value;
 
   const { heartsChannel } = await Admin.getHouse(houseId);
@@ -177,6 +174,7 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
 
   // Initiate the challenge
   const now = new Date();
+  const quorum = await Hearts.getChallengeQuorum(houseId, challengeeId, numHearts, now);
   const [ challenge ] = await Hearts.issueChallenge(houseId, residentId, challengeeId, numHearts, now);
   await Polls.submitVote(challenge.pollId, residentId, now, YAY);
 
@@ -184,7 +182,7 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
     token: heartsOauth.bot.token,
     channel: heartsChannel,
     text: 'Someone just issued a hearts challenge',
-    blocks: blocks.heartsChallengeCallbackView(challenge, circumstance)
+    blocks: blocks.heartsChallengeCallbackView(challenge, quorum, circumstance)
   };
 
   res = await app.client.chat.postMessage(message);

@@ -6,7 +6,6 @@ const {
   pointsPerResident,
   pointPrecision,
   achievementBase,
-  heartsMinVotesInitial,
   thingsMinVotesScalar,
   choresPollLength,
   thingsPollLength,
@@ -396,7 +395,7 @@ exports.heartsChallengeView = function () {
         type: 'input',
         label: { type: 'plain_text', text: 'Challengee', emoji: true },
         element: {
-          type: 'multi_users_select',
+          type: 'users_select',
           placeholder: { type: 'plain_text', text: 'Choose a resident', emoji: true },
           action_id: 'challengee'
         }
@@ -405,8 +404,14 @@ exports.heartsChallengeView = function () {
         type: 'input',
         label: { type: 'plain_text', text: 'Number of hearts', emoji: true },
         element: {
-          type: 'plain_text_input',
-          placeholder: { type: 'plain_text', text: 'Enter a number', emoji: true },
+          type: 'static_select',
+          placeholder: { type: 'plain_text', text: 'Select a number', emoji: true },
+          options: [
+            { text: { type: 'plain_text', text: '1', emoji: true }, value: '1' },
+            { text: { type: 'plain_text', text: '2', emoji: true }, value: '2' },
+            { text: { type: 'plain_text', text: '3', emoji: true }, value: '3' }
+          ],
+          initial_option: { text: { type: 'plain_text', text: '1', emoji: true }, value: '1' },
           action_id: 'hearts'
         }
       },
@@ -424,10 +429,10 @@ exports.heartsChallengeView = function () {
   };
 };
 
-exports.heartsChallengeCallbackView = function (challenge, circumstance) {
+exports.heartsChallengeCallbackView = function (challenge, quorum, circumstance) {
   const textA = `*<@${challenge.challengerId}>* challenged *<@${challenge.challengeeId}>* ` +
     `for *${challenge.value} heart(s)*, due to the following circumstance:`;
-  const textB = `*${heartsMinVotesInitial} endorsements* are required to pass, ` +
+  const textB = `*${quorum} endorsements* are required to pass, ` +
     `voting closes in *${heartsPollLength / HOUR} hours*`;
 
   return [

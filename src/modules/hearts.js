@@ -1,6 +1,16 @@
 const { db } = require('../db');
 const { getMonthStart, getPrevMonthEnd } = require('../utils');
-const { heartsMinVotesInitial, heartsBaseline, heartsPollLength, karmaDelay, karmaMaxHearts, heartsRegen } = require('../config');
+
+const {
+  heartsMinPctInitial,
+  heartsMinPctFinal,
+  heartsBaseline,
+  heartsPollLength,
+  karmaDelay,
+  karmaMaxHearts,
+  heartsRegen,
+  heartsCriticalNum
+} = require('../config');
 
 const Admin = require('./admin');
 const Polls = require('./polls');
@@ -69,14 +79,15 @@ exports.regenerateHearts = async function (houseId, residentId, currentTime) {
 
 // Challenges
 
-exports.issueChallenge = async function (houseId, challengerId, challengeeId, numHearts, challengeTime) {
-  const [ poll ] = await Polls.createPoll(challengeTime, heartsPollLength);
+exports.issueChallenge = async function (houseId, challengerId, challengeeId, numHearts, challengedAt) {
+  const [ poll ] = await Polls.createPoll(challengedAt, heartsPollLength);
 
   return db('HeartChallenge')
     .insert({
       houseId: houseId,
       challengerId: challengerId,
       challengeeId: challengeeId,
+      challengedAt: challengedAt,
       value: numHearts,
       pollId: poll.id
     })
@@ -90,19 +101,27 @@ exports.getChallenge = async function (challengeId) {
     .first();
 };
 
+exports.getChallengeQuorum = async function (houseId, challengeeId, value, challengedAt) {
+  const residents = await Admin.getResidents(houseId);
+  const challengeeHearts = await exports.getHearts(houseId, challengeeId, challengedAt);
+  return (challengeeHearts.sum - value <= heartsCriticalNum)
+    ? Math.ceil(residents.length * heartsMinPctFinal)
+    : Math.ceil(residents.length * heartsMinPctInitial);
+};
+
 exports.resolveChallenge = async function (challengeId, resolvedAt) {
   const challenge = await exports.getChallenge(challengeId);
 
   if (challenge.heartId !== null) { throw new Error('Challenge already resolved!'); }
 
-  const pollId = challenge.pollId;
-  const poll = await Polls.getPoll(pollId);
+  const poll = await Polls.getPoll(challenge.pollId);
 
   if (resolvedAt < poll.endTime) { throw new Error('Poll not closed!'); }
 
-  // Challangers wins with a majority and a minimum of four votes
-  const { yays, nays } = await Polls.getPollResultCounts(pollId);
-  const loser = (yays >= heartsMinVotesInitial && yays > nays)
+  // Challenger wins with a majority and minimum quorum
+  const quorum = await exports.getChallengeQuorum(challenge.houseId, challenge.challengeeId, challenge.value, challenge.challengedAt);
+  const { yays, nays } = await Polls.getPollResultCounts(challenge.pollId);
+  const loser = (yays >= quorum && yays > nays)
     ? challenge.challengeeId
     : challenge.challengerId;
 

@@ -17,8 +17,9 @@ exports.implicitPref = 0.25;
 exports.heartsPollLength = 3 * DAY;
 exports.heartsBaseline = 5;
 exports.heartsRegen = 0.5;
-exports.heartsMinVotesInitial = 4; // For removing initial hearts
-exports.heartsMinVotesFinal = 7; // For removing the final two hearts
+exports.heartsMinPctInitial = 0.4; // For removing initial hearts
+exports.heartsMinPctFinal = 0.7; // For removing the final two hearts
+exports.heartsCriticalNum = 2;
 exports.karmaDelay = 3 * HOUR;
 exports.karmaMaxHearts = 7;
 
