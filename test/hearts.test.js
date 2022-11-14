@@ -242,9 +242,8 @@ describe('Hearts', async () => {
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
       await sleep(5);
 
+      // Quorum is 2, only 1 vote is submitted
       await Polls.submitVote(challenge.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(challenge.pollId, RESIDENT2, now, NAY);
-      await Polls.submitVote(challenge.pollId, RESIDENT3, now, YAY);
       await sleep(5);
 
       await Hearts.resolveChallenge(challenge.id, challengeEnd);
@@ -306,9 +305,21 @@ describe('Hearts', async () => {
         .to.be.rejectedWith('Challenge already resolved!');
     });
 
+    it('can get the qorum for a challenge', async () => {
+      let quorum;
+
+      // Challenge reducing to 3 hearts, needs 40% of 5 residents
+      quorum = await Hearts.getChallengeQuorum(HOUSE, RESIDENT2, 2, now);
+      expect(quorum).to.equal(2);
+
+      // Challenge reducing to 1 hearts, needs 70% of 5 residents
+      quorum = await Hearts.getChallengeQuorum(HOUSE, RESIDENT2, 4, now);
+      expect(quorum).to.equal(4);
+    });
+
     it('cannot challenge oneself', async () => {
-      const dbError = 'HeartChallenge" ("challengeeId", "challengerId", "houseId", "pollId", "value") values ($1, $2, $3, $4, $5) returning * - ' +
-        'new row for relation "HeartChallenge" violates check constraint "HeartChallenge_check';
+      const dbError = 'insert into "HeartChallenge" ("challengedAt", "challengeeId", "challengerId", "houseId", "pollId", "value") ' +
+        'values ($1, $2, $3, $4, $5, $6) returning * - new row for relation "HeartChallenge" violates check constraint "HeartChallenge_check';
 
       await expect(Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT1, 1, now))
         .to.be.rejectedWith(dbError);
