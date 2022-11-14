@@ -365,8 +365,8 @@ exports.heartsHomeView = function (numHearts) {
       {
         type: 'actions',
         elements: [
-          { type: 'button', action_id: 'hearts-challenge', text: { type: 'plain_text', text: 'Issue a challenge', emoji: true } },
-          { type: 'button', action_id: 'hearts-board', text: { type: 'plain_text', text: 'See current hearts', emoji: true } }
+          { type: 'button', action_id: 'hearts-board', text: { type: 'plain_text', text: 'See current hearts', emoji: true } },
+          { type: 'button', action_id: 'hearts-challenge', text: { type: 'plain_text', text: 'Issue a challenge', emoji: true } }
         ]
       }
     ]
