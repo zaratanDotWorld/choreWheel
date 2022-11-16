@@ -6,7 +6,7 @@ const Hearts = require('../modules/hearts');
 const Polls = require('../modules/polls');
 const Admin = require('../modules/admin');
 
-const { YAY } = require('../constants');
+const { YAY, SLACKBOT } = require('../constants');
 const { sleep } = require('../utils');
 
 const blocks = require('./blocks');
@@ -64,6 +64,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     const now = new Date();
 
     await Admin.addResident(houseId, residentId, now);
+    await sleep(5);
     await Hearts.initialiseResident(houseId, residentId, now);
     await sleep(5);
 
@@ -80,6 +81,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     await Hearts.regenerateHearts(houseId, residentId, now);
     await Hearts.resolveChallenges(houseId, now);
 
+    // Issue karma hearts
     const [ karmaHeart ] = await Hearts.generateKarmaHeart(houseId, now);
     if (karmaHeart !== undefined) {
       const { heartsChannel } = await Admin.getHouse(houseId);
@@ -89,6 +91,16 @@ app.event('app_home_opened', async ({ body, event }) => {
         text: `<@${karmaHeart.residentId}> is last month's karma winner :heart_on_fire:`
       };
       res = await app.client.chat.postMessage(message);
+    }
+
+    // Sync workspace
+    const workspaceMembers = await app.client.users.list({ token: heartsOauth.bot.token });
+    for (const member of workspaceMembers.members) {
+      if (!member.is_bot & member.id !== SLACKBOT & member.id !== residentId) {
+        member.deleted
+          ? await Admin.deleteResident(houseId, member.id)
+          : await Admin.addResident(houseId, member.id, now);
+      }
     }
   }
 });

@@ -63,8 +63,6 @@ app.event('app_home_opened', async ({ body, event }) => {
     const now = new Date();
 
     await Admin.addResident(houseId, residentId, now);
-    console.log(`Added resident ${residentId}`);
-
     const balance = await Things.getHouseBalance(houseId, now);
 
     const data = {

@@ -7,7 +7,7 @@ const Polls = require('../modules/polls');
 const Admin = require('../modules/admin');
 
 const { pointsPerResident, displayThreshold } = require('../config');
-const { YAY, MINUTE, DAY } = require('../constants');
+const { YAY, MINUTE, DAY, SLACKBOT } = require('../constants');
 const { sleep, getMonthStart } = require('../utils');
 
 const blocks = require('./blocks');
@@ -62,11 +62,11 @@ app.event('app_home_opened', async ({ body, event }) => {
     const residentId = event.user;
 
     const now = new Date();
+    const monthStart = getMonthStart(now);
 
     await Admin.addResident(houseId, residentId, now);
-    console.log(`Added resident ${residentId}`);
+    await sleep(5);
 
-    const monthStart = getMonthStart(now);
     const chorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
     const activePercentage = await Chores.getActiveResidentPercentage(residentId, now);
 
@@ -80,6 +80,16 @@ app.event('app_home_opened', async ({ body, event }) => {
     // This bookkeeping is done asynchronously after returning the view
     await Chores.resolveChoreClaims(houseId, now);
     // await Chores.addChorePenalty(houseId, residentId, now);
+
+    // Sync workspace
+    const workspaceMembers = await app.client.users.list({ token: choresOauth.bot.token });
+    for (const member of workspaceMembers.members) {
+      if (!member.is_bot & member.id !== SLACKBOT & member.id !== residentId) {
+        member.deleted
+          ? await Admin.deleteResident(houseId, member.id)
+          : await Admin.addResident(houseId, member.id, now);
+      }
+    }
   }
 });
 
@@ -165,30 +175,6 @@ app.command('/chores-del', async ({ ack, command }) => {
     text = 'Only admins can update the chore list...';
   }
 
-  const message = prepareEphemeral(command, text);
-  await app.client.chat.postEphemeral(message);
-});
-
-app.command('/chores-sync', async ({ ack, command }) => {
-  await ack();
-
-  const SLACKBOT = 'USLACKBOT';
-
-  const now = new Date();
-  const workspaceMembers = await app.client.users.list({ token: choresOauth.bot.token });
-
-  for (const member of workspaceMembers.members) {
-    if (!member.is_bot & member.id !== SLACKBOT) {
-      member.deleted
-        ? await Admin.deleteResident(member.team_id, member.id)
-        : await Admin.addResident(member.team_id, member.id, now);
-    }
-  }
-
-  await sleep(5);
-  const residents = await Admin.getResidents(workspaceMembers.members[0].team_id);
-
-  const text = `Synced workspace, ${residents.length} active residents found`;
   const message = prepareEphemeral(command, text);
   await app.client.chat.postEphemeral(message);
 });
