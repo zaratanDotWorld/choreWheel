@@ -200,7 +200,7 @@ exports.getValidChoreClaims = async function (choreId) {
     .andWhere({ choreId });
 };
 
-exports.claimChore = async function (choreId, slackId, claimedAt) {
+exports.claimChore = async function (houseId, choreId, slackId, claimedAt) {
   const choreValue = await exports.getCurrentChoreValue(choreId, claimedAt);
 
   if (choreValue.sum === null) { throw new Error('Cannot claim a zero-value chore!'); }
@@ -209,6 +209,7 @@ exports.claimChore = async function (choreId, slackId, claimedAt) {
 
   return db('ChoreClaim')
     .insert({
+      houseId: houseId,
       choreId: choreId,
       claimedBy: slackId,
       claimedAt: claimedAt,
@@ -241,9 +242,8 @@ exports.resolveChoreClaim = async function (claimId, resolvedAt) {
 
 exports.resolveChoreClaims = async function (houseId, currentTime) {
   const resolvableChoreClaims = await db('ChoreClaim')
-    .join('Resident', 'ChoreClaim.claimedBy', 'Resident.slackId')
     .join('Poll', 'ChoreClaim.pollId', 'Poll.id')
-    .where('Resident.houseId', houseId)
+    .where('ChoreClaim.houseId', houseId)
     .where('ChoreClaim.resolvedAt', null)
     .where('Poll.endTime', '<=', currentTime)
     .select('ChoreClaim.id');

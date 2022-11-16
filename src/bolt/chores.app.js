@@ -235,7 +235,7 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const recentPoints = await Chores.getChorePoints(residentId, choreId, sixMonths, now);
 
   // Perform the claim
-  const [ claim ] = await Chores.claimChore(choreId, residentId, now);
+  const [ claim ] = await Chores.claimChore(houseId, choreId, residentId, now);
   await Polls.submitVote(claim.pollId, residentId, now, YAY);
 
   const message = {
