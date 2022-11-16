@@ -18,9 +18,9 @@ const { PowerRanker } = require('./power');
 
 // Hearts
 
-exports.getHeart = async function (houseId, residentId, currentTime) {
+exports.getHeart = async function (residentId, currentTime) {
   return db('Heart')
-    .where({ houseId: houseId, residentId: residentId, generatedAt: currentTime })
+    .where({ residentId: residentId, generatedAt: currentTime })
     .first();
 };
 
@@ -30,9 +30,9 @@ exports.getAgnosticHeart = async function (houseId, currentTime) {
     .first();
 };
 
-exports.getHearts = async function (houseId, residentId, currentTime) {
+exports.getHearts = async function (residentId, currentTime) {
   return db('Heart')
-    .where({ houseId, residentId })
+    .where({ residentId })
     .where('generatedAt', '<=', currentTime)
     .sum('value')
     .first();
@@ -57,7 +57,7 @@ exports.generateHearts = async function (houseId, residentId, value, generatedAt
 };
 
 exports.initialiseResident = async function (houseId, residentId, currentTime) {
-  const hearts = await exports.getHearts(houseId, residentId, currentTime);
+  const hearts = await exports.getHearts(residentId, currentTime);
   if (hearts.sum === null) {
     return exports.generateHearts(houseId, residentId, heartsBaseline, currentTime);
   } else { return []; }
@@ -67,9 +67,9 @@ exports.regenerateHearts = async function (houseId, residentId, currentTime) {
   const regenTime = getMonthStart(currentTime);
   if (currentTime < regenTime) { return []; }
 
-  const regeneration = await exports.getHeart(houseId, residentId, regenTime);
+  const regeneration = await exports.getHeart(residentId, regenTime);
   if (regeneration === undefined) {
-    const hearts = await exports.getHearts(houseId, residentId, regenTime);
+    const hearts = await exports.getHearts(residentId, regenTime);
     if (hearts.sum === null) { return []; } // Don't regenerate if not initialized
 
     const regenAmount = Math.min(heartsRegen, Math.max(0, heartsBaseline - hearts.sum)); // Bring to baseline
@@ -103,7 +103,7 @@ exports.getChallenge = async function (challengeId) {
 
 exports.getChallengeQuorum = async function (houseId, challengeeId, value, challengedAt) {
   const residents = await Admin.getResidents(houseId);
-  const challengeeHearts = await exports.getHearts(houseId, challengeeId, challengedAt);
+  const challengeeHearts = await exports.getHearts(challengeeId, challengedAt);
   return (challengeeHearts.sum - value <= heartsCriticalNum)
     ? Math.ceil(residents.length * heartsMinPctFinal)
     : Math.ceil(residents.length * heartsMinPctInitial);
@@ -192,7 +192,7 @@ exports.generateKarmaHeart = async function (houseId, currentTime) {
     if (karmaRankings.length === 0) { return []; }
 
     const winnerId = karmaRankings[0].slackId;
-    const winnerHearts = await exports.getHearts(houseId, winnerId, generationTime);
+    const winnerHearts = await exports.getHearts(winnerId, generationTime);
     const karmaAmount = Math.min(1, Math.max(0, karmaMaxHearts - winnerHearts.sum)); // Bring to maximum
     return exports.generateHearts(houseId, winnerId, karmaAmount, generationTime);
   } else { return []; }

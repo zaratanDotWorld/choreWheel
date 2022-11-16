@@ -335,9 +335,9 @@ exports.addChorePenalty = async function (houseId, residentId, currentTime) {
   const penaltyTime = new Date(monthStart.getTime() + penaltyDelay);
   if (currentTime < penaltyTime) { return []; }
 
-  const penalty = await Hearts.getHeart(houseId, residentId, penaltyTime);
+  const penalty = await Hearts.getHeart(residentId, penaltyTime);
   if (penalty === undefined) {
-    const hearts = await Hearts.getHearts(houseId, residentId, penaltyTime);
+    const hearts = await Hearts.getHearts(residentId, penaltyTime);
     if (hearts.sum === null) { return []; } // Don't penalize if not initialized
 
     const penaltyAmount = await exports.calculatePenalty(residentId, penaltyTime);

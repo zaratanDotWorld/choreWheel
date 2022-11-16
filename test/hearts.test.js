@@ -62,9 +62,9 @@ describe('Hearts', async () => {
       await Hearts.generateHearts(HOUSE, RESIDENT2, 1, now);
       await sleep(5);
 
-      const hearts1 = await Hearts.getHearts(HOUSE, RESIDENT1, now);
-      const hearts2 = await Hearts.getHearts(HOUSE, RESIDENT2, now);
-      const hearts3 = await Hearts.getHearts(HOUSE, RESIDENT3, now);
+      const hearts1 = await Hearts.getHearts(RESIDENT1, now);
+      const hearts2 = await Hearts.getHearts(RESIDENT2, now);
+      const hearts3 = await Hearts.getHearts(RESIDENT3, now);
 
       expect(hearts1.sum).to.equal(2);
       expect(hearts2.sum).to.equal(1);
@@ -88,7 +88,7 @@ describe('Hearts', async () => {
       await Hearts.generateHearts(HOUSE, RESIDENT1, -2, now);
       await sleep(5);
 
-      const hearts = await Hearts.getHearts(HOUSE, RESIDENT1, now);
+      const hearts = await Hearts.getHearts(RESIDENT1, now);
 
       expect(hearts.sum).to.equal(1);
     });
@@ -98,7 +98,7 @@ describe('Hearts', async () => {
       await Hearts.generateHearts(HOUSE, RESIDENT1, -0.75, now);
       await sleep(5);
 
-      const hearts = await Hearts.getHearts(HOUSE, RESIDENT1, now);
+      const hearts = await Hearts.getHearts(RESIDENT1, now);
 
       expect(hearts.sum).to.equal(1.75);
     });
@@ -108,14 +108,14 @@ describe('Hearts', async () => {
       await sleep(5);
 
       let hearts;
-      hearts = await Hearts.getHearts(HOUSE, RESIDENT1, now);
+      hearts = await Hearts.getHearts(RESIDENT1, now);
       expect(hearts.sum).to.equal(heartsBaseline);
 
       // But only once
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
       await sleep(5);
 
-      hearts = await Hearts.getHearts(HOUSE, RESIDENT1, now);
+      hearts = await Hearts.getHearts(RESIDENT1, now);
       expect(hearts.sum).to.equal(heartsBaseline);
 
       // Even if they go back to zero
@@ -125,7 +125,7 @@ describe('Hearts', async () => {
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
       await sleep(5);
 
-      hearts = await Hearts.getHearts(HOUSE, RESIDENT1, now);
+      hearts = await Hearts.getHearts(RESIDENT1, now);
       expect(hearts.sum).to.equal(0);
     });
 
@@ -136,7 +136,7 @@ describe('Hearts', async () => {
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, nextMonth);
       await sleep(5);
 
-      hearts = await Hearts.getHearts(HOUSE, RESIDENT1, nextMonth);
+      hearts = await Hearts.getHearts(RESIDENT1, nextMonth);
       expect(hearts.sum).to.equal(null);
 
       // Generate a heart, now regeneration works
@@ -146,21 +146,21 @@ describe('Hearts', async () => {
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, nextMonth);
       await sleep(5);
 
-      hearts = await Hearts.getHearts(HOUSE, RESIDENT1, nextMonth);
+      hearts = await Hearts.getHearts(RESIDENT1, nextMonth);
       expect(hearts.sum).to.equal(1.5);
 
       // But not in the same month
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, nextMonth);
       await sleep(5);
 
-      hearts = await Hearts.getHearts(HOUSE, RESIDENT1, nextMonth);
+      hearts = await Hearts.getHearts(RESIDENT1, nextMonth);
       expect(hearts.sum).to.equal(1.5);
 
       // But yes in another month
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, twoMonths);
       await sleep(5);
 
-      hearts = await Hearts.getHearts(HOUSE, RESIDENT1, twoMonths);
+      hearts = await Hearts.getHearts(RESIDENT1, twoMonths);
       expect(hearts.sum).to.equal(2);
     });
 
@@ -170,26 +170,26 @@ describe('Hearts', async () => {
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
       await sleep(5);
 
-      hearts = await Hearts.getHearts(HOUSE, RESIDENT1, now);
+      hearts = await Hearts.getHearts(RESIDENT1, now);
       expect(hearts.sum).to.equal(5);
 
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, now);
       await sleep(5);
 
-      hearts = await Hearts.getHearts(HOUSE, RESIDENT1, now);
+      hearts = await Hearts.getHearts(RESIDENT1, now);
       expect(hearts.sum).to.equal(5);
 
       // Or overloaded
       await Hearts.generateHearts(HOUSE, RESIDENT1, 1, nextMonth);
       await sleep(5);
 
-      hearts = await Hearts.getHearts(HOUSE, RESIDENT1, nextMonth);
+      hearts = await Hearts.getHearts(RESIDENT1, nextMonth);
       expect(hearts.sum).to.equal(6);
 
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, nextMonth);
       await sleep(5);
 
-      hearts = await Hearts.getHearts(HOUSE, RESIDENT1, nextMonth);
+      hearts = await Hearts.getHearts(RESIDENT1, nextMonth);
       expect(hearts.sum).to.equal(6);
     });
   });
@@ -214,8 +214,8 @@ describe('Hearts', async () => {
       await Hearts.resolveChallenge(challenge.id, challengeEnd);
       await sleep(5);
 
-      const hearts1 = await Hearts.getHearts(HOUSE, RESIDENT1, challengeEnd);
-      const hearts2 = await Hearts.getHearts(HOUSE, RESIDENT2, challengeEnd);
+      const hearts1 = await Hearts.getHearts(RESIDENT1, challengeEnd);
+      const hearts2 = await Hearts.getHearts(RESIDENT2, challengeEnd);
       expect(hearts1.sum).to.equal(5);
       expect(hearts2.sum).to.equal(4);
     });
@@ -232,8 +232,8 @@ describe('Hearts', async () => {
       await Hearts.resolveChallenge(challenge.id, challengeEnd);
       await sleep(5);
 
-      const hearts1 = await Hearts.getHearts(HOUSE, RESIDENT1, challengeEnd);
-      const hearts2 = await Hearts.getHearts(HOUSE, RESIDENT2, challengeEnd);
+      const hearts1 = await Hearts.getHearts(RESIDENT1, challengeEnd);
+      const hearts2 = await Hearts.getHearts(RESIDENT2, challengeEnd);
       expect(hearts1.sum).to.equal(4);
       expect(hearts2.sum).to.equal(5);
     });
@@ -249,8 +249,8 @@ describe('Hearts', async () => {
       await Hearts.resolveChallenge(challenge.id, challengeEnd);
       await sleep(5);
 
-      const hearts1 = await Hearts.getHearts(HOUSE, RESIDENT1, challengeEnd);
-      const hearts2 = await Hearts.getHearts(HOUSE, RESIDENT2, challengeEnd);
+      const hearts1 = await Hearts.getHearts(RESIDENT1, challengeEnd);
+      const hearts2 = await Hearts.getHearts(RESIDENT2, challengeEnd);
       expect(hearts1.sum).to.equal(4);
       expect(hearts2.sum).to.equal(5);
     });
@@ -270,8 +270,8 @@ describe('Hearts', async () => {
       await Hearts.resolveChallenges(HOUSE, challengeEnd);
       await sleep(5);
 
-      const hearts1 = await Hearts.getHearts(HOUSE, RESIDENT1, challengeEnd);
-      const hearts2 = await Hearts.getHearts(HOUSE, RESIDENT2, challengeEnd);
+      const hearts1 = await Hearts.getHearts(RESIDENT1, challengeEnd);
+      const hearts2 = await Hearts.getHearts(RESIDENT2, challengeEnd);
       expect(hearts1.sum).to.equal(4);
       expect(hearts2.sum).to.equal(4);
     });
