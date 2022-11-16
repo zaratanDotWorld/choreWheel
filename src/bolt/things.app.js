@@ -26,7 +26,7 @@ const home = {
 };
 
 const app = new App({
-  logLevel: LogLevel.DEBUG,
+  logLevel: LogLevel.INFO,
   clientId: process.env.THINGS_CLIENT_ID,
   clientSecret: process.env.THINGS_CLIENT_SECRET,
   signingSecret: process.env.THINGS_SIGNING_SECRET,
