@@ -67,7 +67,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     await Hearts.initialiseResident(houseId, residentId, now);
     await sleep(5);
 
-    const hearts = await Hearts.getHearts(houseId, residentId, now);
+    const hearts = await Hearts.getHearts(residentId, now);
 
     const data = {
       token: heartsOauth.bot.token,
