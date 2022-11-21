@@ -7,7 +7,7 @@ const Polls = require('../modules/polls');
 const Admin = require('../modules/admin');
 
 const { pointsPerResident, displayThreshold } = require('../config');
-const { YAY, MINUTE, DAY, SLACKBOT } = require('../constants');
+const { YAY, MINUTE, DAY } = require('../constants');
 const { sleep, getMonthStart } = require('../utils');
 
 const blocks = require('./blocks');
@@ -82,14 +82,14 @@ app.event('app_home_opened', async ({ body, event }) => {
     // await Chores.addChorePenalty(houseId, residentId, now);
 
     // Sync workspace
-    const workspaceMembers = await app.client.users.list({ token: choresOauth.bot.token });
-    for (const member of workspaceMembers.members) {
-      if (!member.is_bot & member.id !== SLACKBOT & member.id !== residentId) {
-        member.deleted
-          ? await Admin.deleteResident(houseId, member.id)
-          : await Admin.addResident(houseId, member.id, now);
-      }
-    }
+    // const workspaceMembers = await app.client.users.list({ token: choresOauth.bot.token });
+    // for (const member of workspaceMembers.members) {
+    //   if (!member.is_bot & member.id !== SLACKBOT & member.id !== residentId) {
+    //     member.deleted
+    //       ? await Admin.deleteResident(houseId, member.id)
+    //       : await Admin.addResident(houseId, member.id, now);
+    //   }
+    // }
   }
 });
 

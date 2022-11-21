@@ -6,7 +6,7 @@ const Hearts = require('../modules/hearts');
 const Polls = require('../modules/polls');
 const Admin = require('../modules/admin');
 
-const { YAY, SLACKBOT } = require('../constants');
+const { YAY } = require('../constants');
 const { sleep } = require('../utils');
 
 const blocks = require('./blocks');
@@ -94,14 +94,14 @@ app.event('app_home_opened', async ({ body, event }) => {
     }
 
     // Sync workspace
-    const workspaceMembers = await app.client.users.list({ token: heartsOauth.bot.token });
-    for (const member of workspaceMembers.members) {
-      if (!member.is_bot & member.id !== SLACKBOT & member.id !== residentId) {
-        member.deleted
-          ? await Admin.deleteResident(houseId, member.id)
-          : await Admin.addResident(houseId, member.id, now);
-      }
-    }
+    // const workspaceMembers = await app.client.users.list({ token: heartsOauth.bot.token });
+    // for (const member of workspaceMembers.members) {
+    //   if (!member.is_bot & member.id !== SLACKBOT & member.id !== residentId) {
+    //     member.deleted
+    //       ? await Admin.deleteResident(houseId, member.id)
+    //       : await Admin.addResident(houseId, member.id, now);
+    //   }
+    // }
   }
 });
 
