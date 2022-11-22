@@ -148,6 +148,18 @@ exports.resolveChallenges = async function (houseId, currentTime) {
 
 // Karma
 
+exports.getKarmaRecipients = function (message) {
+  const regex = /<@(\w+)>\s*\+\+/g; // Matches`<@username>++`
+  const matches = [];
+
+  let match;
+  while ((match = regex.exec(message))) {
+    matches.push(match[1]);
+  }
+
+  return matches;
+};
+
 exports.getKarma = async function (houseId, startTime, endTime) {
   return db('HeartKarma')
     .where({ houseId })

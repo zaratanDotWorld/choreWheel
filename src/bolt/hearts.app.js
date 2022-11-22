@@ -250,15 +250,16 @@ app.action(/poll-vote/, async ({ ack, body, action }) => {
 // Karma flow
 
 app.event('message', async ({ payload }) => {
-  const regex = /<@(\w+)>\s*\+\+/;
-  const matches = regex.exec(payload.text);
+  const karmaRecipients = Hearts.getKarmaRecipients(payload.text);
 
-  if (matches !== null) {
+  if (karmaRecipients.length > 0) {
     const houseId = payload.team;
     const giverId = payload.user;
-    const receiverId = matches[1];
+    const now = new Date();
 
-    await Hearts.giveKarma(houseId, giverId, receiverId, new Date());
+    for (const receiverId of karmaRecipients) {
+      await Hearts.giveKarma(houseId, giverId, receiverId, now);
+    }
 
     await app.client.reactions.add({
       token: heartsOauth.bot.token,

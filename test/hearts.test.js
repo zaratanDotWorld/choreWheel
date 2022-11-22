@@ -335,6 +335,15 @@ describe('Hearts', async () => {
       twoMonthsKarma = new Date(twoMonths.getTime() + karmaDelay);
     });
 
+    it('can extract recipients from a message', async () => {
+      const message = `Thanks <@${RESIDENT1}>++ and <@${RESIDENT2}> ++ for dinner!`;
+      const recipients = Hearts.getKarmaRecipients(message);
+
+      expect(recipients.length).to.equal(2);
+      expect(recipients[0]).to.equal(RESIDENT1);
+      expect(recipients[1]).to.equal(RESIDENT2);
+    });
+
     it('can give karma to a resident', async () => {
       await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT2, now);
       await Hearts.giveKarma(HOUSE, RESIDENT2, RESIDENT3, now);
