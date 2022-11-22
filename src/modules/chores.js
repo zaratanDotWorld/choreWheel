@@ -384,6 +384,7 @@ exports.giftChorePoints = async function (gifterId, recipientId, giftedAt, value
 
     await trx('ChoreClaim')
       .insert({
+        houseId: choreClaim.houseId,
         claimedBy: recipientId,
         claimedAt: giftedAt,
         value: value,
