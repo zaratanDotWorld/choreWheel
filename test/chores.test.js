@@ -825,6 +825,27 @@ describe('Chores', async () => {
       expect(chorePoints2.sum).to.equal(6);
     });
 
+    it('can correctly account for gifts when resolving claims', async () => {
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 } ]);
+      await sleep(5);
+      const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
+      await sleep(5);
+      await Chores.giftChorePoints(RESIDENT1, RESIDENT2, now, 6);
+      await sleep(5);
+
+      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT2, soon, YAY);
+      await sleep(5);
+      await Chores.resolveChoreClaim(choreClaim.id, challengeEnd);
+      await sleep(5);
+
+      const monthStart = getMonthStart(now);
+      const chorePoints1 = await Chores.getAllChorePoints(RESIDENT1, monthStart, challengeEnd);
+      const chorePoints2 = await Chores.getAllChorePoints(RESIDENT2, monthStart, challengeEnd);
+      expect(chorePoints1.sum).to.equal(4);
+      expect(chorePoints2.sum).to.equal(6);
+    });
+
     it('cannot gift more than the most recent claim', async () => {
       await db('ChoreValue').insert([
         { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 },

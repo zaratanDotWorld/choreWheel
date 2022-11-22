@@ -221,22 +221,27 @@ exports.claimChore = async function (houseId, choreId, slackId, claimedAt) {
 
 exports.resolveChoreClaim = async function (claimId, resolvedAt) {
   const choreClaim = await exports.getChoreClaim(claimId);
-
-  const pollId = choreClaim.pollId;
-  const poll = await Polls.getPoll(pollId);
+  const poll = await Polls.getPoll(choreClaim.pollId);
 
   if (resolvedAt < poll.endTime) { throw new Error('Poll not closed!'); }
 
-  const { yays, nays } = await Polls.getPollResultCounts(pollId);
-  const valid = (yays >= choresMinVotes && yays > nays);
+  let adjustedCurrentValue;
+  if (choreClaim.choreId) {
+    const choreGifts = await exports.getChorePointGifts(choreClaim.pollId);
+    const currentValue = await exports.getCurrentChoreValue(choreClaim.choreId, choreClaim.claimedAt);
+    const sumGifts = choreGifts.reduce((sum, gift) => sum + gift.value, 0);
+    adjustedCurrentValue = currentValue.sum - sumGifts;
+  } else {
+    adjustedCurrentValue = choreClaim.value;
+  }
 
-  const choreValue = valid
-    ? await exports.getCurrentChoreValue(choreClaim.choreId, choreClaim.claimedAt)
-    : { sum: 0 };
+  const { yays, nays } = await Polls.getPollResultCounts(choreClaim.pollId);
+  const valid = (yays >= choresMinVotes && yays > nays);
+  const choreValue = valid ? adjustedCurrentValue : 0;
 
   return db('ChoreClaim')
     .where({ id: claimId, resolvedAt: null }) // Cannot resolve twice
-    .update({ value: choreValue.sum, resolvedAt: resolvedAt, valid: valid })
+    .update({ value: choreValue, resolvedAt: resolvedAt, valid: valid })
     .returning('*');
 };
 
@@ -386,4 +391,10 @@ exports.giftChorePoints = async function (gifterId, recipientId, giftedAt, value
       })
       .returning('*');
   });
+};
+
+exports.getChorePointGifts = async function (pollId) {
+  return db('ChoreClaim')
+    .where({ choreId: null, pollId: pollId })
+    .select('*');
 };
