@@ -211,7 +211,7 @@ app.command('/things-resolved', async ({ ack, command }) => {
   const now = new Date();
   const start = new Date(now.getTime() - DAY * numDays);
 
-  const buys = await Things.getResolvedThingBuys(houseId, start, now);
+  const buys = await Things.getFulfillableThingBuys(houseId, start, now);
   const parsedBuys = buys.map((buy) => `\n${buy.resolvedAt}: ${blocks.formatThing(buy)}`);
 
   const text = `The resolved buys in the last ${numDays} days:${parsedBuys}`;

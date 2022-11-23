@@ -216,7 +216,7 @@ describe('Things', async () => {
       expect(resolvedBuy3.resolvedAt).to.equal(null);
     });
 
-    it('can get a list of resolved buys', async () => {
+    it('can get a list of fulfillable buys', async () => {
       await Things.loadHouseAccount(HOUSE, now, 100);
       await sleep(5);
 
@@ -225,15 +225,31 @@ describe('Things', async () => {
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
       await sleep(5);
 
-      let resolvedBuys;
-      resolvedBuys = await Things.getResolvedThingBuys(HOUSE, now, challengeEnd);
-      expect(resolvedBuys.length).to.equal(0);
+      let fulfillableBuys;
+      fulfillableBuys = await Things.getFulfillableThingBuys(HOUSE, now, challengeEnd);
+      expect(fulfillableBuys.length).to.equal(0);
 
       await Things.resolveThingBuy(buy.id, challengeEnd);
       await sleep(5);
 
-      resolvedBuys = await Things.getResolvedThingBuys(HOUSE, now, challengeEnd);
-      expect(resolvedBuys.length).to.equal(1);
+      fulfillableBuys = await Things.getFulfillableThingBuys(HOUSE, now, challengeEnd);
+      expect(fulfillableBuys.length).to.equal(1);
+    });
+
+    it('can fulfill a buy', async () => {
+      await Things.loadHouseAccount(HOUSE, now, 100);
+      await sleep(5);
+
+      const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
+
+      await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
+      await sleep(5);
+      await Things.resolveThingBuy(buy.id, challengeEnd);
+      await sleep(5);
+
+      const [ fulfilledBuy ] = await Things.fulfillThingBuy(buy.id, RESIDENT2, challengeEnd);
+      expect(fulfilledBuy.fulfilledAt.getTime()).to.equal(challengeEnd.getTime());
+      expect(fulfilledBuy.fulfilledBy).to.equal(RESIDENT2);
     });
   });
 });

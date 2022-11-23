@@ -109,13 +109,21 @@ exports.resolveThingBuys = async function (houseId, currentTime) {
   }
 };
 
-exports.getResolvedThingBuys = async function (houseId, startTime, endTime) {
+exports.getFulfillableThingBuys = async function (houseId, startTime, endTime) {
   return db('ThingBuy')
     .join('Thing', 'ThingBuy.thingId', 'Thing.id')
     .where('ThingBuy.houseId', houseId)
     .where('ThingBuy.resolvedAt', '>', startTime)
     .where('ThingBuy.resolvedAt', '<=', endTime)
+    .where('ThingBuy.fulfilledAt', null) // Exclude fulfilled buys
     .whereNot('ThingBuy.pollId', null) // Exclude "load" buys
     .orderBy('ThingBuy.resolvedAt', 'asc')
     .select('*');
+};
+
+exports.fulfillThingBuy = async function (buyId, fulfilledBy, fulfilledAt) {
+  return db('ThingBuy')
+    .where({ id: buyId, fulfilledAt: null })
+    .update({ fulfilledBy, fulfilledAt })
+    .returning('*');
 };
