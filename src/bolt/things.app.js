@@ -212,9 +212,27 @@ app.command('/things-resolved', async ({ ack, command }) => {
   const start = new Date(now.getTime() - DAY * numDays);
 
   const buys = await Things.getFulfillableThingBuys(houseId, start, now);
-  const parsedBuys = buys.map((buy) => `\n${buy.resolvedAt}: ${blocks.formatThing(buy)}`);
+  const parsedBuys = buys.map((buy) => {
+    return `\n${buy.id} ${blocks.formatThing(buy)}: ${buy.resolvedAt.toLocaleString()}`;
+  });
 
   const text = `The resolved buys in the last ${numDays} days:${parsedBuys}`;
+  const message = prepareEphemeral(command, text);
+  await app.client.chat.postEphemeral(message);
+});
+
+app.command('/things-fulfill', async ({ ack, command }) => {
+  await ack();
+
+  const residentId = command.user_id;
+  const buyIds = command.text.split(' ');
+  const now = new Date();
+
+  for (const buyId of buyIds) {
+    await Things.fulfillThingBuy(buyId, residentId, now);
+  }
+
+  const text = `Fulfilled the following buys: ${buyIds.join(' ')}`;
   const message = prepareEphemeral(command, text);
   await app.client.chat.postEphemeral(message);
 });
