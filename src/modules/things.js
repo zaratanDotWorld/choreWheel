@@ -118,7 +118,14 @@ exports.getFulfillableThingBuys = async function (houseId, startTime, endTime) {
     .where('ThingBuy.fulfilledAt', null) // Exclude fulfilled buys
     .whereNot('ThingBuy.pollId', null) // Exclude "load" buys
     .orderBy('ThingBuy.resolvedAt', 'asc')
-    .select('*');
+    .select([
+      'ThingBuy.id',
+      'Thing.type',
+      'Thing.name',
+      'Thing.quantity',
+      'ThingBuy.value',
+      'ThingBuy.resolvedAt'
+    ]);
 };
 
 exports.fulfillThingBuy = async function (buyId, fulfilledBy, fulfilledAt) {
