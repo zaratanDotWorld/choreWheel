@@ -41,6 +41,11 @@ features:
       description: Get list of resolved buys
       usage_hint: "[days]"
       should_escape: true
+    - command: /things-fulfill
+      url: https://zaratan.ngrok.io/slack/events
+      description: Mark buys as fulfilled
+      usage_hint: "[id] [id] ..."
+      should_escape: true
 oauth_config:
   redirect_urls:
     - https://zaratan.ngrok.io/slack/oauth_redirect
