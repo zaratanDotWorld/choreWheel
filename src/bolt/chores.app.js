@@ -371,12 +371,14 @@ app.action('chores-gift', async ({ ack, body }) => {
   await ack();
 
   const residentId = body.user.id;
-  const lastChoreclaim = await Chores.getLatestChoreClaim(residentId);
+  const now = new Date();
+  const monthStart = getMonthStart(now);
+  const choreClaim = await Chores.getLargestChoreClaim(residentId, monthStart, now);
 
   const view = {
     token: choresOauth.bot.token,
     trigger_id: body.trigger_id,
-    view: blocks.choresGiftView(lastChoreclaim.value)
+    view: blocks.choresGiftView(choreClaim)
   };
 
   res = await app.client.views.open(view);
@@ -394,18 +396,19 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
   const recipientBlockId = body.view.blocks[2].block_id;
   const valueBlockId = body.view.blocks[3].block_id;
 
-  const recipientId = body.view.state.values[recipientBlockId].recipient.selected_users[0];
+  const recipientId = body.view.state.values[recipientBlockId].recipient.selected_user;
   const value = body.view.state.values[valueBlockId].value.value;
 
   const { choresChannel } = await Admin.getHouse(houseId);
 
   // Perform the update
-  await Chores.giftChorePoints(residentId, recipientId, new Date(), Number(value));
+  const choreClaimId = body.view.private_metadata;
+  await Chores.giftChorePoints(choreClaimId, recipientId, new Date(), Number(value));
 
   const message = {
     token: choresOauth.bot.token,
     channel: choresChannel,
-    text: `<@${residentId}> just gifted <@${recipientId}> *${value} points* :sparkling_heart:`
+    text: `<@${residentId}> just gifted <@${recipientId}> *${value} points* :gift:`
   };
 
   res = await app.client.chat.postMessage(message);

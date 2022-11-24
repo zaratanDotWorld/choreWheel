@@ -809,13 +809,29 @@ describe('Chores', async () => {
       await Admin.addResident(HOUSE, RESIDENT2, now);
     });
 
+    it('can get the largest valid chore claim', async () => {
+      await db('ChoreValue').insert([
+        { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 },
+        { choreId: restock.id, valuedAt: now, value: 30, ranking: 0, residents: 0 },
+        { choreId: sweeping.id, valuedAt: now, value: 20, ranking: 0, residents: 0 }
+      ]);
+      await sleep(5);
+      await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
+      await Chores.claimChore(HOUSE, restock.id, RESIDENT1, now);
+      await Chores.claimChore(HOUSE, sweeping.id, RESIDENT1, now);
+      await sleep(5);
+
+      const choreClaim = await Chores.getLargestChoreClaim(RESIDENT1, now, now);
+      expect(choreClaim.value).to.equal(30);
+    });
+
     it('can gift chore points', async () => {
       await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 } ]);
       await sleep(5);
-      await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
+      const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
       await sleep(5);
 
-      await Chores.giftChorePoints(RESIDENT1, RESIDENT2, now, 6);
+      await Chores.giftChorePoints(choreClaim.id, RESIDENT2, now, 6);
       await sleep(5);
 
       const monthStart = getMonthStart(now);
@@ -830,7 +846,7 @@ describe('Chores', async () => {
       await sleep(5);
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
       await sleep(5);
-      await Chores.giftChorePoints(RESIDENT1, RESIDENT2, now, 6);
+      await Chores.giftChorePoints(choreClaim.id, RESIDENT2, now, 6);
       await sleep(5);
 
       await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
@@ -851,7 +867,7 @@ describe('Chores', async () => {
       await sleep(5);
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
       await sleep(5);
-      await Chores.giftChorePoints(RESIDENT1, RESIDENT2, now, 6);
+      await Chores.giftChorePoints(choreClaim.id, RESIDENT2, now, 6);
       await sleep(5);
 
       await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, NAY);
@@ -867,22 +883,43 @@ describe('Chores', async () => {
       expect(chorePoints2.sum).to.equal(null);
     });
 
-    it('cannot gift more than the most recent claim', async () => {
-      await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 },
-        { choreId: sweeping.id, valuedAt: now, value: 5, ranking: 0, residents: 0 }
-      ]);
+    it('cannot gift more than the value of the claim', async () => {
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 } ]);
       await sleep(5);
-      await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
-      await sleep(5);
-      await Chores.claimChore(HOUSE, sweeping.id, RESIDENT1, soon);
+      const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
       await sleep(5);
 
       const dbError = 'update "ChoreClaim" set "value" = $1 where "id" = $2 - ' +
         'new row for relation "ChoreClaim" violates check constraint "ChoreClaim_value_check"';
 
-      await expect(Chores.giftChorePoints(RESIDENT1, RESIDENT2, soon, 6))
+      await expect(Chores.giftChorePoints(choreClaim.id, RESIDENT2, soon, 20))
         .to.be.rejectedWith(dbError);
+    });
+
+    it('can regift a chore gift', async () => {
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 40, ranking: 0, residents: 0 } ]);
+      await sleep(5);
+      await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
+      await sleep(5);
+
+      let choreClaim;
+      choreClaim = await Chores.getLargestChoreClaim(RESIDENT1, now, now);
+      expect(choreClaim.value).to.equal(40);
+
+      await Chores.giftChorePoints(choreClaim.id, RESIDENT2, now, 30);
+      await sleep(5);
+
+      choreClaim = await Chores.getLargestChoreClaim(RESIDENT1, now, now);
+      expect(choreClaim.value).to.equal(10);
+
+      choreClaim = await Chores.getLargestChoreClaim(RESIDENT2, now, now);
+      expect(choreClaim.value).to.equal(30);
+
+      await Chores.giftChorePoints(choreClaim.id, RESIDENT1, now, 20);
+      await sleep(5);
+
+      choreClaim = await Chores.getLargestChoreClaim(RESIDENT1, now, now);
+      expect(choreClaim.value).to.equal(20);
     });
   });
 });

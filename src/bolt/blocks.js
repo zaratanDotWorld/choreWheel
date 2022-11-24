@@ -202,13 +202,14 @@ exports.choresBreakView = function (currentTime) {
   };
 };
 
-exports.choresGiftView = function (maxValue) {
-  const mainText = 'Choose a recipient. You can gift up to a maximum of ' +
-    `*${maxValue.toFixed(pointPrecision)} points* (the remaining value of your last claim).`;
+exports.choresGiftView = function (choreClaim) {
+  const giftablePoints = choreClaim.value.toFixed(pointPrecision);
+  const mainText = `Choose a recipient. You have *${giftablePoints} points* available to gift.`;
 
   return {
     type: 'modal',
     callback_id: 'chores-gift-callback',
+    private_metadata: choreClaim.id.toString(),
     title: { type: 'plain_text', text: 'Chores', emoji: true },
     submit: { type: 'plain_text', text: 'Submit', emoji: true },
     close: { type: 'plain_text', text: 'Cancel', emoji: true },
@@ -219,7 +220,7 @@ exports.choresGiftView = function (maxValue) {
         type: 'input',
         label: { type: 'plain_text', text: 'Gift recipient', emoji: true },
         element: {
-          type: 'multi_users_select',
+          type: 'users_select',
           placeholder: { type: 'plain_text', text: 'Choose a resident', emoji: true },
           action_id: 'recipient'
         }

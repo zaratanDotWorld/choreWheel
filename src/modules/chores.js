@@ -366,16 +366,16 @@ exports.calculatePenalty = async function (residentId, penaltyTime) {
 
 // Chore Point Gifting
 
-exports.getLatestChoreClaim = async function (residentId) {
+exports.getLargestChoreClaim = async function (residentId, startTime, endTime) {
   return db('ChoreClaim')
     .where({ claimedBy: residentId, valid: true })
-    .whereNot({ choreId: null })
-    .orderBy('claimedAt', 'desc')
+    .whereBetween('claimedAt', [ startTime, endTime ])
+    .orderBy('value', 'desc')
     .first();
 };
 
-exports.giftChorePoints = async function (gifterId, recipientId, giftedAt, value) {
-  const choreClaim = await exports.getLatestChoreClaim(gifterId);
+exports.giftChorePoints = async function (sourceClaimId, recipientId, giftedAt, value) {
+  const choreClaim = await exports.getChoreClaim(sourceClaimId);
 
   return db.transaction(async trx => {
     await trx('ChoreClaim')
