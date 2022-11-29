@@ -117,7 +117,7 @@ exports.getCurrentChoreRankings = async function (houseId) {
 
   return chores.map(chore => {
     return { id: chore.id, name: chore.name, ranking: rankings.get(chore.id) };
-  });
+  }).sort((a, b) => b.ranking - a.ranking);
 };
 
 exports.getChoreValueIntervalScalar = async function (houseId, currentTime) {
