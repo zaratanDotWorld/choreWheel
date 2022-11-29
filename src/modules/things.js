@@ -22,6 +22,7 @@ exports.deleteThing = async function (thingId) {
 exports.getThings = async function (houseId) {
   return db('Thing')
     .where({ houseId: houseId, active: true })
+    .orderBy([ 'type', 'name' ])
     .returning('*');
 };
 

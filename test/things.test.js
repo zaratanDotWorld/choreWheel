@@ -59,6 +59,8 @@ describe('Things', async () => {
       let things;
       things = await Things.getThings(HOUSE);
       expect(things.length).to.equal(2);
+      expect(things[0].name).to.equal(RICE);
+      expect(things[1].name).to.equal(SOAP);
 
       await Things.deleteThing(soap.id);
       await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, value: 20 });
