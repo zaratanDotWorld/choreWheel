@@ -181,7 +181,7 @@ exports.getUpdatedChoreValues = async function (houseId, updateTime) {
     choreValue.value += (choreValueUpdate) ? choreValueUpdate.value : 0;
   });
 
-  return choreValues;
+  return choreValues.sort((a, b) => b.value - a.value);
 };
 
 // Chore Claims
