@@ -41,7 +41,7 @@ exports.choresHomeView = function (balance, owed) {
         elements: [
           { type: 'button', action_id: 'chores-claim', text: { type: 'plain_text', text: 'Claim a chore', emoji: true } },
           { type: 'button', action_id: 'chores-rank', text: { type: 'plain_text', text: 'Set chore speeds', emoji: true } },
-          { type: 'button', action_id: 'chores-gift', text: { type: 'plain_text', text: 'Gift chore points', emoji: true } },
+          { type: 'button', action_id: 'chores-gift', text: { type: 'plain_text', text: 'Gift your points', emoji: true } },
           { type: 'button', action_id: 'chores-break', text: { type: 'plain_text', text: 'Take a break', emoji: true } }
         ]
       }
@@ -163,6 +163,42 @@ exports.choresRankView = function (choreRankings) {
   };
 };
 
+exports.choresGiftView = function (choreClaim) {
+  const giftablePoints = choreClaim.value.toFixed(pointPrecision);
+  const mainText = `Gift someone points from your balance. You have *${giftablePoints} points* to gift.`;
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-gift-callback',
+    private_metadata: choreClaim.id.toString(),
+    title: { type: 'plain_text', text: 'Chores', emoji: true },
+    submit: { type: 'plain_text', text: 'Submit', emoji: true },
+    close: { type: 'plain_text', text: 'Cancel', emoji: true },
+    blocks: [
+      { type: 'header', text: { type: 'plain_text', text: 'Gift chore points', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Gift recipient', emoji: true },
+        element: {
+          type: 'users_select',
+          placeholder: { type: 'plain_text', text: 'Choose a resident', emoji: true },
+          action_id: 'recipient'
+        }
+      },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Number of points', emoji: true },
+        element: {
+          type: 'plain_text_input',
+          placeholder: { type: 'plain_text', text: 'Enter a number', emoji: true },
+          action_id: 'value'
+        }
+      }
+    ]
+  };
+};
+
 exports.choresBreakView = function (currentTime) {
   const formattedTime = `${currentTime.getFullYear()}-${currentTime.getMonth() + 1}-${currentTime.getDate()}`;
   const mainText = 'Take a chore break when you go out of town, ' +
@@ -196,42 +232,6 @@ exports.choresBreakView = function (currentTime) {
           initial_date: formattedTime,
           placeholder: { type: 'plain_text', text: 'Select a date', emoji: true },
           action_id: 'date'
-        }
-      }
-    ]
-  };
-};
-
-exports.choresGiftView = function (choreClaim) {
-  const giftablePoints = choreClaim.value.toFixed(pointPrecision);
-  const mainText = `Choose a recipient. You have *${giftablePoints} points* available to gift.`;
-
-  return {
-    type: 'modal',
-    callback_id: 'chores-gift-callback',
-    private_metadata: choreClaim.id.toString(),
-    title: { type: 'plain_text', text: 'Chores', emoji: true },
-    submit: { type: 'plain_text', text: 'Submit', emoji: true },
-    close: { type: 'plain_text', text: 'Cancel', emoji: true },
-    blocks: [
-      { type: 'header', text: { type: 'plain_text', text: 'Gift chore points', emoji: true } },
-      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
-      {
-        type: 'input',
-        label: { type: 'plain_text', text: 'Gift recipient', emoji: true },
-        element: {
-          type: 'users_select',
-          placeholder: { type: 'plain_text', text: 'Choose a resident', emoji: true },
-          action_id: 'recipient'
-        }
-      },
-      {
-        type: 'input',
-        label: { type: 'plain_text', text: 'Number of points', emoji: true },
-        element: {
-          type: 'plain_text_input',
-          placeholder: { type: 'plain_text', text: 'Enter a number', emoji: true },
-          action_id: 'value'
         }
       }
     ]
