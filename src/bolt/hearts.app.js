@@ -9,7 +9,7 @@ const Admin = require('../modules/admin');
 const { YAY } = require('../constants');
 const { sleep } = require('../utils');
 
-const blocks = require('./blocks');
+const views = require('./views');
 
 let res;
 let heartsOauth;
@@ -73,7 +73,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     const data = {
       token: heartsOauth.bot.token,
       user_id: residentId,
-      view: blocks.heartsHomeView(hearts.sum || 0)
+      view: views.heartsHomeView(hearts.sum || 0)
     };
     res = await app.client.views.publish(data);
 
@@ -157,7 +157,7 @@ app.action('hearts-challenge', async ({ ack, body }) => {
   const view = {
     token: heartsOauth.bot.token,
     trigger_id: body.trigger_id,
-    view: blocks.heartsChallengeView()
+    view: views.heartsChallengeView()
   };
 
   res = await app.client.views.open(view);
@@ -194,7 +194,7 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
     token: heartsOauth.bot.token,
     channel: heartsChannel,
     text: 'Someone just issued a hearts challenge',
-    blocks: blocks.heartsChallengeCallbackView(challenge, quorum, circumstance)
+    blocks: views.heartsChallengeCallbackView(challenge, quorum, circumstance)
   };
 
   res = await app.client.chat.postMessage(message);
@@ -213,7 +213,7 @@ app.action('hearts-board', async ({ ack, body }) => {
   const view = {
     token: heartsOauth.bot.token,
     trigger_id: body.trigger_id,
-    view: blocks.heartsBoardView(hearts)
+    view: views.heartsBoardView(hearts)
   };
 
   res = await app.client.views.open(view);
@@ -240,7 +240,7 @@ app.action(/poll-vote/, async ({ ack, body, action }) => {
   const buttonsIndex = body.message.blocks.length - 1;
   body.message.token = heartsOauth.bot.token;
   body.message.channel = channelId;
-  body.message.blocks[buttonsIndex].elements = blocks.makeVoteButtons(pollId, yays, nays);
+  body.message.blocks[buttonsIndex].elements = views.makeVoteButtons(pollId, yays, nays);
 
   await app.client.chat.update(body.message);
 
