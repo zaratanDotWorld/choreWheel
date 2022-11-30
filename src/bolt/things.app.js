@@ -9,7 +9,7 @@ const Admin = require('../modules/admin');
 const { YAY, DAY } = require('../constants');
 const { sleep } = require('../utils');
 
-const blocks = require('./blocks');
+const views = require('./views');
 
 let res;
 let thingsOauth;
@@ -68,7 +68,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     const data = {
       token: thingsOauth.bot.token,
       user_id: residentId,
-      view: blocks.thingsHomeView(balance.sum || 0)
+      view: views.thingsHomeView(balance.sum || 0)
     };
     await app.client.views.publish(data);
 
@@ -131,11 +131,11 @@ app.command('/things-add', async ({ ack, command }) => {
 
   if (userInfo.user.is_admin) {
     const active = true;
-    const { type, name, quantity, value } = blocks.parseThingAdd(command.text);
+    const { type, name, quantity, value } = views.parseThingAdd(command.text);
     const [ thing ] = await Things.updateThing({ houseId, type, name, quantity, value, active });
 
-    text = `${blocks.formatThing(thing)} added to the things list :star-struck:`;
-    console.log(`Added thing ${blocks.formatThing(thing)}`);
+    text = `${views.formatThing(thing)} added to the things list :star-struck:`;
+    console.log(`Added thing ${views.formatThing(thing)}`);
   } else {
     text = 'Only admins can update the things list...';
   }
@@ -154,11 +154,11 @@ app.command('/things-del', async ({ ack, command }) => {
 
   if (userInfo.user.is_admin) {
     const [ value, active ] = [ 0, false ];
-    const { type, name } = blocks.parseThingDel(command.text);
+    const { type, name } = views.parseThingDel(command.text);
     const [ thing ] = await Things.updateThing({ houseId, type, name, value, active });
 
-    text = `${blocks.formatThing(thing)} removed from the things list :sob:`;
-    console.log(`Deleted thing ${blocks.formatThing(thing)}`);
+    text = `${views.formatThing(thing)} removed from the things list :sob:`;
+    console.log(`Deleted thing ${views.formatThing(thing)}`);
   } else {
     text = 'Only admins can update the things list...';
   }
@@ -173,7 +173,7 @@ app.command('/things-list', async ({ ack, command }) => {
   const houseId = command.team_id;
 
   const things = await Things.getThings(houseId);
-  const parsedThings = things.map((thing) => `\n${blocks.formatThing(thing)}`);
+  const parsedThings = things.map((thing) => `\n${views.formatThing(thing)}`);
 
   const text = `The current things:${parsedThings}`;
   const message = prepareEphemeral(command, text);
@@ -213,7 +213,7 @@ app.command('/things-resolved', async ({ ack, command }) => {
 
   const buys = await Things.getFulfillableThingBuys(houseId, start, now);
   const parsedBuys = buys.map((buy) => {
-    return `\n${buy.id} ${blocks.formatThing(buy)}: ${buy.resolvedAt.toLocaleString()}`;
+    return `\n${buy.id} ${views.formatThing(buy)}: ${buy.resolvedAt.toLocaleString()}`;
   });
 
   const text = `The resolved buys in the last ${numDays} days:${parsedBuys}`;
@@ -247,7 +247,7 @@ app.action('things-buy', async ({ ack, body }) => {
   const view = {
     token: thingsOauth.bot.token,
     trigger_id: body.trigger_id,
-    view: blocks.thingsBuyView(things)
+    view: views.thingsBuyView(things)
   };
 
   res = await app.client.views.open(view);
@@ -282,7 +282,7 @@ app.view('things-buy-callback', async ({ ack, body }) => {
     token: thingsOauth.bot.token,
     channel: thingsChannel,
     text: 'Someone just bought a thing',
-    blocks: blocks.thingsBuyCallbackView(buy, thing, balance.sum)
+    blocks: views.thingsBuyCallbackView(buy, thing, balance.sum)
   };
 
   res = await app.client.chat.postMessage(message);
@@ -308,7 +308,7 @@ app.action(/poll-vote/, async ({ ack, body, action }) => {
   // Update the vote counts
   body.message.token = thingsOauth.bot.token;
   body.message.channel = channelId;
-  body.message.blocks[2].elements = blocks.makeVoteButtons(pollId, yays, nays);
+  body.message.blocks[2].elements = views.makeVoteButtons(pollId, yays, nays);
 
   await app.client.chat.update(body.message);
 
