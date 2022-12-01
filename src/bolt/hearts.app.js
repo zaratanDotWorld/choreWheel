@@ -9,21 +9,12 @@ const Admin = require('../modules/admin');
 const { YAY } = require('../constants');
 const { sleep } = require('../utils');
 
+const common = require('./common');
 const views = require('./views');
 
-let res;
 let heartsOauth;
 
 // Create the app
-
-const home = {
-  path: '/',
-  method: [ 'GET' ],
-  handler: async (_, res) => {
-    res.writeHead(200);
-    res.end('Welcome to Mirror - Hearts!');
-  }
-};
 
 const app = new App({
   logLevel: LogLevel.INFO,
@@ -31,7 +22,7 @@ const app = new App({
   clientSecret: process.env.HEARTS_CLIENT_SECRET,
   signingSecret: process.env.HEARTS_SIGNING_SECRET,
   stateSecret: process.env.STATE_SECRET,
-  customRoutes: [ home ],
+  customRoutes: [ common.homeEndpoint('Hearts') ],
   scopes: [
     'channels:history', 'channels:read',
     'chat:write',
@@ -58,6 +49,7 @@ const app = new App({
 
 app.event('app_home_opened', async ({ body, event }) => {
   if (event.tab === 'home') {
+    console.log('hearts home');
     const houseId = body.team_id;
     const residentId = event.user;
 
@@ -69,13 +61,8 @@ app.event('app_home_opened', async ({ body, event }) => {
     await sleep(5);
 
     const hearts = await Hearts.getHearts(residentId, now);
-
-    const data = {
-      token: heartsOauth.bot.token,
-      user_id: residentId,
-      view: views.heartsHomeView(hearts.sum || 0)
-    };
-    res = await app.client.views.publish(data);
+    const view = views.heartsHomeView(hearts.sum || 0);
+    await common.publishHome(app, heartsOauth, residentId, view);
 
     // This bookkeeping is done asynchronously after returning the view
     await Hearts.regenerateHearts(houseId, residentId, now);
@@ -85,12 +72,8 @@ app.event('app_home_opened', async ({ body, event }) => {
     const [ karmaHeart ] = await Hearts.generateKarmaHeart(houseId, now);
     if (karmaHeart !== undefined) {
       const { heartsChannel } = await Admin.getHouse(houseId);
-      const message = {
-        token: heartsOauth.bot.token,
-        channel: heartsChannel,
-        text: `<@${karmaHeart.residentId}> is last month's karma winner :heart_on_fire:`
-      };
-      res = await app.client.chat.postMessage(message);
+      const text = `<@${karmaHeart.residentId}> is last month's karma winner :heart_on_fire:`;
+      await common.postMessage(app, heartsOauth, heartsChannel, text);
     }
 
     // Sync workspace
@@ -107,64 +90,25 @@ app.event('app_home_opened', async ({ body, event }) => {
 
 // Slash commands
 
-async function getUser (userId) {
-  return app.client.users.info({
-    token: heartsOauth.bot.token,
-    user: userId
-  });
-}
-
-function prepareEphemeral (command, text) {
-  return {
-    token: heartsOauth.bot.token,
-    channel: command.channel_id,
-    user: command.user_id,
-    text: text
-  };
-}
-
 app.command('/hearts-channel', async ({ ack, command }) => {
+  console.log('/hearts-channel');
   await ack();
 
-  const channelName = command.text;
-  const houseId = command.team_id;
-  const userInfo = await getUser(command.user_id);
-
-  let text;
-
-  if (userInfo.user.is_admin) {
-    // TODO: return a friendly error if the channel doesn't exist
-    res = await app.client.conversations.list({ token: heartsOauth.bot.token });
-    const channelId = res.channels.filter(channel => channel.name === channelName)[0].id;
-
-    await Admin.updateHouse({ slackId: houseId, heartsChannel: channelId });
-
-    text = `Heart challenges channel set to ${channelName} :fire:\nPlease add the Hearts bot to the channel`;
-    console.log(`Set heart challenges channel to ${channelName}`);
-  } else {
-    text = 'Only admins can set the channels...';
-  }
-
-  const message = prepareEphemeral(command, text);
-  await app.client.chat.postEphemeral(message);
+  await common.setChannel(app, heartsOauth, 'heartsChannel', command);
 });
 
 // Challenge flow
 
 app.action('hearts-challenge', async ({ ack, body }) => {
+  console.log('hearts-challenge');
   await ack();
 
-  const view = {
-    token: heartsOauth.bot.token,
-    trigger_id: body.trigger_id,
-    view: views.heartsChallengeView()
-  };
-
-  res = await app.client.views.open(view);
-  console.log(`Hearts-challenge opened with id ${res.view.id}`);
+  const view = views.heartsChallengeView();
+  await common.openView(app, heartsOauth, body.trigger_id, view);
 });
 
 app.view('hearts-challenge-callback', async ({ ack, body }) => {
+  console.log('hearts-challenge-callback');
   await ack();
 
   const residentId = body.user.id;
@@ -190,61 +134,31 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
   const [ challenge ] = await Hearts.issueChallenge(houseId, residentId, challengeeId, numHearts, now);
   await Polls.submitVote(challenge.pollId, residentId, now, YAY);
 
-  const message = {
-    token: heartsOauth.bot.token,
-    channel: heartsChannel,
-    text: 'Someone just issued a hearts challenge',
-    blocks: views.heartsChallengeCallbackView(challenge, quorum, circumstance)
-  };
-
-  res = await app.client.chat.postMessage(message);
-  console.log(`Challenge ${challenge.id} created with poll ${challenge.pollId}`);
+  const text = 'Someone just issued a hearts challenge';
+  const blocks = views.heartsChallengeCallbackView(challenge, quorum, circumstance);
+  await common.postMessage(app, heartsOauth, heartsChannel, text, blocks);
 });
 
 // Board flow
 
 app.action('hearts-board', async ({ ack, body }) => {
+  console.log('hearts-board');
   await ack();
 
   const houseId = body.team.id;
-
   const hearts = await Hearts.getHouseHearts(houseId, new Date());
 
-  const view = {
-    token: heartsOauth.bot.token,
-    trigger_id: body.trigger_id,
-    view: views.heartsBoardView(hearts)
-  };
-
-  res = await app.client.views.open(view);
-  console.log(`Hearts-board opened with id ${res.view.id}`);
+  const view = views.heartsBoardView(hearts);
+  await common.openView(app, heartsOauth, body.trigger_id, view);
 });
 
 // Voting flow
 
 app.action(/poll-vote/, async ({ ack, body, action }) => {
+  console.log('hearts poll-vote');
   await ack();
 
-  const residentId = body.user.id;
-  const channelId = body.channel.id;
-
-  // // Submit the vote
-  const [ pollId, value ] = action.value.split('|');
-  await Polls.submitVote(pollId, residentId, new Date(), value);
-
-  await sleep(5);
-
-  const { yays, nays } = await Polls.getPollResultCounts(pollId);
-
-  // Update the vote counts
-  const buttonsIndex = body.message.blocks.length - 1;
-  body.message.token = heartsOauth.bot.token;
-  body.message.channel = channelId;
-  body.message.blocks[buttonsIndex].elements = views.makeVoteButtons(pollId, yays, nays);
-
-  await app.client.chat.update(body.message);
-
-  console.log(`Poll ${pollId} updated`);
+  await common.updateVoteCounts(app, heartsOauth, body, action);
 });
 
 // Karma flow
@@ -253,20 +167,16 @@ app.event('message', async ({ payload }) => {
   const karmaRecipients = Hearts.getKarmaRecipients(payload.text);
 
   if (karmaRecipients.length > 0) {
+    console.log('karma message');
     const houseId = payload.team;
     const giverId = payload.user;
-    const now = new Date();
 
+    const now = new Date();
     for (const receiverId of karmaRecipients) {
       await Hearts.giveKarma(houseId, giverId, receiverId, now);
     }
 
-    await app.client.reactions.add({
-      token: heartsOauth.bot.token,
-      channel: payload.channel,
-      timestamp: payload.event_ts,
-      name: 'sparkles'
-    });
+    await common.addReaction(app, heartsOauth, payload, ':sparkles:');
   }
 });
 
