@@ -64,7 +64,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     const view = views.heartsHomeView(hearts.sum || 0);
     await common.publishHome(app, heartsOauth, residentId, view);
 
-    // This bookkeeping is done asynchronously after returning the view
+    // This bookkeeping is done after returning the view
     await Hearts.regenerateHearts(houseId, residentId, now);
     await Hearts.resolveChallenges(houseId, now);
 
@@ -75,20 +75,17 @@ app.event('app_home_opened', async ({ body, event }) => {
       const text = `<@${karmaHeart.residentId}> is last month's karma winner :heart_on_fire:`;
       await common.postMessage(app, heartsOauth, heartsChannel, text);
     }
-
-    // Sync workspace
-    // const workspaceMembers = await app.client.users.list({ token: heartsOauth.bot.token });
-    // for (const member of workspaceMembers.members) {
-    //   if (!member.is_bot & member.id !== SLACKBOT & member.id !== residentId) {
-    //     member.deleted
-    //       ? await Admin.deleteResident(houseId, member.id)
-    //       : await Admin.addResident(houseId, member.id, now);
-    //   }
-    // }
   }
 });
 
 // Slash commands
+
+app.command('/mirror-sync', async ({ ack, command }) => {
+  console.log('/mirror-sync');
+  await ack();
+
+  await common.syncWorkspace(app, heartsOauth, command);
+});
 
 app.command('/hearts-channel', async ({ ack, command }) => {
   console.log('/hearts-channel');
@@ -123,9 +120,8 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
   const numHearts = body.view.state.values[numHeartsBlockId].hearts.selected_option.value;
   const circumstance = body.view.state.values[circumstanceBlockId].circumstance.value;
 
-  const { heartsChannel } = await Admin.getHouse(houseId);
-
   // TODO: Return error to user (not console) if channel is not set
+  const { heartsChannel } = await Admin.getHouse(houseId);
   if (heartsChannel === null) { throw new Error('Hearts channel not set!'); }
 
   // Initiate the challenge

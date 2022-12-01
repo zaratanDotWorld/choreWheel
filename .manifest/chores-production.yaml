@@ -11,6 +11,9 @@ features:
     display_name: Chores
     always_online: true
   slash_commands:
+    - command: /mirror-sync
+      url: https://chores.mirror.zaratan.world/slack/events
+      description: Sync active residents
     - command: /chores-add
       url: https://chores.mirror.zaratan.world/slack/events
       description: Add a chore

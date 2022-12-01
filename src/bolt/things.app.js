@@ -57,12 +57,19 @@ app.event('app_home_opened', async ({ body, event }) => {
     const view = views.thingsHomeView(balance.sum || 0);
     await common.publishHome(app, thingsOauth, residentId, view);
 
-    // This bookkeeping is done asynchronously after returning the view
-    Things.resolveThingBuys(houseId, now);
+    // This bookkeeping is done after returning the view
+    await Things.resolveThingBuys(houseId, now);
   }
 });
 
 // Slash commands
+
+app.command('/mirror-sync', async ({ ack, command }) => {
+  console.log('/mirror-sync');
+  await ack();
+
+  await common.syncWorkspace(app, thingsOauth, command);
+});
 
 app.command('/things-channel', async ({ ack, command }) => {
   console.log('/things-channel');

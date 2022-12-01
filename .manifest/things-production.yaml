@@ -12,6 +12,9 @@ features:
     display_name: Things
     always_online: true
   slash_commands:
+    - command: /mirror-sync
+      url: https://things.mirror.zaratan.world/slack/events
+      description: Sync active residents
     - command: /things-add
       url: https://things.mirror.zaratan.world/slack/events
       description: Add a thing
