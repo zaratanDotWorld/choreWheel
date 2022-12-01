@@ -10,21 +10,12 @@ const { pointsPerResident, displayThreshold } = require('../config');
 const { YAY, MINUTE, DAY } = require('../constants');
 const { sleep, getMonthStart } = require('../utils');
 
-const blocks = require('./blocks');
+const common = require('./common');
+const views = require('./views');
 
-let res;
 let choresOauth;
 
 // Create the app
-
-const home = {
-  path: '/',
-  method: [ 'GET' ],
-  handler: async (_, res) => {
-    res.writeHead(200);
-    res.end('Welcome to Mirror - Chores!');
-  }
-};
 
 const app = new App({
   logLevel: LogLevel.INFO,
@@ -32,7 +23,7 @@ const app = new App({
   clientId: process.env.CHORES_CLIENT_ID,
   clientSecret: process.env.CHORES_CLIENT_SECRET,
   stateSecret: process.env.STATE_SECRET,
-  customRoutes: [ home ],
+  customRoutes: [ common.homeEndpoint('Chores') ],
   scopes: [
     'channels:history', 'channels:read',
     'chat:write',
@@ -58,6 +49,7 @@ const app = new App({
 
 app.event('app_home_opened', async ({ body, event }) => {
   if (event.tab === 'home') {
+    console.log('chores home');
     const houseId = body.team_id;
     const residentId = event.user;
 
@@ -70,12 +62,8 @@ app.event('app_home_opened', async ({ body, event }) => {
     const chorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
     const activePercentage = await Chores.getActiveResidentPercentage(residentId, now);
 
-    const data = {
-      token: choresOauth.bot.token,
-      user_id: residentId,
-      view: blocks.choresHomeView(chorePoints.sum || 0, activePercentage * pointsPerResident)
-    };
-    await app.client.views.publish(data);
+    const view = views.choresHomeView(chorePoints.sum || 0, activePercentage * pointsPerResident);
+    await common.publishHome(app, choresOauth, residentId, view);
 
     // This bookkeeping is done asynchronously after returning the view
     await Chores.resolveChoreClaims(houseId, now);
@@ -95,109 +83,62 @@ app.event('app_home_opened', async ({ body, event }) => {
 
 // Slash commands
 
-async function getUser (userId) {
-  return app.client.users.info({
-    token: choresOauth.bot.token,
-    user: userId
-  });
-}
-
-function prepareEphemeral (command, text) {
-  return {
-    token: choresOauth.bot.token,
-    channel: command.channel_id,
-    user: command.user_id,
-    text: text
-  };
-}
-
 app.command('/chores-channel', async ({ ack, command }) => {
+  console.log('/chores-channel');
   await ack();
 
-  const channelName = command.text;
-  const houseId = command.team_id;
-  const userInfo = await getUser(command.user_id);
-
-  let text;
-
-  if (userInfo.user.is_admin) {
-    // TODO: return a friendly error if the channel doesn't exist
-    res = await app.client.conversations.list({ token: choresOauth.bot.token });
-    const channelId = res.channels.filter(channel => channel.name === channelName)[0].id;
-
-    await Admin.updateHouse({ slackId: houseId, choresChannel: channelId });
-
-    text = `Chore claims channel set to ${channelName} :fire:\nPlease add the Chores bot to the channel`;
-    console.log(`Set chore claims channel to ${channelName}`);
-  } else {
-    text = 'Only admins can set the channels...';
-  }
-
-  const message = prepareEphemeral(command, text);
-  await app.client.chat.postEphemeral(message);
+  await common.setChannel(app, choresOauth, 'choresChannel', command);
 });
 
 app.command('/chores-add', async ({ ack, command }) => {
+  console.log('/chores-add');
   await ack();
 
-  const userInfo = await getUser(command.user_id);
-
-  let text;
-
+  const userInfo = await common.getUser(app, choresOauth, command.user_id);
   if (userInfo.user.is_admin) {
-    const choreName = blocks.formatChoreName(command.text);
+    const choreName = views.formatChoreName(command.text);
     await Chores.addChore(command.team_id, choreName);
 
-    text = `${choreName} added to the chores list :star-struck:`;
-    console.log(`Added chore ${choreName}`);
+    const text = `${choreName} added to the chores list :star-struck:`;
+    await common.postEphemeral(app, choresOauth, command, text);
   } else {
-    text = 'Only admins can update the chore list...';
+    const text = 'Only admins can update the chore list...';
+    await common.postEphemeral(app, choresOauth, command, text);
   }
-
-  const message = prepareEphemeral(command, text);
-  await app.client.chat.postEphemeral(message);
 });
 
 app.command('/chores-del', async ({ ack, command }) => {
+  console.log('/chores-del');
   await ack();
 
-  const userInfo = await getUser(command.user_id);
-
-  let text;
-
+  const userInfo = await common.getUser(app, choresOauth, command.user_id);
   if (userInfo.user.is_admin) {
-    const choreName = blocks.formatChoreName(command.text);
+    const choreName = views.formatChoreName(command.text);
     await Chores.deleteChore(command.team_id, choreName);
 
-    text = `${choreName} removed from the chores list :sob:`;
-    console.log(`Deleted chore ${choreName}`);
+    const text = `${choreName} removed from the chores list :sob:`;
+    await common.postEphemeral(app, choresOauth, command, text);
   } else {
-    text = 'Only admins can update the chore list...';
+    const text = 'Only admins can update the chore list...';
+    await common.postEphemeral(app, choresOauth, command, text);
   }
-
-  const message = prepareEphemeral(command, text);
-  await app.client.chat.postEphemeral(message);
 });
 
 // Claim flow
 
 app.action('chores-claim', async ({ ack, body }) => {
+  console.log('chores-claim');
   await ack();
 
   const choreValues = await Chores.getUpdatedChoreValues(body.team.id, new Date(), pointsPerResident);
   const filteredChoreValues = choreValues.filter(choreValue => choreValue.value >= displayThreshold);
 
-  const view = {
-    token: choresOauth.bot.token,
-    trigger_id: body.trigger_id,
-    view: blocks.choresClaimView(filteredChoreValues)
-  };
-
-  res = await app.client.views.open(view);
-  console.log(`Chores-claim opened with id ${res.view.id}`);
+  const view = views.choresClaimView(filteredChoreValues);
+  await common.openView(app, choresOauth, body.trigger_id, view);
 });
 
 app.view('chores-claim-callback', async ({ ack, body }) => {
+  console.log('chores-claim-callback');
   await ack();
 
   const residentId = body.user.id;
@@ -208,56 +149,44 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const blockId = body.view.blocks[blockIndex].block_id;
   const [ choreId, choreName ] = body.view.state.values[blockId].options.selected_option.value.split('|');
 
-  const { choresChannel } = await Admin.getHouse(houseId);
-
   // TODO: Return error to user (not console) if channel is not set
+  const { choresChannel } = await Admin.getHouse(houseId);
   if (choresChannel === null) { throw new Error('Chores channel not set!'); }
 
   // Get chore points over last six months
   const now = new Date();
   const monthStart = getMonthStart(now);
   const sixMonths = new Date(now.getTime() - 180 * DAY);
-  const monthlyPoints = await Chores.getAllChorePoints(residentId, monthStart, now);
-  const recentPoints = await Chores.getChorePoints(residentId, choreId, sixMonths, now);
+  let monthlyPoints = await Chores.getAllChorePoints(residentId, monthStart, now);
+  let recentPoints = await Chores.getChorePoints(residentId, choreId, sixMonths, now);
 
   // Perform the claim
   const [ claim ] = await Chores.claimChore(houseId, choreId, residentId, now);
   await Polls.submitVote(claim.pollId, residentId, now, YAY);
 
-  const message = {
-    token: choresOauth.bot.token,
-    channel: choresChannel,
-    text: 'Someone just completed a chore',
-    blocks: blocks.choresClaimCallbackView(
-      claim,
-      choreName,
-      (recentPoints.sum || 0) + claim.value,
-      (monthlyPoints.sum || 0) + claim.value
-    )
-  };
+  // Update point values
+  recentPoints = (recentPoints.sum || 0) + claim.value;
+  monthlyPoints = (monthlyPoints.sum || 0) + claim.value;
 
-  res = await app.client.chat.postMessage(message);
-  console.log(`Claim ${claim.id} created with poll ${claim.pollId}`);
+  const text = 'Someone just completed a chore';
+  const blocks = views.choresClaimCallbackView(claim, choreName, recentPoints, monthlyPoints);
+  await common.postMessage(app, choresOauth, choresChannel, text, blocks);
 });
 
 // Ranking flow
 
 app.action('chores-rank', async ({ ack, body }) => {
+  console.log('chores-rank');
   await ack();
 
   const choreRankings = await Chores.getCurrentChoreRankings(body.team.id);
 
-  const view = {
-    token: choresOauth.bot.token,
-    trigger_id: body.trigger_id,
-    view: blocks.choresRankView(choreRankings)
-  };
-
-  res = await app.client.views.open(view);
-  console.log(`Chores-rank opened with id ${res.view.id}`);
+  const view = views.choresRankView(choreRankings);
+  await common.openView(app, choresOauth, body.trigger_id, view);
 });
 
 app.view('chores-rank-callback', async ({ ack, body }) => {
+  console.log('chores-rank-callback');
   await ack();
 
   const residentId = body.user.id;
@@ -296,32 +225,22 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   }
 
   const { choresChannel } = await Admin.getHouse(houseId);
-
-  const message = {
-    token: choresOauth.bot.token,
-    channel: choresChannel,
-    text: `Someone just sped up ${targetChoreName} :rocket:`
-  };
-
-  res = await app.client.chat.postMessage(message);
+  const text = `Someone just sped up ${targetChoreName} :rocket:`;
+  await common.postMessage(app, choresOauth, choresChannel, text);
 });
 
 // Break flow
 
 app.action('chores-break', async ({ ack, body }) => {
+  console.log('chores-break');
   await ack();
 
-  const view = {
-    token: choresOauth.bot.token,
-    trigger_id: body.trigger_id,
-    view: blocks.choresBreakView(new Date())
-  };
-
-  res = await app.client.views.open(view);
-  console.log(`Chores-break opened with id ${res.view.id}`);
+  const view = views.choresBreakView(new Date());
+  await common.openView(app, choresOauth, body.trigger_id, view);
 });
 
 app.view('chores-break-callback', async ({ ack, body }) => {
+  console.log('chores-break-callback');
   await ack();
 
   const residentId = body.user.id;
@@ -341,33 +260,23 @@ app.view('chores-break-callback', async ({ ack, body }) => {
   const breakEnd = new Date(breakEndUtc.getTime() + now.getTimezoneOffset() * MINUTE);
   const breakDays = parseInt((breakEnd - breakStart) / DAY);
 
-  let message;
   if (breakStart < todayStart || breakDays < 3) {
-    message = {
-      token: choresOauth.bot.token,
-      channel: residentId,
-      text: 'Not a valid chore break :slightly_frowning_face:'
-    };
+    const text = 'Not a valid chore break :slightly_frowning_face:';
+    await common.postMessage(app, choresOauth, residentId, text);
   } else {
     // Record the break
     await Chores.addChoreBreak(residentId, breakStart, breakEnd);
     const { choresChannel } = await Admin.getHouse(houseId);
-
-    message = {
-      token: choresOauth.bot.token,
-      channel: choresChannel,
-      text: `<@${residentId}> is taking a *${breakDays}-day* break ` +
-        `starting ${breakStart.toDateString()} :beach_with_umbrella:`
-    };
+    const text = `<@${residentId}> is taking a *${breakDays}-day* break ` +
+        `starting ${breakStart.toDateString()} :beach_with_umbrella:`;
+    await common.postMessage(app, choresOauth, choresChannel, text);
   }
-
-  res = await app.client.chat.postMessage(message);
-  console.log('Chore break added');
 });
 
 // Gift flow
 
 app.action('chores-gift', async ({ ack, body }) => {
+  console.log('chores-gift');
   await ack();
 
   const residentId = body.user.id;
@@ -375,17 +284,12 @@ app.action('chores-gift', async ({ ack, body }) => {
   const monthStart = getMonthStart(now);
   const choreClaim = await Chores.getLargestChoreClaim(residentId, monthStart, now);
 
-  const view = {
-    token: choresOauth.bot.token,
-    trigger_id: body.trigger_id,
-    view: blocks.choresGiftView(choreClaim)
-  };
-
-  res = await app.client.views.open(view);
-  console.log(`Chores-gift opened with id ${res.view.id}`);
+  const view = views.choresGiftView(choreClaim);
+  await common.openView(app, choresOauth, body.trigger_id, view);
 });
 
 app.view('chores-gift-callback', async ({ ack, body }) => {
+  console.log('chores-gift-callback');
   await ack();
 
   const residentId = body.user.id;
@@ -399,43 +303,21 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
   const recipientId = body.view.state.values[recipientBlockId].recipient.selected_user;
   const value = body.view.state.values[valueBlockId].value.value;
 
-  const { choresChannel } = await Admin.getHouse(houseId);
-
   // Perform the update
   const choreClaimId = body.view.private_metadata;
   await Chores.giftChorePoints(choreClaimId, recipientId, new Date(), Number(value));
 
-  const message = {
-    token: choresOauth.bot.token,
-    channel: choresChannel,
-    text: `<@${residentId}> just gifted <@${recipientId}> *${value} points* :gift:`
-  };
-
-  res = await app.client.chat.postMessage(message);
-  console.log('Chore points gifted');
+  const { choresChannel } = await Admin.getHouse(houseId);
+  const text = `<@${residentId}> just gifted <@${recipientId}> *${value} points* :gift:`;
+  await common.postMessage(app, choresOauth, choresChannel, text);
 });
 
 // Voting flow
 
 app.action(/poll-vote/, async ({ ack, body, action }) => {
+  console.log('chores poll-vote');
   await ack();
-
-  // // Submit the vote
-  const [ pollId, value ] = action.value.split('|');
-  await Polls.submitVote(pollId, body.user.id, new Date(), value);
-  await sleep(5);
-
-  const { yays, nays } = await Polls.getPollResultCounts(pollId);
-
-  // Update the vote counts
-  const blockIndex = body.message.blocks.length - 1;
-  body.message.token = choresOauth.bot.token;
-  body.message.channel = body.channel.id;
-  body.message.blocks[blockIndex].elements = blocks.makeVoteButtons(pollId, yays, nays);
-
-  await app.client.chat.update(body.message);
-
-  console.log(`Poll ${pollId} updated`);
+  await common.updateVoteCounts(app, choresOauth, body, action);
 });
 
 // Launch the app

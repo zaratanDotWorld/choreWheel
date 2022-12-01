@@ -7,23 +7,13 @@ const Polls = require('../modules/polls');
 const Admin = require('../modules/admin');
 
 const { YAY, DAY } = require('../constants');
-const { sleep } = require('../utils');
 
+const common = require('./common');
 const views = require('./views');
 
-let res;
 let thingsOauth;
 
 // Create the app
-
-const home = {
-  path: '/',
-  method: [ 'GET' ],
-  handler: async (_, res) => {
-    res.writeHead(200);
-    res.end('Welcome to Mirror - Things!');
-  }
-};
 
 const app = new App({
   logLevel: LogLevel.INFO,
@@ -31,7 +21,7 @@ const app = new App({
   clientSecret: process.env.THINGS_CLIENT_SECRET,
   signingSecret: process.env.THINGS_SIGNING_SECRET,
   stateSecret: process.env.STATE_SECRET,
-  customRoutes: [ home ],
+  customRoutes: [ common.homeEndpoint('Things') ],
   scopes: [
     'channels:history', 'channels:read',
     'chat:write',
@@ -57,153 +47,102 @@ const app = new App({
 
 app.event('app_home_opened', async ({ body, event }) => {
   if (event.tab === 'home') {
+    console.log('things home');
     const houseId = body.team_id;
     const residentId = event.user;
-
     const now = new Date();
 
     await Admin.addResident(houseId, residentId, now);
     const balance = await Things.getHouseBalance(houseId, now);
-
-    const data = {
-      token: thingsOauth.bot.token,
-      user_id: residentId,
-      view: views.thingsHomeView(balance.sum || 0)
-    };
-    await app.client.views.publish(data);
+    const view = views.thingsHomeView(balance.sum || 0);
+    await common.publishHome(app, thingsOauth, residentId, view);
 
     // This bookkeeping is done asynchronously after returning the view
-    await Things.resolveThingBuys(houseId, now);
+    Things.resolveThingBuys(houseId, now);
   }
 });
 
 // Slash commands
 
-async function getUser (userId) {
-  return app.client.users.info({
-    token: thingsOauth.bot.token,
-    user: userId
-  });
-}
-
-function prepareEphemeral (command, text) {
-  return {
-    token: thingsOauth.bot.token,
-    channel: command.channel_id,
-    user: command.user_id,
-    text: text
-  };
-}
-
 app.command('/things-channel', async ({ ack, command }) => {
+  console.log('/things-channel');
   await ack();
 
-  const channelName = command.text;
-  const houseId = command.team_id;
-  const userInfo = await getUser(command.user_id);
-
-  let text;
-
-  if (userInfo.user.is_admin) {
-    // TODO: return a friendly error if the channel doesn't exist
-    res = await app.client.conversations.list({ token: thingsOauth.bot.token });
-    const channelId = res.channels.filter(channel => channel.name === channelName)[0].id;
-
-    await Admin.updateHouse({ slackId: houseId, thingsChannel: channelId });
-
-    text = `Thing buys channel set to ${channelName} :fire:\nPlease add the Things bot to the channel`;
-    console.log(`Set thing buys channel to ${channelName}`);
-  } else {
-    text = 'Only admins can set the channels...';
-  }
-
-  const message = prepareEphemeral(command, text);
-  await app.client.chat.postEphemeral(message);
+  await common.setChannel(app, thingsOauth, 'thingsChannel', command);
 });
 
 app.command('/things-add', async ({ ack, command }) => {
+  console.log('/things-add');
   await ack();
 
   const houseId = command.team_id;
-  const userInfo = await getUser(command.user_id);
-
-  let text;
+  const userInfo = await common.getUser(command.user_id);
 
   if (userInfo.user.is_admin) {
     const active = true;
     const { type, name, quantity, value } = views.parseThingAdd(command.text);
     const [ thing ] = await Things.updateThing({ houseId, type, name, quantity, value, active });
 
-    text = `${views.formatThing(thing)} added to the things list :star-struck:`;
-    console.log(`Added thing ${views.formatThing(thing)}`);
+    const text = `${views.formatThing(thing)} added to the things list :star-struck:`;
+    await common.postEphemeral(app, thingsOauth, command, text);
   } else {
-    text = 'Only admins can update the things list...';
+    const text = 'Only admins can update the things list...';
+    await common.postEphemeral(app, thingsOauth, command, text);
   }
-
-  const message = prepareEphemeral(command, text);
-  await app.client.chat.postEphemeral(message);
 });
 
 app.command('/things-del', async ({ ack, command }) => {
+  console.log('/things-del');
   await ack();
 
   const houseId = command.team_id;
-  const userInfo = await getUser(command.user_id);
-
-  let text;
+  const userInfo = await common.getUser(command.user_id);
 
   if (userInfo.user.is_admin) {
     const [ value, active ] = [ 0, false ];
     const { type, name } = views.parseThingDel(command.text);
     const [ thing ] = await Things.updateThing({ houseId, type, name, value, active });
 
-    text = `${views.formatThing(thing)} removed from the things list :sob:`;
-    console.log(`Deleted thing ${views.formatThing(thing)}`);
+    const text = `${views.formatThing(thing)} removed from the things list :sob:`;
+    await common.postEphemeral(app, thingsOauth, command, text);
   } else {
-    text = 'Only admins can update the things list...';
+    const text = 'Only admins can update the things list...';
+    await common.postEphemeral(app, thingsOauth, command, text);
   }
-
-  const message = prepareEphemeral(command, text);
-  await app.client.chat.postEphemeral(message);
 });
 
 app.command('/things-list', async ({ ack, command }) => {
+  console.log('/things-list');
   await ack();
 
   const houseId = command.team_id;
-
   const things = await Things.getThings(houseId);
   const parsedThings = things.map((thing) => `\n${views.formatThing(thing)}`);
-
   const text = `The current things:${parsedThings}`;
-  const message = prepareEphemeral(command, text);
-  await app.client.chat.postEphemeral(message);
+  await common.postEphemeral(app, thingsOauth, command, text);
 });
 
 app.command('/things-load', async ({ ack, command }) => {
+  console.log('/things-load');
   await ack();
 
   const houseId = command.team_id;
-  const userInfo = await getUser(command.user_id);
+  const userInfo = await common.getUser(command.user_id);
 
   if (userInfo.user.is_admin) {
     const [ thing ] = await Things.loadHouseAccount(houseId, new Date(), command.text);
     const { thingsChannel } = await Admin.getHouse(houseId);
 
-    const message = {
-      token: thingsOauth.bot.token,
-      channel: thingsChannel,
-      text: ` <!channel> $${thing.value} was just loaded into the house account :money_with_wings:`
-    };
-    await app.client.chat.postMessage(message);
-    console.log(`Added $${thing.value} to house account`);
+    const text = `<!channel> $${thing.value} was just loaded into the house account :money_with_wings:`;
+    await common.postMessage(app, thingsOauth, thingsChannel, text);
   } else {
-    const message = prepareEphemeral(command, 'Only admins can load the house account...');
-    await app.client.chat.postEphemeral(message);
+    const text = 'Only admins can load the house account...';
+    await common.postEphemeral(app, thingsOauth, command, text);
   }
 });
 
 app.command('/things-resolved', async ({ ack, command }) => {
+  console.log('/things-resolved');
   await ack();
 
   const houseId = command.team_id;
@@ -217,11 +156,11 @@ app.command('/things-resolved', async ({ ack, command }) => {
   });
 
   const text = `The resolved buys in the last ${numDays} days:${parsedBuys}`;
-  const message = prepareEphemeral(command, text);
-  await app.client.chat.postEphemeral(message);
+  await common.postEphemeral(app, thingsOauth, command, text);
 });
 
 app.command('/things-fulfill', async ({ ack, command }) => {
+  console.log('/things-fulfill');
   await ack();
 
   const residentId = command.user_id;
@@ -233,28 +172,22 @@ app.command('/things-fulfill', async ({ ack, command }) => {
   }
 
   const text = `Fulfilled the following buys: ${buyIds.join(' ')}`;
-  const message = prepareEphemeral(command, text);
-  await app.client.chat.postEphemeral(message);
+  await common.postEphemeral(app, thingsOauth, command, text);
 });
 
 // Buy flow
 
 app.action('things-buy', async ({ ack, body }) => {
+  console.log('things-buy');
   await ack();
 
   const things = await Things.getThings(body.team.id);
-
-  const view = {
-    token: thingsOauth.bot.token,
-    trigger_id: body.trigger_id,
-    view: views.thingsBuyView(things)
-  };
-
-  res = await app.client.views.open(view);
-  console.log(`Things-buy opened with id ${res.view.id}`);
+  const view = views.thingsBuyView(things);
+  await common.openView(app, thingsOauth, body.trigger_id, view);
 });
 
 app.view('things-buy-callback', async ({ ack, body }) => {
+  console.log('things-buy-callback');
   await ack();
 
   const residentId = body.user.id;
@@ -265,9 +198,8 @@ app.view('things-buy-callback', async ({ ack, body }) => {
   const blockId = body.view.blocks[blockIndex].block_id;
   const thingId = parseInt(body.view.state.values[blockId].options.selected_option.value);
 
-  const { thingsChannel } = await Admin.getHouse(houseId);
-
   // TODO: Return error to user (not console) if channel is not set
+  const { thingsChannel } = await Admin.getHouse(houseId);
   if (thingsChannel === null) { throw new Error('Things channel not set!'); }
 
   // Perform the buy
@@ -278,41 +210,18 @@ app.view('things-buy-callback', async ({ ack, body }) => {
   const [ buy ] = await Things.buyThing(houseId, thing.id, residentId, now, thing.value);
   await Polls.submitVote(buy.pollId, residentId, now, YAY);
 
-  const message = {
-    token: thingsOauth.bot.token,
-    channel: thingsChannel,
-    text: 'Someone just bought a thing',
-    blocks: views.thingsBuyCallbackView(buy, thing, balance.sum)
-  };
-
-  res = await app.client.chat.postMessage(message);
-  console.log(`Buy ${buy.id} created with poll ${buy.pollId}`);
+  const text = 'Someone just bought a thing';
+  const blocks = views.thingsBuyCallbackView(buy, thing, balance.sum);
+  await common.postMessage(app, thingsOauth, thingsChannel, text, blocks);
 });
 
 // Voting flow
 
 app.action(/poll-vote/, async ({ ack, body, action }) => {
+  console.log('things poll-vote');
   await ack();
 
-  const residentId = body.user.id;
-  const channelId = body.channel.id;
-
-  // // Submit the vote
-  const [ pollId, value ] = action.value.split('|');
-  await Polls.submitVote(pollId, residentId, new Date(), value);
-
-  await sleep(5);
-
-  const { yays, nays } = await Polls.getPollResultCounts(pollId);
-
-  // Update the vote counts
-  body.message.token = thingsOauth.bot.token;
-  body.message.channel = channelId;
-  body.message.blocks[2].elements = views.makeVoteButtons(pollId, yays, nays);
-
-  await app.client.chat.update(body.message);
-
-  console.log(`Poll ${pollId} updated`);
+  await common.updateVoteCounts(app, thingsOauth, body, action);
 });
 
 // Launch the app
