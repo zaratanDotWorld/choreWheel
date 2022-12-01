@@ -12,6 +12,9 @@ features:
     display_name: Hearts-dev
     always_online: true
   slash_commands:
+    - command: /mirror-sync
+      url: https://zaratan.ngrok.io/slack/events
+      description: Sync active residents
     - command: /hearts-channel
       url: https://zaratan.ngrok.io/slack/events
       description: Set the hearts channel

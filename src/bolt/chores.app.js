@@ -65,23 +65,20 @@ app.event('app_home_opened', async ({ body, event }) => {
     const view = views.choresHomeView(chorePoints.sum || 0, activePercentage * pointsPerResident);
     await common.publishHome(app, choresOauth, residentId, view);
 
-    // This bookkeeping is done asynchronously after returning the view
+    // This bookkeeping is done after returning the view
     await Chores.resolveChoreClaims(houseId, now);
     // await Chores.addChorePenalty(houseId, residentId, now);
-
-    // Sync workspace
-    // const workspaceMembers = await app.client.users.list({ token: choresOauth.bot.token });
-    // for (const member of workspaceMembers.members) {
-    //   if (!member.is_bot & member.id !== SLACKBOT & member.id !== residentId) {
-    //     member.deleted
-    //       ? await Admin.deleteResident(houseId, member.id)
-    //       : await Admin.addResident(houseId, member.id, now);
-    //   }
-    // }
   }
 });
 
 // Slash commands
+
+app.command('/mirror-sync', async ({ ack, command }) => {
+  console.log('/mirror-sync');
+  await ack();
+
+  await common.syncWorkspace(app, choresOauth, command);
+});
 
 app.command('/chores-channel', async ({ ack, command }) => {
   console.log('/chores-channel');

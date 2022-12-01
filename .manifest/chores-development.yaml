@@ -11,6 +11,9 @@ features:
     display_name: Chores-dev
     always_online: true
   slash_commands:
+    - command: /mirror-sync
+      url: https://zaratan.ngrok.io/slack/events
+      description: Sync active residents
     - command: /chores-add
       url: https://zaratan.ngrok.io/slack/events
       description: Add a chore

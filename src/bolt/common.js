@@ -1,8 +1,9 @@
 const Admin = require('../modules/admin');
 const Polls = require('../modules/polls');
 
-const views = require('./views');
+const { SLACKBOT } = require('../constants');
 const utils = require('../utils');
+const views = require('./views');
 
 exports.homeEndpoint = function (appName) {
   return {
@@ -84,6 +85,23 @@ exports.setChannel = async function (app, oauth, channelType, command) {
     const text = 'Only admins can set the channels...';
     await exports.postEphemeral(app, oauth, command, text);
   }
+};
+
+exports.syncWorkspace = async function (app, oauth, command) {
+  const houseId = command.team_id;
+  const now = new Date();
+  const workspaceMembers = await app.client.users.list({ token: oauth.bot.token });
+  for (const member of workspaceMembers.members) {
+    if (!member.is_bot & member.id !== SLACKBOT) {
+      member.deleted
+        ? await Admin.deleteResident(houseId, member.id)
+        : await Admin.addResident(houseId, member.id, now);
+    }
+  }
+
+  const residents = await Admin.getResidents(houseId);
+  const text = `Synced workspace with ${residents.length} active residents`;
+  await exports.postEphemeral(app, oauth, command, text);
 };
 
 exports.updateVoteCounts = async function (app, oauth, body, action) {
