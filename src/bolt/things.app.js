@@ -83,7 +83,7 @@ app.command('/things-add', async ({ ack, command }) => {
   await ack();
 
   const houseId = command.team_id;
-  const userInfo = await common.getUser(command.user_id);
+  const userInfo = await common.getUser(app, thingsOauth, command.user_id);
 
   if (userInfo.user.is_admin) {
     const active = true;
@@ -103,7 +103,7 @@ app.command('/things-del', async ({ ack, command }) => {
   await ack();
 
   const houseId = command.team_id;
-  const userInfo = await common.getUser(command.user_id);
+  const userInfo = await common.getUser(app, thingsOauth, command.user_id);
 
   if (userInfo.user.is_admin) {
     const [ value, active ] = [ 0, false ];
@@ -134,7 +134,7 @@ app.command('/things-load', async ({ ack, command }) => {
   await ack();
 
   const houseId = command.team_id;
-  const userInfo = await common.getUser(command.user_id);
+  const userInfo = await common.getUser(app, thingsOauth, command.user_id);
 
   if (userInfo.user.is_admin) {
     const [ thing ] = await Things.loadHouseAccount(houseId, new Date(), command.text);

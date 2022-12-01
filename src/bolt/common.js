@@ -89,7 +89,9 @@ exports.setChannel = async function (app, oauth, channelType, command) {
 
 exports.syncWorkspace = async function (app, oauth, command) {
   const houseId = command.team_id;
+  const residentId = command.user_id;
   const now = new Date();
+
   const workspaceMembers = await app.client.users.list({ token: oauth.bot.token });
   for (const member of workspaceMembers.members) {
     if (!member.is_bot & member.id !== SLACKBOT) {
@@ -101,7 +103,7 @@ exports.syncWorkspace = async function (app, oauth, command) {
 
   const residents = await Admin.getResidents(houseId);
   const text = `Synced workspace with ${residents.length} active residents`;
-  await exports.postEphemeral(app, oauth, command, text);
+  await exports.postMessage(app, oauth, residentId, text);
 };
 
 exports.updateVoteCounts = async function (app, oauth, body, action) {
