@@ -197,7 +197,8 @@ exports.getValidChoreClaims = async function (choreId) {
   return db('ChoreClaim')
     .select('*')
     .whereNot({ valid: false })
-    .andWhere({ choreId });
+    .andWhere({ choreId })
+    .orderBy('claimedAt');
 };
 
 exports.claimChore = async function (houseId, choreId, slackId, claimedAt) {
