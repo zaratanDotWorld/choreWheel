@@ -1,4 +1,5 @@
 const Admin = require('../modules/admin');
+const Hearts = require('../modules/hearts');
 const Polls = require('../modules/polls');
 
 const { SLACKBOT } = require('../constants');
@@ -94,9 +95,12 @@ exports.syncWorkspace = async function (app, oauth, command) {
   const workspaceMembers = await app.client.users.list({ token: oauth.bot.token });
   for (const member of workspaceMembers.members) {
     if (!member.is_bot & member.id !== SLACKBOT) {
-      member.deleted
-        ? await Admin.deleteResident(houseId, member.id)
-        : await Admin.addResident(houseId, member.id, now);
+      if (member.deleted) {
+        await Admin.deleteResident(houseId, member.id);
+      } else {
+        await Admin.addResident(houseId, member.id, now);
+        await Hearts.initialiseResident(houseId, member.id, now);
+      }
     }
   }
 

@@ -64,13 +64,6 @@ app.event('app_home_opened', async ({ body, event }) => {
 
 // Slash commands
 
-app.command('/mirror-sync', async ({ ack, command }) => {
-  console.log('/mirror-sync');
-  await ack();
-
-  await common.syncWorkspace(app, thingsOauth, command);
-});
-
 app.command('/things-channel', async ({ ack, command }) => {
   console.log('/things-channel');
   await ack();
@@ -116,17 +109,6 @@ app.command('/things-del', async ({ ack, command }) => {
     const text = 'Only admins can update the things list...';
     await common.postEphemeral(app, thingsOauth, command, text);
   }
-});
-
-app.command('/things-list', async ({ ack, command }) => {
-  console.log('/things-list');
-  await ack();
-
-  const houseId = command.team_id;
-  const things = await Things.getThings(houseId);
-  const parsedThings = things.map((thing) => `\n${views.formatThing(thing)}`);
-  const text = `The current things:${parsedThings}`;
-  await common.postEphemeral(app, thingsOauth, command, text);
 });
 
 app.command('/things-load', async ({ ack, command }) => {

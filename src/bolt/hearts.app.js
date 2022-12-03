@@ -77,8 +77,8 @@ app.event('app_home_opened', async ({ body, event }) => {
 
 // Slash commands
 
-app.command('/mirror-sync', async ({ ack, command }) => {
-  console.log('/mirror-sync');
+app.command('/hearts-sync', async ({ ack, command }) => {
+  console.log('/hearts-sync');
   await ack();
 
   await common.syncWorkspace(app, heartsOauth, command);
@@ -169,7 +169,7 @@ app.event('message', async ({ payload }) => {
       await Hearts.giveKarma(houseId, giverId, receiverId, now);
     }
 
-    await common.addReaction(app, heartsOauth, payload, ':sparkles:');
+    await common.addReaction(app, heartsOauth, payload, 'sparkles');
   }
 });
 

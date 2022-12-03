@@ -12,43 +12,31 @@ features:
     display_name: Things
     always_online: true
   slash_commands:
-    - command: /mirror-sync
-      url: https://things.mirror.zaratan.world/slack/events
-      description: Sync active residents
-    - command: /things-add
-      url: https://things.mirror.zaratan.world/slack/events
-      description: Add a thing
-      usage_hint: "[type]-[name]-[quantity]-[price]"
-      should_escape: true
-    - command: /things-del
-      url: https://things.mirror.zaratan.world/slack/events
-      description: Delete a thing
-      usage_hint: "[type]-[name]"
-      should_escape: true
-    - command: /things-list
-      url: https://things.mirror.zaratan.world/slack/events
-      description: List current things
-      should_escape: true
     - command: /things-channel
       url: https://things.mirror.zaratan.world/slack/events
       description: Set the things channel
       usage_hint: "[name]"
       should_escape: true
+    - command: /things-add
+      url: https://things.mirror.zaratan.world/slack/events
+      description: Add a thing
+      usage_hint: "[type]-[name]-[quantity]-[price]"
+    - command: /things-del
+      url: https://things.mirror.zaratan.world/slack/events
+      description: Delete a thing
+      usage_hint: "[type]-[name]"
     - command: /things-load
       url: https://things.mirror.zaratan.world/slack/events
       description: Load money into the house account
       usage_hint: "[amount]"
-      should_escape: true
     - command: /things-resolved
       url: https://things.mirror.zaratan.world/slack/events
       description: Get list of resolved buys
       usage_hint: "[days]"
-      should_escape: true
     - command: /things-fulfill
       url: https://things.mirror.zaratan.world/slack/events
       description: Mark buys as fulfilled
       usage_hint: "[id] [id] ..."
-      should_escape: true
 oauth_config:
   redirect_urls:
     - https://things.mirror.zaratan.world/slack/oauth_redirect

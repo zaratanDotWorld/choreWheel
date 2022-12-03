@@ -72,8 +72,8 @@ app.event('app_home_opened', async ({ body, event }) => {
 
 // Slash commands
 
-app.command('/mirror-sync', async ({ ack, command }) => {
-  console.log('/mirror-sync');
+app.command('/chores-sync', async ({ ack, command }) => {
+  console.log('/chores-sync');
   await ack();
 
   await common.syncWorkspace(app, choresOauth, command);
@@ -313,6 +313,7 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
 app.action(/poll-vote/, async ({ ack, body, action }) => {
   console.log('chores poll-vote');
   await ack();
+
   await common.updateVoteCounts(app, choresOauth, body, action);
 });
 

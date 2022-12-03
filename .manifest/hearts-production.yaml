@@ -12,14 +12,14 @@ features:
     display_name: Hearts
     always_online: true
   slash_commands:
-    - command: /mirror-sync
-      url: https://hearts.mirror.zaratan.world/slack/events
-      description: Sync active residents
     - command: /hearts-channel
       url: https://hearts.mirror.zaratan.world/slack/events
       description: Set the hearts channel
       usage_hint: "[name]"
       should_escape: true
+    - command: /hearts-sync
+      url: https://hearts.mirror.zaratan.world/slack/events
+      description: Sync active residents
 oauth_config:
   redirect_urls:
     - https://hearts.mirror.zaratan.world/slack/oauth_redirect
@@ -29,8 +29,8 @@ oauth_config:
       - channels:read
       - chat:write
       - commands
-      - users:read
       - reactions:write
+      - users:read
 settings:
   event_subscriptions:
     request_url: https://hearts.mirror.zaratan.world/slack/events
