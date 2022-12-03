@@ -193,8 +193,9 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   const targetBlockId = body.view.blocks[2].block_id;
   const sourceBlockId = body.view.blocks[3].block_id;
 
-  const [ targetChoreId, targetChoreName ] = body.view.state.values[targetBlockId].chores.selected_option.value.split('|');
+  const target = body.view.state.values[targetBlockId].chores.selected_option.value;
   const sources = body.view.state.values[sourceBlockId].chores.selected_options;
+  const [ targetChoreId, targetChoreName, targetChoreSpeed ] = target.split('|');
 
   let alphaChoreId;
   let betaChoreId;
@@ -220,9 +221,18 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
     console.log(`Chore preference updated, ${alphaChoreId} vs ${betaChoreId} at ${preference}`);
   }
 
-  const { choresChannel } = await Admin.getHouse(houseId);
-  const text = `Someone just sped up ${targetChoreName} :rocket:`;
-  await common.postMessage(app, choresOauth, choresChannel, text);
+  const choreRankings = await Chores.getCurrentChoreRankings(houseId);
+  const targetChoreRanking = choreRankings.find((chore) => chore.id === parseInt(targetChoreId));
+  const speedDiff = (targetChoreRanking.ranking * 1000).toFixed(0) - parseInt(targetChoreSpeed);
+
+  if (speedDiff > 0) {
+    const { choresChannel } = await Admin.getHouse(houseId);
+    const text = `Someone sped up *${targetChoreName}* by *${speedDiff} speed* :rocket:`;
+    await common.postMessage(app, choresOauth, choresChannel, text);
+  } else {
+    const text = 'No speed change. Try slowing down more chores.';
+    await common.postMessage(app, choresOauth, residentId, text);
+  }
 });
 
 // Break flow

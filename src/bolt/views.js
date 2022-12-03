@@ -118,9 +118,10 @@ exports.choresClaimCallbackView = function (claim, choreName, totalPoints, month
 
 exports.choresRankView = function (choreRankings) {
   const mappedChoreRankings = choreRankings.map((chore) => {
+    const choreSpeed = (chore.ranking * 1000).toFixed(0);
     return {
-      value: `${chore.id}|${chore.name}`,
-      text: { type: 'plain_text', text: `${chore.name} - ${(chore.ranking * 1000).toFixed(0)} speed`, emoji: true }
+      value: `${chore.id}|${chore.name}|${choreSpeed}`,
+      text: { type: 'plain_text', text: `${chore.name} - ${choreSpeed} speed`, emoji: true }
     };
   });
 
