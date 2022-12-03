@@ -280,7 +280,9 @@ app.action('chores-gift', async ({ ack, body }) => {
   const monthStart = getMonthStart(now);
   const choreClaim = await Chores.getLargestChoreClaim(residentId, monthStart, now);
 
-  const view = views.choresGiftView(choreClaim);
+  const view = (choreClaim === undefined)
+    ? views.choresGiftView('', 0)
+    : views.choresGiftView(choreClaim.id, choreClaim.value);
   await common.openView(app, choresOauth, body.trigger_id, view);
 });
 

@@ -163,14 +163,14 @@ exports.choresRankView = function (choreRankings) {
   };
 };
 
-exports.choresGiftView = function (choreClaim) {
-  const giftablePoints = choreClaim.value.toFixed(pointPrecision);
+exports.choresGiftView = function (claimId, claimValue) {
+  const giftablePoints = claimValue.toFixed(pointPrecision);
   const mainText = `Gift someone points from your balance. You have *${giftablePoints} points* to gift.`;
 
   return {
     type: 'modal',
     callback_id: 'chores-gift-callback',
-    private_metadata: choreClaim.id.toString(),
+    private_metadata: claimId.toString(),
     title: { type: 'plain_text', text: 'Chores', emoji: true },
     submit: { type: 'plain_text', text: 'Submit', emoji: true },
     close: { type: 'plain_text', text: 'Cancel', emoji: true },
