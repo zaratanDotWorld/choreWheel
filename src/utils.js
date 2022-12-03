@@ -1,9 +1,5 @@
 const { DAY } = require('./constants');
 
-exports.sleep = function (ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-};
-
 exports.getDateStart = function (date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 };

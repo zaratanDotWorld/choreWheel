@@ -5,7 +5,6 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
 const { HOUR, DAY, NAY, YAY, CANCEL } = require('../src/constants');
-const { sleep } = require('../src/utils');
 const { db } = require('../src/db');
 
 const Polls = require('../src/modules/polls');
@@ -85,8 +84,6 @@ describe('Polls', async () => {
     it('cannot update the vote in a poll if the poll is closed', async () => {
       const [ poll ] = await Polls.createPoll(now, DAY);
 
-      await sleep(5);
-
       await expect(Polls.submitVote(poll.id, RESIDENT1, new Date(now.getTime() + DAY + 1), YAY))
         .to.be.rejectedWith('Poll has closed');
     });
@@ -98,8 +95,6 @@ describe('Polls', async () => {
       await Polls.submitVote(poll.id, RESIDENT2, soon, YAY);
       await Polls.submitVote(poll.id, RESIDENT3, soon, NAY);
 
-      await sleep(5);
-
       const results = await Polls.getPollResults(poll.id);
       expect(results.length).to.equal(3);
     });
@@ -110,8 +105,6 @@ describe('Polls', async () => {
       await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
       await Polls.submitVote(poll.id, RESIDENT2, soon, YAY);
       await Polls.submitVote(poll.id, RESIDENT3, soon, NAY);
-
-      await sleep(5);
 
       const { yays, nays } = await Polls.getPollResultCounts(poll.id);
       expect(yays).to.equal(2);

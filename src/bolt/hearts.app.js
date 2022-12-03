@@ -7,7 +7,6 @@ const Polls = require('../modules/polls');
 const Admin = require('../modules/admin');
 
 const { YAY } = require('../constants');
-const { sleep } = require('../utils');
 
 const common = require('./common');
 const views = require('./views');
@@ -56,9 +55,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     const now = new Date();
 
     await Admin.addResident(houseId, residentId, now);
-    await sleep(5);
     await Hearts.initialiseResident(houseId, residentId, now);
-    await sleep(5);
 
     const hearts = await Hearts.getHearts(residentId, now);
     const view = views.heartsHomeView(hearts.sum || 0);

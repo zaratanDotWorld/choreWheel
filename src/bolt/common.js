@@ -2,7 +2,6 @@ const Admin = require('../modules/admin');
 const Polls = require('../modules/polls');
 
 const { SLACKBOT } = require('../constants');
-const utils = require('../utils');
 const views = require('./views');
 
 exports.homeEndpoint = function (appName) {
@@ -109,7 +108,6 @@ exports.syncWorkspace = async function (app, oauth, command) {
 exports.updateVoteCounts = async function (app, oauth, body, action) {
   const [ pollId, value ] = action.value.split('|');
   await Polls.submitVote(pollId, body.user.id, new Date(), value);
-  await utils.sleep(5);
 
   // Update the vote counts
   const { yays, nays } = await Polls.getPollResultCounts(pollId);

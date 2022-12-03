@@ -5,7 +5,7 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
 const { HOUR } = require('../src/constants');
-const { sleep, getMonthStart, getMonthEnd, getNextMonthStart, getPrevMonthEnd, getDateStart } = require('../src/utils');
+const { getMonthStart, getMonthEnd, getNextMonthStart, getPrevMonthEnd, getDateStart } = require('../src/utils');
 const { db } = require('../src/db');
 
 const Admin = require('../src/modules/admin');
@@ -40,13 +40,11 @@ describe('Admin', async () => {
       expect(parseInt(numHouses.count)).to.equal(0);
 
       await Admin.updateHouse({ slackId: HOUSE1 });
-      await sleep(5);
 
       numHouses = await Admin.getNumHouses();
       expect(parseInt(numHouses.count)).to.equal(1);
 
       await Admin.updateHouse({ slackId: HOUSE2 });
-      await sleep(5);
 
       numHouses = await Admin.getNumHouses();
       expect(parseInt(numHouses.count)).to.equal(2);
@@ -59,14 +57,12 @@ describe('Admin', async () => {
 
       await Admin.updateHouse({ slackId: HOUSE1 });
       await Admin.updateHouse({ slackId: HOUSE2 });
-      await sleep(5);
 
       numHouses = await Admin.getNumHouses();
       expect(parseInt(numHouses.count)).to.equal(2);
 
       await Admin.updateHouse({ slackId: HOUSE1 });
       await Admin.updateHouse({ slackId: HOUSE2 });
-      await sleep(5);
 
       numHouses = await Admin.getNumHouses();
       expect(parseInt(numHouses.count)).to.equal(2);
@@ -77,9 +73,7 @@ describe('Admin', async () => {
       const thingsChannel = 'thingsChannel';
 
       await Admin.updateHouse({ slackId: HOUSE1, choresChannel: choresChannel });
-      await sleep(5);
       await Admin.updateHouse({ slackId: HOUSE1, thingsChannel: thingsChannel });
-      await sleep(5);
 
       const house = await Admin.getHouse(HOUSE1);
       expect(house.choresChannel).to.equal(choresChannel);
@@ -99,13 +93,11 @@ describe('Admin', async () => {
       expect(residents.length).to.equal(0);
 
       await Admin.addResident(HOUSE1, RESIDENT1, now);
-      await sleep(5);
 
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(1);
 
       await Admin.addResident(HOUSE1, RESIDENT2, now);
-      await sleep(5);
 
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(2);
@@ -120,9 +112,7 @@ describe('Admin', async () => {
       expect(residents.length).to.equal(0);
 
       await Admin.addResident(HOUSE1, RESIDENT1, now);
-      await sleep(5);
       await Admin.addResident(HOUSE1, RESIDENT1, soon);
-      await sleep(5);
 
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(1);
@@ -131,14 +121,12 @@ describe('Admin', async () => {
 
     it('can delete a resident', async () => {
       await Admin.addResident(HOUSE1, RESIDENT1, now);
-      await sleep(5);
 
       let residents;
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(1);
 
       await Admin.deleteResident(HOUSE1, RESIDENT1);
-      await sleep(5);
 
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(0);

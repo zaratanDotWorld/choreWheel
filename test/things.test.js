@@ -6,7 +6,6 @@ chai.use(chaiAsPromised);
 
 const { NAY, YAY, HOUR } = require('../src/constants');
 const { thingsPollLength } = require('../src/config');
-const { sleep } = require('../src/utils');
 const { db } = require('../src/db');
 
 const Things = require('../src/modules/things');
@@ -54,7 +53,6 @@ describe('Things', async () => {
     it('can manage items on the list', async () => {
       const [ soap ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: SOAP, value: 10 });
       await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, value: 75 });
-      await sleep(5);
 
       let things;
       things = await Things.getThings(HOUSE);
@@ -64,7 +62,6 @@ describe('Things', async () => {
 
       await Things.deleteThing(soap.id);
       await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, value: 20 });
-      await sleep(5);
 
       things = await Things.getThings(HOUSE);
       expect(things.length).to.equal(1);
@@ -73,7 +70,6 @@ describe('Things', async () => {
 
     it('can get a thing by id', async () => {
       const [ soap ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: SOAP, value: 10 });
-      await sleep(5);
 
       const thing = await Things.getThing(soap.id);
       expect(thing.name).to.equal(soap.name);
@@ -108,15 +104,12 @@ describe('Things', async () => {
 
     it('can affirm a buy', async () => {
       await Things.loadHouseAccount(HOUSE, now, 100);
-      await sleep(5);
 
       let [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
-      await sleep(5);
 
       await Things.resolveThingBuy(buy.id, challengeEnd);
-      await sleep(5);
 
       const balance = await Things.getHouseBalance(HOUSE, challengeEnd);
       expect(balance.sum).to.equal(90);
@@ -128,16 +121,13 @@ describe('Things', async () => {
 
     it('can reject a buy', async () => {
       await Things.loadHouseAccount(HOUSE, now, 100);
-      await sleep(5);
 
       let [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(buy.pollId, RESIDENT2, now, NAY);
-      await sleep(5);
 
       await Things.resolveThingBuy(buy.id, challengeEnd);
-      await sleep(5);
 
       const balance = await Things.getHouseBalance(HOUSE, challengeEnd);
       expect(balance.sum).to.equal(100);
@@ -149,16 +139,13 @@ describe('Things', async () => {
 
     it('can negate a buy if quorum is not reached', async () => {
       await Things.loadHouseAccount(HOUSE, now, 100);
-      await sleep(5);
 
       // Need 1 affirmative vote per $50
       let [ buy ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, 75);
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
-      await sleep(5);
 
       await Things.resolveThingBuy(buy.id, challengeEnd);
-      await sleep(5);
 
       buy = await Things.getThingBuy(buy.id);
       expect(buy.valid).to.be.false;
@@ -166,7 +153,6 @@ describe('Things', async () => {
 
     it('cannot resolve a buy before the poll is closed', async () => {
       await Things.loadHouseAccount(HOUSE, now, 100);
-      await sleep(5);
 
       const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
 
@@ -176,15 +162,12 @@ describe('Things', async () => {
 
     it('cannot resolve a buy twice', async () => {
       await Things.loadHouseAccount(HOUSE, now, 100);
-      await sleep(5);
 
       let [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
-      await sleep(5);
 
       await Things.resolveThingBuy(buy.id, challengeEnd);
-      await sleep(5);
 
       [ buy ] = await Things.resolveThingBuy(buy.id, challengeEnd);
       expect(buy).to.be.undefined;
@@ -192,15 +175,12 @@ describe('Things', async () => {
 
     it('can resolve buys in bulk', async () => {
       await Things.loadHouseAccount(HOUSE, now, 100);
-      await sleep(5);
 
       const [ thingBuy1 ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, 10);
       const [ thingBuy2 ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
       const [ thingBuy3 ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, soon, 10);
-      await sleep(5);
 
       await Polls.submitVote(thingBuy1.pollId, RESIDENT1, now, YAY);
-      await sleep(5);
 
       await Things.resolveThingBuys(HOUSE, challengeEnd);
 
@@ -220,19 +200,16 @@ describe('Things', async () => {
 
     it('can get a list of fulfillable buys', async () => {
       await Things.loadHouseAccount(HOUSE, now, 100);
-      await sleep(5);
 
       const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
-      await sleep(5);
 
       let fulfillableBuys;
       fulfillableBuys = await Things.getFulfillableThingBuys(HOUSE, now, challengeEnd);
       expect(fulfillableBuys.length).to.equal(0);
 
       await Things.resolveThingBuy(buy.id, challengeEnd);
-      await sleep(5);
 
       fulfillableBuys = await Things.getFulfillableThingBuys(HOUSE, now, challengeEnd);
       expect(fulfillableBuys.length).to.equal(1);
@@ -240,14 +217,11 @@ describe('Things', async () => {
 
     it('can fulfill a buy', async () => {
       await Things.loadHouseAccount(HOUSE, now, 100);
-      await sleep(5);
 
       const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
-      await sleep(5);
       await Things.resolveThingBuy(buy.id, challengeEnd);
-      await sleep(5);
 
       const [ fulfilledBuy ] = await Things.fulfillThingBuy(buy.id, RESIDENT2, challengeEnd);
       expect(fulfilledBuy.fulfilledAt.getTime()).to.equal(challengeEnd.getTime());
