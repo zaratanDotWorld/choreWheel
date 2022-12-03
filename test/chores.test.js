@@ -517,8 +517,8 @@ describe('Chores', async () => {
     it('can calculate chore penalties', async () => {
       await db('ChoreValue').insert([
         { choreId: dishes.id, valuedAt: now, value: 91, ranking: 0, residents: 0 },
-        { choreId: sweeping.id, valuedAt: now, value: 90, ranking: 0, residents: 0 },
-        { choreId: restock.id, valuedAt: now, value: 89, ranking: 0, residents: 0 }
+        { choreId: sweeping.id, valuedAt: now, value: 80, ranking: 0, residents: 0 },
+        { choreId: restock.id, valuedAt: now, value: 69, ranking: 0, residents: 0 }
       ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
       await Chores.claimChore(HOUSE, sweeping.id, RESIDENT2, now);
@@ -526,15 +526,12 @@ describe('Chores', async () => {
 
       let penalty;
       const penaltyTime = new Date(getNextMonthStart(now).getTime() + penaltyDelay);
-
       penalty = await Chores.calculatePenalty(RESIDENT1, penaltyTime);
-      expect(penalty).to.almost.equal(0);
-
+      expect(penalty).to.equal(0);
       penalty = await Chores.calculatePenalty(RESIDENT2, penaltyTime);
-      expect(penalty).to.almost.equal(0.25);
-
+      expect(penalty).to.equal(1);
       penalty = await Chores.calculatePenalty(RESIDENT3, penaltyTime);
-      expect(penalty).to.almost.equal(0.25);
+      expect(penalty).to.equal(1.5);
     });
 
     it('can calculate chore penalties, taking into account chore breaks', async () => {
@@ -557,15 +554,12 @@ describe('Chores', async () => {
 
       let penalty;
       const penaltyTime = new Date(getNextMonthStart(feb1).getTime() + penaltyDelay);
-
       penalty = await Chores.calculatePenalty(RESIDENT1, penaltyTime);
-      expect(penalty).to.almost.equal(0);
-
+      expect(penalty).to.equal(0);
       penalty = await Chores.calculatePenalty(RESIDENT2, penaltyTime);
-      expect(penalty).to.almost.equal(0);
-
+      expect(penalty).to.equal(0);
       penalty = await Chores.calculatePenalty(RESIDENT3, penaltyTime);
-      expect(penalty).to.almost.equal(0.25);
+      expect(penalty).to.equal(0.5);
     });
 
     it('can add a penalty at the right time', async () => {
@@ -577,13 +571,10 @@ describe('Chores', async () => {
       let penaltyHeart;
       const penaltyTime = new Date(getNextMonthStart(now).getTime() + penaltyDelay);
       const beforeTime = new Date(penaltyTime.getTime() - 1);
-
       [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, beforeTime);
       expect(penaltyHeart).to.be.undefined;
-
       [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
-      expect(penaltyHeart.value).to.almost.equal(-1.25);
-
+      expect(penaltyHeart.value).to.equal(-2.5);
       [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
       expect(penaltyHeart).to.be.undefined;
     });
@@ -602,7 +593,7 @@ describe('Chores', async () => {
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
 
       [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
-      expect(penaltyHeart.value).to.almost.equal(-1.25);
+      expect(penaltyHeart.value).to.equal(-2.5);
     });
   });
 
@@ -675,32 +666,32 @@ describe('Chores', async () => {
       let activeDays;
 
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
-      expect(activeDays).to.almost.equal(1.0);
+      expect(activeDays).to.equal(1);
 
       // Take the first week off
       await Chores.addChoreBreak(RESIDENT1, feb1, feb8);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
-      expect(activeDays).to.almost.equal(0.75);
+      expect(activeDays).to.equal(0.75);
 
       // Take the third week off
       await Chores.addChoreBreak(RESIDENT1, feb15, feb22);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
-      expect(activeDays).to.almost.equal(0.5);
+      expect(activeDays).to.equal(0.5);
 
       // Take time off next month, has no effect
       await Chores.addChoreBreak(RESIDENT1, mar1, mar15);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
-      expect(activeDays).to.almost.equal(0.5);
+      expect(activeDays).to.equal(0.5);
 
       // Take the first two weeks off, this break overlaps with the first break
       await Chores.addChoreBreak(RESIDENT1, feb1, feb15);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
-      expect(activeDays).to.almost.equal(0.25);
+      expect(activeDays).to.equal(0.25);
 
       // Take the last week off, this break stretches into the next month
       await Chores.addChoreBreak(RESIDENT1, feb22, mar8);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
-      expect(activeDays).to.almost.equal(0.0);
+      expect(activeDays).to.equal(0.0);
     });
 
     it('can consider only the parts of breaks in the current month', async () => {
@@ -715,12 +706,12 @@ describe('Chores', async () => {
       // Overlap last and first weeks
       await Chores.addChoreBreak(RESIDENT1, jan25, feb8);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
-      expect(activeDays).to.almost.equal(0.75);
+      expect(activeDays).to.equal(0.75);
 
       // Overlap last and first weeks
       await Chores.addChoreBreak(RESIDENT1, feb22, mar8);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
-      expect(activeDays).to.almost.equal(0.50);
+      expect(activeDays).to.equal(0.5);
     });
 
     it('can consider the resident activeAt when calculating active percentage', async () => {
@@ -735,12 +726,12 @@ describe('Chores', async () => {
 
       // activeAt used to create implicit break
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT3, feb1);
-      expect(activeDays).to.almost.equal(0.75);
+      expect(activeDays).to.equal(0.75);
 
       // Can combine with regular breaks
       await Chores.addChoreBreak(RESIDENT3, feb22, mar1);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT3, feb1);
-      expect(activeDays).to.almost.equal(0.50);
+      expect(activeDays).to.equal(0.5);
     });
   });
 

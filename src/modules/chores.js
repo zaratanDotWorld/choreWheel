@@ -357,7 +357,7 @@ exports.calculatePenalty = async function (residentId, penaltyTime) {
   const pointsOwed = pointsPerResident * activePercentage;
   const deficiency = Math.max(pointsOwed - chorePoints.sum, 0);
   const truncatedDeficiency = Math.floor(deficiency / penaltyIncrement) * penaltyIncrement;
-  return truncatedDeficiency / (4 * penaltyIncrement);
+  return truncatedDeficiency / (2 * penaltyIncrement);
 };
 
 // Chore Point Gifting
