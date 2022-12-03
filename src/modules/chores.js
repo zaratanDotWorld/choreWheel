@@ -60,15 +60,9 @@ exports.getActiveChorePreferences = async function (houseId) {
     .select('alphaChoreId', 'betaChoreId', 'preference');
 };
 
-exports.setChorePreference = async function (houseId, slackId, alphaChoreId, betaChoreId, preference) {
+exports.setChorePreference = async function (houseId, residentId, alphaChoreId, betaChoreId, preference) {
   return db('ChorePref')
-    .insert({
-      houseId: houseId,
-      residentId: slackId,
-      alphaChoreId: alphaChoreId,
-      betaChoreId: betaChoreId,
-      preference: preference
-    })
+    .insert({ houseId, residentId, alphaChoreId, betaChoreId, preference })
     .onConflict([ 'houseId', 'residentId', 'alphaChoreId', 'betaChoreId' ]).merge();
 };
 
@@ -84,10 +78,9 @@ exports.getChoreValue = async function (choreId, startTime, endTime) {
 };
 
 exports.getCurrentChoreValue = async function (choreId, currentTime) {
-  const previousClaims = await exports.getValidChoreClaims(choreId);
-  const filteredClaims = previousClaims.filter((claim) => claim.claimedAt < currentTime);
-  const previousClaimedAt = (filteredClaims.length === 0) ? new Date(0) : filteredClaims.slice(-1)[0].claimedAt;
-  return exports.getChoreValue(choreId, previousClaimedAt, currentTime);
+  const latestClaim = await exports.getLatestChoreClaim(choreId, currentTime);
+  const latestClaimedAt = (latestClaim === undefined) ? new Date(0) : latestClaim.claimedAt;
+  return exports.getChoreValue(choreId, latestClaimedAt, currentTime);
 };
 
 exports.getCurrentChoreValues = async function (houseId, currentTime) {
@@ -193,15 +186,17 @@ exports.getChoreClaim = async function (claimId) {
     .first();
 };
 
-exports.getValidChoreClaims = async function (choreId) {
+exports.getLatestChoreClaim = async function (choreId, currentTime) {
   return db('ChoreClaim')
     .select('*')
+    .where({ choreId })
+    .where('claimedAt', '<', currentTime) // TODO: should this be <= ??
     .whereNot({ valid: false })
-    .andWhere({ choreId })
-    .orderBy('claimedAt');
+    .orderBy('claimedAt', 'desc')
+    .first();
 };
 
-exports.claimChore = async function (houseId, choreId, slackId, claimedAt) {
+exports.claimChore = async function (houseId, choreId, residentId, claimedAt) {
   const choreValue = await exports.getCurrentChoreValue(choreId, claimedAt);
 
   if (choreValue.sum === null) { throw new Error('Cannot claim a zero-value chore!'); }
@@ -212,7 +207,7 @@ exports.claimChore = async function (houseId, choreId, slackId, claimedAt) {
     .insert({
       houseId: houseId,
       choreId: choreId,
-      claimedBy: slackId,
+      claimedBy: residentId,
       claimedAt: claimedAt,
       value: choreValue.sum,
       pollId: poll.id

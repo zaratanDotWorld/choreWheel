@@ -327,9 +327,9 @@ describe('Chores', async () => {
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
       await sleep(5);
 
-      const choreClaims = await Chores.getValidChoreClaims(dishes.id);
-      expect(choreClaims[0].claimedBy).to.equal(RESIDENT1);
-      expect(choreClaims[0].value).to.equal(15);
+      const choreClaim = await Chores.getLatestChoreClaim(dishes.id, soon);
+      expect(choreClaim.claimedBy).to.equal(RESIDENT1);
+      expect(choreClaim.value).to.equal(15);
     });
 
     it('cannot claim a chore with a zero value', async () => {
@@ -342,19 +342,18 @@ describe('Chores', async () => {
       await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 } ]);
       await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 5, ranking: 0, residents: 0 } ]);
       await sleep(5);
-      await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
+      const [ choreClaim1 ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
       await sleep(5);
 
       await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: soon, value: 20, ranking: 0, residents: 0 } ]);
       await sleep(5);
-      await Chores.claimChore(HOUSE, dishes.id, RESIDENT2, soon);
+      const [ choreClaim2 ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT2, soon);
       await sleep(5);
 
-      const choreClaims = await Chores.getValidChoreClaims(dishes.id);
-      expect(choreClaims[0].claimedBy).to.equal(RESIDENT1);
-      expect(choreClaims[0].value).to.equal(15);
-      expect(choreClaims[1].claimedBy).to.equal(RESIDENT2);
-      expect(choreClaims[1].value).to.equal(20);
+      expect(choreClaim1.claimedBy).to.equal(RESIDENT1);
+      expect(choreClaim1.value).to.equal(15);
+      expect(choreClaim2.claimedBy).to.equal(RESIDENT2);
+      expect(choreClaim2.value).to.equal(20);
     });
 
     it('can successfully resolve a claim', async () => {
