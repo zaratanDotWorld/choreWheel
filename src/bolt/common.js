@@ -28,7 +28,7 @@ exports.postEphemeral = async function (app, oauth, command, text) {
     token: oauth.bot.token,
     channel: command.channel_id,
     user: command.user_id,
-    text: text
+    text
   });
 };
 
@@ -36,8 +36,8 @@ exports.postMessage = async function (app, oauth, channelId, text, blocks) {
   return app.client.chat.postMessage({
     token: oauth.bot.token,
     channel: channelId,
-    text: text,
-    blocks: blocks
+    text,
+    blocks
   });
 };
 
@@ -45,7 +45,7 @@ exports.publishHome = async function (app, oauth, residentId, view) {
   await app.client.views.publish({
     token: oauth.bot.token,
     user_id: residentId,
-    view: view
+    view
   });
 };
 
@@ -53,7 +53,7 @@ exports.openView = async function (app, oauth, triggerId, view) {
   return app.client.views.open({
     token: oauth.bot.token,
     trigger_id: triggerId,
-    view: view
+    view
   });
 };
 

@@ -21,7 +21,7 @@ exports.deleteThing = async function (thingId) {
 
 exports.getThings = async function (houseId) {
   return db('Thing')
-    .where({ houseId: houseId, active: true })
+    .where({ houseId, active: true })
     .orderBy([ 'type', 'name' ])
     .returning('*');
 };
@@ -37,20 +37,15 @@ exports.getThing = async function (thingId) {
 
 exports.getHouseBalance = async function (houseId, currentTime) {
   return db('ThingBuy')
-    .where({ houseId: houseId, valid: true })
+    .where({ houseId, valid: true })
     .where('boughtAt', '<=', currentTime)
     .sum('value')
     .first();
 };
 
-exports.loadHouseAccount = async function (houseId, loadedAt, amount) {
+exports.loadHouseAccount = async function (houseId, loadedAt, value) {
   return db('ThingBuy')
-    .insert({
-      houseId: houseId,
-      boughtAt: loadedAt,
-      value: amount,
-      resolvedAt: loadedAt
-    })
+    .insert({ houseId, value, boughtAt: loadedAt, resolvedAt: loadedAt })
     .returning('*');
 };
 
@@ -62,14 +57,7 @@ exports.buyThing = async function (houseId, thingId, boughtBy, boughtAt, price) 
   const [ poll ] = await Polls.createPoll(boughtAt, thingsPollLength);
 
   return db('ThingBuy')
-    .insert({
-      houseId: houseId,
-      thingId: thingId,
-      boughtBy: boughtBy,
-      boughtAt: boughtAt,
-      value: -price,
-      pollId: poll.id
-    })
+    .insert({ houseId, thingId, boughtBy, boughtAt, value: -price, pollId: poll.id })
     .returning('*');
 };
 

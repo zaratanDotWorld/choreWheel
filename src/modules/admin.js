@@ -29,13 +29,13 @@ exports.addResident = async function (houseId, slackId, activeAt) {
   if (resident && resident.active) { return; }
 
   return db('Resident')
-    .insert({ houseId: houseId, slackId: slackId, active: true, activeAt: activeAt })
+    .insert({ houseId, slackId, activeAt, active: true })
     .onConflict('slackId').merge();
 };
 
 exports.deleteResident = async function (houseId, slackId) {
   return db('Resident')
-    .insert({ houseId: houseId, slackId: slackId, active: false })
+    .insert({ houseId, slackId, active: false })
     .onConflict('slackId').merge([ 'active' ]);
 };
 

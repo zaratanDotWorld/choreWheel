@@ -22,7 +22,7 @@ const { PowerRanker } = require('./power');
 
 exports.addChore = async function (houseId, name) {
   return db('Chore')
-    .insert({ houseId: houseId, name: name, active: true })
+    .insert({ houseId, name, active: true })
     .onConflict([ 'houseId', 'name' ]).merge()
     .returning('*');
 };
@@ -196,7 +196,7 @@ exports.getLatestChoreClaim = async function (choreId, currentTime) {
     .first();
 };
 
-exports.claimChore = async function (houseId, choreId, residentId, claimedAt) {
+exports.claimChore = async function (houseId, choreId, claimedBy, claimedAt) {
   const choreValue = await exports.getCurrentChoreValue(choreId, claimedAt);
 
   if (choreValue.sum === null) { throw new Error('Cannot claim a zero-value chore!'); }
@@ -204,14 +204,7 @@ exports.claimChore = async function (houseId, choreId, residentId, claimedAt) {
   const [ poll ] = await Polls.createPoll(claimedAt, choresPollLength);
 
   return db('ChoreClaim')
-    .insert({
-      houseId: houseId,
-      choreId: choreId,
-      claimedBy: residentId,
-      claimedAt: claimedAt,
-      value: choreValue.sum,
-      pollId: poll.id
-    })
+    .insert({ houseId, choreId, claimedBy, claimedAt, value: choreValue.sum, pollId: poll.id })
     .returning('*');
 };
 
@@ -233,11 +226,11 @@ exports.resolveChoreClaim = async function (claimId, resolvedAt) {
 
   const { yays, nays } = await Polls.getPollResultCounts(choreClaim.pollId);
   const valid = (yays >= choresMinVotes && yays > nays);
-  const choreValue = valid ? adjustedCurrentValue : 0;
+  const value = valid ? adjustedCurrentValue : 0;
 
   return db('ChoreClaim')
     .where({ id: claimId, resolvedAt: null }) // Cannot resolve twice
-    .update({ value: choreValue, resolvedAt: resolvedAt, valid: valid })
+    .update({ value, resolvedAt, valid })
     .returning('*');
 };
 
@@ -254,17 +247,17 @@ exports.resolveChoreClaims = async function (houseId, currentTime) {
   }
 };
 
-exports.getChorePoints = async function (residentId, choreId, startTime, endTime) {
+exports.getChorePoints = async function (claimedBy, choreId, startTime, endTime) {
   return db('ChoreClaim')
-    .where({ claimedBy: residentId, choreId: choreId, valid: true })
+    .where({ claimedBy, choreId, valid: true })
     .whereBetween('claimedAt', [ startTime, endTime ])
     .sum('value')
     .first();
 };
 
-exports.getAllChorePoints = async function (residentId, startTime, endTime) {
+exports.getAllChorePoints = async function (claimedBy, startTime, endTime) {
   return db('ChoreClaim')
-    .where({ claimedBy: residentId, valid: true })
+    .where({ claimedBy, valid: true })
     .whereBetween('claimedAt', [ startTime, endTime ])
     .sum('value')
     .first();
@@ -370,20 +363,20 @@ exports.getLargestChoreClaim = async function (residentId, startTime, endTime) {
     .first();
 };
 
-exports.giftChorePoints = async function (sourceClaimId, recipientId, giftedAt, value) {
+exports.giftChorePoints = async function (sourceClaimId, recipientId, giftedAt, giftValue) {
   const choreClaim = await exports.getChoreClaim(sourceClaimId);
 
   return db.transaction(async trx => {
     await trx('ChoreClaim')
       .where({ id: choreClaim.id })
-      .update({ value: choreClaim.value - value });
+      .update({ value: choreClaim.value - giftValue });
 
     await trx('ChoreClaim')
       .insert({
         houseId: choreClaim.houseId,
         claimedBy: recipientId,
         claimedAt: giftedAt,
-        value: value,
+        value: giftValue,
         pollId: choreClaim.pollId
       })
       .returning('*');
@@ -392,6 +385,6 @@ exports.giftChorePoints = async function (sourceClaimId, recipientId, giftedAt, 
 
 exports.getChorePointGifts = async function (pollId) {
   return db('ChoreClaim')
-    .where({ choreId: null, pollId: pollId })
+    .where({ choreId: null, pollId })
     .select('*');
 };

@@ -72,8 +72,8 @@ describe('Admin', async () => {
       const choresChannel = 'choresChannel';
       const thingsChannel = 'thingsChannel';
 
-      await Admin.updateHouse({ slackId: HOUSE1, choresChannel: choresChannel });
-      await Admin.updateHouse({ slackId: HOUSE1, thingsChannel: thingsChannel });
+      await Admin.updateHouse({ slackId: HOUSE1, choresChannel });
+      await Admin.updateHouse({ slackId: HOUSE1, thingsChannel });
 
       const house = await Admin.getHouse(HOUSE1);
       expect(house.choresChannel).to.equal(choresChannel);

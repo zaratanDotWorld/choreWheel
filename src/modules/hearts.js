@@ -18,15 +18,15 @@ const { PowerRanker } = require('./power');
 
 // Hearts
 
-exports.getHeart = async function (residentId, currentTime) {
+exports.getHeart = async function (residentId, generatedAt) {
   return db('Heart')
-    .where({ residentId: residentId, generatedAt: currentTime })
+    .where({ residentId, generatedAt })
     .first();
 };
 
-exports.getAgnosticHeart = async function (houseId, currentTime) {
+exports.getAgnosticHeart = async function (houseId, generatedAt) {
   return db('Heart')
-    .where({ houseId: houseId, generatedAt: currentTime })
+    .where({ houseId, generatedAt })
     .first();
 };
 
@@ -79,18 +79,11 @@ exports.regenerateHearts = async function (houseId, residentId, currentTime) {
 
 // Challenges
 
-exports.issueChallenge = async function (houseId, challengerId, challengeeId, numHearts, challengedAt) {
+exports.issueChallenge = async function (houseId, challengerId, challengeeId, value, challengedAt) {
   const [ poll ] = await Polls.createPoll(challengedAt, heartsPollLength);
 
   return db('HeartChallenge')
-    .insert({
-      houseId: houseId,
-      challengerId: challengerId,
-      challengeeId: challengeeId,
-      challengedAt: challengedAt,
-      value: numHearts,
-      pollId: poll.id
-    })
+    .insert({ houseId, challengerId, challengeeId, challengedAt, value, pollId: poll.id })
     .returning('*');
 };
 
@@ -129,7 +122,7 @@ exports.resolveChallenge = async function (challengeId, resolvedAt) {
 
   return db('HeartChallenge')
     .where({ id: challengeId })
-    .update({ resolvedAt: resolvedAt, heartId: heart.id })
+    .update({ resolvedAt, heartId: heart.id })
     .returning('*');
 };
 

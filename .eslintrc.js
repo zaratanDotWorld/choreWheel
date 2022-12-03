@@ -15,7 +15,7 @@ module.exports = {
     'max-len': [ 2, 150 ],
     'no-unused-expressions': 0,
     'no-unused-vars': [ 2, 'local' ],
-    'object-shorthand': [ 1, 'consistent-as-needed' ],
+    'object-shorthand': [ 1, 'properties' ],
     'array-bracket-spacing': [ 2, 'always' ],
     'no-only-tests/no-only-tests': [ 2, { fix: true } ]
   },
