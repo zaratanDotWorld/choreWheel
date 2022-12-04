@@ -227,7 +227,7 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
 
   if (speedDiff > 0) {
     const { choresChannel } = await Admin.getHouse(houseId);
-    const text = `Someone sped up *${targetChoreName}* by *${speedDiff} speed* :rocket:`;
+    const text = `Someone sped up *${targetChoreName}* by *${speedDiff} ppt* :rocket:`;
     await common.postMessage(app, choresOauth, choresChannel, text);
   } else {
     const text = 'No speed change. Try slowing down more chores.';

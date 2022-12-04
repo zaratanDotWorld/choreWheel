@@ -121,15 +121,15 @@ exports.choresRankView = function (choreRankings) {
     const choreSpeed = (chore.ranking * 1000).toFixed(0);
     return {
       value: `${chore.id}|${chore.name}|${choreSpeed}`,
-      text: { type: 'plain_text', text: `${chore.name} - ${choreSpeed} speed`, emoji: true }
+      text: { type: 'plain_text', text: `${chore.name} - ${choreSpeed} ppt`, emoji: true }
     };
   });
 
   const mainText = 'Every hour, chores gain points. ' +
-    'The sum of points across all chores is fixed, but some chores gain points faster than others. ' +
-    'Every chore has a speed, and speeds always add up to *1000*.\n\n' +
-    'You can set chore speeds here. Choose one chore to make faster, ' +
-    'and one (or more) to make slower. The effect will be larger the more chores you slow down.';
+    'The total points across all chores is fixed, but some chores gain points faster than others. ' +
+    'Every chore has a speed (measured in *ppt*, or points-per-thousand), and speeds always add up to *1000*.\n\n' +
+    'You can set chore speeds here. Choose one chore to make faster, and one (or more) to make slower. ' +
+    'The effect will be larger the more chores you slow down.';
 
   return {
     type: 'modal',
