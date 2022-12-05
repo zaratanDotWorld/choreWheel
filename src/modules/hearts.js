@@ -7,6 +7,7 @@ const {
   heartsBaseline,
   heartsPollLength,
   karmaDelay,
+  karmaProportion,
   karmaMaxHearts,
   heartsRegen,
   heartsCriticalNum
@@ -184,21 +185,31 @@ exports.getKarmaRankings = async function (houseId, startTime, endTime) {
   }).sort((a, b) => b.ranking - a.ranking);
 };
 
-exports.generateKarmaHeart = async function (houseId, currentTime) {
-  const monthStart = getMonthStart(currentTime);
-  const generationTime = new Date(monthStart.getTime() + karmaDelay);
-  if (currentTime < generationTime) { return []; }
+exports.getNumKarmaWinners = async function (houseId) {
+  const residents = await Admin.getResidents(houseId);
+  return Math.floor(residents.length / karmaProportion);
+};
 
-  const karmaHeart = await exports.getAgnosticHeart(houseId, generationTime);
+exports.generateKarmaHearts = async function (houseId, currentTime, numWinners) {
+  const monthStart = getMonthStart(currentTime);
+  const generatedAt = new Date(monthStart.getTime() + karmaDelay);
+  if (currentTime < generatedAt) { return []; }
+
+  const karmaHeart = await exports.getAgnosticHeart(houseId, generatedAt);
   if (karmaHeart === undefined) {
     const prevMonthEnd = getPrevMonthEnd(currentTime);
     const prevMonthStart = getMonthStart(prevMonthEnd);
     const karmaRankings = await exports.getKarmaRankings(houseId, prevMonthStart, prevMonthEnd);
     if (karmaRankings.length === 0) { return []; }
 
-    const winnerId = karmaRankings[0].slackId;
-    const winnerHearts = await exports.getHearts(winnerId, generationTime);
-    const karmaAmount = Math.min(1, Math.max(0, karmaMaxHearts - winnerHearts.sum)); // Bring to maximum
-    return exports.generateHearts(houseId, winnerId, generationTime, karmaAmount);
+    const karmaHearts = [];
+    for (const winner of karmaRankings.slice(0, numWinners)) {
+      const residentId = winner.slackId;
+      const residentHearts = await exports.getHearts(residentId, generatedAt);
+      const value = Math.min(1, Math.max(0, karmaMaxHearts - residentHearts.sum)); // Bring to maximum
+      karmaHearts.push({ houseId, residentId, generatedAt, value });
+    }
+
+    return db('Heart').insert(karmaHearts).returning('*');
   } else { return []; }
 };

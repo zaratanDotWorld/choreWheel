@@ -66,10 +66,12 @@ app.event('app_home_opened', async ({ body, event }) => {
     await Hearts.resolveChallenges(houseId, now);
 
     // Issue karma hearts
-    const [ karmaHeart ] = await Hearts.generateKarmaHeart(houseId, now);
-    if (karmaHeart !== undefined) {
+    const numWinners = await Hearts.getNumKarmaWinners(houseId);
+    const karmaHearts = await Hearts.generateKarmaHearts(houseId, now, numWinners);
+    if (karmaHearts.length > 0) {
       const { heartsChannel } = await Admin.getHouse(houseId);
-      const text = `<@${karmaHeart.residentId}> is last month's karma winner :heart_on_fire:`;
+      const karmaWinners = karmaHearts.map((heart) => `<@${heart.residentId}`).join(' and ');
+      const text = `${karmaWinners} are last month's karma winners :heart_on_fire:`;
       await common.postMessage(app, heartsOauth, heartsChannel, text);
     }
   }

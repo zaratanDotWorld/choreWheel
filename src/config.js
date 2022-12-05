@@ -21,6 +21,7 @@ exports.heartsMinPctInitial = 0.4; // For removing initial hearts
 exports.heartsMinPctFinal = 0.7; // For removing the final two hearts
 exports.heartsCriticalNum = 2;
 exports.karmaDelay = 3 * HOUR;
+exports.karmaProportion = 3;
 exports.karmaMaxHearts = 7;
 
 // Things
