@@ -335,7 +335,7 @@ exports.addChorePenalty = async function (houseId, residentId, currentTime) {
     if (hearts.sum === null) { return []; } // Don't penalize if not initialized
 
     const penaltyAmount = await exports.calculatePenalty(residentId, penaltyTime);
-    return Hearts.generateHearts(houseId, residentId, -penaltyAmount, penaltyTime);
+    return Hearts.generateHearts(houseId, residentId, penaltyTime, -penaltyAmount);
   } else {
     return [];
   }

@@ -50,7 +50,7 @@ exports.getHouseHearts = async function (houseId, currentTime) {
     .orderBy('sum', 'desc');
 };
 
-exports.generateHearts = async function (houseId, residentId, value, generatedAt) {
+exports.generateHearts = async function (houseId, residentId, generatedAt, value) {
   return db('Heart')
     .insert({ houseId, residentId, generatedAt, value })
     .returning('*');
@@ -59,7 +59,7 @@ exports.generateHearts = async function (houseId, residentId, value, generatedAt
 exports.initialiseResident = async function (houseId, residentId, currentTime) {
   const hearts = await exports.getHearts(residentId, currentTime);
   if (hearts.sum === null) {
-    return exports.generateHearts(houseId, residentId, heartsBaseline, currentTime);
+    return exports.generateHearts(houseId, residentId, currentTime, heartsBaseline);
   } else { return []; }
 };
 
@@ -73,7 +73,7 @@ exports.regenerateHearts = async function (houseId, residentId, currentTime) {
     if (hearts.sum === null) { return []; } // Don't regenerate if not initialized
 
     const regenAmount = Math.min(heartsRegen, Math.max(0, heartsBaseline - hearts.sum)); // Bring to baseline
-    return exports.generateHearts(houseId, residentId, regenAmount, regenTime);
+    return exports.generateHearts(houseId, residentId, regenTime, regenAmount);
   } else { return []; }
 };
 
@@ -118,7 +118,7 @@ exports.resolveChallenge = async function (challengeId, resolvedAt) {
     ? challenge.challengeeId
     : challenge.challengerId;
 
-  const [ heart ] = await exports.generateHearts(challenge.houseId, loser, -challenge.value, resolvedAt);
+  const [ heart ] = await exports.generateHearts(challenge.houseId, loser, resolvedAt, -challenge.value);
 
   return db('HeartChallenge')
     .where({ id: challengeId })
@@ -199,6 +199,6 @@ exports.generateKarmaHeart = async function (houseId, currentTime) {
     const winnerId = karmaRankings[0].slackId;
     const winnerHearts = await exports.getHearts(winnerId, generationTime);
     const karmaAmount = Math.min(1, Math.max(0, karmaMaxHearts - winnerHearts.sum)); // Bring to maximum
-    return exports.generateHearts(houseId, winnerId, karmaAmount, generationTime);
+    return exports.generateHearts(houseId, winnerId, generationTime, karmaAmount);
   } else { return []; }
 };

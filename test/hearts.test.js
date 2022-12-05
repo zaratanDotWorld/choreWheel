@@ -57,9 +57,9 @@ describe('Hearts', async () => {
 
   describe('using hearts', async () => {
     it('can generate hearts for residents', async () => {
-      await Hearts.generateHearts(HOUSE, RESIDENT1, 1, now);
-      await Hearts.generateHearts(HOUSE, RESIDENT1, 1, now);
-      await Hearts.generateHearts(HOUSE, RESIDENT2, 1, now);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, now, 1);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, now, 1);
+      await Hearts.generateHearts(HOUSE, RESIDENT2, now, 1);
 
       const hearts1 = await Hearts.getHearts(RESIDENT1, now);
       const hearts2 = await Hearts.getHearts(RESIDENT2, now);
@@ -71,8 +71,8 @@ describe('Hearts', async () => {
     });
 
     it('can get hearts for the house at once', async () => {
-      await Hearts.generateHearts(HOUSE, RESIDENT1, 2, now);
-      await Hearts.generateHearts(HOUSE, RESIDENT2, 1, now);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, now, 2);
+      await Hearts.generateHearts(HOUSE, RESIDENT2, now, 1);
 
       const hearts = await Hearts.getHouseHearts(HOUSE, now);
 
@@ -81,9 +81,9 @@ describe('Hearts', async () => {
     });
 
     it('can aggregate positive and negative hearts', async () => {
-      await Hearts.generateHearts(HOUSE, RESIDENT1, 2, now);
-      await Hearts.generateHearts(HOUSE, RESIDENT1, 1, now);
-      await Hearts.generateHearts(HOUSE, RESIDENT1, -2, now);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, now, 2);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, now, 1);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, now, -2);
 
       const hearts = await Hearts.getHearts(RESIDENT1, now);
 
@@ -91,8 +91,8 @@ describe('Hearts', async () => {
     });
 
     it('can handle fractional hearts', async () => {
-      await Hearts.generateHearts(HOUSE, RESIDENT1, 2.5, now);
-      await Hearts.generateHearts(HOUSE, RESIDENT1, -0.75, now);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, now, 2.5);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, now, -0.75);
 
       const hearts = await Hearts.getHearts(RESIDENT1, now);
 
@@ -113,7 +113,7 @@ describe('Hearts', async () => {
       expect(hearts.sum).to.equal(heartsBaseline);
 
       // Even if they go back to zero
-      await Hearts.generateHearts(HOUSE, RESIDENT1, -heartsBaseline, now);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, now, -heartsBaseline);
 
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
 
@@ -131,7 +131,7 @@ describe('Hearts', async () => {
       expect(hearts.sum).to.equal(null);
 
       // Generate a heart, now regeneration works
-      await Hearts.generateHearts(HOUSE, RESIDENT1, 1, now);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, now, 1);
 
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, nextMonth);
 
@@ -165,7 +165,7 @@ describe('Hearts', async () => {
       expect(hearts.sum).to.equal(5);
 
       // Or overloaded
-      await Hearts.generateHearts(HOUSE, RESIDENT1, 1, nextMonth);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, nextMonth, 1);
 
       hearts = await Hearts.getHearts(RESIDENT1, nextMonth);
       expect(hearts.sum).to.equal(6);
@@ -354,7 +354,7 @@ describe('Hearts', async () => {
       expect(karmaHeart).to.be.undefined;
 
       // If they're at the limit, they get less
-      await Hearts.generateHearts(HOUSE, RESIDENT4, karmaMaxHearts - 0.5, nextMonthKarma);
+      await Hearts.generateHearts(HOUSE, RESIDENT4, nextMonthKarma, karmaMaxHearts - 0.5);
       await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT4, nextMonthKarma);
 
       [ karmaHeart ] = await Hearts.generateKarmaHeart(HOUSE, twoMonthsKarma);
