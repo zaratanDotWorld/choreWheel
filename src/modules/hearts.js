@@ -25,10 +25,9 @@ exports.getHeart = async function (residentId, generatedAt) {
     .first();
 };
 
-exports.getAgnosticHeart = async function (houseId, generatedAt) {
+exports.getAgnosticHearts = async function (houseId, generatedAt) {
   return db('Heart')
-    .where({ houseId, generatedAt })
-    .first();
+    .where({ houseId, generatedAt });
 };
 
 exports.getHearts = async function (residentId, currentTime) {
@@ -195,14 +194,13 @@ exports.generateKarmaHearts = async function (houseId, currentTime, numWinners) 
   const generatedAt = new Date(monthStart.getTime() + karmaDelay);
   if (currentTime < generatedAt) { return []; }
 
-  const karmaHeart = await exports.getAgnosticHeart(houseId, generatedAt);
-  if (karmaHeart === undefined) {
+  const karmaHearts = await exports.getAgnosticHearts(houseId, generatedAt);
+  if (karmaHearts.length === 0) {
     const prevMonthEnd = getPrevMonthEnd(currentTime);
     const prevMonthStart = getMonthStart(prevMonthEnd);
     const karmaRankings = await exports.getKarmaRankings(houseId, prevMonthStart, prevMonthEnd);
     if (karmaRankings.length === 0) { return []; }
 
-    const karmaHearts = [];
     for (const winner of karmaRankings.slice(0, numWinners)) {
       const residentId = winner.slackId;
       const residentHearts = await exports.getHearts(residentId, generatedAt);
