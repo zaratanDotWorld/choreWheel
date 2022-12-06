@@ -115,7 +115,7 @@ exports.syncWorkspace = async function (app, oauth, command) {
 
   const residents = await Admin.getResidents(houseId);
   const text = `Synced workspace with ${residents.length} active residents`;
-  await exports.postMessage(app, oauth, residentId, text);
+  await exports.postEphemeralDirect(app, oauth, residentId, text);
 };
 
 exports.updateVoteCounts = async function (app, oauth, body, action) {
