@@ -32,6 +32,15 @@ exports.postEphemeral = async function (app, oauth, command, text) {
   });
 };
 
+exports.postEphemeralDirect = async function (app, oauth, residentId, text) {
+  return app.client.chat.postEphemeral({
+    token: oauth.bot.token,
+    channel: residentId,
+    user: residentId,
+    text
+  });
+};
+
 exports.postMessage = async function (app, oauth, channelId, text, blocks) {
   return app.client.chat.postMessage({
     token: oauth.bot.token,

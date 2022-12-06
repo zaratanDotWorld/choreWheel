@@ -231,7 +231,7 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
     await common.postMessage(app, choresOauth, choresChannel, text);
   } else {
     const text = 'No speed change. Try slowing down more chores.';
-    await common.postMessage(app, choresOauth, residentId, text);
+    await common.postEphemeralDirect(app, choresOauth, residentId, text);
   }
 });
 
@@ -268,7 +268,7 @@ app.view('chores-break-callback', async ({ ack, body }) => {
 
   if (breakStart < todayStart || breakDays < 3) {
     const text = 'Not a valid chore break :slightly_frowning_face:';
-    await common.postMessage(app, choresOauth, residentId, text);
+    await common.postEphemeralDirect(app, choresOauth, residentId, text);
   } else {
     // Record the break
     await Chores.addChoreBreak(residentId, breakStart, breakEnd);
