@@ -206,12 +206,12 @@ describe('Things', async () => {
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
 
       let fulfillableBuys;
-      fulfillableBuys = await Things.getFulfillableThingBuys(HOUSE, now, challengeEnd);
+      fulfillableBuys = await Things.getFulfillableThingBuys(HOUSE, challengeEnd);
       expect(fulfillableBuys.length).to.equal(0);
 
       await Things.resolveThingBuy(buy.id, challengeEnd);
 
-      fulfillableBuys = await Things.getFulfillableThingBuys(HOUSE, now, challengeEnd);
+      fulfillableBuys = await Things.getFulfillableThingBuys(HOUSE, challengeEnd);
       expect(fulfillableBuys.length).to.equal(1);
     });
 

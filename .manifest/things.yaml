@@ -32,7 +32,6 @@ features:
     - command: /things-resolved
       url: https://things.mirror.zaratan.world/slack/events
       description: Get list of resolved buys
-      usage_hint: "[days]"
     - command: /things-fulfill
       url: https://things.mirror.zaratan.world/slack/events
       description: Mark buys as fulfilled

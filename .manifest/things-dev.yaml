@@ -32,7 +32,6 @@ features:
     - command: /things-resolved
       url: https://zaratan.ngrok.io/slack/events
       description: Get list of resolved buys
-      usage_hint: "[days]"
     - command: /things-fulfill
       url: https://zaratan.ngrok.io/slack/events
       description: Mark buys as fulfilled

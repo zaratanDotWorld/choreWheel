@@ -6,7 +6,7 @@ const Things = require('../modules/things');
 const Polls = require('../modules/polls');
 const Admin = require('../modules/admin');
 
-const { YAY, DAY } = require('../constants');
+const { YAY } = require('../constants');
 
 const common = require('./common');
 const views = require('./views');
@@ -135,16 +135,14 @@ app.command('/things-resolved', async ({ ack, command }) => {
   await ack();
 
   const houseId = command.team_id;
-  const numDays = parseInt(command.text) || 7;
   const now = new Date();
-  const start = new Date(now.getTime() - DAY * numDays);
-
-  const buys = await Things.getFulfillableThingBuys(houseId, start, now);
+  const buys = await Things.getFulfillableThingBuys(houseId, now);
   const parsedBuys = buys.map((buy) => {
-    return `\n${buy.id} ${views.formatThing(buy)}: ${buy.resolvedAt.toLocaleString()}`;
+    const resolvedAt = buy.resolvedAt.toLocaleDateString();
+    return `\n(${buy.id}) [${resolvedAt}] ${buy.type}: ${buy.name} - ${buy.quantity}`;
   });
 
-  const text = `The resolved buys in the last ${numDays} days:${parsedBuys}`;
+  const text = `Resolved buys not yet fulfilled:${parsedBuys}`;
   await common.postEphemeral(app, thingsOauth, command, text);
 });
 
