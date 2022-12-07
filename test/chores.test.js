@@ -179,9 +179,9 @@ describe('Chores', async () => {
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE);
 
-      expect(choreRankings[0].ranking).to.almost.equal(0.46925851053827156);
-      expect(choreRankings[1].ranking).to.almost.equal(0.31658843780740736);
-      expect(choreRankings[2].ranking).to.almost.equal(0.21415305165432094);
+      expect(choreRankings[0].ranking).to.almost.equal(0.49601230302233323);
+      expect(choreRankings[1].ranking).to.almost.equal(0.3047593359453333);
+      expect(choreRankings[2].ranking).to.almost.equal(0.19922836103233332);
     });
 
     it('can use preferences to determine mild chore values', async () => {
@@ -191,9 +191,9 @@ describe('Chores', async () => {
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE);
 
-      expect(choreRankings[0].ranking).to.almost.equal(0.3733095832082963);
-      expect(choreRankings[1].ranking).to.almost.equal(0.3573411668574816);
-      expect(choreRankings[2].ranking).to.almost.equal(0.2693492499342223);
+      expect(choreRankings[0].ranking).to.almost.equal(0.38141044732507734);
+      expect(choreRankings[1].ranking).to.almost.equal(0.35929449533781344);
+      expect(choreRankings[2].ranking).to.almost.equal(0.2592950573371094);
     });
 
     it('can use preferences to determine complex chore values', async () => {
@@ -203,9 +203,9 @@ describe('Chores', async () => {
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.4225216790123456);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.15495664197530862);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.4225216790123456);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.43437533333333334);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.13124933333333333);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.4343753333333333);
     });
 
     it('can handle circular chore values', async () => {

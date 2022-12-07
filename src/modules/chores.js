@@ -106,7 +106,7 @@ exports.getCurrentChoreRankings = async function (houseId) {
   });
 
   const powerRanker = new PowerRanker(choresSet, formattedPreferences, residents.length, implicitPref);
-  const rankings = powerRanker.run(d = 0.8); // eslint-disable-line no-undef
+  const rankings = powerRanker.run(d = 0.9); // eslint-disable-line no-undef
 
   return chores.map(chore => {
     return { id: chore.id, name: chore.name, ranking: rankings.get(chore.id) };
