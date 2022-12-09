@@ -3,7 +3,7 @@ const { getMonthStart, getPrevMonthEnd } = require('../utils');
 
 const {
   heartsMinPctInitial,
-  heartsMinPctFinal,
+  heartsMinPctCritical,
   heartsBaseline,
   heartsPollLength,
   karmaDelay,
@@ -98,7 +98,7 @@ exports.getChallengeQuorum = async function (houseId, challengeeId, value, chall
   const residents = await Admin.getResidents(houseId);
   const challengeeHearts = await exports.getHearts(challengeeId, challengedAt);
   return (challengeeHearts.sum - value <= heartsCriticalNum)
-    ? Math.ceil(residents.length * heartsMinPctFinal)
+    ? Math.ceil(residents.length * heartsMinPctCritical)
     : Math.ceil(residents.length * heartsMinPctInitial);
 };
 

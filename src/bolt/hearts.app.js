@@ -67,7 +67,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     await Hearts.resolveChallenges(houseId, now);
     const challengeHearts = await Hearts.getAgnosticHearts(houseId, now);
     for (const challengeHeart of challengeHearts) {
-      const text = `You lost a challenge, and *${challengeHeart.value.toFixed(0)}* hearts...`;
+      const text = `You lost a challenge, and *${(-challengeHeart.value).toFixed(0)}* hearts...`;
       await common.postMessage(app, heartsOauth, challengeHeart.residentId, text);
     }
 
@@ -83,7 +83,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     const karmaHearts = await Hearts.generateKarmaHearts(houseId, now, numWinners);
     if (karmaHearts.length > 0) {
       const { heartsChannel } = await Admin.getHouse(houseId);
-      const karmaWinners = karmaHearts.map((heart) => `<@${heart.residentId}`).join(' and ');
+      const karmaWinners = karmaHearts.map((heart) => `<@${heart.residentId}>`).join(' and ');
       const text = `${karmaWinners} are last month's karma winners :heart_on_fire:`;
       await common.postMessage(app, heartsOauth, heartsChannel, text);
     }
@@ -112,7 +112,9 @@ app.action('hearts-challenge', async ({ ack, body }) => {
   console.log('hearts-challenge');
   await ack();
 
-  const view = views.heartsChallengeView();
+  const houseId = body.team.id;
+  const residents = await Admin.getResidents(houseId);
+  const view = views.heartsChallengeView(residents.length);
   await common.openView(app, heartsOauth, body.trigger_id, view);
 });
 

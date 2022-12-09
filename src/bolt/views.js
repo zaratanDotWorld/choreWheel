@@ -9,7 +9,10 @@ const {
   thingsMinVotesScalar,
   choresPollLength,
   thingsPollLength,
-  heartsPollLength
+  heartsPollLength,
+  heartsCriticalNum,
+  heartsMinPctInitial,
+  heartsMinPctCritical
 } = require('../config');
 
 // Chores Views
@@ -354,9 +357,9 @@ exports.heartsHomeView = function (numHearts) {
   const docsURI = 'https://github.com/kronosapiens/mirror/wiki/Hearts';
   const textA = `We use *<${docsURI}|Hearts>* to keep each other accountable.\n\n` +
     'Everyone starts with five hearts. We lose hearts when we fail to uphold our commitments, ' +
-    'and we earn them back over time (one per month), and by exceeding expectations.';
+    'and we earn them back over time (one-half per month), and by exceeding expectations.';
 
-  const textB = `You have *${numHearts}* hearts: ${exports.heartEmoji(numHearts).repeat(numHearts)}`;
+  const textB = `You have *${numHearts}* hearts: ${exports.heartEmoji(numHearts).repeat(Math.floor(numHearts))}`;
 
   return {
     type: 'home',
@@ -369,20 +372,25 @@ exports.heartsHomeView = function (numHearts) {
         type: 'actions',
         elements: [
           { type: 'button', action_id: 'hearts-board', text: { type: 'plain_text', text: 'See current hearts', emoji: true } },
-          { type: 'button', action_id: 'hearts-challenge', text: { type: 'plain_text', text: 'Issue a challenge', emoji: true } }
+          { type: 'button', action_id: 'hearts-challenge', text: { type: 'plain_text', text: 'Resolve a dispute', emoji: true } }
         ]
       }
     ]
   };
 };
 
-exports.heartsChallengeView = function () {
-  const mainText = 'Choose someone to challenge, a number of hearts, and explain the circumstance. ' +
-    'The issue will go to a house vote, and the loser (potentially you) will lose hearts.\n\n' +
-    'If the challengee has three or more hearts, you need a minimum of *four* positive votes. ' +
-    'If they have only one or two hearts left, you need a minimum of *seven* positive votes. ' +
-    'So please make sure you\'ve spoken to others about the issue before raising a challenge.\n\n' +
-    '*<https://github.com/kronosapiens/mirror/wiki/Conflict-Resolution|Click here>* for more information about conflict resolution.';
+exports.heartsChallengeView = function (numResidents) {
+  const initialQuorum = Math.ceil(numResidents * heartsMinPctInitial);
+  const criticalQuorum = Math.ceil(numResidents * heartsMinPctCritical);
+  const resolutionURI = 'https://github.com/kronosapiens/mirror/wiki/Conflict-Resolution';
+  const mainText = 'If prior attempts at mediating a conflict have failed, it may be time to raise a public dispute.\n\n' +
+    'Choose someone to challenge, a number of hearts to take away, and explain the circumstance. ' +
+    'The dispute will go to a house vote, and the loser (potentially you) will lose hearts.\n\n' +
+    `To succeed, you will need a minimum of *${initialQuorum} positive votes*. ` +
+    `If the challengee will end up with less than *${heartsCriticalNum} hearts*, ` +
+    `you will need a minimum of *${criticalQuorum} positive votes*. ` +
+    'So please make sure you\'ve spoken to others about the issue before raising a dispute.\n\n' +
+    `*<${resolutionURI}|See here>* for more information about conflict resolution.`;
 
   return {
     type: 'modal',
@@ -391,7 +399,7 @@ exports.heartsChallengeView = function () {
     submit: { type: 'plain_text', text: 'Submit', emoji: true },
     close: { type: 'plain_text', text: 'Cancel', emoji: true },
     blocks: [
-      { type: 'header', text: { type: 'plain_text', text: 'Issue a challenge', emoji: true } },
+      { type: 'header', text: { type: 'plain_text', text: 'Resolve a dispute', emoji: true } },
       { type: 'section', text: { type: 'mrkdwn', text: mainText } },
       {
         type: 'input',
@@ -446,9 +454,11 @@ exports.heartsChallengeCallbackView = function (challenge, quorum, circumstance)
 };
 
 exports.heartsBoardView = function (hearts) {
-  const mainText = 'Current hearts for the house.\n*One or two* hearts is :broken_heart:, ' +
-    '*three to five* is :heart:, and *more than five* is :heart_on_fire:';
-  const heartsText = hearts.map((heart) => `\n\n${exports.heartEmoji(heart.sum)} <@${heart.residentId}>`).join('');
+  const mainText = 'Current hearts for the house.\n\n' +
+    '*One or two* hearts is :broken_heart:,\n*three to five* is :heart:,\nand *six or more* is :heart_on_fire:';
+  const heartsText = hearts.map((heart) => {
+    return `\n\n${exports.heartEmoji(heart.sum).repeat(Math.floor(heart.sum))} <@${heart.residentId}>`;
+  }).join('');
 
   return {
     type: 'modal',
