@@ -1,4 +1,4 @@
-const { db } = require('../db');
+const { db } = require('./db');
 const { thingsPollLength, thingsMinVotesScalar } = require('../config');
 
 const Polls = require('./polls');

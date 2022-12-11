@@ -6,7 +6,7 @@ chai.use(chaiAsPromised);
 
 const { HOUR } = require('../src/constants');
 const { getMonthStart, getMonthEnd, getNextMonthStart, getPrevMonthEnd, getDateStart } = require('../src/utils');
-const { db } = require('../src/db');
+const { db } = require('../src/modules/db');
 
 const Admin = require('../src/modules/admin');
 
