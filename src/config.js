@@ -25,5 +25,5 @@ exports.karmaProportion = 3;
 exports.karmaMaxHearts = 7;
 
 // Things
-exports.thingsPollLength = DAY;
+exports.thingsPollLength = 12 * HOUR;
 exports.thingsMinVotesScalar = 50; // One vote per $50
