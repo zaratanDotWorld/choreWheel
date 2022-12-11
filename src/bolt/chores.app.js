@@ -11,7 +11,7 @@ const { YAY, MINUTE, DAY } = require('../constants');
 const { getMonthStart } = require('../utils');
 
 const common = require('./common');
-const views = require('./views');
+const views = require('./chores.views');
 
 let choresOauth;
 

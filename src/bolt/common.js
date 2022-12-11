@@ -3,7 +3,6 @@ const Hearts = require('../modules/hearts');
 const Polls = require('../modules/polls');
 
 const { SLACKBOT } = require('../constants');
-const views = require('./views');
 
 exports.homeEndpoint = function (appName) {
   return {
@@ -127,8 +126,25 @@ exports.updateVoteCounts = async function (app, oauth, body, action) {
   const blockIndex = body.message.blocks.length - 1; // Voting block is last
   body.message.token = oauth.bot.token;
   body.message.channel = body.channel.id;
-  body.message.blocks[blockIndex].elements = views.makeVoteButtons(pollId, yays, nays);
+  body.message.blocks[blockIndex].elements = exports.makeVoteButtons(pollId, yays, nays);
 
   await app.client.chat.update(body.message);
   console.log(`Poll ${pollId} updated`);
+};
+
+exports.makeVoteButtons = function (pollId, upvoteCount, downvoteCount) {
+  return [
+    {
+      type: 'button',
+      text: { type: 'plain_text', text: `:+1: (${upvoteCount})`, emoji: true },
+      value: `${pollId}|1`,
+      action_id: 'poll-vote-up'
+    },
+    {
+      type: 'button',
+      text: { type: 'plain_text', text: `:-1: (${downvoteCount})`, emoji: true },
+      value: `${pollId}|0`,
+      action_id: 'poll-vote-down'
+    }
+  ];
 };

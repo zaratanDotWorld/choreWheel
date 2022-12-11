@@ -9,7 +9,7 @@ const Admin = require('../modules/admin');
 const { YAY } = require('../constants');
 
 const common = require('./common');
-const views = require('./views');
+const views = require('./things.views');
 
 let thingsOauth;
 
