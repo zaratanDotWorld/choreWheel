@@ -6,8 +6,7 @@ module.exports = {
     node: true
   },
   extends: 'semistandard',
-  overrides: [
-  ],
+  overrides: [],
   parserOptions: {
     ecmaVersion: 'latest'
   },
@@ -20,8 +19,7 @@ module.exports = {
     'no-only-tests/no-only-tests': [ 2, { fix: true } ]
   },
   ignorePatterns: [
-    'migrations',
-    'seeds'
+    'migrations'
   ],
   plugins: [
     'no-only-tests'

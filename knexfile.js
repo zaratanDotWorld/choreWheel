@@ -3,28 +3,14 @@ require('dotenv').config();
 module.exports = {
   development: {
     client: 'pg',
-    connection: process.env.PG_CONNECTION_DEV,
-    migrations: {
-      tableName: 'knex_migrations'
-    },
-    useNullAsDefault: true
+    connection: process.env.PG_CONNECTION_DEV
   },
-
   test: {
     client: 'pg',
-    connection: process.env.PG_CONNECTION_TEST,
-    migrations: {
-      tableName: 'knex_migrations'
-    },
-    useNullAsDefault: true
+    connection: process.env.PG_CONNECTION_TEST
   },
-
   production: {
     client: 'pg',
-    connection: process.env.PG_CONNECTION_PROD,
-    migrations: {
-      tableName: 'knex_migrations'
-    },
-    useNullAsDefault: true
+    connection: process.env.PG_CONNECTION_PROD
   }
 };
