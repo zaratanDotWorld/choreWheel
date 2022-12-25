@@ -31,8 +31,8 @@ exports.formatThing = function (thing) {
 exports.thingsHomeView = function (balance) {
   const docsURI = 'https://github.com/kronosapiens/mirror/wiki/Things';
   const textA = `We use *<${docsURI}|Things>* to spend money together.\n\n` +
-    'Anyone can propose a buy, which requires *one* thumbs-up vote per $50. ' +
-    'Successful buys are fulfilled within 3-7 days.';
+    'Anyone can propose a buy, which requires *one endorsement per $50*. ' +
+    'Successful buys are fulfilled within *3-5 days*.';
 
   const textB = `The house has *$${balance}* left in the account :moneybag:`;
 
@@ -61,8 +61,7 @@ exports.thingsBuyView = function (things) {
     };
   });
 
-  const mainText = 'Choose the thing to buy. Make sure you have support for large buys, ' +
-    'as you need one thumbs-up vote per $50.';
+  const mainText = 'Choose something to buy. Make sure you have support for large buys!';
 
   return {
     type: 'modal',
@@ -91,8 +90,8 @@ exports.thingsBuyCallbackView = function (buy, thing, priorBalance) {
   const pollQuorum = Math.ceil(thing.value / thingsMinVotesScalar);
   const currentBalance = priorBalance - thing.value;
 
-  const textA = `*<@${buy.boughtBy}>* bought *${thing.name} - ${thing.quantity}* for *$${thing.value}*. ` +
-    `There's *$${currentBalance}* left in the house account :fire:`;
+  const textA = `*<@${buy.boughtBy}>* bought *${thing.name} - ${thing.quantity}* for *$${thing.value}*.\n` +
+    `There's *$${currentBalance}* left in the house account :chart_with_downwards_trend:`;
   const textB = `*${pollQuorum} endorsement(s)* are required to pass, ` +
     `voting closes in *${thingsPollLength / HOUR} hours*`;
 
