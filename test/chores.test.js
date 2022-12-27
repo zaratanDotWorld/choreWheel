@@ -757,9 +757,9 @@ describe('Chores', async () => {
 
     it('can gift chore points', async () => {
       await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 } ]);
-      const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
+      await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
 
-      await Chores.giftChorePoints(choreClaim.id, RESIDENT2, now, 6);
+      await Chores.giftChorePoints(HOUSE, RESIDENT1, RESIDENT2, now, 6);
 
       const monthStart = getMonthStart(now);
       const chorePoints1 = await Chores.getAllChorePoints(RESIDENT1, monthStart, now);
@@ -768,26 +768,15 @@ describe('Chores', async () => {
       expect(chorePoints2.sum).to.equal(6);
     });
 
-    it('can correctly account for gifts when resolving claims', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 } ]);
-      const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
-      await Chores.giftChorePoints(choreClaim.id, RESIDENT2, now, 6);
-
-      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
-      await Polls.submitVote(choreClaim.pollId, RESIDENT2, soon, YAY);
-      await Chores.resolveChoreClaim(choreClaim.id, challengeEnd);
-
-      const monthStart = getMonthStart(now);
-      const chorePoints1 = await Chores.getAllChorePoints(RESIDENT1, monthStart, challengeEnd);
-      const chorePoints2 = await Chores.getAllChorePoints(RESIDENT2, monthStart, challengeEnd);
-      expect(chorePoints1.sum).to.equal(4);
-      expect(chorePoints2.sum).to.equal(6);
+    it('cannot gift more than your current balance', async () => {
+      await expect(Chores.giftChorePoints(HOUSE, RESIDENT1, RESIDENT2, now, 10))
+        .to.be.rejectedWith('Cannot gift more than the points balance!');
     });
 
-    it('can negate a gift if the source claim is negated', async () => {
+    it('can have a negative balance if a claim is denied after gifting', async () => {
       await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 } ]);
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
-      await Chores.giftChorePoints(choreClaim.id, RESIDENT2, now, 6);
+      await Chores.giftChorePoints(HOUSE, RESIDENT1, RESIDENT2, now, 6);
 
       await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, NAY);
       await Polls.submitVote(choreClaim.pollId, RESIDENT2, soon, NAY);
@@ -796,30 +785,8 @@ describe('Chores', async () => {
       const monthStart = getMonthStart(now);
       const chorePoints1 = await Chores.getAllChorePoints(RESIDENT1, monthStart, challengeEnd);
       const chorePoints2 = await Chores.getAllChorePoints(RESIDENT2, monthStart, challengeEnd);
-      expect(chorePoints1.sum).to.equal(null);
-      expect(chorePoints2.sum).to.equal(null);
-    });
-
-    it('can regift a chore gift', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 40, ranking: 0, residents: 0 } ]);
-      await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
-
-      let choreClaim;
-      choreClaim = await Chores.getLargestChoreClaim(RESIDENT1, now, now);
-      expect(choreClaim.value).to.equal(40);
-
-      await Chores.giftChorePoints(choreClaim.id, RESIDENT2, now, 30);
-
-      choreClaim = await Chores.getLargestChoreClaim(RESIDENT1, now, now);
-      expect(choreClaim.value).to.equal(10);
-
-      choreClaim = await Chores.getLargestChoreClaim(RESIDENT2, now, now);
-      expect(choreClaim.value).to.equal(30);
-
-      await Chores.giftChorePoints(choreClaim.id, RESIDENT1, now, 20);
-
-      choreClaim = await Chores.getLargestChoreClaim(RESIDENT1, now, now);
-      expect(choreClaim.value).to.equal(20);
+      expect(chorePoints1.sum).to.equal(-6);
+      expect(chorePoints2.sum).to.equal(6);
     });
   });
 });

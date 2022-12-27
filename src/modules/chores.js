@@ -363,24 +363,18 @@ exports.getLargestChoreClaim = async function (residentId, startTime, endTime) {
     .first();
 };
 
-exports.giftChorePoints = async function (sourceClaimId, recipientId, giftedAt, giftValue) {
-  const choreClaim = await exports.getChoreClaim(sourceClaimId);
+exports.giftChorePoints = async function (houseId, gifterId, recipientId, giftedAt, value) {
+  const monthStart = getMonthStart(giftedAt);
+  const gifterChorePoints = await exports.getAllChorePoints(gifterId, monthStart, giftedAt);
 
-  return db.transaction(async trx => {
-    await trx('ChoreClaim')
-      .where({ id: choreClaim.id })
-      .update({ value: choreClaim.value - giftValue });
+  if (gifterChorePoints.sum < value) { throw new Error('Cannot gift more than the points balance!'); }
 
-    await trx('ChoreClaim')
-      .insert({
-        houseId: choreClaim.houseId,
-        claimedBy: recipientId,
-        claimedAt: giftedAt,
-        value: giftValue,
-        pollId: choreClaim.pollId
-      })
-      .returning('*');
-  });
+  await db('ChoreClaim')
+    .insert([
+      { houseId, claimedBy: gifterId, claimedAt: giftedAt, value: -value },
+      { houseId, claimedBy: recipientId, claimedAt: giftedAt, value }
+    ])
+    .returning('*');
 };
 
 exports.getChorePointGifts = async function (pollId) {

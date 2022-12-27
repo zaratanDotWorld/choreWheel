@@ -297,11 +297,9 @@ app.action('chores-gift', async ({ ack, body }) => {
   const residentId = body.user.id;
   const now = new Date();
   const monthStart = getMonthStart(now);
-  const choreClaim = await Chores.getLargestChoreClaim(residentId, monthStart, now);
+  const chorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
 
-  const view = (choreClaim === undefined)
-    ? views.choresGiftView('', 0)
-    : views.choresGiftView(choreClaim.id, choreClaim.value);
+  const view = views.choresGiftView(chorePoints.sum || 0);
   await common.openView(app, choresOauth, body.trigger_id, view);
 });
 
@@ -318,15 +316,20 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
   const valueBlockId = body.view.blocks[3].block_id;
 
   const recipientId = body.view.state.values[recipientBlockId].recipient.selected_user;
-  const value = body.view.state.values[valueBlockId].value.value;
+  const value = Number(body.view.state.values[valueBlockId].value.value);
+  const pointsBalance = Number(body.view.private_metadata);
 
-  // Perform the update
-  const choreClaimId = body.view.private_metadata;
-  await Chores.giftChorePoints(choreClaimId, recipientId, new Date(), Number(value));
+  if (value <= pointsBalance) {
+    // Make the gift
+    await Chores.giftChorePoints(houseId, residentId, recipientId, new Date(), value);
 
-  const { choresChannel } = await Admin.getHouse(houseId);
-  const text = `<@${residentId}> just gifted <@${recipientId}> *${value} points* :gift:`;
-  await common.postMessage(app, choresOauth, choresChannel, text);
+    const { choresChannel } = await Admin.getHouse(houseId);
+    const text = `<@${residentId}> just gifted <@${recipientId}> *${value} points* :gift:`;
+    await common.postMessage(app, choresOauth, choresChannel, text);
+  } else {
+    const text = 'You can\'t gift more points than you have! :face_with_monocle:';
+    await common.postEphemeralDirect(app, choresOauth, residentId, text);
+  }
 });
 
 // Voting flow
