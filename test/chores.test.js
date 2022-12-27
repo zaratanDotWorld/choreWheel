@@ -375,18 +375,15 @@ describe('Chores', async () => {
 
       const resolvedClaim1 = await Chores.getChoreClaim(choreClaim1.id);
       expect(resolvedClaim1.valid).to.be.true;
-      expect(resolvedClaim1.value).to.equal(10);
       expect(resolvedClaim1.resolvedAt.getTime()).to.equal(challengeEnd.getTime());
 
       const resolvedClaim2 = await Chores.getChoreClaim(choreClaim2.id);
       expect(resolvedClaim2.valid).to.be.false;
-      expect(resolvedClaim2.value).to.equal(0);
       expect(resolvedClaim2.resolvedAt.getTime()).to.equal(challengeEnd.getTime());
 
       // This claim was not resolved as poll is not yet closed
       const resolvedClaim3 = await Chores.getChoreClaim(choreClaim3.id);
       expect(resolvedClaim3.valid).to.be.true;
-      expect(resolvedClaim3.value).to.equal(10);
       expect(resolvedClaim3.resolvedAt).to.equal(null);
     });
 
@@ -482,7 +479,7 @@ describe('Chores', async () => {
 
       const [ resolvedClaim1 ] = await Chores.resolveChoreClaim(choreClaim1.id, t3);
       expect(resolvedClaim1.valid).to.be.false;
-      expect(resolvedClaim1.value).to.equal(0);
+      expect(resolvedClaim1.value).to.equal(10);
 
       const [ resolvedClaim2 ] = await Chores.resolveChoreClaim(choreClaim2.id, t4);
       expect(resolvedClaim2.valid).to.be.true;
