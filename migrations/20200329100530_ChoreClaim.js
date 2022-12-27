@@ -6,11 +6,9 @@ exports.up = function(knex, Promise) {
         t.string('claimedBy').references('Resident.slackId').notNull();
         t.timestamp('claimedAt');
         t.float('value');
-        t.integer('pollId').references('Poll.id').notNull();
+        t.integer('pollId').references('Poll.id');
         t.timestamp('resolvedAt');
         t.boolean('valid').notNull().defaultTo(true);
-        t.check('?? >= 0', 'value');
-
     });
 };
 

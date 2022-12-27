@@ -800,17 +800,6 @@ describe('Chores', async () => {
       expect(chorePoints2.sum).to.equal(null);
     });
 
-    it('cannot gift more than the value of the claim', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10, ranking: 0, residents: 0 } ]);
-      const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
-
-      const dbError = 'update "ChoreClaim" set "value" = $1 where "id" = $2 - ' +
-        'new row for relation "ChoreClaim" violates check constraint "ChoreClaim_value_check"';
-
-      await expect(Chores.giftChorePoints(choreClaim.id, RESIDENT2, soon, 20))
-        .to.be.rejectedWith(dbError);
-    });
-
     it('can regift a chore gift', async () => {
       await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 40, ranking: 0, residents: 0 } ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
