@@ -150,6 +150,7 @@ exports.updateChoreValues = async function (houseId, updateTime) {
 
   const choreValues = choreRankings.map(chore => {
     return {
+      houseId,
       choreId: chore.id,
       valuedAt: updateTime,
       value: chore.ranking * updateScalar,
