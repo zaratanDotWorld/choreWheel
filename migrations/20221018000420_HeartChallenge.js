@@ -9,6 +9,7 @@ exports.up = function(knex) {
         t.string('houseId').references('House.slackId').notNull();
         t.string('challengerId').references('Resident.slackId').notNull();
         t.string('challengeeId').references('Resident.slackId').notNull();
+        t.timestamp('challengedAt').notNull();
         t.integer('value').notNull();
         t.integer('pollId').references('Poll.id').notNull();
         t.timestamp('resolvedAt');
