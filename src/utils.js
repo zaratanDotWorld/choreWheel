@@ -1,5 +1,3 @@
-const { DAY } = require('./constants');
-
 exports.getDateStart = function (date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 };
@@ -9,12 +7,12 @@ exports.getMonthStart = function (date) {
 };
 
 exports.getMonthEnd = function (date) {
-  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
 };
 
 exports.getPrevMonthEnd = function (date) {
-  return new Date(exports.getMonthStart(date).getTime() - DAY);
+  return new Date(exports.getMonthStart(date).getTime() - 1);
 };
 exports.getNextMonthStart = function (date) {
-  return new Date(exports.getMonthEnd(date).getTime() + DAY);
+  return new Date(exports.getMonthEnd(date).getTime() + 1);
 };

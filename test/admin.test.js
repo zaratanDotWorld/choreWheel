@@ -4,7 +4,7 @@ const chaiAsPromised = require('chai-as-promised');
 
 chai.use(chaiAsPromised);
 
-const { HOUR } = require('../src/constants');
+const { HOUR, DAY } = require('../src/constants');
 const { getMonthStart, getMonthEnd, getNextMonthStart, getPrevMonthEnd, getDateStart } = require('../src/utils');
 const { db } = require('../src/modules/db');
 
@@ -152,16 +152,16 @@ describe('Admin', async () => {
       expect(getMonthStart(mar15).getTime()).to.equal(mar1.getTime());
       expect(getMonthStart(mar31).getTime()).to.equal(mar1.getTime());
 
-      expect(getMonthEnd(feb1).getTime()).to.equal(feb28.getTime());
-      expect(getMonthEnd(feb14).getTime()).to.equal(feb28.getTime());
-      expect(getMonthEnd(feb28).getTime()).to.equal(feb28.getTime());
-      expect(getMonthEnd(mar1).getTime()).to.equal(mar31.getTime());
-      expect(getMonthEnd(mar15).getTime()).to.equal(mar31.getTime());
-      expect(getMonthEnd(mar31).getTime()).to.equal(mar31.getTime());
+      expect(getMonthEnd(feb1).getTime()).to.equal(feb28.getTime() + DAY - 1);
+      expect(getMonthEnd(feb14).getTime()).to.equal(feb28.getTime() + DAY - 1);
+      expect(getMonthEnd(feb28).getTime()).to.equal(feb28.getTime() + DAY - 1);
+      expect(getMonthEnd(mar1).getTime()).to.equal(mar31.getTime() + DAY - 1);
+      expect(getMonthEnd(mar15).getTime()).to.equal(mar31.getTime() + DAY - 1);
+      expect(getMonthEnd(mar31).getTime()).to.equal(mar31.getTime() + DAY - 1);
 
-      expect(getPrevMonthEnd(mar1).getTime()).to.equal(feb28.getTime());
-      expect(getPrevMonthEnd(mar15).getTime()).to.equal(feb28.getTime());
-      expect(getPrevMonthEnd(mar31).getTime()).to.equal(feb28.getTime());
+      expect(getPrevMonthEnd(mar1).getTime()).to.equal(feb28.getTime() + DAY - 1);
+      expect(getPrevMonthEnd(mar15).getTime()).to.equal(feb28.getTime() + DAY - 1);
+      expect(getPrevMonthEnd(mar31).getTime()).to.equal(feb28.getTime() + DAY - 1);
 
       expect(getNextMonthStart(feb1).getTime()).to.equal(mar1.getTime());
       expect(getNextMonthStart(feb14).getTime()).to.equal(mar1.getTime());
