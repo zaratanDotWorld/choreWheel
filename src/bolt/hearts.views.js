@@ -3,13 +3,17 @@ const { HOUR } = require('../constants');
 const { heartsPollLength, heartsCriticalNum, heartsMinPctInitial, heartsMinPctCritical } = require('../config');
 
 exports.heartEmoji = function (numHearts) {
-  if (numHearts <= 2) {
-    return ':broken_heart:';
+  let emoji;
+  if (numHearts <= 0) {
+    emoji = ':skull_and_crossbones:';
+  } else if (numHearts <= 2) {
+    emoji = ':broken_heart:';
   } else if (numHearts <= 5) {
-    return ':heart:';
+    emoji = ':heart:';
   } else {
-    return ':heart_on_fire:';
+    emoji = ':heart_on_fire:';
   }
+  return emoji.repeat(Math.max(1, Math.floor(numHearts)));
 };
 
 exports.heartsHomeView = function (numHearts) {
@@ -18,7 +22,7 @@ exports.heartsHomeView = function (numHearts) {
     'Everyone starts with five hearts. We lose hearts when we fail to uphold our commitments, ' +
     'and we earn them back over time (one-half per month), and by exceeding expectations.';
 
-  const textB = `You have *${numHearts}* hearts: ${exports.heartEmoji(numHearts).repeat(Math.floor(numHearts))}`;
+  const textB = `You have *${numHearts}* hearts: ${exports.heartEmoji(numHearts)}`;
 
   return {
     type: 'home',
@@ -116,7 +120,7 @@ exports.heartsBoardView = function (hearts) {
   const mainText = 'Current hearts for the house.\n\n' +
     '*One or two* hearts is :broken_heart:,\n*three to five* is :heart:,\nand *six or more* is :heart_on_fire:';
   const heartsText = hearts.map((heart) => {
-    return `\n\n${exports.heartEmoji(heart.sum).repeat(Math.floor(heart.sum))} <@${heart.residentId}>`;
+    return `\n\n${exports.heartEmoji(heart.sum)} <@${heart.residentId}>`;
   }).join('');
 
   return {
