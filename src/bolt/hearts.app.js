@@ -73,7 +73,7 @@ app.event('app_home_opened', async ({ body, event }) => {
 
     // Regenerate the monthly half-heart
     const [ regenHeart ] = await Hearts.regenerateHearts(houseId, residentId, now);
-    if (regenHeart !== undefined) {
+    if (regenHeart !== undefined && regenHeart.value > 0) {
       const text = `You regenerated *${regenHeart.value.toFixed(1)}* hearts!`;
       await common.postMessage(app, heartsOauth, residentId, text);
     }
