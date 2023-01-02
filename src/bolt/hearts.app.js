@@ -84,7 +84,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     if (karmaHearts.length > 0) {
       const { heartsChannel } = await Admin.getHouse(houseId);
       const karmaWinners = karmaHearts.map((heart) => `<@${heart.residentId}>`).join(' and ');
-      const text = `${karmaWinners} are last month's karma winners :heart_on_fire:`;
+      const text = `${karmaWinners} get(s) last month's karma heart :heart_on_fire:`;
       await common.postMessage(app, heartsOauth, heartsChannel, text);
     }
   }

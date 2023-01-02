@@ -70,12 +70,11 @@ app.event('app_home_opened', async ({ body, event }) => {
     await Chores.resolveChoreClaims(houseId, now);
 
     // Give monthly penalty if needed
-    // TODO: Uncomment this on Jan 1, 2023
-    // const [ penaltyHeart ] = await Chores.addChorePenalty(houseId, residentId, now);
-    // if (penaltyHeart !== undefined) {
-    //   const text = `Last month you bailed on chores, and lost *${penaltyHeart.value.toFixed(1)}* hearts...`;
-    //   await common.postMessage(app, choresOauth, penaltyHeart.residentId, text);
-    // }
+    const [ penaltyHeart ] = await Chores.addChorePenalty(houseId, residentId, now);
+    if (penaltyHeart !== undefined) {
+      const text = `You missed too many chores last month, and lost *${penaltyHeart.value.toFixed(1)}* hearts...`;
+      await common.postMessage(app, choresOauth, residentId, text);
+    }
   }
 });
 
