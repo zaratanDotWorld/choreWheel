@@ -224,6 +224,15 @@ exports.choresBreakView = function (currentTime) {
           placeholder: { type: 'plain_text', text: 'Select a date', emoji: true },
           action_id: 'date'
         }
+      },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Circumstance', emoji: true },
+        element: {
+          type: 'plain_text_input',
+          placeholder: { type: 'plain_text', text: 'Tell us where you\'re going', emoji: true },
+          action_id: 'circumstance'
+        }
       }
     ]
   };

@@ -264,10 +264,12 @@ app.view('chores-break-callback', async ({ ack, body }) => {
 
   const breakStartId = body.view.blocks[2].block_id;
   const breakEndId = body.view.blocks[3].block_id;
+  const circumstanceId = body.view.blocks[4].block_id;
 
   const now = new Date();
   const breakStartUtc = new Date(body.view.state.values[breakStartId].date.selected_date);
   const breakEndUtc = new Date(body.view.state.values[breakEndId].date.selected_date);
+  const circumstance = body.view.state.values[circumstanceId].circumstance.value;
 
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const breakStart = new Date(breakStartUtc.getTime() + now.getTimezoneOffset() * MINUTE);
@@ -282,7 +284,8 @@ app.view('chores-break-callback', async ({ ack, body }) => {
     await Chores.addChoreBreak(residentId, breakStart, breakEnd);
     const { choresChannel } = await Admin.getHouse(houseId);
     const text = `<@${residentId}> is taking a *${breakDays}-day* break ` +
-        `starting ${breakStart.toDateString()} :beach_with_umbrella:`;
+        `starting ${breakStart.toDateString()} :beach_with_umbrella:\n` +
+        `_${circumstance}_`;
     await common.postMessage(app, choresOauth, choresChannel, text);
   }
 });
