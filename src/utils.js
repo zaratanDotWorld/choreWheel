@@ -1,3 +1,5 @@
+const { MINUTE } = require('./constants');
+
 exports.getDateStart = function (date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 };
@@ -13,6 +15,11 @@ exports.getMonthEnd = function (date) {
 exports.getPrevMonthEnd = function (date) {
   return new Date(exports.getMonthStart(date).getTime() - 1);
 };
+
 exports.getNextMonthStart = function (date) {
   return new Date(exports.getMonthEnd(date).getTime() + 1);
+};
+
+exports.shiftDate = function (date, minutes) {
+  return new Date(date.getTime() + minutes * MINUTE);
 };

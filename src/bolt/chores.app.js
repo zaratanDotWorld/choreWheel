@@ -7,8 +7,8 @@ const Polls = require('../modules/polls');
 const Admin = require('../modules/admin');
 
 const { pointsPerResident, displayThreshold } = require('../config');
-const { YAY, MINUTE, DAY } = require('../constants');
-const { getMonthStart } = require('../utils');
+const { YAY, DAY } = require('../constants');
+const { getMonthStart, shiftDate } = require('../utils');
 
 const common = require('./common');
 const views = require('./chores.views');
@@ -266,14 +266,16 @@ app.view('chores-break-callback', async ({ ack, body }) => {
   const breakEndId = body.view.blocks[3].block_id;
   const circumstanceId = body.view.blocks[4].block_id;
 
+  // Dates come in yyyy-mm-dd format
   const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const breakStartUtc = new Date(body.view.state.values[breakStartId].date.selected_date);
   const breakEndUtc = new Date(body.view.state.values[breakEndId].date.selected_date);
   const circumstance = body.view.state.values[circumstanceId].circumstance.value;
 
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const breakStart = new Date(breakStartUtc.getTime() + now.getTimezoneOffset() * MINUTE);
-  const breakEnd = new Date(breakEndUtc.getTime() + now.getTimezoneOffset() * MINUTE);
+  // Shift the date to align with the system clock
+  const breakStart = shiftDate(breakStartUtc, now.getTimezoneOffset());
+  const breakEnd = shiftDate(breakEndUtc, now.getTimezoneOffset());
   const breakDays = parseInt((breakEnd - breakStart) / DAY);
 
   if (breakStart < todayStart || breakDays < 3) {
