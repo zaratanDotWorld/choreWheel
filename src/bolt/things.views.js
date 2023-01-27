@@ -46,7 +46,8 @@ exports.thingsHomeView = function (balance) {
       {
         type: 'actions',
         elements: [
-          { type: 'button', action_id: 'things-buy', text: { type: 'plain_text', text: 'Buy a thing', emoji: true } }
+          { type: 'button', action_id: 'things-buy', text: { type: 'plain_text', text: 'Buy a thing', emoji: true } },
+          { type: 'button', action_id: 'things-bought', text: { type: 'plain_text', text: 'See bought things', emoji: true } }
         ]
       }
     ]
@@ -90,8 +91,8 @@ exports.thingsBuyCallbackView = function (buy, thing, priorBalance) {
   const pollQuorum = Math.ceil(thing.value / thingsMinVotesScalar);
   const currentBalance = priorBalance - thing.value;
 
-  const textA = `*<@${buy.boughtBy}>* bought *${thing.name} - ${thing.quantity}* for *$${thing.value}*.\n` +
-    `There's *$${currentBalance}* left in the house account :chart_with_downwards_trend:`;
+  const textA = `*<@${buy.boughtBy}>* bought *${thing.name} - ${thing.quantity}* for *$${thing.value}*. ` +
+    `There's *$${currentBalance}* left in the account :money_with_wings:`;
   const textB = `*${pollQuorum} endorsement(s)* are required to pass, ` +
     `voting closes in *${thingsPollLength / HOUR} hours*`;
 
@@ -100,4 +101,27 @@ exports.thingsBuyCallbackView = function (buy, thing, priorBalance) {
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
     { type: 'actions', elements: common.makeVoteButtons(buy.pollId, 1, 0) }
   ];
+};
+
+exports.thingsBoughtView = function (buys) {
+  const buysConfirmed = buys
+    .filter((buy) => buy.resolvedAt !== null)
+    .map((buy) => exports.formatThing(buy))
+    .join('\n');
+
+  const buysPending = buys
+    .filter((buy) => buy.resolvedAt === null)
+    .map((buy) => exports.formatThing(buy))
+    .join('\n');
+
+  return {
+    type: 'modal',
+    title: { type: 'plain_text', text: 'Things', emoji: true },
+    close: { type: 'plain_text', text: 'Cancel', emoji: true },
+    blocks: [
+      { type: 'header', text: { type: 'plain_text', text: 'Bought things', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: `*Confirmed:*\n${buysConfirmed}` } },
+      { type: 'section', text: { type: 'mrkdwn', text: `*Pending:*\n${buysPending}` } }
+    ]
+  };
 };

@@ -198,21 +198,21 @@ describe('Things', async () => {
       expect(resolvedBuy3.resolvedAt).to.equal(null);
     });
 
-    it('can get a list of fulfillable buys', async () => {
+    it('can get a list of unfulfilled buys', async () => {
       await Things.loadHouseAccount(HOUSE, now, 100);
 
       const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
 
-      await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(buy.pollId, RESIDENT1, now, NAY);
 
-      let fulfillableBuys;
-      fulfillableBuys = await Things.getFulfillableThingBuys(HOUSE, challengeEnd);
-      expect(fulfillableBuys.length).to.equal(0);
+      let unfulfilledBuys;
+      unfulfilledBuys = await Things.getUnfulfilledThingBuys(HOUSE, challengeEnd);
+      expect(unfulfilledBuys.length).to.equal(1);
 
       await Things.resolveThingBuy(buy.id, challengeEnd);
 
-      fulfillableBuys = await Things.getFulfillableThingBuys(HOUSE, challengeEnd);
-      expect(fulfillableBuys.length).to.equal(1);
+      unfulfilledBuys = await Things.getUnfulfilledThingBuys(HOUSE, challengeEnd);
+      expect(unfulfilledBuys.length).to.equal(0);
     });
 
     it('can fulfill a buy', async () => {

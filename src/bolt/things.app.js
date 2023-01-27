@@ -122,7 +122,7 @@ app.command('/things-load', async ({ ack, command }) => {
     const [ thing ] = await Things.loadHouseAccount(houseId, new Date(), command.text);
     const { thingsChannel } = await Admin.getHouse(houseId);
 
-    const text = `<!channel> $${thing.value} was just loaded into the house account :money_with_wings:`;
+    const text = `<!channel> *$${thing.value}* was just loaded into the house account :chart_with_upwards_trend:`;
     await common.postMessage(app, thingsOauth, thingsChannel, text);
   } else {
     const text = 'Only admins can load the house account...';
@@ -136,13 +136,15 @@ app.command('/things-resolved', async ({ ack, command }) => {
 
   const houseId = command.team_id;
   const now = new Date();
-  const buys = await Things.getFulfillableThingBuys(houseId, now);
-  const parsedBuys = buys.map((buy) => {
-    const resolvedAt = buy.resolvedAt.toLocaleDateString();
-    return `\n(${buy.id}) [${resolvedAt}] ${buy.type}: ${buy.name} - ${buy.quantity}`;
-  });
+  const buys = await Things.getUnfulfilledThingBuys(houseId, now);
+  const parsedResolvedBuys = buys
+    .filter((buy) => buy.resolvedAt !== null)
+    .map((buy) => {
+      const resolvedAt = buy.resolvedAt.toLocaleDateString();
+      return `\n(${buy.id}) [${resolvedAt}] ${buy.type}: ${buy.name} - ${buy.quantity}`;
+    });
 
-  const text = `Resolved buys not yet fulfilled:${parsedBuys}`;
+  const text = `Resolved buys not yet fulfilled:${parsedResolvedBuys}`;
   await common.postEphemeral(app, thingsOauth, command, text);
 });
 
@@ -200,6 +202,17 @@ app.view('things-buy-callback', async ({ ack, body }) => {
   const text = 'Someone just bought a thing';
   const blocks = views.thingsBuyCallbackView(buy, thing, balance.sum);
   await common.postMessage(app, thingsOauth, thingsChannel, text, blocks);
+});
+
+app.action('things-bought', async ({ ack, body }) => {
+  console.log('things-bought');
+  await ack();
+
+  const houseId = body.team.id;
+  const things = await Things.getUnfulfilledThingBuys(houseId, new Date());
+
+  const view = views.thingsBoughtView(things);
+  await common.openView(app, thingsOauth, body.trigger_id, view);
 });
 
 // Voting flow

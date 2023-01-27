@@ -98,19 +98,21 @@ exports.resolveThingBuys = async function (houseId, currentTime) {
   }
 };
 
-exports.getFulfillableThingBuys = async function (houseId, currentTime) {
+exports.getUnfulfilledThingBuys = async function (houseId, currentTime) {
   return db('ThingBuy')
     .join('Thing', 'ThingBuy.thingId', 'Thing.id')
     .where('ThingBuy.houseId', houseId)
-    .where('ThingBuy.resolvedAt', '<=', currentTime)
+    .where('ThingBuy.boughtAt', '<=', currentTime)
+    .where('ThingBuy.valid', true) // Exclude invalid buys
     .where('ThingBuy.fulfilledAt', null) // Exclude fulfilled buys
     .whereNot('ThingBuy.pollId', null) // Exclude "load" buys
-    .orderBy('ThingBuy.resolvedAt', 'asc')
+    .orderBy('ThingBuy.boughtAt', 'asc')
     .select([
       'ThingBuy.id',
       'Thing.type',
       'Thing.name',
       'Thing.quantity',
+      'Thing.value',
       'ThingBuy.resolvedAt'
     ]);
 };
