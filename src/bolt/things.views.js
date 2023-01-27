@@ -104,6 +104,8 @@ exports.thingsBuyCallbackView = function (buy, thing, priorBalance) {
 };
 
 exports.thingsBoughtView = function (buys) {
+  const mainText = 'Things bought by the house, and going into the next order.';
+
   const buysConfirmed = buys
     .filter((buy) => buy.resolvedAt !== null)
     .map((buy) => exports.formatThing(buy))
@@ -120,6 +122,8 @@ exports.thingsBoughtView = function (buys) {
     close: { type: 'plain_text', text: 'Cancel', emoji: true },
     blocks: [
       { type: 'header', text: { type: 'plain_text', text: 'Bought things', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
+      { type: 'divider' },
       { type: 'section', text: { type: 'mrkdwn', text: `*Confirmed:*\n${buysConfirmed}` } },
       { type: 'section', text: { type: 'mrkdwn', text: `*Pending:*\n${buysPending}` } }
     ]
