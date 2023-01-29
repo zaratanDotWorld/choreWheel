@@ -1,4 +1,5 @@
-const { db } = require('./db');
+const { db } = require('../db');
+
 const { HOUR, DAY } = require('../constants');
 const { getMonthStart, getMonthEnd, getPrevMonthEnd, getNextMonthStart, getDateStart } = require('../utils');
 

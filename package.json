@@ -1,6 +1,6 @@
 {
   "name": "mirror-core",
-  "version": "0.0.2",
+  "version": "0.0.8",
   "description": "Chore wheel x1000",
   "repository": "git@github.com:kronosapiens/mirror.git",
   "author": "Daniel Kronovet <krono@zaratan.world>",

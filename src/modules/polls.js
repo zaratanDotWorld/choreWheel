@@ -1,6 +1,6 @@
 const sha256 = require('js-sha256');
 
-const { db } = require('./db');
+const { db } = require('../db');
 
 exports.createPoll = async function (startTime, duration) {
   const endTime = new Date(startTime.getTime() + duration);

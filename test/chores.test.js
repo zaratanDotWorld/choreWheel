@@ -9,7 +9,7 @@ chai.use(chaiAsPromised);
 const { YAY, NAY, DAY, HOUR, MINUTE } = require('../src/constants');
 const { pointsPerResident, inflationFactor, penaltyDelay, choresPollLength } = require('../src/config');
 const { getMonthStart, getNextMonthStart, getPrevMonthEnd } = require('../src/utils');
-const { db } = require('../src/modules/db');
+const { db } = require('../src/db');
 
 const Chores = require('../src/modules/chores');
 const Hearts = require('../src/modules/hearts');
