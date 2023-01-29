@@ -4,7 +4,7 @@
   "description": "Chore wheel x1000",
   "repository": "git@github.com:kronosapiens/mirror.git",
   "author": "Daniel Kronovet <krono@zaratan.world>",
-  "license": "AGPL-3.0-or-later",
+  "license": "UNLICENSED",
   "files": [
     "index.js",
     "migrations/*",
