@@ -6,7 +6,7 @@ chai.use(chaiAsPromised);
 
 const { NAY, YAY, HOUR } = require('../src/constants');
 const { thingsPollLength } = require('../src/config');
-const { db } = require('../src/modules/db');
+const { db } = require('../src/db');
 
 const Things = require('../src/modules/things');
 const Polls = require('../src/modules/polls');

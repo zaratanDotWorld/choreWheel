@@ -7,7 +7,7 @@ chai.use(chaiAsPromised);
 const { NAY, YAY, HOUR } = require('../src/constants');
 const { heartsPollLength, heartsBaseline, karmaMaxHearts, karmaDelay } = require('../src/config');
 const { getNextMonthStart } = require('../src/utils');
-const { db } = require('../src/modules/db');
+const { db } = require('../src/db');
 
 const Hearts = require('../src/modules/hearts');
 const Polls = require('../src/modules/polls');
