@@ -4,14 +4,11 @@ const chaiAsPromised = require('chai-as-promised');
 
 chai.use(chaiAsPromised);
 
+const { Hearts, Polls, Admin } = require('../src/core/index');
 const { NAY, YAY, HOUR } = require('../src/constants');
 const { heartsPollLength, heartsBaseline, karmaMaxHearts, karmaDelay } = require('../src/config');
 const { getNextMonthStart } = require('../src/utils');
-const { db } = require('../src/db');
-
-const Hearts = require('../src/core/hearts');
-const Polls = require('../src/core/polls');
-const Admin = require('../src/core/admin');
+const { db } = require('../src/core/db');
 
 describe('Hearts', async () => {
   const HOUSE = 'house123';

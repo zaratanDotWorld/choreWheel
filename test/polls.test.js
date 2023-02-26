@@ -4,11 +4,9 @@ const chaiAsPromised = require('chai-as-promised');
 
 chai.use(chaiAsPromised);
 
+const { Polls, Admin } = require('../src/core/index');
 const { HOUR, DAY, NAY, YAY, CANCEL } = require('../src/constants');
-const { db } = require('../src/db');
-
-const Polls = require('../src/core/polls');
-const Admin = require('../src/core/admin');
+const { db } = require('../src/core/db');
 
 describe('Polls', async () => {
   const HOUSE = 'house123';
