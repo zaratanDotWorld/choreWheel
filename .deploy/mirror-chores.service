@@ -1,0 +1,15 @@
+[Unit]
+Description=Chores by Mirror
+Documentation=https://github.com/kronosapiens/mirror
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/mirror
+ExecStart=/home/ubuntu/.nvm/versions/node/v16.15.0/bin/node src/bolt/chores.app.js
+StandardOutput=file:/home/ubuntu/mirror/logs/chores.log
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

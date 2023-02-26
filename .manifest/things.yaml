@@ -1,0 +1,59 @@
+display_information:
+  name: Things
+  description: House accounts for everyone
+  background_color: "#bb4f35"
+  long_description: Allow for collaborative purchasing out of a shared account. Allows admins to manage a whitelist of items and for residents to make purchases with an auto-scaling quorum based on item price.
+features:
+  app_home:
+    home_tab_enabled: true
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
+  bot_user:
+    display_name: Things
+    always_online: true
+  slash_commands:
+    - command: /things-channel
+      url: https://things.mirror.zaratan.world/slack/events
+      description: Set the things channel
+      usage_hint: "[name]"
+      should_escape: true
+    - command: /things-add
+      url: https://things.mirror.zaratan.world/slack/events
+      description: Add a thing
+      usage_hint: "[type]-[name]-[quantity]-[price]"
+    - command: /things-del
+      url: https://things.mirror.zaratan.world/slack/events
+      description: Delete a thing
+      usage_hint: "[type]-[name]"
+    - command: /things-load
+      url: https://things.mirror.zaratan.world/slack/events
+      description: Load money into the house account
+      usage_hint: "[amount]"
+    - command: /things-resolved
+      url: https://things.mirror.zaratan.world/slack/events
+      description: Get list of resolved buys
+    - command: /things-fulfill
+      url: https://things.mirror.zaratan.world/slack/events
+      description: Mark buys as fulfilled
+      usage_hint: "[id] [id] ..."
+oauth_config:
+  redirect_urls:
+    - https://things.mirror.zaratan.world/slack/oauth_redirect
+  scopes:
+    bot:
+      - channels:history
+      - channels:read
+      - chat:write
+      - commands
+      - users:read
+settings:
+  event_subscriptions:
+    request_url: https://things.mirror.zaratan.world/slack/events
+    bot_events:
+      - app_home_opened
+  interactivity:
+    is_enabled: true
+    request_url: https://things.mirror.zaratan.world/slack/events
+  org_deploy_enabled: true
+  socket_mode_enabled: false
+  token_rotation_enabled: false
