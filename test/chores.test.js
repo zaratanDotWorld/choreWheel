@@ -11,10 +11,10 @@ const { pointsPerResident, inflationFactor, penaltyDelay, choresPollLength } = r
 const { getMonthStart, getNextMonthStart, getPrevMonthEnd } = require('../src/utils');
 const { db } = require('../src/db');
 
-const Chores = require('../src/modules/chores');
-const Hearts = require('../src/modules/hearts');
-const Polls = require('../src/modules/polls');
-const Admin = require('../src/modules/admin');
+const Chores = require('../src/core/chores');
+const Hearts = require('../src/core/hearts');
+const Polls = require('../src/core/polls');
+const Admin = require('../src/core/admin');
 
 describe('Chores', async () => {
   const HOUSE = 'house123';

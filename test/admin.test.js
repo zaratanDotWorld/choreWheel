@@ -8,7 +8,7 @@ const { HOUR, DAY } = require('../src/constants');
 const { getMonthStart, getMonthEnd, getNextMonthStart, getPrevMonthEnd, getDateStart } = require('../src/utils');
 const { db } = require('../src/db');
 
-const Admin = require('../src/modules/admin');
+const Admin = require('../src/core/admin');
 
 describe('Admin', async () => {
   const HOUSE1 = 'HOUSE1';

@@ -9,9 +9,9 @@ const { heartsPollLength, heartsBaseline, karmaMaxHearts, karmaDelay } = require
 const { getNextMonthStart } = require('../src/utils');
 const { db } = require('../src/db');
 
-const Hearts = require('../src/modules/hearts');
-const Polls = require('../src/modules/polls');
-const Admin = require('../src/modules/admin');
+const Hearts = require('../src/core/hearts');
+const Polls = require('../src/core/polls');
+const Admin = require('../src/core/admin');
 
 describe('Hearts', async () => {
   const HOUSE = 'house123';
