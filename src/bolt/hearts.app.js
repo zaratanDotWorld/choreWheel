@@ -1,9 +1,9 @@
 require('dotenv').config();
 
 const { App, LogLevel } = require('@slack/bolt');
-const { Admin, Polls, Hearts } = require('@kronosapiens/mirror');
 
-const { YAY } = require('./constants');
+const { Admin, Polls, Hearts } = require('../core/index');
+const { YAY } = require('../constants');
 
 const common = require('./common');
 const views = require('./hearts.views');

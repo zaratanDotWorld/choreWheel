@@ -1,6 +1,6 @@
-const { Admin, Hearts, Polls } = require('@kronosapiens/mirror');
 
-const { SLACKBOT } = require('./constants');
+const { Admin, Hearts, Polls } = require('../core/index');
+const { SLACKBOT } = require('../constants');
 
 exports.homeEndpoint = function (appName) {
   return {

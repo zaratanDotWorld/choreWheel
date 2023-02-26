@@ -1,8 +1,9 @@
 const voca = require('voca');
 
+const { HOUR } = require('../constants');
+const { pointsPerResident, pointPrecision, achievementBase, choresPollLength, penaltyIncrement } = require('../config');
+
 const common = require('./common');
-const { HOUR } = require('./constants');
-const { pointsPerResident, pointPrecision, achievementBase, choresPollLength, penaltyIncrement } = require('./config');
 
 exports.formatChoreName = function (text) {
   return voca(text).latinise().titleCase().value();
