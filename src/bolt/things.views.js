@@ -1,8 +1,9 @@
 const voca = require('voca');
 
-const common = require('./common');
-const { HOUR } = require('./constants');
-const { thingsMinVotesScalar, thingsPollLength } = require('./config');
+const { HOUR } = require('../constants');
+const { thingsMinVotesScalar, thingsPollLength } = require('../config');
+
+const { makeVoteButtons } = require('./common');
 
 // Things Views
 
@@ -99,7 +100,7 @@ exports.thingsBuyCallbackView = function (buy, thing, priorBalance) {
   return [
     { type: 'section', text: { type: 'mrkdwn', text: textA } },
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
-    { type: 'actions', elements: common.makeVoteButtons(buy.pollId, 1, 0) }
+    { type: 'actions', elements: makeVoteButtons(buy.pollId, 1, 0) }
   ];
 };
 

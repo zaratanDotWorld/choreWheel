@@ -1,6 +1,7 @@
+const { HOUR } = require('../constants');
+const { heartsPollLength, heartsCriticalNum, heartsMinPctInitial, heartsMinPctCritical } = require('../config');
+
 const common = require('./common');
-const { HOUR } = require('./constants');
-const { heartsPollLength, heartsCriticalNum, heartsMinPctInitial, heartsMinPctCritical } = require('./config');
 
 exports.heartEmoji = function (numHearts) {
   let emoji;

@@ -1,10 +1,11 @@
 require('dotenv').config();
 
 const { App, LogLevel } = require('@slack/bolt');
-const { Admin, Polls, Chores, utils } = require('@kronosapiens/mirror');
 
-const { pointsPerResident, displayThreshold } = require('./config');
-const { YAY, DAY } = require('./constants');
+const { Admin, Polls, Chores } = require('../core/index');
+const { pointsPerResident, displayThreshold } = require('../config');
+const { YAY, DAY } = require('../constants');
+const { getMonthStart, shiftDate } = require('../utils');
 
 const common = require('./common');
 const views = require('./chores.views');
@@ -50,7 +51,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     const residentId = event.user;
 
     const now = new Date();
-    const monthStart = utils.getMonthStart(now);
+    const monthStart = getMonthStart(now);
 
     await Admin.addResident(houseId, residentId, now);
 
@@ -155,7 +156,7 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
 
   // Get chore points over last six months
   const now = new Date();
-  const monthStart = utils.getMonthStart(now);
+  const monthStart = getMonthStart(now);
   const sixMonths = new Date(now.getTime() - 180 * DAY);
   let monthlyPoints = await Chores.getAllChorePoints(residentId, monthStart, now);
   let recentPoints = await Chores.getChorePoints(residentId, choreId, sixMonths, now);
@@ -287,8 +288,8 @@ app.view('chores-break-callback', async ({ ack, body }) => {
   const circumstance = body.view.state.values[circumstanceId].circumstance.value;
 
   // Shift the date to align with the system clock
-  const breakStart = utils.shiftDate(breakStartUtc, now.getTimezoneOffset());
-  const breakEnd = utils.shiftDate(breakEndUtc, now.getTimezoneOffset());
+  const breakStart = shiftDate(breakStartUtc, now.getTimezoneOffset());
+  const breakEnd = shiftDate(breakEndUtc, now.getTimezoneOffset());
   const breakDays = parseInt((breakEnd - breakStart) / DAY);
 
   if (breakStart < todayStart || breakDays < 3) {
@@ -313,7 +314,7 @@ app.action('chores-gift', async ({ ack, body }) => {
 
   const residentId = body.user.id;
   const now = new Date();
-  const monthStart = utils.getMonthStart(now);
+  const monthStart = getMonthStart(now);
   const chorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
 
   const view = views.choresGiftView(chorePoints.sum || 0);
