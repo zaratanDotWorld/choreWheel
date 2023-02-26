@@ -8,9 +8,9 @@ const { NAY, YAY, HOUR } = require('../src/constants');
 const { thingsPollLength } = require('../src/config');
 const { db } = require('../src/db');
 
-const Things = require('../src/modules/things');
-const Polls = require('../src/modules/polls');
-const Admin = require('../src/modules/admin');
+const Things = require('../src/core/things');
+const Polls = require('../src/core/polls');
+const Admin = require('../src/core/admin');
 
 describe('Things', async () => {
   const HOUSE = 'house123';
