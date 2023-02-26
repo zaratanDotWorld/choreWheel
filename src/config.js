@@ -12,6 +12,7 @@ exports.penaltyDelay = exports.choresPollLength + 6 * HOUR; // TODO: make robust
 exports.penaltyIncrement = 10; // Per half heart
 exports.achievementBase = 20;
 exports.implicitPref = 0.25;
+exports.dampingFactor = 0.9;
 
 // Hearts
 exports.heartsPollLength = 3 * DAY;
