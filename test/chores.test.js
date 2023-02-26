@@ -6,15 +6,11 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAlmost());
 chai.use(chaiAsPromised);
 
+const { Chores, Hearts, Polls, Admin } = require('../src/core/index');
 const { YAY, NAY, DAY, HOUR, MINUTE } = require('../src/constants');
 const { pointsPerResident, inflationFactor, penaltyDelay, choresPollLength } = require('../src/config');
 const { getMonthStart, getNextMonthStart, getPrevMonthEnd } = require('../src/utils');
-const { db } = require('../src/db');
-
-const Chores = require('../src/core/chores');
-const Hearts = require('../src/core/hearts');
-const Polls = require('../src/core/polls');
-const Admin = require('../src/core/admin');
+const { db } = require('../src/core/db');
 
 describe('Chores', async () => {
   const HOUSE = 'house123';

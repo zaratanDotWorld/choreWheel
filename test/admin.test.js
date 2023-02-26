@@ -4,11 +4,10 @@ const chaiAsPromised = require('chai-as-promised');
 
 chai.use(chaiAsPromised);
 
+const { Admin } = require('../src/core/index');
 const { HOUR, DAY } = require('../src/constants');
 const { getMonthStart, getMonthEnd, getNextMonthStart, getPrevMonthEnd, getDateStart } = require('../src/utils');
-const { db } = require('../src/db');
-
-const Admin = require('../src/core/admin');
+const { db } = require('../src/core/db');
 
 describe('Admin', async () => {
   const HOUSE1 = 'HOUSE1';

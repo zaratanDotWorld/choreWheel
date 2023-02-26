@@ -4,13 +4,10 @@ const chaiAsPromised = require('chai-as-promised');
 
 chai.use(chaiAsPromised);
 
+const { Things, Polls, Admin } = require('../src/core/index');
 const { NAY, YAY, HOUR } = require('../src/constants');
 const { thingsPollLength } = require('../src/config');
-const { db } = require('../src/db');
-
-const Things = require('../src/core/things');
-const Polls = require('../src/core/polls');
-const Admin = require('../src/core/admin');
+const { db } = require('../src/core/db');
 
 describe('Things', async () => {
   const HOUSE = 'house123';
