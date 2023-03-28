@@ -216,6 +216,15 @@ exports.choresGiftView = function (pointsBalance) {
           placeholder: { type: 'plain_text', text: 'Enter a number', emoji: true },
           action_id: 'value'
         }
+      },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Circumstance', emoji: true },
+        element: {
+          type: 'plain_text_input',
+          placeholder: { type: 'plain_text', text: 'Tell us why you\'re giving the gift', emoji: true },
+          action_id: 'circumstance'
+        }
       }
     ]
   };

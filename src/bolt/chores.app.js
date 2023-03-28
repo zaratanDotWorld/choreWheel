@@ -332,9 +332,11 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
 
   const recipientBlockId = body.view.blocks[2].block_id;
   const valueBlockId = body.view.blocks[3].block_id;
+  const circumstanceBlockId = body.view.blocks[4].block_id;
 
   const recipientId = body.view.state.values[recipientBlockId].recipient.selected_user;
   const value = Number(body.view.state.values[valueBlockId].value.value);
+  const circumstance = body.view.state.values[circumstanceBlockId].circumstance.value;
   const pointsBalance = Number(body.view.private_metadata);
 
   if (value <= pointsBalance) {
@@ -342,7 +344,8 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
     await Chores.giftChorePoints(houseId, residentId, recipientId, new Date(), value);
 
     const { choresChannel } = await Admin.getHouse(houseId);
-    const text = `<@${residentId}> just gifted <@${recipientId}> *${value} points* :gift:`;
+    const text = `<@${residentId}> just gifted <@${recipientId}> *${value} points* :gift:\n` +
+      `_${circumstance}_`;
     await common.postMessage(app, choresOauth, choresChannel, text);
   } else {
     const text = 'You can\'t gift more points than you have! :face_with_monocle:';
