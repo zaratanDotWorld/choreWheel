@@ -81,10 +81,10 @@ app.command('/things-add', async ({ ack, command }) => {
     const [ thing ] = await Things.updateThing({ houseId, type, name, quantity, value, active });
 
     const text = `${views.formatThing(thing)} added to the things list :star-struck:`;
-    await common.postEphemeral(app, thingsOauth, command, text);
+    await common.replyEphemeral(app, thingsOauth, command, text);
   } else {
     const text = 'Only admins can update the things list...';
-    await common.postEphemeral(app, thingsOauth, command, text);
+    await common.replyEphemeral(app, thingsOauth, command, text);
   }
 });
 
@@ -101,10 +101,10 @@ app.command('/things-del', async ({ ack, command }) => {
     const [ thing ] = await Things.updateThing({ houseId, type, name, value, active });
 
     const text = `${views.formatThing(thing)} removed from the things list :sob:`;
-    await common.postEphemeral(app, thingsOauth, command, text);
+    await common.replyEphemeral(app, thingsOauth, command, text);
   } else {
     const text = 'Only admins can update the things list...';
-    await common.postEphemeral(app, thingsOauth, command, text);
+    await common.replyEphemeral(app, thingsOauth, command, text);
   }
 });
 
@@ -119,11 +119,11 @@ app.command('/things-load', async ({ ack, command }) => {
     const [ thing ] = await Things.loadHouseAccount(houseId, new Date(), command.text);
     const { thingsChannel } = await Admin.getHouse(houseId);
 
-    const text = `<!channel> *$${thing.value}* was just loaded into the house account :chart_with_upwards_trend:`;
+    const text = `*$${thing.value}* was just loaded into the house account :chart_with_upwards_trend:`;
     await common.postMessage(app, thingsOauth, thingsChannel, text);
   } else {
     const text = 'Only admins can load the house account...';
-    await common.postEphemeral(app, thingsOauth, command, text);
+    await common.replyEphemeral(app, thingsOauth, command, text);
   }
 });
 
@@ -142,7 +142,7 @@ app.command('/things-resolved', async ({ ack, command }) => {
     });
 
   const text = `Resolved buys not yet fulfilled:${parsedResolvedBuys}`;
-  await common.postEphemeral(app, thingsOauth, command, text);
+  await common.replyEphemeral(app, thingsOauth, command, text);
 });
 
 app.command('/things-fulfill', async ({ ack, command }) => {
@@ -158,7 +158,7 @@ app.command('/things-fulfill', async ({ ack, command }) => {
   }
 
   const text = `Fulfilled the following buys: ${buyIds.join(' ')}`;
-  await common.postEphemeral(app, thingsOauth, command, text);
+  await common.replyEphemeral(app, thingsOauth, command, text);
 });
 
 // Buy flow

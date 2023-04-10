@@ -20,7 +20,7 @@ exports.getUser = async function (app, oauth, userId) {
   });
 };
 
-exports.postEphemeral = async function (app, oauth, command, text) {
+exports.replyEphemeral = async function (app, oauth, command, text) {
   return app.client.chat.postEphemeral({
     token: oauth.bot.token,
     channel: command.channel_id,
@@ -29,10 +29,10 @@ exports.postEphemeral = async function (app, oauth, command, text) {
   });
 };
 
-exports.postEphemeralDirect = async function (app, oauth, residentId, text) {
+exports.postEphemeral = async function (app, oauth, channelId, residentId, text) {
   return app.client.chat.postEphemeral({
     token: oauth.bot.token,
-    channel: residentId,
+    channel: channelId,
     user: residentId,
     text
   });
@@ -95,20 +95,19 @@ exports.setChannel = async function (app, oauth, channelType, command) {
 
       const text = `${channelType} set to *${channelName}* :fire:\n` +
         'Please add the bot to the channel';
-      await exports.postEphemeral(app, oauth, command, text);
+      await exports.replyEphemeral(app, oauth, command, text);
     } else {
       const text = `*${command.text}* is not a valid channel...`;
-      await exports.postEphemeral(app, oauth, command, text);
+      await exports.replyEphemeral(app, oauth, command, text);
     }
   } else {
     const text = 'Only admins can set the channels...';
-    await exports.postEphemeral(app, oauth, command, text);
+    await exports.replyEphemeral(app, oauth, command, text);
   }
 };
 
 exports.syncWorkspace = async function (app, oauth, command) {
   const houseId = command.team_id;
-  const residentId = command.user_id;
   const now = new Date();
 
   const workspaceMembers = await app.client.users.list({ token: oauth.bot.token });
@@ -125,7 +124,7 @@ exports.syncWorkspace = async function (app, oauth, command) {
 
   const residents = await Admin.getResidents(houseId);
   const text = `Synced workspace with ${residents.length} active residents`;
-  await exports.postEphemeralDirect(app, oauth, residentId, text);
+  await exports.replyEphemeral(app, oauth, command, text);
 };
 
 exports.updateVoteCounts = async function (app, oauth, body, action) {

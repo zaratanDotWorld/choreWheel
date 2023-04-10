@@ -101,10 +101,10 @@ app.command('/chores-add', async ({ ack, command }) => {
     await Chores.addChore(command.team_id, choreName);
 
     const text = `${choreName} added to the chores list :star-struck:`;
-    await common.postEphemeral(app, choresOauth, command, text);
+    await common.replyEphemeral(app, choresOauth, command, text);
   } else {
     const text = 'Only admins can update the chore list...';
-    await common.postEphemeral(app, choresOauth, command, text);
+    await common.replyEphemeral(app, choresOauth, command, text);
   }
 });
 
@@ -118,10 +118,10 @@ app.command('/chores-del', async ({ ack, command }) => {
     await Chores.deleteChore(command.team_id, choreName);
 
     const text = `${choreName} removed from the chores list :sob:`;
-    await common.postEphemeral(app, choresOauth, command, text);
+    await common.replyEphemeral(app, choresOauth, command, text);
   } else {
     const text = 'Only admins can update the chore list...';
-    await common.postEphemeral(app, choresOauth, command, text);
+    await common.replyEphemeral(app, choresOauth, command, text);
   }
 });
 
@@ -243,8 +243,8 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   const targetChoreRanking = choreRankings.find((chore) => chore.id === parseInt(targetChoreId));
   const speedDiff = (targetChoreRanking.ranking * 1000).toFixed(0) - parseInt(targetChoreSpeed);
 
+  const { choresChannel } = await Admin.getHouse(houseId);
   if (speedDiff > 0) {
-    const { choresChannel } = await Admin.getHouse(houseId);
     const text = `Someone sped up *${targetChoreName}* by *${speedDiff} ppt* :rocket:`;
     await common.postMessage(app, choresOauth, choresChannel, text);
   } else if (speedDiff < 0) {
@@ -253,7 +253,7 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
     await common.postMessage(app, choresOauth, choresChannel, text);
   } else {
     const text = 'No speed change. Try including more chores.';
-    await common.postEphemeralDirect(app, choresOauth, residentId, text);
+    await common.postEphemeral(app, choresOauth, choresChannel, residentId, text);
   }
 });
 
@@ -292,13 +292,13 @@ app.view('chores-break-callback', async ({ ack, body }) => {
   const breakEnd = shiftDate(breakEndUtc, now.getTimezoneOffset());
   const breakDays = parseInt((breakEnd - breakStart) / DAY);
 
+  const { choresChannel } = await Admin.getHouse(houseId);
   if (breakStart < todayStart || breakDays < 3) {
     const text = 'Not a valid chore break :slightly_frowning_face:';
-    await common.postEphemeralDirect(app, choresOauth, residentId, text);
+    await common.postEphemeral(app, choresOauth, choresChannel, residentId, text);
   } else {
     // Record the break
     await Chores.addChoreBreak(residentId, breakStart, breakEnd);
-    const { choresChannel } = await Admin.getHouse(houseId);
     const text = `<@${residentId}> is taking a *${breakDays}-day* break ` +
         `starting ${breakStart.toDateString()} :beach_with_umbrella:\n` +
         `_${circumstance}_`;
@@ -339,17 +339,17 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
   const circumstance = body.view.state.values[circumstanceBlockId].circumstance.value;
   const pointsBalance = Number(body.view.private_metadata);
 
+  const { choresChannel } = await Admin.getHouse(houseId);
   if (value <= pointsBalance) {
     // Make the gift
     await Chores.giftChorePoints(houseId, residentId, recipientId, new Date(), value);
 
-    const { choresChannel } = await Admin.getHouse(houseId);
     const text = `<@${residentId}> just gifted <@${recipientId}> *${value} points* :gift:\n` +
       `_${circumstance}_`;
     await common.postMessage(app, choresOauth, choresChannel, text);
   } else {
     const text = 'You can\'t gift more points than you have! :face_with_monocle:';
-    await common.postEphemeralDirect(app, choresOauth, residentId, text);
+    await common.postEphemeral(app, choresOauth, choresChannel, residentId, text);
   }
 });
 
