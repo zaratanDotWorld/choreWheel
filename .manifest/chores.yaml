@@ -13,9 +13,7 @@ features:
   slash_commands:
     - command: /chores-channel
       url: https://chores.mirror.zaratan.world/slack/events
-      description: Set the claims channel
-      usage_hint: "[name]"
-      should_escape: true
+      description: Use the current channel for app events
     - command: /chores-sync
       url: https://chores.mirror.zaratan.world/slack/events
       description: Sync active residents
@@ -33,6 +31,7 @@ oauth_config:
   scopes:
     bot:
       - channels:history
+      - channels:join
       - channels:read
       - chat:write
       - commands

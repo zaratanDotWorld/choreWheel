@@ -14,9 +14,7 @@ features:
   slash_commands:
     - command: /hearts-channel
       url: https://hearts.mirror.zaratan.world/slack/events
-      description: Set the hearts channel
-      usage_hint: "[name]"
-      should_escape: true
+      description: Use the current channel for app events
     - command: /hearts-sync
       url: https://hearts.mirror.zaratan.world/slack/events
       description: Sync active residents
@@ -26,6 +24,7 @@ oauth_config:
   scopes:
     bot:
       - channels:history
+      - channels:join
       - channels:read
       - chat:write
       - commands

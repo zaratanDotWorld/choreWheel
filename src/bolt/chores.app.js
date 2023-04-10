@@ -22,7 +22,7 @@ const app = new App({
   stateSecret: process.env.STATE_SECRET,
   customRoutes: [ common.homeEndpoint('Chores') ],
   scopes: [
-    'channels:history', 'channels:read',
+    'channels:history', 'channels:join', 'channels:read',
     'chat:write',
     'commands',
     'users:read'

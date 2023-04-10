@@ -14,9 +14,7 @@ features:
   slash_commands:
     - command: /things-channel
       url: https://things.mirror.zaratan.world/slack/events
-      description: Set the things channel
-      usage_hint: "[name]"
-      should_escape: true
+      description: Use the current channel for app events
     - command: /things-add
       url: https://things.mirror.zaratan.world/slack/events
       description: Add a thing
@@ -42,6 +40,7 @@ oauth_config:
   scopes:
     bot:
       - channels:history
+      - channels:join
       - channels:read
       - chat:write
       - commands

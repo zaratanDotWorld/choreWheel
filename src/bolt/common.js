@@ -83,23 +83,14 @@ exports.addReaction = async function (app, oauth, payload, emoji) {
 exports.setChannel = async function (app, oauth, channelType, command) {
   const userInfo = await exports.getUser(app, oauth, command.user_id);
   if (userInfo.user.is_admin) {
-    const regex = /<#(\w+)|([a-zA-Z0-9_-]+)>/g; // Matches`<#CHANNELID|channel-name>`
-    const channelInfo = [ ...command.text.matchAll(regex) ];
+    const houseId = command.team_id;
+    const channelId = command.channel_id;
 
-    if (channelInfo.length === 2) {
-      const houseId = command.team_id;
-      const channelId = channelInfo[0][1];
-      const channelName = channelInfo[1][2];
+    await Admin.updateHouse({ slackId: houseId, [channelType]: channelId });
+    await app.client.conversations.join({ token: oauth.bot.token, channel: channelId });
 
-      await Admin.updateHouse({ slackId: houseId, [channelType]: channelId });
-
-      const text = `${channelType} set to *${channelName}* :fire:\n` +
-        'Please add the bot to the channel';
-      await exports.replyEphemeral(app, oauth, command, text);
-    } else {
-      const text = `*${command.text}* is not a valid channel...`;
-      await exports.replyEphemeral(app, oauth, command, text);
-    }
+    const text = `App events channel set to *<#${channelId}>* :fire:`;
+    await exports.replyEphemeral(app, oauth, command, text);
   } else {
     const text = 'Only admins can set the channels...';
     await exports.replyEphemeral(app, oauth, command, text);
