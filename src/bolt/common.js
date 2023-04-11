@@ -20,6 +20,11 @@ exports.getUser = async function (app, oauth, userId) {
   });
 };
 
+exports.isAdmin = async function (app, oauth, command) {
+  const { user } = await exports.getUser(app, oauth, command.user_id);
+  return user.is_admin;
+};
+
 exports.replyEphemeral = async function (app, oauth, command, text) {
   return app.client.chat.postEphemeral({
     token: oauth.bot.token,

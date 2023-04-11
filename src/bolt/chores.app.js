@@ -95,8 +95,7 @@ app.command('/chores-add', async ({ ack, command }) => {
   console.log('/chores-add');
   await ack();
 
-  const userInfo = await common.getUser(app, choresOauth, command.user_id);
-  if (userInfo.user.is_admin) {
+  if (await common.isAdmin(app, choresOauth, command)) {
     const choreName = views.formatChoreName(command.text);
     await Chores.addChore(command.team_id, choreName);
 
@@ -112,8 +111,7 @@ app.command('/chores-del', async ({ ack, command }) => {
   console.log('/chores-del');
   await ack();
 
-  const userInfo = await common.getUser(app, choresOauth, command.user_id);
-  if (userInfo.user.is_admin) {
+  if (await common.isAdmin(app, choresOauth, command)) {
     const choreName = views.formatChoreName(command.text);
     await Chores.deleteChore(command.team_id, choreName);
 

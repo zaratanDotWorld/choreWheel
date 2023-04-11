@@ -73,9 +73,8 @@ app.command('/things-add', async ({ ack, command }) => {
   await ack();
 
   const houseId = command.team_id;
-  const userInfo = await common.getUser(app, thingsOauth, command.user_id);
 
-  if (userInfo.user.is_admin) {
+  if (await common.isAdmin(app, thingsOauth, command)) {
     const active = true;
     const { type, name, quantity, value } = views.parseThingAdd(command.text);
     const [ thing ] = await Things.updateThing({ houseId, type, name, quantity, value, active });
@@ -93,9 +92,8 @@ app.command('/things-del', async ({ ack, command }) => {
   await ack();
 
   const houseId = command.team_id;
-  const userInfo = await common.getUser(app, thingsOauth, command.user_id);
 
-  if (userInfo.user.is_admin) {
+  if (await common.isAdmin(app, thingsOauth, command)) {
     const [ value, active ] = [ 0, false ];
     const { type, name } = views.parseThingDel(command.text);
     const [ thing ] = await Things.updateThing({ houseId, type, name, value, active });
@@ -113,9 +111,8 @@ app.command('/things-load', async ({ ack, command }) => {
   await ack();
 
   const houseId = command.team_id;
-  const userInfo = await common.getUser(app, thingsOauth, command.user_id);
 
-  if (userInfo.user.is_admin) {
+  if (await common.isAdmin(app, thingsOauth, command)) {
     const [ thing ] = await Things.loadHouseAccount(houseId, new Date(), command.text);
     const { thingsChannel } = await Admin.getHouse(houseId);
 
@@ -133,6 +130,7 @@ app.command('/things-resolved', async ({ ack, command }) => {
 
   const houseId = command.team_id;
   const now = new Date();
+
   const buys = await Things.getUnfulfilledThingBuys(houseId, now);
   const parsedResolvedBuys = buys
     .filter((buy) => buy.resolvedAt !== null)
@@ -152,9 +150,8 @@ app.command('/things-fulfill', async ({ ack, command }) => {
   const residentId = command.user_id;
   const buyIds = command.text.split(' ');
   const now = new Date();
-  const userInfo = await common.getUser(app, thingsOauth, command.user_id);
 
-  if (userInfo.user.is_admin) {
+  if (await common.isAdmin(app, thingsOauth, command)) {
     for (const buyId of buyIds) {
       await Things.fulfillThingBuy(buyId, residentId, now);
     }
