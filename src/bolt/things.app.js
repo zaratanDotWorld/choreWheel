@@ -83,7 +83,7 @@ app.command('/things-add', async ({ ack, command }) => {
     const text = `${views.formatThing(thing)} added to the things list :star-struck:`;
     await common.replyEphemeral(app, thingsOauth, command, text);
   } else {
-    const text = 'Only admins can update the things list...';
+    const text = ':warning: Only admins can update the things list...';
     await common.replyEphemeral(app, thingsOauth, command, text);
   }
 });
@@ -103,7 +103,7 @@ app.command('/things-del', async ({ ack, command }) => {
     const text = `${views.formatThing(thing)} removed from the things list :sob:`;
     await common.replyEphemeral(app, thingsOauth, command, text);
   } else {
-    const text = 'Only admins can update the things list...';
+    const text = ':warning: Only admins can update the things list...';
     await common.replyEphemeral(app, thingsOauth, command, text);
   }
 });
@@ -122,7 +122,7 @@ app.command('/things-load', async ({ ack, command }) => {
     const text = `*$${thing.value}* was just loaded into the house account :chart_with_upwards_trend:`;
     await common.postMessage(app, thingsOauth, thingsChannel, text);
   } else {
-    const text = 'Only admins can load the house account...';
+    const text = ':warning: Only admins can load the house account...';
     await common.replyEphemeral(app, thingsOauth, command, text);
   }
 });
@@ -152,13 +152,19 @@ app.command('/things-fulfill', async ({ ack, command }) => {
   const residentId = command.user_id;
   const buyIds = command.text.split(' ');
   const now = new Date();
+  const userInfo = await common.getUser(app, thingsOauth, command.user_id);
 
-  for (const buyId of buyIds) {
-    await Things.fulfillThingBuy(buyId, residentId, now);
+  if (userInfo.user.is_admin) {
+    for (const buyId of buyIds) {
+      await Things.fulfillThingBuy(buyId, residentId, now);
+    }
+
+    const text = `Fulfilled the following buys: ${buyIds.join(' ')}`;
+    await common.replyEphemeral(app, thingsOauth, command, text);
+  } else {
+    const text = ':warning: Only admins can fulfill buys...';
+    await common.replyEphemeral(app, thingsOauth, command, text);
   }
-
-  const text = `Fulfilled the following buys: ${buyIds.join(' ')}`;
-  await common.replyEphemeral(app, thingsOauth, command, text);
 });
 
 // Buy flow

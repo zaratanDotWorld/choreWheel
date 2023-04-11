@@ -92,7 +92,7 @@ exports.setChannel = async function (app, oauth, channelType, command) {
     const text = `App events channel set to *<#${channelId}>* :fire:`;
     await exports.replyEphemeral(app, oauth, command, text);
   } else {
-    const text = 'Only admins can set the channels...';
+    const text = ':warning: Only admins can set the channels...';
     await exports.replyEphemeral(app, oauth, command, text);
   }
 };

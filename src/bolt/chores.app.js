@@ -103,7 +103,7 @@ app.command('/chores-add', async ({ ack, command }) => {
     const text = `${choreName} added to the chores list :star-struck:`;
     await common.replyEphemeral(app, choresOauth, command, text);
   } else {
-    const text = 'Only admins can update the chore list...';
+    const text = ':warning: Only admins can update the chore list...';
     await common.replyEphemeral(app, choresOauth, command, text);
   }
 });
@@ -120,7 +120,7 @@ app.command('/chores-del', async ({ ack, command }) => {
     const text = `${choreName} removed from the chores list :sob:`;
     await common.replyEphemeral(app, choresOauth, command, text);
   } else {
-    const text = 'Only admins can update the chore list...';
+    const text = ':warning: Only admins can update the chore list...';
     await common.replyEphemeral(app, choresOauth, command, text);
   }
 });
