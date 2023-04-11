@@ -81,7 +81,7 @@ app.command('/chores-sync', async ({ ack, command }) => {
   console.log('/chores-sync');
   await ack();
 
-  await common.syncWorkspace(app, choresOauth, command);
+  await common.syncWorkspace(app, choresOauth, command, true, false);
 });
 
 app.command('/chores-channel', async ({ ack, command }) => {

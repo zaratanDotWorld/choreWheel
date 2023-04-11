@@ -97,12 +97,31 @@ exports.setChannel = async function (app, oauth, channelType, command) {
   }
 };
 
-exports.syncWorkspace = async function (app, oauth, command) {
-  const houseId = command.team_id;
+exports.syncWorkspace = async function (app, oauth, command, syncMembers, syncChannels) {
+  let text = 'Synced workspace with ';
+
+  if (syncMembers) {
+    const numResidents = await exports.syncWorkspaceMembers(app, oauth, command.team_id);
+    text += `${numResidents} active residents`;
+  }
+
+  if (syncMembers & syncChannels) {
+    text += ' and ';
+  }
+
+  if (syncChannels) {
+    const numChannels = await exports.syncWorkspaceChannels(app, oauth);
+    text += `${numChannels} public channels`;
+  }
+
+  await exports.replyEphemeral(app, oauth, command, text);
+};
+
+exports.syncWorkspaceMembers = async function (app, oauth, houseId) {
   const now = new Date();
 
-  const workspaceMembers = await app.client.users.list({ token: oauth.bot.token });
-  for (const member of workspaceMembers.members) {
+  const { members } = await app.client.users.list({ token: oauth.bot.token });
+  for (const member of members) {
     if (!member.is_bot & member.id !== SLACKBOT) {
       if (member.deleted) {
         await Admin.deleteResident(houseId, member.id);
@@ -114,8 +133,23 @@ exports.syncWorkspace = async function (app, oauth, command) {
   }
 
   const residents = await Admin.getResidents(houseId);
-  const text = `Synced workspace with ${residents.length} active residents`;
-  await exports.replyEphemeral(app, oauth, command, text);
+  return residents.length;
+};
+
+exports.syncWorkspaceChannels = async function (app, oauth) {
+  const { channels: workspaceChannels } = await app.client.conversations.list({ token: oauth.bot.token, exclude_archived: true });
+  const workspaceChannelIds = workspaceChannels.map(channel => channel.id);
+
+  const { channels: botChannels } = await app.client.users.conversations({ token: oauth.bot.token });
+  const botChannelIds = botChannels.map(channel => channel.id);
+
+  for (const channelId of workspaceChannelIds) {
+    if (!botChannelIds.includes(channelId)) {
+      await app.client.conversations.join({ token: oauth.bot.token, channel: channelId });
+    }
+  }
+
+  return workspaceChannels.length;
 };
 
 exports.updateVoteCounts = async function (app, oauth, body, action) {

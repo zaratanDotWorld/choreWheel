@@ -95,7 +95,7 @@ app.command('/hearts-sync', async ({ ack, command }) => {
   console.log('/hearts-sync');
   await ack();
 
-  await common.syncWorkspace(app, heartsOauth, command);
+  await common.syncWorkspace(app, heartsOauth, command, true, true);
 });
 
 app.command('/hearts-channel', async ({ ack, command }) => {
