@@ -65,14 +65,14 @@ app.event('app_home_opened', async ({ body, event }) => {
     const challengeHearts = await Hearts.getAgnosticHearts(houseId, now);
     for (const challengeHeart of challengeHearts) {
       const text = `You lost a challenge, and *${(-challengeHeart.value).toFixed(0)}* hearts...`;
-      await common.postMessage(app, heartsOauth, challengeHeart.residentId, text);
+      await common.postMessage(app, heartsOauth, challengeHeart.residentId, text); // TODO: Sent to public channel
     }
 
     // Regenerate the monthly half-heart
     const [ regenHeart ] = await Hearts.regenerateHearts(houseId, residentId, now);
     if (regenHeart !== undefined && regenHeart.value > 0) {
       const text = `You regenerated *${regenHeart.value.toFixed(1)}* hearts!`;
-      await common.postMessage(app, heartsOauth, residentId, text);
+      await common.postMessage(app, heartsOauth, residentId, text); // TODO: Sent to public channel
     }
 
     // Issue karma hearts

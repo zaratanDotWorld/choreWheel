@@ -20,7 +20,7 @@ const app = new App({
   stateSecret: process.env.STATE_SECRET,
   customRoutes: [ common.homeEndpoint('Things') ],
   scopes: [
-    'channels:history', 'channels:join', 'channels:read',
+    'channels:join',
     'chat:write',
     'commands',
     'users:read'
