@@ -95,32 +95,40 @@ app.command('/chores-add', async ({ ack, command }) => {
   console.log('/chores-add');
   await ack();
 
-  if (await common.isAdmin(app, choresOauth, command)) {
+  let text;
+
+  if (command.text === 'help' || command.text.length === 0) {
+    text = 'Enter the name of a new chore to add it to the list. ' +
+    'If the chore already exists, the command does nothing.';
+  } else if (await common.isAdmin(app, choresOauth, command)) {
     const choreName = views.formatChoreName(command.text);
     await Chores.addChore(command.team_id, choreName);
-
-    const text = `${choreName} added to the chores list :star-struck:`;
-    await common.replyEphemeral(app, choresOauth, command, text);
+    text = `${choreName} added to the chores list :star-struck:`;
   } else {
-    const text = ':warning: Only admins can update the chore list...';
-    await common.replyEphemeral(app, choresOauth, command, text);
+    text = ':warning: Only admins can update the chore list...';
   }
+
+  await common.replyEphemeral(app, choresOauth, command, text);
 });
 
 app.command('/chores-del', async ({ ack, command }) => {
   console.log('/chores-del');
   await ack();
 
-  if (await common.isAdmin(app, choresOauth, command)) {
+  let text;
+
+  if (command.text === 'help' || command.text.length === 0) {
+    text = 'Enter the name of an existing chore to delete it from the list. ' +
+    'If no matching chore is found, the command does nothing.';
+  } else if (await common.isAdmin(app, choresOauth, command)) {
     const choreName = views.formatChoreName(command.text);
     await Chores.deleteChore(command.team_id, choreName);
-
-    const text = `${choreName} removed from the chores list :sob:`;
-    await common.replyEphemeral(app, choresOauth, command, text);
+    text = `${choreName} removed from the chores list :sob:`;
   } else {
-    const text = ':warning: Only admins can update the chore list...';
-    await common.replyEphemeral(app, choresOauth, command, text);
+    text = ':warning: Only admins can update the chore list...';
   }
+
+  await common.replyEphemeral(app, choresOauth, command, text);
 });
 
 // Claim flow

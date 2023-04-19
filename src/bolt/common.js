@@ -86,37 +86,45 @@ exports.addReaction = async function (app, oauth, payload, emoji) {
 };
 
 exports.setChannel = async function (app, oauth, channelType, command) {
-  const userInfo = await exports.getUser(app, oauth, command.user_id);
-  if (userInfo.user.is_admin) {
-    const houseId = command.team_id;
-    const channelId = command.channel_id;
+  let text;
 
+  if (command.text === 'help') {
+    text = 'Set the current channel as the log channel for the app. ' +
+    'The app will use this channel to post polls or share public activity.';
+  } else if (await exports.isAdmin(app, oauth, command)) {
+    const [ houseId, channelId ] = [ command.team_id, command.channel_id ];
     await Admin.updateHouse({ slackId: houseId, [channelType]: channelId });
     await app.client.conversations.join({ token: oauth.bot.token, channel: channelId });
-
-    const text = `App events channel set to *<#${channelId}>* :fire:`;
-    await exports.replyEphemeral(app, oauth, command, text);
+    text = `App events channel set to *<#${channelId}>* :fire:`;
   } else {
-    const text = ':warning: Only admins can set the channels...';
-    await exports.replyEphemeral(app, oauth, command, text);
+    text = ':warning: Only admins can set the channels...';
   }
+
+  await exports.replyEphemeral(app, oauth, command, text);
 };
 
 exports.syncWorkspace = async function (app, oauth, command, syncMembers, syncChannels) {
-  let text = 'Synced workspace with ';
+  let text;
 
-  if (syncMembers) {
-    const numResidents = await exports.syncWorkspaceMembers(app, oauth, command.team_id);
-    text += `${numResidents} active residents`;
-  }
+  if (command.text === 'help') {
+    text = 'Sync the workspace to the current number of active members. ' +
+    'This is important for ensuring the correct behavior of the app.';
+  } else {
+    text = 'Synced workspace with ';
 
-  if (syncMembers & syncChannels) {
-    text += ' and ';
-  }
+    if (syncMembers) {
+      const numResidents = await exports.syncWorkspaceMembers(app, oauth, command.team_id);
+      text += `${numResidents} active residents`;
+    }
 
-  if (syncChannels) {
-    const numChannels = await exports.syncWorkspaceChannels(app, oauth);
-    text += `${numChannels} public channels`;
+    if (syncMembers & syncChannels) {
+      text += ' and ';
+    }
+
+    if (syncChannels) {
+      const numChannels = await exports.syncWorkspaceChannels(app, oauth);
+      text += `${numChannels} public channels`;
+    }
   }
 
   await exports.replyEphemeral(app, oauth, command, text);

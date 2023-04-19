@@ -25,6 +25,15 @@ exports.parseThingDel = function (text) {
   return { type, name };
 };
 
+exports.parseResolvedThingBuys = function (buys) {
+  return buys
+    .filter((buy) => buy.resolvedAt !== null)
+    .map((buy) => {
+      const resolvedAt = buy.resolvedAt.toLocaleDateString();
+      return `\n(${buy.id}) [${resolvedAt}] ${buy.type}: ${buy.name} - ${buy.quantity}`;
+    });
+};
+
 exports.formatThing = function (thing) {
   return `${thing.type}: ${thing.name} - ${thing.quantity} ($${thing.value})`;
 };

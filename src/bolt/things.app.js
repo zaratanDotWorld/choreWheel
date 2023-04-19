@@ -72,47 +72,55 @@ app.command('/things-add', async ({ ack, command }) => {
   console.log('/things-add');
   await ack();
 
-  const houseId = command.team_id;
+  let text;
 
-  if (await common.isAdmin(app, thingsOauth, command)) {
-    const active = true;
+  if (command.text === 'help' || command.text.length === 0) {
+    text = 'Enter the details of a new thing to add it to the list. ' +
+    'Entries have four hyphen-separated parts, e.g. Food - Eggs - 2 dozen - 20. ' +
+    'If the thing already exists, the command does nothing.';
+  } else if (await common.isAdmin(app, thingsOauth, command)) {
+    const [ houseId, active ] = [ command.team_id, true ];
     const { type, name, quantity, value } = views.parseThingAdd(command.text);
     const [ thing ] = await Things.updateThing({ houseId, type, name, quantity, value, active });
-
-    const text = `${views.formatThing(thing)} added to the things list :star-struck:`;
-    await common.replyEphemeral(app, thingsOauth, command, text);
+    text = `${views.formatThing(thing)} added to the things list :star-struck:`;
   } else {
-    const text = ':warning: Only admins can update the things list...';
-    await common.replyEphemeral(app, thingsOauth, command, text);
+    text = ':warning: Only admins can update the things list...';
   }
+
+  await common.replyEphemeral(app, thingsOauth, command, text);
 });
 
 app.command('/things-del', async ({ ack, command }) => {
   console.log('/things-del');
   await ack();
 
-  const houseId = command.team_id;
+  let text;
 
-  if (await common.isAdmin(app, thingsOauth, command)) {
-    const [ value, active ] = [ 0, false ];
+  if (command.text === 'help' || command.text.length === 0) {
+    text = 'Enter the name of an existing thing to delete it from the list. ' +
+    'Entries have two hyphen-separated parts, e.g. Food - Eggs. ' +
+    'If no matching thing is found, the command does nothing.';
+  } else if (await common.isAdmin(app, thingsOauth, command)) {
+    const [ houseId, value, active ] = [ command.team_id, 0, false ];
     const { type, name } = views.parseThingDel(command.text);
     const [ thing ] = await Things.updateThing({ houseId, type, name, value, active });
-
-    const text = `${views.formatThing(thing)} removed from the things list :sob:`;
-    await common.replyEphemeral(app, thingsOauth, command, text);
+    text = `${views.formatThing(thing)} removed from the things list :sob:`;
   } else {
-    const text = ':warning: Only admins can update the things list...';
-    await common.replyEphemeral(app, thingsOauth, command, text);
+    text = ':warning: Only admins can update the things list...';
   }
+
+  await common.replyEphemeral(app, thingsOauth, command, text);
 });
 
 app.command('/things-load', async ({ ack, command }) => {
   console.log('/things-load');
   await ack();
 
-  const houseId = command.team_id;
-
-  if (await common.isAdmin(app, thingsOauth, command)) {
+  if (command.text === 'help' || command.text.length === 0) {
+    const text = 'Enter an amount of money to add to the account for future buys.';
+    await common.replyEphemeral(app, thingsOauth, command, text);
+  } else if (await common.isAdmin(app, thingsOauth, command)) {
+    const houseId = command.team_id;
     const [ thing ] = await Things.loadHouseAccount(houseId, new Date(), command.text);
     const { thingsChannel } = await Admin.getHouse(houseId);
 
@@ -128,18 +136,20 @@ app.command('/things-resolved', async ({ ack, command }) => {
   console.log('/things-resolved');
   await ack();
 
-  const houseId = command.team_id;
-  const now = new Date();
+  let text;
 
-  const buys = await Things.getUnfulfilledThingBuys(houseId, now);
-  const parsedResolvedBuys = buys
-    .filter((buy) => buy.resolvedAt !== null)
-    .map((buy) => {
-      const resolvedAt = buy.resolvedAt.toLocaleDateString();
-      return `\n(${buy.id}) [${resolvedAt}] ${buy.type}: ${buy.name} - ${buy.quantity}`;
-    });
+  if (command.text === 'help') {
+    text = 'Show a list of resolved buys, including their buy id. ' +
+    'Buys are resolved after 12 hours, assuming they have received enough endorsements';
+  } else {
+    const houseId = command.team_id;
+    const now = new Date();
 
-  const text = `Resolved buys not yet fulfilled:${parsedResolvedBuys}`;
+    const buys = await Things.getUnfulfilledThingBuys(houseId, now);
+    const parsedResolvedBuys = views.parseResolvedThingBuys(buys);
+    text = `Resolved buys not yet fulfilled:${parsedResolvedBuys}`;
+  }
+
   await common.replyEphemeral(app, thingsOauth, command, text);
 });
 
@@ -147,21 +157,27 @@ app.command('/things-fulfill', async ({ ack, command }) => {
   console.log('/things-fulfill');
   await ack();
 
-  const residentId = command.user_id;
-  const buyIds = command.text.split(' ');
-  const now = new Date();
+  let text;
 
-  if (await common.isAdmin(app, thingsOauth, command)) {
+  if (command.text === 'help' || command.text.length === 0) {
+    text = 'Indicate that buys have been externally fulfilled, and remove them from the list. ' +
+    'You can fulfill many buys at once by including multiple soace-separated ids, e.g. 23 24 25 28. ' +
+    'Fulfilled buys are indicated by their buy id, which you can see by calling /things-resolved.';
+  } else if (await common.isAdmin(app, thingsOauth, command)) {
+    const residentId = command.user_id;
+    const buyIds = command.text.split(' ');
+    const now = new Date();
+
     for (const buyId of buyIds) {
       await Things.fulfillThingBuy(buyId, residentId, now);
     }
 
-    const text = `Fulfilled the following buys: ${buyIds.join(' ')}`;
-    await common.replyEphemeral(app, thingsOauth, command, text);
+    text = `Fulfilled the following buys: ${buyIds.join(' ')}`;
   } else {
-    const text = ':warning: Only admins can fulfill buys...';
-    await common.replyEphemeral(app, thingsOauth, command, text);
+    text = ':warning: Only admins can fulfill buys...';
   }
+
+  await common.replyEphemeral(app, thingsOauth, command, text);
 });
 
 // Buy flow
