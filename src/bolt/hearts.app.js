@@ -59,20 +59,21 @@ app.event('app_home_opened', async ({ body, event }) => {
     await common.publishHome(app, heartsOauth, residentId, view);
 
     // This bookkeeping is done after returning the view
+    const { heartsChannel } = await Admin.getHouse(houseId);
 
     // Resolve any challanges
     await Hearts.resolveChallenges(houseId, now);
     const challengeHearts = await Hearts.getAgnosticHearts(houseId, now);
     for (const challengeHeart of challengeHearts) {
-      const text = `You lost a challenge, and *${(-challengeHeart.value).toFixed(0)}* hearts...`;
-      await common.postMessage(app, heartsOauth, challengeHeart.residentId, text); // TODO: Sent to public channel
+      const text = `<@${challengeHeart.residentId}> lost a challenge, and *${(-challengeHeart.value).toFixed(0)}* hearts...`;
+      await common.postMessage(app, heartsOauth, heartsChannel, text);
     }
 
     // Regenerate the monthly half-heart
     const [ regenHeart ] = await Hearts.regenerateHearts(houseId, residentId, now);
     if (regenHeart !== undefined && regenHeart.value > 0) {
       const text = `You regenerated *${regenHeart.value.toFixed(1)}* hearts!`;
-      await common.postMessage(app, heartsOauth, residentId, text); // TODO: Sent to public channel
+      await common.postEphemeral(app, heartsOauth, heartsChannel, residentId, text);
     }
 
     // Issue karma hearts
