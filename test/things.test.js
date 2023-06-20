@@ -5,7 +5,7 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
 const { Things, Polls, Admin } = require('../src/core/index');
-const { NAY, YAY, HOUR } = require('../src/constants');
+const { NAY, YAY, HOUR, DAY } = require('../src/constants');
 const { thingsPollLength } = require('../src/config');
 const { db } = require('../src/core/db');
 
@@ -49,7 +49,7 @@ describe('Things', async () => {
   describe('managing the list', async () => {
     it('can manage items on the list', async () => {
       const [ soap ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: SOAP, value: 10 });
-      await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, value: 75 });
+      await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, value: 60 });
 
       let things;
       things = await Things.getThings(HOUSE);
@@ -79,7 +79,7 @@ describe('Things', async () => {
 
     beforeEach(async () => {
       [ soap ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: SOAP, value: 10 });
-      [ rice ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, value: 75 });
+      [ rice ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, value: 60 });
     });
 
     it('can buy a thing from the list', async () => {
@@ -89,9 +89,11 @@ describe('Things', async () => {
       balance = await Things.getHouseBalance(HOUSE, now);
       expect(balance.sum).to.equal(100);
 
-      await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
+      const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 30);
+      expect(buy.value).to.equal(-30);
+
       balance = await Things.getHouseBalance(HOUSE, now);
-      expect(balance.sum).to.equal(90);
+      expect(balance.sum).to.equal(70);
     });
 
     it('cannot buy a thing with insufficient funds', async () => {
@@ -138,7 +140,7 @@ describe('Things', async () => {
       await Things.loadHouseAccount(HOUSE, now, 100);
 
       // Need 1 affirmative vote per $50
-      let [ buy ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, 75);
+      let [ buy ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, 60);
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
 
@@ -223,6 +225,54 @@ describe('Things', async () => {
       const [ fulfilledBuy ] = await Things.fulfillThingBuy(buy.id, RESIDENT2, challengeEnd);
       expect(fulfilledBuy.fulfilledAt.getTime()).to.equal(challengeEnd.getTime());
       expect(fulfilledBuy.fulfilledBy).to.equal(RESIDENT2);
+    });
+
+    it('can get a list of fulfilled buys within a time range', async () => {
+      await Things.loadHouseAccount(HOUSE, now, 100);
+
+      const nextWeek = new Date(now.getTime() + 7 * DAY);
+      const nextMonth = new Date(now.getTime() + 28 * DAY);
+
+      const [ thingBuy1 ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, 10);
+      const [ thingBuy2 ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, nextWeek, 15);
+      const [ thingBuy3 ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, nextMonth, 20);
+
+      await Polls.submitVote(thingBuy1.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(thingBuy2.pollId, RESIDENT1, nextWeek, YAY);
+      await Polls.submitVote(thingBuy3.pollId, RESIDENT1, nextMonth, YAY);
+
+      const nextWeekChallengeEnd = new Date(nextWeek.getTime() + thingsPollLength);
+      const nextMonthChallengeEnd = new Date(nextMonth.getTime() + thingsPollLength);
+
+      await Things.resolveThingBuy(thingBuy1.id, challengeEnd);
+      await Things.resolveThingBuy(thingBuy2.id, nextWeekChallengeEnd);
+      await Things.resolveThingBuy(thingBuy3.id, nextMonthChallengeEnd);
+
+      let fulfilledBuys;
+
+      fulfilledBuys = await Things.getFulfilledThingBuys(HOUSE, now, nextMonthChallengeEnd);
+      expect(fulfilledBuys.length).to.equal(0);
+
+      await Things.fulfillThingBuy(thingBuy1.id, RESIDENT1, challengeEnd);
+      await Things.fulfillThingBuy(thingBuy2.id, RESIDENT1, nextWeekChallengeEnd);
+      await Things.fulfillThingBuy(thingBuy3.id, RESIDENT1, nextMonthChallengeEnd);
+
+      // first
+      fulfilledBuys = await Things.getFulfilledThingBuys(HOUSE, now, challengeEnd);
+      expect(fulfilledBuys.length).to.equal(1);
+      expect(fulfilledBuys.find(buy => buy.name === RICE).value).to.equal(-10);
+
+      // all three
+      fulfilledBuys = await Things.getFulfilledThingBuys(HOUSE, now, nextMonthChallengeEnd);
+      expect(fulfilledBuys.length).to.equal(2);
+      expect(fulfilledBuys.find(buy => buy.name === RICE).value).to.equal(-30);
+      expect(fulfilledBuys.find(buy => buy.name === SOAP).value).to.equal(-15);
+
+      // last two
+      fulfilledBuys = await Things.getFulfilledThingBuys(HOUSE, nextWeekChallengeEnd, nextMonthChallengeEnd);
+      expect(fulfilledBuys.length).to.equal(2);
+      expect(fulfilledBuys.find(buy => buy.name === RICE).value).to.equal(-20);
+      expect(fulfilledBuys.find(buy => buy.name === SOAP).value).to.equal(-15);
     });
   });
 });

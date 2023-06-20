@@ -124,3 +124,19 @@ exports.fulfillThingBuy = async function (buyId, fulfilledBy, fulfilledAt) {
     .update({ fulfilledBy, fulfilledAt })
     .returning('*');
 };
+
+exports.getFulfilledThingBuys = async function (houseId, startTime, endTime) {
+  return db('ThingBuy')
+    .join('Thing', 'ThingBuy.thingId', 'Thing.id')
+    .where('ThingBuy.houseId', houseId)
+    .where('ThingBuy.valid', true) // Exclude invalid buys
+    .whereNot('ThingBuy.pollId', null) // Exclude "load" buys
+    .whereBetween('ThingBuy.fulfilledAt', [ startTime, endTime ])
+    .groupBy([ 'Thing.type', 'Thing.name' ])
+    .sum('ThingBuy.value as value')
+    .orderBy('value', 'asc')
+    .select([
+      'Thing.type',
+      'Thing.name'
+    ]);
+};
