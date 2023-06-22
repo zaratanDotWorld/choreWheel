@@ -110,9 +110,10 @@ exports.choresClaimCallbackView = function (claim, choreName, totalPoints, month
 
 exports.choresRankView = function () {
   const mainText = 'Every hour, chores gain points. ' +
-    'The total points across all chores is fixed, but some chores gain points faster than others. ' +
-    'Every chore has a speed (measured in *ppt*, or points-per-thousand), and speeds always add up to *1000*.\n\n' +
-    'You can set chore speeds here. First, decide whether you want to speed up or slow down a chore. ' +
+    'The *total* points per month is fixed, but not all chores gain points equally. ' +
+    'Every chore has a *speed* (measured in *ppt*, or points-per-thousand), and speeds always add up to *1000*. ' +
+    'The faster a chore is, the more points it will generally be worth.\n\n' +
+    'First, decide whether you want to *speed up* or *slow down* a chore. ' +
     'Speeding up a chore will make other chores slower, and slowing down a chore will make other chores faster.';
 
   return {
@@ -129,8 +130,8 @@ exports.choresRankView = function () {
             type: 'radio_buttons',
             action_id: 'chores-rank-2',
             options: [
-              { text: { type: 'mrkdwn', text: 'Speed up a chore' }, value: 'faster' },
-              { text: { type: 'mrkdwn', text: 'Slow down a chore' }, value: 'slower' }
+              { text: { type: 'mrkdwn', text: '*Speed up a chore* (worth more over time)' }, value: 'faster' },
+              { text: { type: 'mrkdwn', text: '*Slow down a chore* (worth less over time)' }, value: 'slower' }
             ]
           }
         ]
@@ -148,8 +149,20 @@ exports.choresRankView2 = function (direction, choreRankings) {
     };
   });
 
-  const textA = direction === 'faster' ? 'Chore to speed up' : 'Chore to slow down';
-  const textB = direction === 'faster' ? 'Chores to slow down' : 'Chores to speed up';
+  const mainText = 'Choose chores to update. ' +
+    'Faster chores will be worth more points over time, and vice-versa.\n\n' +
+    'You can think of this as \'taking\' speed (measured in *ppt*) from some chores and giving it to others. ' +
+    '*Some things to keep in mind:*\n\n' +
+    '*1.* Choosing a *faster chore* has a bigger effect.\n' +
+    '*2.* Choosing *more chores* has a bigger effect.\n' +
+    '*3.* *More housemates* have a bigger effect.';
+
+  const textA = direction === 'faster'
+    ? 'Chore to speed up (worth more over time)'
+    : 'Chore to slow down (worth less over time)';
+  const textB = direction === 'faster'
+    ? 'Chores to slow down (worth less over time)'
+    : 'Chores to speed up (worth more over time)';
 
   return {
     type: 'modal',
@@ -160,14 +173,14 @@ exports.choresRankView2 = function (direction, choreRankings) {
     close: { type: 'plain_text', text: 'Back', emoji: true },
     blocks: [
       { type: 'header', text: { type: 'plain_text', text: 'Set chore speeds', emoji: true } },
-      { type: 'section', text: { type: 'mrkdwn', text: 'Choose chores to update' } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
       {
         type: 'input',
         label: { type: 'plain_text', text: textA, emoji: true },
         element: {
           type: 'static_select',
           action_id: 'chores',
-          placeholder: { type: 'plain_text', text: 'Choose a chore', emoji: true },
+          placeholder: { type: 'plain_text', text: 'Choose one chore', emoji: true },
           options: mappedChoreRankings
         }
       },
@@ -177,7 +190,7 @@ exports.choresRankView2 = function (direction, choreRankings) {
         element: {
           type: 'multi_static_select',
           action_id: 'chores',
-          placeholder: { type: 'plain_text', text: 'Choose some chores', emoji: true },
+          placeholder: { type: 'plain_text', text: 'Choose one or more chores', emoji: true },
           options: mappedChoreRankings
         }
       }
