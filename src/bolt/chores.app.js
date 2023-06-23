@@ -248,16 +248,18 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
 
   const choreRankings = await Chores.getCurrentChoreRankings(houseId);
   const targetChoreRanking = choreRankings.find((chore) => chore.id === parseInt(targetChoreId));
+
+  const bigChange = (1000 / choreRankings.length) / 5; // 20% of the average speed
   const speedDiff = (targetChoreRanking.ranking * 1000).toFixed(0) - parseInt(targetChoreSpeed);
-  const speedText = (Math.abs(speedDiff) > 5) ? 'lot' : 'little';
+  const speedText = (Math.abs(speedDiff) > bigChange) ? 'a lot' : 'a little';
 
   const { choresChannel } = await Admin.getHouse(houseId);
   if (speedDiff > 0) {
-    const text = `Someone sped up *${targetChoreName}* by *a ${speedText}* :rocket:`;
+    const text = `Someone sped up *${targetChoreName}* by *${speedText}* :rocket:`;
     await common.postMessage(app, choresOauth, choresChannel, text);
   } else if (speedDiff < 0) {
     const { choresChannel } = await Admin.getHouse(houseId);
-    const text = `Someone slowed down *${targetChoreName}* by *a ${speedText}* :snail:`;
+    const text = `Someone slowed down *${targetChoreName}* by *${speedText}* :snail:`;
     await common.postMessage(app, choresOauth, choresChannel, text);
   } else {
     const text = 'No speed change. Try including more chores.';
