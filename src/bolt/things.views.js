@@ -113,17 +113,23 @@ exports.thingsBuyCallbackView = function (buy, thing, priorBalance) {
   ];
 };
 
-exports.thingsBoughtView = function (buys) {
-  const mainText = 'Things bought by the house, and going into the next order.';
+exports.thingsBoughtView = function (unfulfilledBuys, fulfilledBuys) {
+  const mainText = 'Things bought by the house. ' +
+    'Unfulfilled buys are approved but not yet ordered. ' +
+    'Fulfilled buys show total amounts spent in the last 90 days.';
 
-  const buysConfirmed = buys
+  const confirmedBuysText = unfulfilledBuys
     .filter((buy) => buy.resolvedAt !== null)
     .map((buy) => exports.formatThing(buy))
     .join('\n');
 
-  const buysPending = buys
+  const pendingBuysText = unfulfilledBuys
     .filter((buy) => buy.resolvedAt === null)
-    .map((buy) => exports.formatThing(buy))
+    .map((buy) => `_${exports.formatThing(buy)} - pending_`)
+    .join('\n');
+
+  const fulfilledBuysText = fulfilledBuys
+    .map((buy) => `${buy.type}: ${buy.name} ($${-buy.value})`)
     .join('\n');
 
   return {
@@ -134,8 +140,8 @@ exports.thingsBoughtView = function (buys) {
       { type: 'header', text: { type: 'plain_text', text: 'Bought things', emoji: true } },
       { type: 'section', text: { type: 'mrkdwn', text: mainText } },
       { type: 'divider' },
-      { type: 'section', text: { type: 'mrkdwn', text: `*Confirmed:*\n${buysConfirmed}` } },
-      { type: 'section', text: { type: 'mrkdwn', text: `*Pending:*\n${buysPending}` } }
+      { type: 'section', text: { type: 'mrkdwn', text: `*Unfulfilled:*\n${confirmedBuysText}\n${pendingBuysText}` } },
+      { type: 'section', text: { type: 'mrkdwn', text: `*Fulfilled in the last 90 days:*\n${fulfilledBuysText}` } }
     ]
   };
 };

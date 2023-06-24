@@ -3,7 +3,7 @@ require('dotenv').config();
 const { App, LogLevel } = require('@slack/bolt');
 
 const { Admin, Polls, Things } = require('../core/index');
-const { YAY } = require('../constants');
+const { YAY, DAY } = require('../constants');
 
 const common = require('./common');
 const views = require('./things.views');
@@ -225,9 +225,12 @@ app.action('things-bought', async ({ ack, body }) => {
   await ack();
 
   const houseId = body.team.id;
-  const things = await Things.getUnfulfilledThingBuys(houseId, new Date());
+  const now = new Date();
+  const threeMonthsAgo = new Date(now.getTime() - 90 * DAY);
 
-  const view = views.thingsBoughtView(things);
+  const unfulfilledBuys = await Things.getUnfulfilledThingBuys(houseId, now);
+  const fulfilledBuys = await Things.getFulfilledThingBuys(houseId, threeMonthsAgo, now);
+  const view = views.thingsBoughtView(unfulfilledBuys, fulfilledBuys);
   await common.openView(app, thingsOauth, body.trigger_id, view);
 });
 
