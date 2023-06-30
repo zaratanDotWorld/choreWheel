@@ -150,8 +150,8 @@ exports.choresRankView2 = function (direction, choreRankings) {
   });
 
   const mainText = 'Choose chores to update. ' +
-    'Faster chores will be worth more points over time, and vice-versa.\n\n' +
-    'You can think of this as \'taking\' speed (measured in *ppt*) from some chores and giving it to others. ' +
+    'Faster chores will be worth more points over time, and vice-versa. ' +
+    'You can think of this as \'taking\' speed (measured in *ppt*) from some chores and giving it to others.\n\n' +
     '*Some things to keep in mind:*\n\n' +
     '*1.* Choosing a *faster chore* has a bigger effect.\n' +
     '*2.* Choosing *more chores* has a bigger effect.\n' +
@@ -164,6 +164,13 @@ exports.choresRankView2 = function (direction, choreRankings) {
     ? 'Chores to slow down (worth less over time)'
     : 'Chores to speed up (worth more over time)';
 
+  const subTextA = direction === 'faster'
+    ? 'Choose a chore to be worth more'
+    : 'Choose a chore to be worth less';
+  const subTextB = direction === 'faster'
+    ? 'Choose some chores to be worth less'
+    : 'Choose some chores to be worth more';
+
   return {
     type: 'modal',
     callback_id: 'chores-rank-callback',
@@ -174,13 +181,14 @@ exports.choresRankView2 = function (direction, choreRankings) {
     blocks: [
       { type: 'header', text: { type: 'plain_text', text: 'Set chore speeds', emoji: true } },
       { type: 'section', text: { type: 'mrkdwn', text: mainText } },
+      { type: 'divider' },
       {
         type: 'input',
         label: { type: 'plain_text', text: textA, emoji: true },
         element: {
           type: 'static_select',
           action_id: 'chores',
-          placeholder: { type: 'plain_text', text: 'Choose one chore', emoji: true },
+          placeholder: { type: 'plain_text', text: subTextA, emoji: true },
           options: mappedChoreRankings
         }
       },
@@ -190,7 +198,7 @@ exports.choresRankView2 = function (direction, choreRankings) {
         element: {
           type: 'multi_static_select',
           action_id: 'chores',
-          placeholder: { type: 'plain_text', text: 'Choose one or more chores', emoji: true },
+          placeholder: { type: 'plain_text', text: subTextB, emoji: true },
           options: mappedChoreRankings
         }
       }
