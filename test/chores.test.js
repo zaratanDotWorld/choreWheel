@@ -707,6 +707,17 @@ describe('Chores', async () => {
       expect(activeDays).to.equal(0.5);
     });
 
+    it('can consider a break which starts before and ends after the current month', async () => {
+      const feb1 = new Date(3000, 1, 1); // February, a 28 day month
+      const mar8 = new Date(feb1.getTime() + 35 * DAY);
+      const jan25 = new Date(feb1.getTime() - 7 * DAY);
+
+      // Add a six-week break
+      await Chores.addChoreBreak(RESIDENT1, jan25, mar8);
+      const activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
+      expect(activeDays).to.equal(0);
+    });
+
     it('can consider the resident activeAt when calculating active percentage', async () => {
       const feb1 = new Date(3000, 1, 1); // February, a 28 day month
       const feb8 = new Date(feb1.getTime() + 7 * DAY);
