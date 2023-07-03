@@ -214,8 +214,8 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
 
   // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
 
-  const targetBlockId = body.view.blocks[2].block_id;
-  const sourceBlockId = body.view.blocks[3].block_id;
+  const targetBlockId = body.view.blocks[3].block_id;
+  const sourceBlockId = body.view.blocks[4].block_id;
 
   const direction = body.view.private_metadata;
   const target = body.view.state.values[targetBlockId].chores.selected_option.value;
