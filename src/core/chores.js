@@ -288,14 +288,14 @@ exports.getActiveResidentPercentage = async function (residentId, now) {
 
   const choreBreaks = await db('ChoreBreak')
     .where({ residentId })
-    .where(function () { // Now falls between startDate & endDate
-      this.where('startDate', '<=', now)
-        .where('endDate', '>=', now);
-    })
-    .orWhere(function () { // Either startDate or endDate is betwen monthStart and monthEnd
+    .where(function () { // Either startDate or endDate is betwen monthStart and monthEnd
       this.whereBetween('startDate', [ monthStart, monthEnd ])
         .orWhereBetween('endDate', [ monthStart, monthEnd ]);
     })
+    // .orWhere(function () { // Now falls between startDate & endDate
+    //   this.where('startDate', '<=', now)
+    //     .where('endDate', '>=', now);
+    // })
     .select('*');
 
   // Add an implicit break the month the resident is added
