@@ -226,11 +226,13 @@ app.action('things-bought', async ({ ack, body }) => {
 
   const houseId = body.team.id;
   const now = new Date();
+  const oneWeekAgo = new Date(now.getTime() - 7 * DAY);
   const threeMonthsAgo = new Date(now.getTime() - 90 * DAY);
 
   const unfulfilledBuys = await Things.getUnfulfilledThingBuys(houseId, now);
-  const fulfilledBuys = await Things.getFulfilledThingBuys(houseId, threeMonthsAgo, now);
-  const view = views.thingsBoughtView(unfulfilledBuys, fulfilledBuys);
+  const fulfilledBuys7 = await Things.getFulfilledThingBuys(houseId, oneWeekAgo, now);
+  const fulfilledBuys90 = await Things.getFulfilledThingBuys(houseId, threeMonthsAgo, now);
+  const view = views.thingsBoughtView(unfulfilledBuys, fulfilledBuys7, fulfilledBuys90);
   await common.openView(app, thingsOauth, body.trigger_id, view);
 });
 

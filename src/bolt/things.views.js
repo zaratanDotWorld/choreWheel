@@ -113,22 +113,27 @@ exports.thingsBuyCallbackView = function (buy, thing, priorBalance) {
   ];
 };
 
-exports.thingsBoughtView = function (unfulfilledBuys, fulfilledBuys) {
-  const mainText = 'Things bought by the house. ' +
-    'Unfulfilled buys are approved but not yet ordered. ' +
-    'Fulfilled buys show total amounts spent in the last 90 days.';
+exports.thingsBoughtView = function (unfulfilledBuys, fulfilledBuys7, fulfilledBuys90) {
+  const mainText = 'Things bought by the house.\n\n' +
+    '*Pending* buys are proposed but not yet approved. ' +
+    '*Unfulfilled* buys are approved but not yet ordered. ' +
+    '*Fulfilled* buys have already been ordered and show the *total amounts* spent over a time period.';
+
+  const pendingBuysText = unfulfilledBuys
+    .filter((buy) => buy.resolvedAt === null)
+    .map((buy) => exports.formatThing(buy))
+    .join('\n');
 
   const confirmedBuysText = unfulfilledBuys
     .filter((buy) => buy.resolvedAt !== null)
     .map((buy) => exports.formatThing(buy))
     .join('\n');
 
-  const pendingBuysText = unfulfilledBuys
-    .filter((buy) => buy.resolvedAt === null)
-    .map((buy) => `_${exports.formatThing(buy)} - pending_`)
+  const fulfilledBuys7Text = fulfilledBuys7
+    .map((buy) => `${buy.type}: ${buy.name} ($${-buy.value})`)
     .join('\n');
 
-  const fulfilledBuysText = fulfilledBuys
+  const fulfilledBuys90Text = fulfilledBuys90
     .map((buy) => `${buy.type}: ${buy.name} ($${-buy.value})`)
     .join('\n');
 
@@ -140,8 +145,10 @@ exports.thingsBoughtView = function (unfulfilledBuys, fulfilledBuys) {
       { type: 'header', text: { type: 'plain_text', text: 'Bought things', emoji: true } },
       { type: 'section', text: { type: 'mrkdwn', text: mainText } },
       { type: 'divider' },
-      { type: 'section', text: { type: 'mrkdwn', text: `*Unfulfilled:*\n${confirmedBuysText}\n${pendingBuysText}` } },
-      { type: 'section', text: { type: 'mrkdwn', text: `*Fulfilled in the last 90 days:*\n${fulfilledBuysText}` } }
+      { type: 'section', text: { type: 'mrkdwn', text: `*Pending:*\n${pendingBuysText}` } },
+      { type: 'section', text: { type: 'mrkdwn', text: `*Unfulfilled:*\n${confirmedBuysText}` } },
+      { type: 'section', text: { type: 'mrkdwn', text: `*Fulfilled in the last 7 days:*\n${fulfilledBuys7Text}` } },
+      { type: 'section', text: { type: 'mrkdwn', text: `*Fulfilled in the last 90 days:*\n${fulfilledBuys90Text}` } }
     ]
   };
 };
