@@ -645,6 +645,14 @@ describe('Chores', async () => {
       await Admin.deleteResident(HOUSE, RESIDENT3);
       [ residentCount ] = await Chores.getActiveResidentCount(HOUSE, later);
       expect(parseInt(residentCount.count)).to.equal(2);
+
+      // Will also exclude if break extends across months
+      const lastMonth = new Date(now.getTime() - 35 * DAY);
+      const nextMonth = new Date(now.getTime() + 35 * DAY);
+      await Chores.addChoreBreak(RESIDENT2, lastMonth, nextMonth);
+
+      [ residentCount ] = await Chores.getActiveResidentCount(HOUSE, later);
+      expect(parseInt(residentCount.count)).to.equal(1);
     });
 
     it('can return the percent of the period a resident is not on break', async () => {
@@ -716,6 +724,43 @@ describe('Chores', async () => {
       await Chores.addChoreBreak(RESIDENT1, jan25, mar8);
       const activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.equal(0);
+    });
+
+    it.skip('can consider complex break combinations', async () => {
+      const feb15 = new Date(3000, 1, 15);
+      const mar1 = new Date(3000, 2, 1);
+      const apr1 = new Date(3000, 3, 1); // April, a 30 day month
+      const apr7 = new Date(3000, 3, 7);
+      const apr10 = new Date(3000, 3, 10);
+      const apr22 = new Date(3000, 3, 22);
+      const apr25 = new Date(3000, 3, 25);
+      const may5 = new Date(3000, 4, 5);
+
+      let activeDays;
+
+      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, apr1);
+      expect(activeDays).to.equal(1);
+
+      // Add a six-week break from feb into april (6 day break)
+      await Chores.addChoreBreak(RESIDENT1, feb15, apr7);
+      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb15);
+      expect(activeDays).to.equal(0.5);
+
+      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, mar1);
+      expect(activeDays).to.equal(0);
+
+      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, apr1);
+      expect(activeDays).to.equal(0.8);
+
+      // Add a week-long break mid-april (12 day break)
+      await Chores.addChoreBreak(RESIDENT1, apr10, apr22);
+      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, apr1);
+      expect(activeDays).to.equal(0.4);
+
+      // Add a two-week break spanning april and may (6 day break)
+      await Chores.addChoreBreak(RESIDENT1, apr25, may5);
+      activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, apr1);
+      expect(activeDays).to.equal(0.2);
     });
 
     it('can consider the resident activeAt when calculating active percentage', async () => {

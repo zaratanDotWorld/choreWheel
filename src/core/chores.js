@@ -294,7 +294,7 @@ exports.getActiveResidentPercentage = async function (residentId, now) {
     })
     // .orWhere(function () { // Now falls between startDate & endDate
     //   this.where('startDate', '<=', now)
-    //     .where('endDate', '>=', now);
+    //     .where('endDate', '>', now);
     // })
     .select('*');
 
