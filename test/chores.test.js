@@ -541,9 +541,9 @@ describe('Chores', async () => {
       await Chores.claimChore(HOUSE, restock.id, RESIDENT3, feb1);
 
       // Everyone takes half the month off
-      await Chores.addChoreBreak(RESIDENT1, feb1, feb15);
-      await Chores.addChoreBreak(RESIDENT2, feb1, feb15);
-      await Chores.addChoreBreak(RESIDENT3, feb1, feb15);
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, feb1, feb15);
+      await Chores.addChoreBreak(HOUSE, RESIDENT2, feb1, feb15);
+      await Chores.addChoreBreak(HOUSE, RESIDENT3, feb1, feb15);
 
       let penalty;
       const penaltyTime = new Date(getNextMonthStart(feb1).getTime() + penaltyDelay);
@@ -596,63 +596,81 @@ describe('Chores', async () => {
       await Admin.addResident(HOUSE, RESIDENT2, now);
     });
 
-    it('can add a chore break', async () => {
-      let breakCount;
-      [ breakCount ] = await db('ChoreBreak').count('*');
-      expect(parseInt(breakCount.count)).to.equal(0);
+    it('can add, query, and delete chore breaks', async () => {
+      const oneDay = new Date(now.getTime() + 1 * DAY);
+      const twoDays = new Date(now.getTime() + 2 * DAY);
 
-      await Chores.addChoreBreak(RESIDENT1, now, challengeEnd);
+      let choreBreaks;
+      choreBreaks = await Chores.getChoreBreaks(HOUSE, now);
+      expect(choreBreaks.length).to.equal(0);
 
-      [ breakCount ] = await db('ChoreBreak').count('*');
-      expect(parseInt(breakCount.count)).to.equal(1);
-    });
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, now, oneDay);
+      choreBreaks = await Chores.getChoreBreaks(HOUSE, now);
+      expect(choreBreaks.length).to.equal(1);
 
-    it('can delete a chore break', async () => {
-      let breakCount;
-      [ breakCount ] = await db('ChoreBreak').count('*');
-      expect(parseInt(breakCount.count)).to.equal(0);
+      await Chores.deleteChoreBreak(choreBreaks[0].id);
+      choreBreaks = await Chores.getChoreBreaks(HOUSE, now);
+      expect(choreBreaks.length).to.equal(0);
 
-      const [ choreBreak ] = await Chores.addChoreBreak(RESIDENT1, now, challengeEnd);
-
-      [ breakCount ] = await db('ChoreBreak').count('*');
-      expect(parseInt(breakCount.count)).to.equal(1);
-
-      await Chores.deleteChoreBreak(choreBreak.id);
-
-      [ breakCount ] = await db('ChoreBreak').count('*');
-      expect(parseInt(breakCount.count)).to.equal(0);
+      await Chores.addChoreBreak(HOUSE, RESIDENT2, now, oneDay);
+      await Chores.addChoreBreak(HOUSE, RESIDENT2, now, twoDays);
+      choreBreaks = await Chores.getChoreBreaks(HOUSE, now);
+      expect(choreBreaks.length).to.equal(2);
+      choreBreaks = await Chores.getChoreBreaks(HOUSE, oneDay);
+      expect(choreBreaks.length).to.equal(1);
+      choreBreaks = await Chores.getChoreBreaks(HOUSE, twoDays);
+      expect(choreBreaks.length).to.equal(0);
     });
 
     it('can exclude inactive residents from the chore valuing', async () => {
       await Admin.addResident(HOUSE, RESIDENT3, now);
+      await Admin.addResident(HOUSE, RESIDENT4, now);
 
-      const later = new Date(now.getTime() + 2 * DAY);
-
-      let residentCount;
-      [ residentCount ] = await Chores.getActiveResidentCount(HOUSE, soon);
-      expect(parseInt(residentCount.count)).to.equal(3);
-
-      await Chores.addChoreBreak(RESIDENT1, now, challengeEnd);
-
-      [ residentCount ] = await Chores.getActiveResidentCount(HOUSE, soon);
-      expect(parseInt(residentCount.count)).to.equal(2);
-
-      // After the break ends
-      [ residentCount ] = await Chores.getActiveResidentCount(HOUSE, later);
-      expect(parseInt(residentCount.count)).to.equal(3);
-
-      // Will also exclude if inactive
-      await Admin.deleteResident(HOUSE, RESIDENT3);
-      [ residentCount ] = await Chores.getActiveResidentCount(HOUSE, later);
-      expect(parseInt(residentCount.count)).to.equal(2);
-
-      // Will also exclude if break extends across months
+      const oneDay = new Date(now.getTime() + 1 * DAY);
+      const twoDays = new Date(now.getTime() + 2 * DAY);
+      const oneWeek = new Date(now.getTime() + 7 * DAY);
+      const twoWeeks = new Date(now.getTime() + 14 * DAY);
       const lastMonth = new Date(now.getTime() - 35 * DAY);
       const nextMonth = new Date(now.getTime() + 35 * DAY);
-      await Chores.addChoreBreak(RESIDENT2, lastMonth, nextMonth);
+      const twoMonths = new Date(now.getTime() + 60 * DAY);
 
-      [ residentCount ] = await Chores.getActiveResidentCount(HOUSE, later);
-      expect(parseInt(residentCount.count)).to.equal(1);
+      let residentCount;
+      residentCount = await Chores.getActiveResidentCount(HOUSE, now);
+      expect(residentCount).to.equal(4);
+
+      // Will exclude inactive residents
+      await Admin.deleteResident(HOUSE, RESIDENT4);
+      residentCount = await Chores.getActiveResidentCount(HOUSE, now);
+      expect(residentCount).to.equal(3);
+
+      // Will count active breaks
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, now, twoDays);
+      residentCount = await Chores.getActiveResidentCount(HOUSE, now);
+      expect(residentCount).to.equal(2);
+
+      // Can handle overlapping breaks
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, now, oneDay);
+      residentCount = await Chores.getActiveResidentCount(HOUSE, now);
+      expect(residentCount).to.equal(2);
+
+      // Can handle new breaks by the same user
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, oneWeek, twoWeeks);
+      residentCount = await Chores.getActiveResidentCount(HOUSE, oneWeek);
+      expect(residentCount).to.equal(2);
+
+      // Will also exclude if break extends across months
+      await Chores.addChoreBreak(HOUSE, RESIDENT2, lastMonth, nextMonth);
+      residentCount = await Chores.getActiveResidentCount(HOUSE, now);
+      expect(residentCount).to.equal(1);
+
+      // Will not count breaks in the past
+      residentCount = await Chores.getActiveResidentCount(HOUSE, twoMonths);
+      expect(residentCount).to.equal(3);
+
+      // Will not count breaks in the future
+      await Chores.addChoreBreak(HOUSE, RESIDENT3, oneDay, oneWeek);
+      residentCount = await Chores.getActiveResidentCount(HOUSE, now);
+      expect(residentCount).to.equal(1);
     });
 
     it('can return the percent of the period a resident is not on break', async () => {
@@ -670,27 +688,27 @@ describe('Chores', async () => {
       expect(activeDays).to.equal(1);
 
       // Take the first week off
-      await Chores.addChoreBreak(RESIDENT1, feb1, feb8);
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, feb1, feb8);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.equal(0.75);
 
       // Take the third week off
-      await Chores.addChoreBreak(RESIDENT1, feb15, feb22);
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, feb15, feb22);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.equal(0.5);
 
       // Take time off next month, has no effect
-      await Chores.addChoreBreak(RESIDENT1, mar1, mar15);
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, mar1, mar15);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.equal(0.5);
 
       // Take the first two weeks off, this break overlaps with the first break
-      await Chores.addChoreBreak(RESIDENT1, feb1, feb15);
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, feb1, feb15);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.equal(0.25);
 
       // Take the last week off, this break stretches into the next month
-      await Chores.addChoreBreak(RESIDENT1, feb22, mar8);
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, feb22, mar8);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.equal(0.0);
     });
@@ -705,12 +723,12 @@ describe('Chores', async () => {
       let activeDays;
 
       // Overlap last and first weeks
-      await Chores.addChoreBreak(RESIDENT1, jan25, feb8);
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, jan25, feb8);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.equal(0.75);
 
       // Overlap last and first weeks
-      await Chores.addChoreBreak(RESIDENT1, feb22, mar8);
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, feb22, mar8);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.equal(0.5);
     });
@@ -721,7 +739,7 @@ describe('Chores', async () => {
       const jan25 = new Date(feb1.getTime() - 7 * DAY);
 
       // Add a six-week break
-      await Chores.addChoreBreak(RESIDENT1, jan25, mar8);
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, jan25, mar8);
       const activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb1);
       expect(activeDays).to.equal(0);
     });
@@ -742,7 +760,7 @@ describe('Chores', async () => {
       expect(activeDays).to.equal(1);
 
       // Add a six-week break from feb into april (6 day break)
-      await Chores.addChoreBreak(RESIDENT1, feb15, apr7);
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, feb15, apr7);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, feb15);
       expect(activeDays).to.equal(0.5);
 
@@ -753,12 +771,12 @@ describe('Chores', async () => {
       expect(activeDays).to.equal(0.8);
 
       // Add a week-long break mid-april (12 day break)
-      await Chores.addChoreBreak(RESIDENT1, apr10, apr22);
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, apr10, apr22);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, apr1);
       expect(activeDays).to.equal(0.4);
 
       // Add a two-week break spanning april and may (6 day break)
-      await Chores.addChoreBreak(RESIDENT1, apr25, may5);
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, apr25, may5);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT1, apr1);
       expect(activeDays).to.equal(0.2);
     });
@@ -778,7 +796,7 @@ describe('Chores', async () => {
       expect(activeDays).to.equal(0.75);
 
       // Can combine with regular breaks
-      await Chores.addChoreBreak(RESIDENT3, feb22, mar1);
+      await Chores.addChoreBreak(HOUSE, RESIDENT3, feb22, mar1);
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT3, feb1);
       expect(activeDays).to.equal(0.5);
     });

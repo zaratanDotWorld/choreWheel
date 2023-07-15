@@ -146,8 +146,8 @@ exports.updateChoreValues = async function (houseId, updateTime) {
   // If we've updated in the last interval, short-circuit execution
   if (intervalScalar === 0) { return Promise.resolve([]); }
 
-  const [ residentCount ] = await exports.getActiveResidentCount(houseId, updateTime);
-  const updateScalar = (residentCount.count * pointsPerResident) * intervalScalar * inflationFactor;
+  const residentCount = await exports.getActiveResidentCount(houseId, updateTime);
+  const updateScalar = (residentCount * pointsPerResident) * intervalScalar * inflationFactor;
   const choreRankings = await exports.getCurrentChoreRankings(houseId);
 
   const choreValues = choreRankings.map(chore => {
@@ -157,7 +157,7 @@ exports.updateChoreValues = async function (houseId, updateTime) {
       valuedAt: updateTime,
       value: chore.ranking * updateScalar,
       ranking: chore.ranking,
-      residents: residentCount.count
+      residents: residentCount
     };
   });
 
@@ -258,9 +258,9 @@ exports.getAllChorePoints = async function (claimedBy, startTime, endTime) {
 
 // Chore Breaks
 
-exports.addChoreBreak = async function (residentId, startDate, endDate) {
+exports.addChoreBreak = async function (houseId, residentId, startDate, endDate) {
   return db('ChoreBreak')
-    .insert({ residentId, startDate, endDate })
+    .insert({ houseId, residentId, startDate, endDate })
     .returning('*');
 };
 
@@ -270,16 +270,18 @@ exports.deleteChoreBreak = async function (choreBreakId) {
     .del();
 };
 
+exports.getChoreBreaks = async function (houseId, now) {
+  return db('ChoreBreak')
+    .where({ houseId })
+    .where('startDate', '<=', now)
+    .where('endDate', '>', now)
+    .returning('*');
+};
+
 exports.getActiveResidentCount = async function (houseId, now) {
-  return db('Resident')
-    .fullOuterJoin('ChoreBreak', 'Resident.slackId', 'ChoreBreak.residentId')
-    .where('Resident.houseId', houseId)
-    .where('Resident.active', true)
-    .where(function () { // Want residents NOT currently on a break
-      this.where('ChoreBreak.startDate', '>', now).orWhereNull('ChoreBreak.startDate')
-        .orWhere('ChoreBreak.endDate', '<=', now).orWhereNull('ChoreBreak.endDate');
-    })
-    .countDistinct('Resident.slackId');
+  const residents = await Admin.getResidents(houseId);
+  const choreBreaks = await exports.getChoreBreaks(houseId, now);
+  return residents.length - (new Set(choreBreaks.map(cb => cb.residentId))).size;
 };
 
 exports.getActiveResidentPercentage = async function (residentId, now) {
