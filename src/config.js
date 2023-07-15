@@ -10,7 +10,7 @@ exports.displayThreshold = 1;
 exports.penaltyDelay = exports.choresPollLength + 6 * HOUR; // TODO: make robust
 exports.penaltyIncrement = 10; // Per half heart
 exports.achievementBase = 20;
-exports.implicitPref = 0.25;
+exports.implicitPref = 0.1 / 2; // Halve the value since it's used twice
 exports.dampingFactor = 0.99;
 
 // Hearts

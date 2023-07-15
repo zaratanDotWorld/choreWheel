@@ -175,9 +175,9 @@ describe('Chores', async () => {
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE);
 
-      expect(choreRankings[0].ranking).to.almost.equal(0.5226110924259844);
-      expect(choreRankings[1].ranking).to.almost.equal(0.2913606948228934);
-      expect(choreRankings[2].ranking).to.almost.equal(0.1860282127511219);
+      expect(choreRankings[0].ranking).to.almost.equal(0.7489979877837285);
+      expect(choreRankings[1].ranking).to.almost.equal(0.17833693651364188);
+      expect(choreRankings[2].ranking).to.almost.equal(0.07266507570262926);
     });
 
     it('can use preferences to determine mild chore values', async () => {
@@ -187,9 +187,9 @@ describe('Chores', async () => {
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE);
 
-      expect(choreRankings[0].ranking).to.almost.equal(0.38931323844791416);
-      expect(choreRankings[1].ranking).to.almost.equal(0.36088136381758185);
-      expect(choreRankings[2].ranking).to.almost.equal(0.24980539773450391);
+      expect(choreRankings[0].ranking).to.almost.equal(0.4351476115449498);
+      expect(choreRankings[1].ranking).to.almost.equal(0.4108001133052762);
+      expect(choreRankings[2].ranking).to.almost.equal(0.15405227514977385);
     });
 
     it('can use preferences to determine complex chore values', async () => {
@@ -199,9 +199,9 @@ describe('Chores', async () => {
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.4452155786653332);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.10956884266933331);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.4452155786653332);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.4791504809209527);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.04169903815809436);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.4791504809209527);
     });
 
     it('can handle circular chore values', async () => {
