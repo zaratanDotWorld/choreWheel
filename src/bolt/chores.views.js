@@ -1,7 +1,7 @@
 const voca = require('voca');
 
 const { HOUR } = require('../constants');
-const { pointsPerResident, pointPrecision, achievementBase, choresPollLength, penaltyIncrement } = require('../config');
+const { pointsPerResident, achievementBase, choresPollLength, penaltyIncrement } = require('../config');
 
 const common = require('./common');
 
@@ -9,7 +9,7 @@ exports.formatChoreName = function (text) {
   return voca(text).latinise().titleCase().value();
 };
 
-exports.choresHomeView = function (balance, owed) {
+exports.choresHomeView = function (balance, owed, active) {
   const progressEmoji = (owed - balance < penaltyIncrement) ? ':white_check_mark:' : ':muscle::skin-tone-4:';
   const docsURI = 'https://github.com/kronosapiens/mirror/wiki/Chores';
   const textA = `We use *<${docsURI}|Chores>* to keep the house a nice place to live.\n\n` +
@@ -18,8 +18,8 @@ exports.choresHomeView = function (balance, owed) {
     'The points for a chore go up every hour until someone claims them. ' +
     'Chores gain points at different speeds, which you can change.';
 
-  const textB = `*You've earned ${balance.toFixed(pointPrecision)} points this month, ` +
-    `out of ${owed.toFixed(0)} owed* ${progressEmoji}`;
+  const textB = `You've earned *${balance.toFixed(0)} / ${owed.toFixed(0)} points* this month ${progressEmoji}`;
+  const textC = `There are *${active} people* around today :sunny:`;
 
   return {
     type: 'home',
@@ -28,6 +28,7 @@ exports.choresHomeView = function (balance, owed) {
       { type: 'section', text: { type: 'mrkdwn', text: textA } },
       { type: 'divider' },
       { type: 'section', text: { type: 'mrkdwn', text: textB } },
+      { type: 'section', text: { type: 'mrkdwn', text: textC } },
       {
         type: 'actions',
         elements: [
@@ -45,7 +46,7 @@ exports.choresClaimView = function (chores) {
   const mappedChores = chores.map((chore) => {
     return {
       value: `${chore.id}|${chore.name}`,
-      text: { type: 'plain_text', text: `${chore.name} - ${chore.value.toFixed(pointPrecision)} points`, emoji: true }
+      text: { type: 'plain_text', text: `${chore.name} - ${chore.value.toFixed(0)} points`, emoji: true }
     };
   });
 
@@ -97,7 +98,7 @@ exports.choresClaimCallbackView = function (claim, choreName, totalPoints, month
   const sparkles = exports.getSparkles(monthlyPoints);
 
   const textA = `*<@${claim.claimedBy}>* did *${choreName}* for ` +
-    `*${claim.value.toFixed(pointPrecision)} points* ${achievement}${sparkles}`;
+    `*${claim.value.toFixed(0)} points* ${achievement}${sparkles}`;
   const textB = '*2 endorsements* are required to pass, ' +
     `voting closes in *${choresPollLength / HOUR} hours*`;
 
@@ -208,7 +209,7 @@ exports.choresRankView2 = function (direction, choreRankings) {
 
 exports.choresGiftView = function (pointsBalance) {
   const mainText = 'Gift someone points from your balance. ' +
-    `You have *${pointsBalance.toFixed(pointPrecision)} points* to gift.`;
+    `You have *${pointsBalance.toFixed(0)} points* to gift.`;
 
   return {
     type: 'modal',

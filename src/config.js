@@ -6,7 +6,6 @@ exports.choresMinVotes = 2;
 exports.pointsPerResident = 100;
 exports.bootstrapDuration = 72 * HOUR;
 exports.inflationFactor = 1.00;
-exports.pointPrecision = 0;
 exports.displayThreshold = 1;
 exports.penaltyDelay = exports.choresPollLength + 6 * HOUR; // TODO: make robust
 exports.penaltyIncrement = 10; // Per half heart
