@@ -16,7 +16,7 @@ exports.choresHomeView = function (balance, owed, active) {
     'Instead of a chore wheel or schedule, everyone owes *100 points* per month (UTC time). ' +
     'You earn points by doing chores you want, on your terms.\n\n' +
     'The points for a chore go up every hour until someone claims them. ' +
-    'Chores gain points at different speeds, which you can change.';
+    'If you feel a chore should be worth more (or less), you can change the speed at which it gains points.';
 
   const textB = `You've earned *${balance.toFixed(0)} / ${owed.toFixed(0)} points* this month ${progressEmoji}`;
   const textC = `There are *${active} people* around today :sunny:`;
@@ -110,12 +110,12 @@ exports.choresClaimCallbackView = function (claim, choreName, totalPoints, month
 };
 
 exports.choresRankView = function () {
-  const mainText = 'Every hour, chores gain points. ' +
-    'The *total* points per month is fixed, but not all chores gain points equally. ' +
-    'Every chore has a *speed* (measured in *ppt*, or points-per-thousand), and speeds always add up to *1000*. ' +
-    'The faster a chore is, the more points it will generally be worth.\n\n' +
-    'First, decide whether you want to *speed up* or *slow down* a chore. ' +
-    'Speeding up a chore will make other chores slower, and slowing down a chore will make other chores faster.';
+  const mainText = 'If you feel a chore should be worth more (or less), you can adjust it\'s *speed*. ' +
+    'The *faster* a chore is, the more points it will be worth over time.\n\n' +
+    'Speed-setting is a *cumulative* process, where every input makes a difference. ' +
+    'It is also an *ongoing, collaborative* process: you can make small (or large) changes at any time, ' +
+    'and encourage others to do the same.\n\n' +
+    'First, decide whether you want to *speed up* or *slow down* a chore.';
 
   return {
     type: 'modal',
@@ -151,12 +151,13 @@ exports.choresRankView2 = function (direction, choreRankings) {
   });
 
   const mainText = 'Choose chores to update. ' +
-    'Faster chores will be worth more points over time, and vice-versa. ' +
-    'You can think of this as \'taking\' speed (measured in *ppt*) from some chores and giving it to others.\n\n' +
+    'Chore speeds are measured in *points-per-thousand* (ppt) and always add up to *1000*.\n\n' +
+    'You can think of updating as \'taking\' speed from some chores and giving it to others, ' +
+    'since something must get slower for something to get faster.\n\n' +
     '*Some things to keep in mind:*\n\n' +
-    '*1.* Choosing a *faster chore* has a bigger effect.\n' +
-    '*2.* Choosing *more chores* has a bigger effect.\n' +
-    '*3.* *More housemates* have a bigger effect.';
+    '*1.* Taking from *more chores* has a bigger effect.\n' +
+    '*2.* Taking from *faster chores* has a bigger effect.\n' +
+    '*3.* *More participants* have a bigger effect.';
 
   const textA = direction === 'faster'
     ? 'Chore to speed up (worth more over time)'
