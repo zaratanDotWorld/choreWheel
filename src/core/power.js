@@ -1,10 +1,15 @@
 const linAlg = require('linear-algebra')();
 
 class PowerRanker {
-  items; // Set({ id })
+  items; // Set(int)
   matrix; // linAlg.Matrix
   verbose; // bool
 
+  /// @notice Construct an instance of a PowerRanker
+  /// @param items:Set(int) The items being voted on
+  /// @param preferences:Array[{alpha:int, beta:int, preference:float}] The preferences of the participants
+  /// @param numResidents:int The number of participants
+  /// @param implicitPref:float The implicif preference of a participant if not explicit
   constructor (items, preferences, numResidents, implicitPref, verbose = false) {
     if (items.size < 2) { throw new Error('PowerRanker: Cannot rank less than two items'); }
 
@@ -20,6 +25,11 @@ class PowerRanker {
     if (this.verbose) { console.log(msg); }
   }
 
+  /// @notice Run the algorithm and return the results
+  /// @param d:float The damping factor, 1 means no damping
+  /// @param epsilon:float The precision at which to run the algorithm
+  /// @param nIter:int The maximum number of iterations to run the algorithm
+  /// @return rankings:Map(int => float) The rankings, with item mapped to result
   run (d = 1, epsilon = 0.001, nIter = 1000) {
     const weights = this.powerMethod(this.matrix, d, epsilon, nIter);
     return this.applyLabels(this.items, weights);
@@ -38,13 +48,14 @@ class PowerRanker {
     const n = items.size;
     const itemMap = this.#toitemMap(items);
 
-    // Initialise the matrix with zero on the diagonal, ones everywhere else
-    let matrix = linAlg.Matrix.zero(n, n)
-      .plusEach(1).minus(linAlg.Matrix.identity(n));
+    // Initialise the zero matrix;
+    let matrix = linAlg.Matrix.zero(n, n);
 
     // Add implicit neutral preferences, if any
     if (implicitPref > 0) {
-      matrix = matrix.mulEach(implicitPref).mulEach(numResidents);
+      matrix = matrix
+        .plusEach(1).minus(linAlg.Matrix.identity(n))
+        .mulEach(implicitPref).mulEach(numResidents);
     }
 
     // Add the preferences to the off-diagonals, removing the implicit neutral preference
