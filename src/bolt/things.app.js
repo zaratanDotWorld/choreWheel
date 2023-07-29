@@ -121,10 +121,11 @@ app.command('/things-load', async ({ ack, command }) => {
     await common.replyEphemeral(app, thingsOauth, command, text);
   } else if (await common.isAdmin(app, thingsOauth, command)) {
     const houseId = command.team_id;
-    const [ thing ] = await Things.loadHouseAccount(houseId, new Date(), command.text);
+    const residentId = command.user_id;
+    const [ thing ] = await Things.loadHouseAccount(houseId, residentId, new Date(), command.text);
     const { thingsChannel } = await Admin.getHouse(houseId);
 
-    const text = `*$${thing.value}* was just loaded into the house account :chart_with_upwards_trend:`;
+    const text = `*<@${thing.boughtBy}>* just loaded *$${thing.value}* into the house account :chart_with_upwards_trend:`;
     await common.postMessage(app, thingsOauth, thingsChannel, text);
   } else {
     const text = ':warning: Only admins can load the house account...';

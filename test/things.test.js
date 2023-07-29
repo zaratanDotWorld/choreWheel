@@ -83,7 +83,7 @@ describe('Things', async () => {
     });
 
     it('can buy a thing from the list', async () => {
-      await Things.loadHouseAccount(HOUSE, now, 100);
+      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
 
       let balance;
       balance = await Things.getHouseBalance(HOUSE, now);
@@ -102,7 +102,7 @@ describe('Things', async () => {
     });
 
     it('can affirm a buy', async () => {
-      await Things.loadHouseAccount(HOUSE, now, 100);
+      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
 
       let [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
 
@@ -119,7 +119,7 @@ describe('Things', async () => {
     });
 
     it('can reject a buy', async () => {
-      await Things.loadHouseAccount(HOUSE, now, 100);
+      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
 
       let [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
 
@@ -137,7 +137,7 @@ describe('Things', async () => {
     });
 
     it('can negate a buy if quorum is not reached', async () => {
-      await Things.loadHouseAccount(HOUSE, now, 100);
+      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
 
       // Need 1 affirmative vote per $50
       let [ buy ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, 60);
@@ -151,7 +151,7 @@ describe('Things', async () => {
     });
 
     it('cannot resolve a buy before the poll is closed', async () => {
-      await Things.loadHouseAccount(HOUSE, now, 100);
+      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
 
       const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
 
@@ -160,7 +160,7 @@ describe('Things', async () => {
     });
 
     it('cannot resolve a buy twice', async () => {
-      await Things.loadHouseAccount(HOUSE, now, 100);
+      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
 
       let [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
 
@@ -173,7 +173,7 @@ describe('Things', async () => {
     });
 
     it('can resolve buys in bulk', async () => {
-      await Things.loadHouseAccount(HOUSE, now, 100);
+      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
 
       const [ thingBuy1 ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, 10);
       const [ thingBuy2 ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
@@ -198,7 +198,7 @@ describe('Things', async () => {
     });
 
     it('can get a list of unfulfilled buys', async () => {
-      await Things.loadHouseAccount(HOUSE, now, 100);
+      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
 
       const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
 
@@ -215,7 +215,7 @@ describe('Things', async () => {
     });
 
     it('can fulfill a buy', async () => {
-      await Things.loadHouseAccount(HOUSE, now, 100);
+      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
 
       const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10);
 
@@ -228,7 +228,7 @@ describe('Things', async () => {
     });
 
     it('can get a list of fulfilled buys within a time range', async () => {
-      await Things.loadHouseAccount(HOUSE, now, 100);
+      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
 
       const nextWeek = new Date(now.getTime() + 7 * DAY);
       const nextMonth = new Date(now.getTime() + 28 * DAY);

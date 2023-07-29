@@ -44,9 +44,9 @@ exports.getHouseBalance = async function (houseId, currentTime) {
     .first();
 };
 
-exports.loadHouseAccount = async function (houseId, loadedAt, value) {
+exports.loadHouseAccount = async function (houseId, boughtBy, loadedAt, value) {
   return db('ThingBuy')
-    .insert({ houseId, value, boughtAt: loadedAt, resolvedAt: loadedAt })
+    .insert({ houseId, value, boughtBy, boughtAt: loadedAt, resolvedAt: loadedAt })
     .returning('*');
 };
 
