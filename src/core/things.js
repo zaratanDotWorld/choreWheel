@@ -1,7 +1,8 @@
 const { db } = require('./db');
 
-const { thingsPollLength, thingsMinVotesScalar } = require('../config');
+const { thingsPollLength, thingsMinVotesScalar, thingsMinPctSpecial, thingsMaxPct } = require('../config');
 
+const Admin = require('./admin');
 const Polls = require('./polls');
 
 // Things
@@ -71,6 +72,25 @@ exports.buyThing = async function (houseId, thingId, boughtBy, boughtAt, price, 
     .returning('*');
 };
 
+exports.buySpecialThing = async function (houseId, boughtBy, boughtAt, price, description) {
+  const houseBalance = await exports.getHouseBalance(houseId, boughtAt);
+
+  if (houseBalance.sum < price) { throw new Error('Insufficient funds!'); }
+
+  const [ poll ] = await Polls.createPoll(boughtAt, thingsPollLength);
+
+  return db('ThingBuy')
+    .insert({
+      houseId,
+      boughtBy,
+      boughtAt,
+      value: -price,
+      pollId: poll.id,
+      metadata: { description }
+    })
+    .returning('*');
+};
+
 exports.getThingBuy = async function (buyId) {
   return db('ThingBuy')
     .select('*')
@@ -78,14 +98,14 @@ exports.getThingBuy = async function (buyId) {
     .first();
 };
 
-exports.resolveThingBuy = async function (buyId, resolvedAt) {
+exports.resolveThingBuy = async function (buyId, resolvedAt, numResidents) {
   const thingBuy = await exports.getThingBuy(buyId);
   const pollId = thingBuy.pollId;
   const poll = await Polls.getPoll(pollId);
 
   if (resolvedAt < poll.endTime) { throw new Error('Poll not closed!'); }
 
-  const minVotes = Math.ceil(Math.abs(thingBuy.value) / thingsMinVotesScalar);
+  const minVotes = await exports.getThingBuyMinVotes(thingBuy, numResidents);
   const { yays, nays } = await Polls.getPollResultCounts(pollId);
   const valid = (yays >= minVotes && yays > nays);
 
@@ -103,8 +123,9 @@ exports.resolveThingBuys = async function (houseId, currentTime) {
     .where('ThingBuy.resolvedAt', null)
     .select('ThingBuy.id');
 
+  const residents = await Admin.getResidents(houseId);
   for (const thingBuy of resolveableThingBuys) {
-    await exports.resolveThingBuy(thingBuy.id, currentTime);
+    await exports.resolveThingBuy(thingBuy.id, currentTime, residents.length);
   }
 };
 
@@ -148,4 +169,16 @@ exports.getFulfilledThingBuys = async function (houseId, startTime, endTime) {
       'Thing.type',
       'Thing.name'
     ]);
+};
+
+// Utils
+
+exports.getThingBuyMinVotes = async function (thingBuy, numResidents) {
+  const maxVotes = Math.ceil(thingsMaxPct * numResidents);
+  const minVotesSpecial = Math.ceil(thingsMinPctSpecial * numResidents);
+  const minVotesScaled = Math.ceil(Math.abs(thingBuy.value) / thingsMinVotesScalar);
+
+  return (thingBuy.thingId === null)
+    ? Math.min(maxVotes, Math.max(minVotesScaled, minVotesSpecial)) // Special buy
+    : Math.min(maxVotes, minVotesScaled); // Regular buy
 };
