@@ -50,15 +50,24 @@ exports.loadHouseAccount = async function (houseId, boughtBy, loadedAt, value) {
     .returning('*');
 };
 
-exports.buyThing = async function (houseId, thingId, boughtBy, boughtAt, price) {
+exports.buyThing = async function (houseId, thingId, boughtBy, boughtAt, price, quantity) {
   const houseBalance = await exports.getHouseBalance(houseId, boughtAt);
+  const totalCost = price * quantity;
 
-  if (houseBalance.sum < price) { throw new Error('Insufficient funds!'); }
+  if (houseBalance.sum < totalCost) { throw new Error('Insufficient funds!'); }
 
   const [ poll ] = await Polls.createPoll(boughtAt, thingsPollLength);
 
   return db('ThingBuy')
-    .insert({ houseId, thingId, boughtBy, boughtAt, value: -price, pollId: poll.id })
+    .insert({
+      houseId,
+      thingId,
+      boughtBy,
+      boughtAt,
+      value: -totalCost,
+      pollId: poll.id,
+      metadata: { quantity }
+    })
     .returning('*');
 };
 

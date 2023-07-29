@@ -213,7 +213,7 @@ app.view('things-buy-callback', async ({ ack, body }) => {
   const balance = await Things.getHouseBalance(houseId, now);
   const thing = await Things.getThing(thingId);
 
-  const [ buy ] = await Things.buyThing(houseId, thing.id, residentId, now, thing.value);
+  const [ buy ] = await Things.buyThing(houseId, thing.id, residentId, now, thing.value, 1);
   await Polls.submitVote(buy.pollId, residentId, now, YAY);
 
   const text = 'Someone just bought a thing';
