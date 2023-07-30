@@ -1,7 +1,7 @@
 const voca = require('voca');
 
 const { HOUR } = require('../constants');
-const { thingsMinVotesScalar, thingsPollLength } = require('../config');
+const { thingsMinPctSpecial, thingsPollLength, thingsSpecialPollLength } = require('../config');
 
 const { makeVoteButtons } = require('./common');
 
@@ -57,6 +57,7 @@ exports.thingsHomeView = function (balance) {
         type: 'actions',
         elements: [
           { type: 'button', action_id: 'things-buy', text: { type: 'plain_text', text: 'Buy a thing', emoji: true } },
+          { type: 'button', action_id: 'things-special', text: { type: 'plain_text', text: 'Buy special thing', emoji: true } },
           { type: 'button', action_id: 'things-bought', text: { type: 'plain_text', text: 'See bought things', emoji: true } }
         ]
       }
@@ -97,17 +98,74 @@ exports.thingsBuyView = function (things) {
   };
 };
 
-exports.thingsBuyCallbackView = function (buy, thing, priorBalance) {
-  const pollQuorum = Math.ceil(thing.value / thingsMinVotesScalar);
-  const currentBalance = priorBalance - thing.value;
+exports.thingsBuyCallbackView = function (buy, thing, priorBalance, minVotes) {
+  const formattedBuy = `${thing.name} - ${buy.metadata.quantity} x ${thing.quantity}`;
+  const currentBalance = priorBalance + buy.value;
 
-  const textA = `*<@${buy.boughtBy}>* bought *${thing.name} - ${thing.quantity}* for *$${thing.value}*. ` +
+  const textA = `*<@${buy.boughtBy}>* bought *${formattedBuy}* for *$${-buy.value}*. ` +
     `There's *$${currentBalance}* left in the account :money_with_wings:`;
-  const textB = `*${pollQuorum} endorsement(s)* are required to pass, ` +
+  const textB = `*${minVotes} endorsement(s)* are required to pass, ` +
     `voting closes in *${thingsPollLength / HOUR} hours*`;
 
   return [
     { type: 'section', text: { type: 'mrkdwn', text: textA } },
+    { type: 'section', text: { type: 'mrkdwn', text: textB } },
+    { type: 'actions', elements: makeVoteButtons(buy.pollId, 1, 0) }
+  ];
+};
+
+exports.thingsSpecialBuyView = function (numResidents) {
+  const minVotes = Math.ceil(thingsMinPctSpecial * numResidents);
+  const mainText = 'Propose a special buy. ' +
+    `Special buys are more flexible, but need a minimum of *${minVotes} endorsements.*\n\n` +
+    'Describe what you want to buy, including any delivery information. ' +
+    'Special buys are fulfilled by the person who proposes them, and then reimbursed. ' +
+    'Reimbursements are capped at the amount requested.';
+
+  return {
+    type: 'modal',
+    callback_id: 'things-special-callback',
+    title: { type: 'plain_text', text: 'Things', emoji: true },
+    submit: { type: 'plain_text', text: 'Buy', emoji: true },
+    close: { type: 'plain_text', text: 'Cancel', emoji: true },
+    blocks: [
+      { type: 'header', text: { type: 'plain_text', text: 'Buy special thing', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Thing to buy', emoji: true },
+        element: {
+          type: 'plain_text_input',
+          multiline: true,
+          placeholder: { type: 'plain_text', text: 'Describe what you would like to buy', emoji: true },
+          action_id: 'description'
+        }
+      },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Total cost', emoji: true },
+        element: {
+          type: 'number_input',
+          is_decimal_allowed: false,
+          placeholder: { type: 'plain_text', text: 'Provide the total cost (including tax and shipping)', emoji: true },
+          action_id: 'cost'
+        }
+      }
+    ]
+  };
+};
+
+exports.thingsSpecialBuyCallbackView = function (buy, priorBalance, minVotes) {
+  const currentBalance = priorBalance + buy.value;
+
+  const textA = `*<@${buy.boughtBy}>* bought the following:`;
+  const textB = `There's *$${currentBalance}* left in the account :money_with_wings:\n` +
+    `*${minVotes} endorsement(s)* are required to pass, ` +
+    `voting closes in *${thingsSpecialPollLength / HOUR} hours*`;
+
+  return [
+    { type: 'section', text: { type: 'mrkdwn', text: textA } },
+    { type: 'section', text: { type: 'mrkdwn', text: `_${buy.metadata.description}_` } },
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
     { type: 'actions', elements: makeVoteButtons(buy.pollId, 1, 0) }
   ];

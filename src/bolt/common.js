@@ -177,7 +177,6 @@ exports.updateVoteCounts = async function (app, oauth, body, action) {
   body.message.blocks[blockIndex].elements = exports.makeVoteButtons(pollId, yays, nays);
 
   await app.client.chat.update(body.message);
-  console.log(`Poll ${pollId} updated`);
 };
 
 exports.makeVoteButtons = function (pollId, upvoteCount, downvoteCount) {
