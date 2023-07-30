@@ -116,7 +116,6 @@ describe('Things', async () => {
     it('cannot buy a thing with insufficient funds', async () => {
       await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 20);
 
-      // Not enough money in the account
       await expect(Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10, 3))
         .to.be.rejectedWith('Insufficient funds!');
 
@@ -321,10 +320,13 @@ describe('Things', async () => {
     it('can buy a special thing', async () => {
       await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 250);
 
-      const description = '2x4 IKEA KALLAX bookshelf';
-      const [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 200, description);
+      const title = '2x4 IKEA KALLAX bookshelf';
+      const details = 'Ordered from ikea.com, shipping included';
+      const [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 200, title, details);
       expect(buy.value).to.equal(-200);
-      expect(buy.metadata.description).to.equal(description);
+      expect(buy.metadata.title).to.equal(title);
+      expect(buy.metadata.details).to.equal(details);
+      expect(buy.metadata.special).to.be.true;
 
       const balance = await Things.getHouseBalance(HOUSE, now);
       expect(balance.sum).to.equal(50);
@@ -333,7 +335,7 @@ describe('Things', async () => {
     it('can affirm a special buy', async () => {
       await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 250);
 
-      let [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 200, 'special');
+      let [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 200, 'special', 'details');
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(buy.pollId, RESIDENT2, now, YAY);
@@ -353,23 +355,51 @@ describe('Things', async () => {
       expect(buy.resolvedAt.getTime()).to.equal(challengeEndSpecial.getTime());
     });
 
+    it('can reject a special buy', async () => {
+      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 250);
+
+      let [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 200, 'special', 'details');
+
+      await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(buy.pollId, RESIDENT2, now, YAY);
+
+      await Things.resolveThingBuy(buy.id, challengeEndSpecial, numResidents);
+
+      const balance = await Things.getHouseBalance(HOUSE, challengeEndSpecial);
+      expect(balance.sum).to.equal(250);
+
+      buy = await Things.getThingBuy(buy.id);
+      expect(buy.valid).to.be.false;
+      expect(buy.resolvedAt.getTime()).to.equal(challengeEndSpecial.getTime());
+    });
+
     it('can get the minimum votes for a special buy', async () => {
       await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 500);
 
       let buy;
       let minVotes;
 
-      [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 10, 'special');
+      [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 10, 'special', 'details');
       minVotes = await Things.getThingBuyMinVotes(buy, numResidents);
       expect(minVotes).to.equal(2);
 
-      [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 100, 'special');
+      [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 100, 'special', 'details');
       minVotes = await Things.getThingBuyMinVotes(buy, numResidents);
       expect(minVotes).to.equal(2);
 
-      [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 300, 'special');
+      [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 300, 'special', 'details');
       minVotes = await Things.getThingBuyMinVotes(buy, numResidents);
       expect(minVotes).to.equal(3);
+    });
+
+    it('can get a list of unfulfilled special buys', async () => {
+      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 500);
+
+      await Things.buySpecialThing(HOUSE, RESIDENT1, now, 100, 'special1', 'details');
+      await Things.buySpecialThing(HOUSE, RESIDENT1, now, 100, 'special2', 'details');
+
+      const unfulfilledBuys = await Things.getUnfulfilledThingBuys(HOUSE, now);
+      expect(unfulfilledBuys.length).to.equal(2);
     });
   });
 });

@@ -242,14 +242,16 @@ app.view('things-special-callback', async ({ ack, body }) => {
 
   // // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
   const numBlocks = body.view.blocks.length;
-  const descriptionBlockId = body.view.blocks[numBlocks - 2].block_id;
-  const priceBlockId = body.view.blocks[numBlocks - 1].block_id;
-  const description = body.view.state.values[descriptionBlockId].description.value;
-  const cost = parseInt(body.view.state.values[priceBlockId].cost.value);
+  const titleBlockId = body.view.blocks[numBlocks - 3].block_id;
+  const detailsBlockId = body.view.blocks[numBlocks - 2].block_id;
+  const costBlockId = body.view.blocks[numBlocks - 1].block_id;
+  const title = body.view.state.values[titleBlockId].title.value.trim();
+  const details = body.view.state.values[detailsBlockId].details.value.trim();
+  const cost = parseInt(body.view.state.values[costBlockId].cost.value);
 
   // Perform the buy
   const now = new Date();
-  const [ buy ] = await Things.buySpecialThing(houseId, residentId, now, cost, description);
+  const [ buy ] = await Things.buySpecialThing(houseId, residentId, now, cost, title, details);
   await Polls.submitVote(buy.pollId, residentId, now, YAY);
 
   const residents = await Admin.getResidents(houseId);
