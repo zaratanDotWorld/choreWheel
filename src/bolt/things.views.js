@@ -25,17 +25,25 @@ exports.parseThingDel = function (text) {
   return { type, name };
 };
 
-exports.parseResolvedThingBuys = function (buys) {
-  return buys
+exports.parseResolvedThingBuys = function (unfulfilledBuys) {
+  return unfulfilledBuys
     .filter((buy) => buy.resolvedAt !== null)
     .map((buy) => {
       const resolvedAt = buy.resolvedAt.toLocaleDateString();
-      return `\n(${buy.id}) [${resolvedAt}] ${buy.type}: ${buy.name} - ${buy.quantity}`;
+      return `\n#${buy.id} [${resolvedAt}] ${exports.formatBuy(buy)}`;
     });
 };
 
 exports.formatThing = function (thing) {
-  return `${thing.type}: ${thing.name} - ${thing.quantity} ($${thing.value})`;
+  return `${thing.type}: ${thing.name} (${thing.quantity}) - $${thing.value}`;
+};
+
+exports.formatBuy = function (buy) {
+  if (buy.metadata !== null && buy.metadata.special) {
+    return `Special: ${buy.metadata.title} - $${-buy.value}`;
+  } else {
+    return `${buy.type}: ${buy.name} (${buy.quantity}) - $${-buy.value}`;
+  }
 };
 
 exports.thingsHomeView = function (balance) {
@@ -118,7 +126,7 @@ exports.thingsSpecialBuyView = function (numResidents) {
   const minVotes = Math.ceil(thingsMinPctSpecial * numResidents);
   const mainText = 'Propose a special buy. ' +
     `Special buys are more flexible, but need a minimum of *${minVotes} endorsements.*\n\n` +
-    'Describe what you want to buy, including any delivery information. ' +
+    'Add relevant information about the buy, including any delivery information. ' +
     'Special buys are fulfilled by the person who proposes them, and then reimbursed. ' +
     'Reimbursements are capped at the amount requested.';
 
@@ -136,9 +144,19 @@ exports.thingsSpecialBuyView = function (numResidents) {
         label: { type: 'plain_text', text: 'Thing to buy', emoji: true },
         element: {
           type: 'plain_text_input',
+          multiline: false,
+          placeholder: { type: 'plain_text', text: 'Short description of the thing', emoji: true },
+          action_id: 'title'
+        }
+      },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Additional details', emoji: true },
+        element: {
+          type: 'plain_text_input',
           multiline: true,
-          placeholder: { type: 'plain_text', text: 'Describe what you would like to buy', emoji: true },
-          action_id: 'description'
+          placeholder: { type: 'plain_text', text: 'Add any additional details', emoji: true },
+          action_id: 'details'
         }
       },
       {
@@ -158,14 +176,15 @@ exports.thingsSpecialBuyView = function (numResidents) {
 exports.thingsSpecialBuyCallbackView = function (buy, priorBalance, minVotes) {
   const currentBalance = priorBalance + buy.value;
 
-  const textA = `*<@${buy.boughtBy}>* bought the following:`;
+  const textA = `*<@${buy.boughtBy}>* bought the following for *$${-buy.value}*:`;
   const textB = `There's *$${currentBalance}* left in the account :money_with_wings:\n` +
     `*${minVotes} endorsement(s)* are required to pass, ` +
     `voting closes in *${thingsSpecialPollLength / HOUR} hours*`;
 
   return [
     { type: 'section', text: { type: 'mrkdwn', text: textA } },
-    { type: 'section', text: { type: 'mrkdwn', text: `_${buy.metadata.description}_` } },
+    { type: 'section', text: { type: 'mrkdwn', text: `*${buy.metadata.title}*` } },
+    { type: 'section', text: { type: 'mrkdwn', text: `_${buy.metadata.details}_` } },
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
     { type: 'actions', elements: makeVoteButtons(buy.pollId, 1, 0) }
   ];
@@ -175,16 +194,17 @@ exports.thingsBoughtView = function (unfulfilledBuys, fulfilledBuys7, fulfilledB
   const mainText = 'Things bought by the house.\n\n' +
     '*Pending* buys are proposed but not yet approved. ' +
     '*Unfulfilled* buys are approved but not yet ordered. ' +
-    '*Fulfilled* buys have already been ordered and show the *total amounts* spent over a time period.';
+    '*Fulfilled* buys have been ordered, and show *total amounts* over a time period ' +
+    '(excluding special buys)';
 
   const pendingBuysText = unfulfilledBuys
     .filter((buy) => buy.resolvedAt === null)
-    .map((buy) => exports.formatThing(buy))
+    .map((buy) => exports.formatBuy(buy))
     .join('\n');
 
   const confirmedBuysText = unfulfilledBuys
     .filter((buy) => buy.resolvedAt !== null)
-    .map((buy) => exports.formatThing(buy))
+    .map((buy) => exports.formatBuy(buy))
     .join('\n');
 
   const fulfilledBuys7Text = fulfilledBuys7

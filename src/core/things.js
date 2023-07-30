@@ -78,7 +78,7 @@ exports.buyThing = async function (houseId, thingId, boughtBy, boughtAt, price, 
     .returning('*');
 };
 
-exports.buySpecialThing = async function (houseId, boughtBy, boughtAt, price, description) {
+exports.buySpecialThing = async function (houseId, boughtBy, boughtAt, price, title, details) {
   const houseBalance = await exports.getHouseBalance(houseId, boughtAt);
 
   if (houseBalance.sum < price) { throw new Error('Insufficient funds!'); }
@@ -92,7 +92,7 @@ exports.buySpecialThing = async function (houseId, boughtBy, boughtAt, price, de
       boughtAt,
       value: -price,
       pollId: poll.id,
-      metadata: { description }
+      metadata: { title, details, special: true }
     })
     .returning('*');
 };
@@ -137,7 +137,7 @@ exports.resolveThingBuys = async function (houseId, currentTime) {
 
 exports.getUnfulfilledThingBuys = async function (houseId, currentTime) {
   return db('ThingBuy')
-    .join('Thing', 'ThingBuy.thingId', 'Thing.id')
+    .leftOuterJoin('Thing', 'ThingBuy.thingId', 'Thing.id')
     .where('ThingBuy.houseId', houseId)
     .where('ThingBuy.boughtAt', '<=', currentTime)
     .where('ThingBuy.valid', true) // Exclude invalid buys
@@ -149,8 +149,9 @@ exports.getUnfulfilledThingBuys = async function (houseId, currentTime) {
       'Thing.type',
       'Thing.name',
       'Thing.quantity',
-      'Thing.value',
-      'ThingBuy.resolvedAt'
+      'ThingBuy.value',
+      'ThingBuy.resolvedAt',
+      'ThingBuy.metadata'
     ]);
 };
 
