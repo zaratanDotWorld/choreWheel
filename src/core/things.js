@@ -1,6 +1,12 @@
 const { db } = require('./db');
 
-const { thingsPollLength, thingsMinVotesScalar, thingsMinPctSpecial, thingsMaxPct } = require('../config');
+const {
+  thingsPollLength,
+  thingsSpecialPollLength,
+  thingsMinVotesScalar,
+  thingsMinPctSpecial,
+  thingsMaxPct
+} = require('../config');
 
 const Admin = require('./admin');
 const Polls = require('./polls');
@@ -77,7 +83,7 @@ exports.buySpecialThing = async function (houseId, boughtBy, boughtAt, price, de
 
   if (houseBalance.sum < price) { throw new Error('Insufficient funds!'); }
 
-  const [ poll ] = await Polls.createPoll(boughtAt, thingsPollLength);
+  const [ poll ] = await Polls.createPoll(boughtAt, thingsSpecialPollLength);
 
   return db('ThingBuy')
     .insert({

@@ -26,6 +26,7 @@ exports.karmaMaxHearts = 7;
 
 // Things
 exports.thingsPollLength = 12 * HOUR;
+exports.thingsSpecialPollLength = 3 * DAY;
 exports.thingsMinVotesScalar = 50; // One vote per $50
 exports.thingsMinPctSpecial = 0.3; // Minimum threshold for special buys
 exports.thingsMaxPct = 0.6; // Maximum approval threshold

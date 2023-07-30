@@ -6,7 +6,7 @@ chai.use(chaiAsPromised);
 
 const { Things, Polls, Admin } = require('../src/core/index');
 const { NAY, YAY, HOUR, DAY } = require('../src/constants');
-const { thingsPollLength } = require('../src/config');
+const { thingsPollLength, thingsSpecialPollLength } = require('../src/config');
 const { db } = require('../src/core/db');
 
 describe('Things', async () => {
@@ -24,6 +24,7 @@ describe('Things', async () => {
   let now;
   let soon;
   let challengeEnd;
+  let challengeEndSpecial;
   let numResidents;
 
   before(async () => {
@@ -34,6 +35,7 @@ describe('Things', async () => {
     now = new Date();
     soon = new Date(now.getTime() + HOUR);
     challengeEnd = new Date(now.getTime() + thingsPollLength);
+    challengeEndSpecial = new Date(now.getTime() + thingsSpecialPollLength);
 
     await Admin.updateHouse({ slackId: HOUSE });
     await Admin.addResident(HOUSE, RESIDENT1, now);
@@ -114,6 +116,7 @@ describe('Things', async () => {
     it('cannot buy a thing with insufficient funds', async () => {
       await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 20);
 
+      // Not enough money in the account
       await expect(Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10, 3))
         .to.be.rejectedWith('Insufficient funds!');
 
@@ -325,6 +328,29 @@ describe('Things', async () => {
 
       const balance = await Things.getHouseBalance(HOUSE, now);
       expect(balance.sum).to.equal(50);
+    });
+
+    it('can affirm a special buy', async () => {
+      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 250);
+
+      let [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 200, 'special');
+
+      await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(buy.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(buy.pollId, RESIDENT3, now, YAY);
+
+      // Special buys have a longer voting window
+      await expect(Things.resolveThingBuy(buy.id, challengeEnd, numResidents))
+        .to.be.rejectedWith('Poll not closed!');
+
+      await Things.resolveThingBuy(buy.id, challengeEndSpecial, numResidents);
+
+      const balance = await Things.getHouseBalance(HOUSE, challengeEndSpecial);
+      expect(balance.sum).to.equal(50);
+
+      buy = await Things.getThingBuy(buy.id);
+      expect(buy.valid).to.be.true;
+      expect(buy.resolvedAt.getTime()).to.equal(challengeEndSpecial.getTime());
     });
 
     it('can get the minimum votes for a special buy', async () => {

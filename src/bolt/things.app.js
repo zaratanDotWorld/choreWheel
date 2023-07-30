@@ -204,20 +204,64 @@ app.view('things-buy-callback', async ({ ack, body }) => {
   const blockId = body.view.blocks[blockIndex].block_id;
   const thingId = parseInt(body.view.state.values[blockId].options.selected_option.value);
 
+  // Perform the buy
+  const now = new Date();
+  const thing = await Things.getThing(thingId);
+  const [ buy ] = await Things.buyThing(houseId, thing.id, residentId, now, thing.value, 1);
+  await Polls.submitVote(buy.pollId, residentId, now, YAY);
+
+  const residents = await Admin.getResidents(houseId);
+  const minVotes = await Things.getThingBuyMinVotes(buy, residents.length);
+  const balance = await Things.getHouseBalance(houseId, now);
+
   // TODO: Return error to user (not console) if channel is not set
   const { thingsChannel } = await Admin.getHouse(houseId);
   if (thingsChannel === null) { throw new Error('Things channel not set!'); }
 
+  const text = 'Someone just bought a thing';
+  const blocks = views.thingsBuyCallbackView(buy, thing, balance.sum, minVotes);
+  await common.postMessage(app, thingsOauth, thingsChannel, text, blocks);
+});
+
+app.action('things-special', async ({ ack, body }) => {
+  console.log('things-special');
+  await ack();
+
+  const houseId = body.team.id;
+  const residents = await Admin.getResidents(houseId);
+  const view = views.thingsSpecialBuyView(residents.length);
+  await common.openView(app, thingsOauth, body.trigger_id, view);
+});
+
+app.view('things-special-callback', async ({ ack, body }) => {
+  console.log('things-special-callback');
+  await ack();
+
+  const residentId = body.user.id;
+  const houseId = body.team.id;
+
+  // // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
+  const numBlocks = body.view.blocks.length;
+  const descriptionBlockId = body.view.blocks[numBlocks - 2].block_id;
+  const priceBlockId = body.view.blocks[numBlocks - 1].block_id;
+  const description = body.view.state.values[descriptionBlockId].description.value;
+  const cost = parseInt(body.view.state.values[priceBlockId].cost.value);
+
   // Perform the buy
   const now = new Date();
-  const balance = await Things.getHouseBalance(houseId, now);
-  const thing = await Things.getThing(thingId);
-
-  const [ buy ] = await Things.buyThing(houseId, thing.id, residentId, now, thing.value, 1);
+  const [ buy ] = await Things.buySpecialThing(houseId, residentId, now, cost, description);
   await Polls.submitVote(buy.pollId, residentId, now, YAY);
 
+  const residents = await Admin.getResidents(houseId);
+  const minVotes = await Things.getThingBuyMinVotes(buy, residents.length);
+  const balance = await Things.getHouseBalance(houseId, now);
+
+  // TODO: Return error to user (not console) if channel is not set
+  const { thingsChannel } = await Admin.getHouse(houseId);
+  if (thingsChannel === null) { throw new Error('Things channel not set!'); }
+
   const text = 'Someone just bought a thing';
-  const blocks = views.thingsBuyCallbackView(buy, thing, balance.sum);
+  const blocks = views.thingsSpecialBuyCallbackView(buy, balance.sum, minVotes);
   await common.postMessage(app, thingsOauth, thingsChannel, text, blocks);
 });
 
