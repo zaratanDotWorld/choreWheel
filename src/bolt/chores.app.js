@@ -69,7 +69,7 @@ app.event('app_home_opened', async ({ body, event }) => {
 
     // Give monthly penalty if needed
     const [ penaltyHeart ] = await Chores.addChorePenalty(houseId, residentId, now);
-    if (penaltyHeart !== undefined && penaltyHeart.value > 0) {
+    if (penaltyHeart !== undefined && penaltyHeart.value < 0) {
       const { choresChannel } = await Admin.getHouse(houseId);
       const text = `You missed too many chores last month, and lost *${penaltyHeart.value.toFixed(1)}* hearts...`;
       await common.postEphemeral(app, choresOauth, choresChannel, residentId, text); // TODO: make public?
