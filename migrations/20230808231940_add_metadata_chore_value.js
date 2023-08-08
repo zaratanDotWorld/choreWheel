@@ -3,7 +3,7 @@
  * @returns { Promise<void> }
  */
 exports.up = function(knex) {
-  return knex.schema.alterTable('ThingBuy', function(t) {
+  return knex.schema.alterTable('ChoreValue', function(t) {
     t.json('metadata');
   });
 };
@@ -13,7 +13,7 @@ exports.up = function(knex) {
  * @returns { Promise<void> }
  */
 exports.down = function(knex) {
-  return knex.schema.alterTable('ThingBuy', function(t) {
+  return knex.schema.alterTable('ChoreValue', function(t) {
     t.dropColumn('metadata');
   });
 };
