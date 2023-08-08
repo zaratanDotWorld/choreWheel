@@ -156,8 +156,7 @@ exports.updateChoreValues = async function (houseId, updateTime) {
       choreId: chore.id,
       valuedAt: updateTime,
       value: chore.ranking * updateScalar,
-      ranking: chore.ranking,
-      residents: residentCount
+      metadata: { ranking: chore.ranking, residents: residentCount }
     };
   });
 

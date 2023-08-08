@@ -5,6 +5,8 @@
 exports.up = function(knex) {
   return knex.schema.alterTable('ChoreValue', function(t) {
     t.json('metadata');
+    t.dropColumn('ranking');
+    t.dropColumn('residents');
   });
 };
 
@@ -15,5 +17,7 @@ exports.up = function(knex) {
 exports.down = function(knex) {
   return knex.schema.alterTable('ChoreValue', function(t) {
     t.dropColumn('metadata');
+    t.float('ranking');
+    t.integer('residents');
   });
 };
