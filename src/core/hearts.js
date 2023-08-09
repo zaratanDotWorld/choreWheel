@@ -80,11 +80,11 @@ exports.regenerateHearts = async function (houseId, residentId, currentTime) {
 
 // Challenges
 
-exports.issueChallenge = async function (houseId, challengerId, challengeeId, value, challengedAt) {
+exports.issueChallenge = async function (houseId, challengerId, challengeeId, value, challengedAt, circumstance) {
   const [ poll ] = await Polls.createPoll(challengedAt, heartsPollLength);
 
   return db('HeartChallenge')
-    .insert({ houseId, challengerId, challengeeId, challengedAt, value, pollId: poll.id })
+    .insert({ houseId, challengerId, challengeeId, challengedAt, value, pollId: poll.id, metadata: { circumstance } })
     .returning('*');
 };
 
