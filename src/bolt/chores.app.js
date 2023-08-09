@@ -309,7 +309,7 @@ app.view('chores-break-callback', async ({ ack, body }) => {
     await common.postEphemeral(app, choresOauth, choresChannel, residentId, text);
   } else {
     // Record the break
-    await Chores.addChoreBreak(houseId, residentId, breakStart, breakEnd);
+    await Chores.addChoreBreak(houseId, residentId, breakStart, breakEnd, circumstance);
     const text = `<@${residentId}> is taking a *${breakDays}-day* break ` +
         `starting ${breakStart.toDateString()} :beach_with_umbrella:\n` +
         `_${circumstance}_`;
