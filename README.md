@@ -2,6 +2,12 @@
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/kronosapiens/mirror/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/kronosapiens/mirror/tree/master)
 
+### Talks:
+- [Slack-Bot Boarding House](https://docs.google.com/presentation/d/1qnnFlv15heegRqlcoAHb6svTdcjtRcC_vIw5qtlqAfw/edit?usp=sharing) (Metagov Seminar, March 2023)
+- [Chores: A 21st century chore wheel](https://docs.google.com/presentation/d/1PcS42tksxbKC1MZDEbaWkzOAkOH88mPbcCnf0RR5CM0/edit?usp=sharing) (Metagov Seminar, June 2023)
+
+### Overview:
+
 Mirror is self-governance software for coliving, helping reshape the economics of housing.
 
 Developed in collaboration with social scientists and game designers, Mirror is a set of tools and processes which enable groups of individuals to easily and effectively share space, without reliance on expensive managers or tedious meetings. By lowering the cost of cooperation, Mirror helps to bring coliving into the mainstream, reducing both the price and environmental impact of housing.
