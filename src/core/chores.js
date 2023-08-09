@@ -257,9 +257,9 @@ exports.getAllChorePoints = async function (claimedBy, startTime, endTime) {
 
 // Chore Breaks
 
-exports.addChoreBreak = async function (houseId, residentId, startDate, endDate) {
+exports.addChoreBreak = async function (houseId, residentId, startDate, endDate, circumstance) {
   return db('ChoreBreak')
-    .insert({ houseId, residentId, startDate, endDate })
+    .insert({ houseId, residentId, startDate, endDate, metadata: { circumstance } })
     .returning('*');
 };
 
