@@ -180,8 +180,16 @@ describe('Hearts', async () => {
       await Hearts.initialiseResident(HOUSE, RESIDENT2, now);
     });
 
+    it('can issue a challenge', async () => {
+      const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 2, now, 'Rude behavior');
+      expect(challenge.challengerId).to.equal(RESIDENT1);
+      expect(challenge.challengeeId).to.equal(RESIDENT2);
+      expect(challenge.value).to.equal(2);
+      expect(challenge.metadata.circumstance).to.equal('Rude behavior');
+    });
+
     it('can resolve a challenge where the challenger wins', async () => {
-      const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
+      const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now, '');
 
       await Polls.submitVote(challenge.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(challenge.pollId, RESIDENT2, now, NAY);
@@ -198,7 +206,7 @@ describe('Hearts', async () => {
     });
 
     it('can resolve a challenge where the challenger loses', async () => {
-      const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
+      const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now, '');
 
       await Polls.submitVote(challenge.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(challenge.pollId, RESIDENT2, now, NAY);
@@ -213,7 +221,7 @@ describe('Hearts', async () => {
     });
 
     it('can resolve a challenge where the quorum is not reached', async () => {
-      const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
+      const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now, '');
 
       // Quorum is 2, only 1 vote is submitted
       await Polls.submitVote(challenge.pollId, RESIDENT1, now, YAY);
@@ -227,9 +235,9 @@ describe('Hearts', async () => {
     });
 
     it('can resolve challenges in bulk', async () => {
-      const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
-      await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
-      await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, soon);
+      const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now, '');
+      await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now, '');
+      await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, soon, '');
 
       await Polls.submitVote(challenge.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(challenge.pollId, RESIDENT3, now, YAY);
@@ -245,7 +253,7 @@ describe('Hearts', async () => {
     });
 
     it('cannot resolve a challenge before the poll is closed', async () => {
-      const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
+      const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now, '');
 
       await Polls.submitVote(challenge.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(challenge.pollId, RESIDENT2, now, NAY);
@@ -256,7 +264,7 @@ describe('Hearts', async () => {
     });
 
     it('cannot resolve a challenge twice', async () => {
-      const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now);
+      const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now, '');
 
       await Polls.submitVote(challenge.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(challenge.pollId, RESIDENT2, now, NAY);
@@ -281,10 +289,10 @@ describe('Hearts', async () => {
     });
 
     it('cannot challenge oneself', async () => {
-      const dbError = 'insert into "HeartChallenge" ("challengedAt", "challengeeId", "challengerId", "houseId", "pollId", "value") ' +
-        'values ($1, $2, $3, $4, $5, $6) returning * - new row for relation "HeartChallenge" violates check constraint "HeartChallenge_check';
+      const dbError = 'insert into "HeartChallenge" ("challengedAt", "challengeeId", "challengerId", "houseId", "metadata", "pollId", "value") ' +
+        'values ($1, $2, $3, $4, $5, $6, $7) returning * - new row for relation "HeartChallenge" violates check constraint "HeartChallenge_check';
 
-      await expect(Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT1, 1, now))
+      await expect(Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT1, 1, now, ''))
         .to.be.rejectedWith(dbError);
     });
   });

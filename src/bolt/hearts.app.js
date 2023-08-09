@@ -141,7 +141,7 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
   // Initiate the challenge
   const now = new Date();
   const quorum = await Hearts.getChallengeQuorum(houseId, challengeeId, numHearts, now);
-  const [ challenge ] = await Hearts.issueChallenge(houseId, residentId, challengeeId, numHearts, now);
+  const [ challenge ] = await Hearts.issueChallenge(houseId, residentId, challengeeId, numHearts, now, circumstance);
   await Polls.submitVote(challenge.pollId, residentId, now, YAY);
 
   const text = 'Someone just issued a hearts challenge';
