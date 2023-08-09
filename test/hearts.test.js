@@ -374,6 +374,7 @@ describe('Hearts', async () => {
       [ karmaHeart ] = await Hearts.generateKarmaHearts(HOUSE, nextMonthKarma, 1);
       expect(karmaHeart.residentId).to.equal(RESIDENT3);
       expect(karmaHeart.value).to.equal(1);
+      expect(karmaHeart.metadata.ranking).to.equal(0.6423540742590585);
 
       // But not twice
       [ karmaHeart ] = await Hearts.generateKarmaHearts(HOUSE, nextMonthKarma, 1);

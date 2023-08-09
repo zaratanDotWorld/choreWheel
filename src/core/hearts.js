@@ -207,7 +207,7 @@ exports.generateKarmaHearts = async function (houseId, currentTime, numWinners) 
       const residentId = winner.slackId;
       const residentHearts = await exports.getHearts(residentId, generatedAt);
       const value = Math.min(1, Math.max(0, karmaMaxHearts - residentHearts.sum)); // Bring to maximum
-      karmaHearts.push({ houseId, residentId, generatedAt, value });
+      karmaHearts.push({ houseId, residentId, generatedAt, value, metadata: { ranking: winner.ranking } });
     }
 
     return db('Heart').insert(karmaHearts).returning('*');
