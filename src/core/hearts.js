@@ -1,6 +1,7 @@
 const { db } = require('./db');
 
 const { getMonthStart, getPrevMonthEnd } = require('../utils');
+const { HEART_TYPE_REGEN, HEART_TYPE_CHALLENGE, HEART_TYPE_KARMA } = require('../constants');
 
 const {
   heartsMinPctInitial,
@@ -51,16 +52,16 @@ exports.getHouseHearts = async function (houseId, currentTime) {
     .orderBy('sum', 'desc');
 };
 
-exports.generateHearts = async function (houseId, residentId, generatedAt, value) {
+exports.generateHearts = async function (houseId, residentId, type, generatedAt, value) {
   return db('Heart')
-    .insert({ houseId, residentId, generatedAt, value })
+    .insert({ houseId, residentId, type, generatedAt, value })
     .returning('*');
 };
 
 exports.initialiseResident = async function (houseId, residentId, currentTime) {
   const hearts = await exports.getHearts(residentId, currentTime);
   if (hearts.sum === null) {
-    return exports.generateHearts(houseId, residentId, currentTime, heartsBaseline);
+    return exports.generateHearts(houseId, residentId, HEART_TYPE_REGEN, currentTime, heartsBaseline);
   } else { return []; }
 };
 
@@ -74,7 +75,7 @@ exports.regenerateHearts = async function (houseId, residentId, currentTime) {
     if (hearts.sum === null) { return []; } // Don't regenerate if not initialized
 
     const regenAmount = Math.min(heartsRegen, Math.max(0, heartsBaseline - hearts.sum)); // Bring to baseline
-    return exports.generateHearts(houseId, residentId, regenTime, regenAmount);
+    return exports.generateHearts(houseId, residentId, HEART_TYPE_REGEN, regenTime, regenAmount);
   } else { return []; }
 };
 
@@ -119,7 +120,7 @@ exports.resolveChallenge = async function (challengeId, resolvedAt) {
     ? challenge.challengeeId
     : challenge.challengerId;
 
-  const [ heart ] = await exports.generateHearts(challenge.houseId, loser, resolvedAt, -challenge.value);
+  const [ heart ] = await exports.generateHearts(challenge.houseId, loser, HEART_TYPE_CHALLENGE, resolvedAt, -challenge.value);
 
   return db('HeartChallenge')
     .where({ id: challengeId })
@@ -205,9 +206,11 @@ exports.generateKarmaHearts = async function (houseId, currentTime, numWinners) 
 
     for (const winner of karmaRankings.slice(0, numWinners)) {
       const residentId = winner.slackId;
+      const type = HEART_TYPE_KARMA;
       const residentHearts = await exports.getHearts(residentId, generatedAt);
       const value = Math.min(1, Math.max(0, karmaMaxHearts - residentHearts.sum)); // Bring to maximum
-      karmaHearts.push({ houseId, residentId, generatedAt, value, metadata: { ranking: winner.ranking } });
+      const metadata = { ranking: winner.ranking };
+      karmaHearts.push({ houseId, residentId, type, generatedAt, value, metadata });
     }
 
     return db('Heart').insert(karmaHearts).returning('*');
