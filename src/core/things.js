@@ -148,7 +148,7 @@ exports.getUnfulfilledThingBuys = async function (houseId, currentTime) {
       'ThingBuy.id',
       'Thing.type',
       'Thing.name',
-      'Thing.quantity',
+      'Thing.metadata AS thingMetadata',
       'ThingBuy.value',
       'ThingBuy.resolvedAt',
       'ThingBuy.metadata'

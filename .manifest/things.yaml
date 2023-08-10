@@ -17,7 +17,7 @@ features:
     - command: /things-add
       url: https://things.mirror.zaratan.world/slack/events
       description: Add a thing
-      usage_hint: "[type]-[name]-[quantity]-[price]"
+      usage_hint: "[type]-[name]-[unit]-[price]"
     - command: /things-del
       url: https://things.mirror.zaratan.world/slack/events
       description: Delete a thing
