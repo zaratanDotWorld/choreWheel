@@ -1,6 +1,6 @@
 # Mirror 🪞
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/kronosapiens/mirror/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/kronosapiens/mirror/tree/master)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/zaratanDotWorld/mirror/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/zaratanDotWorld/mirror/tree/master)
 
 ### Talks:
 - [Slack-Bot Boarding House](https://docs.google.com/presentation/d/1qnnFlv15heegRqlcoAHb6svTdcjtRcC_vIw5qtlqAfw/edit?usp=sharing) (Metagov Seminar, March 2023)
