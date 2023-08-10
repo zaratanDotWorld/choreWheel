@@ -80,8 +80,8 @@ app.command('/things-add', async ({ ack, command }) => {
     'If the thing already exists, the command does nothing.';
   } else if (await common.isAdmin(app, thingsOauth, command)) {
     const [ houseId, active ] = [ command.team_id, true ];
-    const { type, name, quantity, value } = views.parseThingAdd(command.text);
-    const [ thing ] = await Things.updateThing({ houseId, type, name, quantity, value, active });
+    const { type, name, unit, value } = views.parseThingAdd(command.text);
+    const [ thing ] = await Things.updateThing({ houseId, type, name, value, active, metadata: { unit } });
     text = `${views.formatThing(thing)} added to the things list :star-struck:`;
   } else {
     text = ':warning: Only admins can update the things list...';
@@ -146,8 +146,8 @@ app.command('/things-resolved', async ({ ack, command }) => {
     const houseId = command.team_id;
     const now = new Date();
 
-    const buys = await Things.getUnfulfilledThingBuys(houseId, now);
-    const parsedResolvedBuys = views.parseResolvedThingBuys(buys);
+    const unfulfilledBuys = await Things.getUnfulfilledThingBuys(houseId, now);
+    const parsedResolvedBuys = views.parseResolvedThingBuys(unfulfilledBuys);
     text = `Resolved buys not yet fulfilled:${parsedResolvedBuys}`;
   }
 

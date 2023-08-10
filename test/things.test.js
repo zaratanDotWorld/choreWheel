@@ -70,7 +70,7 @@ describe('Things', async () => {
 
       things = await Things.getThings(HOUSE);
       expect(things.length).to.equal(1);
-      expect(things.find(thing => thing.name === RICE).value).to.equal(20);
+      expect(things[0].value).to.equal(20);
     });
 
     it('can get a thing by id', async () => {
@@ -86,8 +86,8 @@ describe('Things', async () => {
     let rice;
 
     beforeEach(async () => {
-      [ soap ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: SOAP, value: 10 });
-      [ rice ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, value: 60 });
+      [ soap ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: SOAP, value: 10, metadata: { unit: '20 bars' } });
+      [ rice ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, value: 60, metadata: { unit: '25 lbs' } });
     });
 
     it('can buy a thing from the list', async () => {
@@ -247,6 +247,8 @@ describe('Things', async () => {
       let unfulfilledBuys;
       unfulfilledBuys = await Things.getUnfulfilledThingBuys(HOUSE, challengeEnd);
       expect(unfulfilledBuys.length).to.equal(1);
+      expect(unfulfilledBuys[0].thingMetadata.unit).to.equal('20 bars');
+      expect(unfulfilledBuys[0].metadata.quantity).to.equal(1);
 
       await Things.resolveThingBuy(buy.id, challengeEnd, numResidents);
 

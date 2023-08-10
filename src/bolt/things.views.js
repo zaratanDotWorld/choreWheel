@@ -8,13 +8,13 @@ const { makeVoteButtons } = require('./common');
 // Things Views
 
 exports.parseThingAdd = function (text) {
-  // [type]-[name]-[quantity]-[value]
-  let [ type, name, quantity, value ] = text.split('-');
+  // [type]-[name]-[unit]-[value]
+  let [ type, name, unit, value ] = text.split('-');
   type = voca(type).trim().titleCase().value();
   name = voca(name).trim().titleCase().value();
-  quantity = voca(quantity).trim().lowerCase().value();
+  unit = voca(unit).trim().lowerCase().value();
   value = voca(value).trim().value();
-  return { type, name, quantity, value };
+  return { type, name, unit, value };
 };
 
 exports.parseThingDel = function (text) {
@@ -30,18 +30,24 @@ exports.parseResolvedThingBuys = function (unfulfilledBuys) {
     .filter((buy) => buy.resolvedAt !== null)
     .map((buy) => {
       const resolvedAt = buy.resolvedAt.toLocaleDateString();
-      return `\n#${buy.id} [${resolvedAt}] ${exports.formatBuy(buy)}`;
+      return `\n#${buy.id} [${resolvedAt}] ${exports.formatUnfulfilledBuy(buy)}`;
     });
 };
 
 exports.formatThing = function (thing) {
-  return `${thing.type}: ${thing.name} (${thing.quantity}) - $${thing.value}`;
+  if (thing.metadata !== null) {
+    return `${thing.type}: ${thing.name} (${thing.metadata.unit}) - $${thing.value}`;
+  } else { // TODO: Deprecated, migrate DB and remove
+    return `${thing.type}: ${thing.name} (${thing.quantity}) - $${thing.value}`;
+  }
 };
 
-exports.formatBuy = function (buy) {
+exports.formatUnfulfilledBuy = function (buy) {
   if (buy.metadata !== null && buy.metadata.special) {
     return `Special: ${buy.metadata.title} - $${-buy.value}`;
-  } else {
+  } else if (buy.metadata !== null & buy.thingMetadata !== null) {
+    return `${buy.type}: ${buy.name} (${buy.metadata.quantity} x ${buy.thingMetadata.unit}) - $${-buy.value}`;
+  } else { // TODO: Deprecated, migrate DB and remove
     return `${buy.type}: ${buy.name} (${buy.quantity}) - $${-buy.value}`;
   }
 };
@@ -107,7 +113,7 @@ exports.thingsBuyView = function (things) {
 };
 
 exports.thingsBuyCallbackView = function (buy, thing, priorBalance, minVotes) {
-  const formattedBuy = `${thing.name} - ${buy.metadata.quantity} x ${thing.quantity}`;
+  const formattedBuy = `${thing.name} (${buy.metadata.quantity} x ${thing.metadata.unit})`;
   const currentBalance = priorBalance + buy.value;
 
   const textA = `*<@${buy.boughtBy}>* bought *${formattedBuy}* for *$${-buy.value}*. ` +
@@ -199,12 +205,12 @@ exports.thingsBoughtView = function (unfulfilledBuys, fulfilledBuys7, fulfilledB
 
   const pendingBuysText = unfulfilledBuys
     .filter((buy) => buy.resolvedAt === null)
-    .map((buy) => exports.formatBuy(buy))
+    .map((buy) => exports.formatUnfulfilledBuy(buy))
     .join('\n');
 
   const confirmedBuysText = unfulfilledBuys
     .filter((buy) => buy.resolvedAt !== null)
-    .map((buy) => exports.formatBuy(buy))
+    .map((buy) => exports.formatUnfulfilledBuy(buy))
     .join('\n');
 
   const fulfilledBuys7Text = fulfilledBuys7
