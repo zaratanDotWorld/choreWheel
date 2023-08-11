@@ -107,6 +107,18 @@ exports.thingsBuyView = function (things) {
           placeholder: { type: 'plain_text', text: 'Choose a thing', emoji: true },
           options: mappedThings
         }
+      },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Amount to buy', emoji: true },
+        element: {
+          type: 'number_input',
+          action_id: 'quantity',
+          placeholder: { type: 'plain_text', text: 'Choose number of units', emoji: true },
+          initial_value: '1',
+          min_value: '0',
+          is_decimal_allowed: false
+        }
       }
     ]
   };
