@@ -53,7 +53,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     const now = new Date();
     const monthStart = getMonthStart(now);
 
-    await Admin.addResident(houseId, residentId, now);
+    await Admin.activateResident(houseId, residentId, now);
 
     const chorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
     const activePercentage = await Chores.getActiveResidentPercentage(residentId, now);

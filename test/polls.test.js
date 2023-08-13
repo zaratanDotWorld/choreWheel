@@ -27,9 +27,9 @@ describe('Polls', async () => {
     soon = new Date(now.getTime() + HOUR);
 
     await Admin.updateHouse({ slackId: HOUSE });
-    await Admin.addResident(HOUSE, RESIDENT1, now);
-    await Admin.addResident(HOUSE, RESIDENT2, now);
-    await Admin.addResident(HOUSE, RESIDENT3, now);
+    await Admin.activateResident(HOUSE, RESIDENT1, now);
+    await Admin.activateResident(HOUSE, RESIDENT2, now);
+    await Admin.activateResident(HOUSE, RESIDENT3, now);
   });
 
   afterEach(async () => {

@@ -147,9 +147,9 @@ exports.syncWorkspaceMembers = async function (app, oauth, houseId) {
   for (const member of members) {
     if (!member.is_bot & member.id !== SLACKBOT) {
       if (member.deleted) {
-        await Admin.deleteResident(houseId, member.id);
+        await Admin.deactivateResident(houseId, member.id);
       } else {
-        await Admin.addResident(houseId, member.id, now);
+        await Admin.activateResident(houseId, member.id, now);
         await Hearts.initialiseResident(houseId, member.id, now);
       }
     }

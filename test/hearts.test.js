@@ -36,11 +36,11 @@ describe('Hearts', async () => {
     twoMonths = getNextMonthStart(nextMonth);
 
     await Admin.updateHouse({ slackId: HOUSE });
-    await Admin.addResident(HOUSE, RESIDENT1, now);
-    await Admin.addResident(HOUSE, RESIDENT2, now);
-    await Admin.addResident(HOUSE, RESIDENT3, now);
-    await Admin.addResident(HOUSE, RESIDENT4, now);
-    await Admin.addResident(HOUSE, RESIDENT5, now);
+    await Admin.activateResident(HOUSE, RESIDENT1, now);
+    await Admin.activateResident(HOUSE, RESIDENT2, now);
+    await Admin.activateResident(HOUSE, RESIDENT3, now);
+    await Admin.activateResident(HOUSE, RESIDENT4, now);
+    await Admin.activateResident(HOUSE, RESIDENT5, now);
   });
 
   afterEach(async () => {
@@ -371,18 +371,18 @@ describe('Hearts', async () => {
       await Admin.updateHouse({ slackId: house2 });
       let numWinners;
 
-      await Admin.addResident(house2, 'r1', now);
-      await Admin.addResident(house2, 'r2', now);
+      await Admin.activateResident(house2, 'r1', now);
+      await Admin.activateResident(house2, 'r2', now);
       numWinners = await Hearts.getNumKarmaWinners(house2);
       expect(numWinners).to.equal(0);
 
-      await Admin.addResident(house2, 'r3', now);
-      await Admin.addResident(house2, 'r4', now);
-      await Admin.addResident(house2, 'r5', now);
+      await Admin.activateResident(house2, 'r3', now);
+      await Admin.activateResident(house2, 'r4', now);
+      await Admin.activateResident(house2, 'r5', now);
       numWinners = await Hearts.getNumKarmaWinners(house2);
       expect(numWinners).to.equal(1);
 
-      await Admin.addResident(house2, 'r6', now);
+      await Admin.activateResident(house2, 'r6', now);
       numWinners = await Hearts.getNumKarmaWinners(house2);
       expect(numWinners).to.equal(2);
     });

@@ -51,7 +51,7 @@ app.event('app_home_opened', async ({ body, event }) => {
 
     const now = new Date();
 
-    await Admin.addResident(houseId, residentId, now);
+    await Admin.activateResident(houseId, residentId, now);
     await Hearts.initialiseResident(houseId, residentId, now);
 
     const hearts = await Hearts.getHearts(residentId, now);

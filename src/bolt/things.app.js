@@ -49,7 +49,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     const residentId = event.user;
     const now = new Date();
 
-    await Admin.addResident(houseId, residentId, now);
+    await Admin.activateResident(houseId, residentId, now);
     const balance = await Things.getHouseBalance(houseId, now);
     const view = views.thingsHomeView(balance.sum || 0);
     await common.publishHome(app, thingsOauth, residentId, view);
