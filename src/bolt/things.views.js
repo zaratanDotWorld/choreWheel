@@ -37,8 +37,8 @@ exports.parseResolvedThingBuys = function (unfulfilledBuys) {
 exports.formatThing = function (thing) {
   if (thing.metadata !== null) {
     return `${thing.type}: ${thing.name} (${thing.metadata.unit}) - $${thing.value}`;
-  } else { // TODO: Deprecated, migrate DB and remove
-    return `${thing.type}: ${thing.name} (${thing.quantity}) - $${thing.value}`;
+  } else {
+    return `${thing.type}: ${thing.name} (?) - $${thing.value}`;
   }
 };
 
@@ -47,8 +47,8 @@ exports.formatUnfulfilledBuy = function (buy) {
     return `Special: ${buy.metadata.title} - $${-buy.value}`;
   } else if (buy.metadata !== null & buy.thingMetadata !== null) {
     return `${buy.type}: ${buy.name} (${buy.metadata.quantity} x ${buy.thingMetadata.unit}) - $${-buy.value}`;
-  } else { // TODO: Deprecated, migrate DB and remove
-    return `${buy.type}: ${buy.name} (${buy.quantity}) - $${-buy.value}`;
+  } else {
+    return `${buy.type}: ${buy.name} (?) - $${-buy.value}`;
   }
 };
 

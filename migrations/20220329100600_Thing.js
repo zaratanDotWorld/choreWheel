@@ -5,9 +5,9 @@ exports.up = function(knex, Promise) {
         t.string('houseId').references('House.slackId').notNull();
         t.string('type').notNull();
         t.string('name').notNull();
-        t.string('quantity'); // TODO: Deprecated, remove
         t.float('value').notNull().defaultTo(0);
         t.boolean('active').notNull().defaultTo(true);
+        t.json('metadata');
         t.unique(['houseId', 'type', 'name']);
     });
 };

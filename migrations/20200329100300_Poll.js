@@ -4,6 +4,7 @@ exports.up = function(knex, Promise) {
         t.timestamps(useTimestamps = true, defaultToNow = true, useCamelCase = true);
         t.timestamp('startTime').notNull();
         t.timestamp('endTime').notNull();
+        t.json('metadata');
     });
 };
 

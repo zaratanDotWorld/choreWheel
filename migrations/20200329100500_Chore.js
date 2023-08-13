@@ -5,6 +5,7 @@ exports.up = function(knex, Promise) {
         t.string('houseId').references('House.slackId').notNull();
         t.string('name').notNull();
         t.boolean('active').notNull().defaultTo(true);
+        t.json('metadata');
         t.unique(['houseId', 'name']);
     });
 };
