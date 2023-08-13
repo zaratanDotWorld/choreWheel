@@ -54,8 +54,8 @@ describe('Chores', async () => {
 
   describe('managing chore preferences', async () => {
     beforeEach(async () => {
-      await Admin.addResident(HOUSE, RESIDENT1, now);
-      await Admin.addResident(HOUSE, RESIDENT2, now);
+      await Admin.activateResident(HOUSE, RESIDENT1, now);
+      await Admin.activateResident(HOUSE, RESIDENT2, now);
 
       [ dishes ] = await Chores.addChore(HOUSE, 'dishes');
       [ sweeping ] = await Chores.addChore(HOUSE, 'sweeping');
@@ -119,7 +119,7 @@ describe('Chores', async () => {
     });
 
     it('can query for active chore preferences', async () => {
-      await Admin.addResident(HOUSE, RESIDENT3, now);
+      await Admin.activateResident(HOUSE, RESIDENT3, now);
 
       await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.0);
       await Chores.setChorePreference(HOUSE, RESIDENT2, dishes.id, restock.id, 0.5);
@@ -130,13 +130,13 @@ describe('Chores', async () => {
       expect(preferences.length).to.equal(3);
 
       // Remove the third preference
-      await Admin.deleteResident(HOUSE, RESIDENT3);
+      await Admin.deactivateResident(HOUSE, RESIDENT3);
 
       preferences = await Chores.getActiveChorePreferences(HOUSE);
       expect(preferences.length).to.equal(2);
 
       // Restore the third preference
-      await Admin.addResident(HOUSE, RESIDENT3, now);
+      await Admin.activateResident(HOUSE, RESIDENT3, now);
 
       preferences = await Chores.getActiveChorePreferences(HOUSE);
       expect(preferences.length).to.equal(3);
@@ -157,8 +157,8 @@ describe('Chores', async () => {
 
   describe('managing chore values', async () => {
     beforeEach(async () => {
-      await Admin.addResident(HOUSE, RESIDENT1, now);
-      await Admin.addResident(HOUSE, RESIDENT2, now);
+      await Admin.activateResident(HOUSE, RESIDENT1, now);
+      await Admin.activateResident(HOUSE, RESIDENT2, now);
 
       [ dishes ] = await Chores.addChore(HOUSE, 'dishes');
       [ sweeping ] = await Chores.addChore(HOUSE, 'sweeping');
@@ -305,10 +305,10 @@ describe('Chores', async () => {
 
   describe('claiming chores', async () => {
     beforeEach(async () => {
-      await Admin.addResident(HOUSE, RESIDENT1, getPrevMonthEnd(now));
-      await Admin.addResident(HOUSE, RESIDENT2, getPrevMonthEnd(now));
-      await Admin.addResident(HOUSE, RESIDENT3, getPrevMonthEnd(now));
-      await Admin.addResident(HOUSE, RESIDENT4, getPrevMonthEnd(now));
+      await Admin.activateResident(HOUSE, RESIDENT1, getPrevMonthEnd(now));
+      await Admin.activateResident(HOUSE, RESIDENT2, getPrevMonthEnd(now));
+      await Admin.activateResident(HOUSE, RESIDENT3, getPrevMonthEnd(now));
+      await Admin.activateResident(HOUSE, RESIDENT4, getPrevMonthEnd(now));
 
       [ dishes ] = await Chores.addChore(HOUSE, 'dishes');
       [ sweeping ] = await Chores.addChore(HOUSE, 'sweeping');
@@ -601,8 +601,8 @@ describe('Chores', async () => {
 
   describe('managing chore breaks', async () => {
     beforeEach(async () => {
-      await Admin.addResident(HOUSE, RESIDENT1, now);
-      await Admin.addResident(HOUSE, RESIDENT2, now);
+      await Admin.activateResident(HOUSE, RESIDENT1, now);
+      await Admin.activateResident(HOUSE, RESIDENT2, now);
     });
 
     it('can add, query, and delete chore breaks', async () => {
@@ -636,8 +636,8 @@ describe('Chores', async () => {
     });
 
     it('can exclude inactive residents from the chore valuing', async () => {
-      await Admin.addResident(HOUSE, RESIDENT3, now);
-      await Admin.addResident(HOUSE, RESIDENT4, now);
+      await Admin.activateResident(HOUSE, RESIDENT3, now);
+      await Admin.activateResident(HOUSE, RESIDENT4, now);
 
       const oneDay = new Date(now.getTime() + 1 * DAY);
       const twoDays = new Date(now.getTime() + 2 * DAY);
@@ -652,7 +652,7 @@ describe('Chores', async () => {
       expect(residentCount).to.equal(4);
 
       // Will exclude inactive residents
-      await Admin.deleteResident(HOUSE, RESIDENT4);
+      await Admin.deactivateResident(HOUSE, RESIDENT4);
       residentCount = await Chores.getActiveResidentCount(HOUSE, now);
       expect(residentCount).to.equal(3);
 
@@ -802,7 +802,7 @@ describe('Chores', async () => {
 
       let activeDays;
 
-      await Admin.addResident(HOUSE, RESIDENT3, feb8);
+      await Admin.activateResident(HOUSE, RESIDENT3, feb8);
 
       // activeAt used to create implicit break
       activeDays = await Chores.getActiveResidentPercentage(RESIDENT3, feb1);
@@ -817,8 +817,8 @@ describe('Chores', async () => {
 
   describe('managing chore point gifts', async () => {
     beforeEach(async () => {
-      await Admin.addResident(HOUSE, RESIDENT1, now);
-      await Admin.addResident(HOUSE, RESIDENT2, now);
+      await Admin.activateResident(HOUSE, RESIDENT1, now);
+      await Admin.activateResident(HOUSE, RESIDENT2, now);
 
       [ dishes ] = await Chores.addChore(HOUSE, 'dishes');
       [ sweeping ] = await Chores.addChore(HOUSE, 'sweeping');
@@ -876,8 +876,8 @@ describe('Chores', async () => {
 
   describe('editing chores', async () => {
     beforeEach(async () => {
-      await Admin.addResident(HOUSE, RESIDENT1, now);
-      await Admin.addResident(HOUSE, RESIDENT2, now);
+      await Admin.activateResident(HOUSE, RESIDENT1, now);
+      await Admin.activateResident(HOUSE, RESIDENT2, now);
     });
 
     it('can add a chore', async () => {
@@ -1000,8 +1000,8 @@ describe('Chores', async () => {
     });
 
     it('cannot approve a proposal with insufficient votes', async () => {
-      await Admin.addResident(HOUSE, RESIDENT3, now);
-      await Admin.addResident(HOUSE, RESIDENT4, now);
+      await Admin.activateResident(HOUSE, RESIDENT3, now);
+      await Admin.activateResident(HOUSE, RESIDENT4, now);
 
       let chores;
       chores = await Chores.getChores(HOUSE);

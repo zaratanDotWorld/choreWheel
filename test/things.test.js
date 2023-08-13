@@ -38,10 +38,10 @@ describe('Things', async () => {
     challengeEndSpecial = new Date(now.getTime() + thingsSpecialPollLength);
 
     await Admin.updateHouse({ slackId: HOUSE });
-    await Admin.addResident(HOUSE, RESIDENT1, now);
-    await Admin.addResident(HOUSE, RESIDENT2, now);
-    await Admin.addResident(HOUSE, RESIDENT3, now);
-    await Admin.addResident(HOUSE, RESIDENT4, now);
+    await Admin.activateResident(HOUSE, RESIDENT1, now);
+    await Admin.activateResident(HOUSE, RESIDENT2, now);
+    await Admin.activateResident(HOUSE, RESIDENT3, now);
+    await Admin.activateResident(HOUSE, RESIDENT4, now);
 
     const residents = await Admin.getResidents(HOUSE);
     numResidents = residents.length;

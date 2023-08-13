@@ -86,17 +86,17 @@ describe('Admin', async () => {
       await Admin.updateHouse({ slackId: HOUSE2 });
     });
 
-    it('can add a resident', async () => {
+    it('can activate a resident', async () => {
       let residents;
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(0);
 
-      await Admin.addResident(HOUSE1, RESIDENT1, now);
+      await Admin.activateResident(HOUSE1, RESIDENT1, now);
 
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(1);
 
-      await Admin.addResident(HOUSE1, RESIDENT2, now);
+      await Admin.activateResident(HOUSE1, RESIDENT2, now);
 
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(2);
@@ -105,27 +105,27 @@ describe('Admin', async () => {
       expect(resident1.activeAt.getTime()).to.equal(now.getTime());
     });
 
-    it('can add a resident idempotently', async () => {
+    it('can activate a resident idempotently', async () => {
       let residents;
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(0);
 
-      await Admin.addResident(HOUSE1, RESIDENT1, now);
-      await Admin.addResident(HOUSE1, RESIDENT1, soon);
+      await Admin.activateResident(HOUSE1, RESIDENT1, now);
+      await Admin.activateResident(HOUSE1, RESIDENT1, soon);
 
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(1);
       expect(residents[0].activeAt.getTime()).to.equal(now.getTime());
     });
 
-    it('can delete a resident', async () => {
-      await Admin.addResident(HOUSE1, RESIDENT1, now);
+    it('can deactivate a resident', async () => {
+      await Admin.activateResident(HOUSE1, RESIDENT1, now);
 
       let residents;
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(1);
 
-      await Admin.deleteResident(HOUSE1, RESIDENT1);
+      await Admin.deactivateResident(HOUSE1, RESIDENT1);
 
       residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(0);
