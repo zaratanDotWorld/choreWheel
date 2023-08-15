@@ -124,12 +124,11 @@ exports.thingsBuyView = function (things) {
   };
 };
 
-exports.thingsBuyCallbackView = function (buy, thing, priorBalance, minVotes) {
+exports.thingsBuyCallbackView = function (buy, thing, balance, minVotes) {
   const formattedBuy = `${thing.name} (${buy.metadata.quantity} x ${thing.metadata.unit})`;
-  const currentBalance = priorBalance + buy.value;
 
   const textA = `*<@${buy.boughtBy}>* bought *${formattedBuy}* for *$${-buy.value}*. ` +
-    `There's *$${currentBalance}* left in the account :money_with_wings:`;
+    `There's *$${balance}* left in the account :money_with_wings:`;
   const textB = `*${minVotes} endorsement(s)* are required to pass, ` +
     `voting closes in *${thingsPollLength / HOUR} hours*`;
 
