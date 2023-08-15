@@ -164,7 +164,7 @@ exports.updateChoreValues = async function (houseId, updateTime) {
   // If we've updated in the last interval, short-circuit execution
   if (intervalScalar === 0) { return Promise.resolve([]); }
 
-  const residentCount = await exports.getActiveResidentCount(houseId, updateTime);
+  const residentCount = await exports.getWorkingResidentCount(houseId, updateTime);
   const updateScalar = (residentCount * pointsPerResident) * intervalScalar * inflationFactor;
   const choreRankings = await exports.getCurrentChoreRankings(houseId);
 
@@ -295,13 +295,13 @@ exports.getChoreBreaks = async function (houseId, now) {
     .returning('*');
 };
 
-exports.getActiveResidentCount = async function (houseId, now) {
+exports.getWorkingResidentCount = async function (houseId, now) {
   const residents = await Admin.getResidents(houseId);
   const choreBreaks = await exports.getChoreBreaks(houseId, now);
   return residents.length - (new Set(choreBreaks.map(cb => cb.residentId))).size;
 };
 
-exports.getActiveResidentPercentage = async function (residentId, now) {
+exports.getWorkingResidentPercentage = async function (residentId, now) {
   const monthStart = getMonthStart(now);
   const monthEnd = getMonthEnd(now);
 
@@ -326,18 +326,18 @@ exports.getActiveResidentPercentage = async function (residentId, now) {
 
   // TODO: implement this more efficiently... currently O(n) but could probably be O(1)
   const daysInMonth = monthEnd.getDate();
-  const activeDays = new Map([ ...Array(daysInMonth).keys() ].map(day => [ day, true ]));
+  const workingDays = new Map([ ...Array(daysInMonth).keys() ].map(day => [ day, true ]));
 
   for (const choreBreak of choreBreaks) {
     let startDate = new Date(Math.max(choreBreak.startDate, monthStart));
     const endDate = new Date(Math.min(choreBreak.endDate, getNextMonthStart(monthEnd)));
     while (startDate < endDate) {
-      activeDays.set(startDate.getDate() - 1, false);
+      workingDays.set(startDate.getDate() - 1, false);
       startDate = new Date(startDate.getTime() + DAY);
     }
   }
-  const numActiveDays = Array.from(activeDays.values()).filter(active => active).length;
-  return numActiveDays / daysInMonth;
+  const numWorkingDays = Array.from(workingDays.values()).filter(x => x).length;
+  return numWorkingDays / daysInMonth;
 };
 
 exports.addChorePenalty = async function (houseId, residentId, currentTime) {
@@ -361,9 +361,9 @@ exports.calculatePenalty = async function (residentId, penaltyTime) {
   const prevMonthEnd = getPrevMonthEnd(penaltyTime);
   const prevMonthStart = getMonthStart(prevMonthEnd);
   const chorePoints = await exports.getAllChorePoints(residentId, prevMonthStart, prevMonthEnd);
-  const activePercentage = await exports.getActiveResidentPercentage(residentId, prevMonthEnd);
+  const workingPercentage = await exports.getWorkingResidentPercentage(residentId, prevMonthEnd);
 
-  const pointsOwed = pointsPerResident * activePercentage;
+  const pointsOwed = pointsPerResident * workingPercentage;
   const deficiency = Math.max(pointsOwed - chorePoints.sum, 0);
   const truncatedDeficiency = Math.floor(deficiency / penaltyIncrement) * penaltyIncrement;
   return truncatedDeficiency / (2 * penaltyIncrement);
