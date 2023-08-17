@@ -289,14 +289,17 @@ exports.deleteChoreBreak = async function (choreBreakId) {
 
 exports.getChoreBreaks = async function (houseId, now) {
   return db('ChoreBreak')
-    .where({ houseId })
-    .where('startDate', '<=', now)
-    .where('endDate', '>', now)
+    .leftJoin('Resident', 'ChoreBreak.residentId', 'Resident.slackId')
+    .where('ChoreBreak.houseId', houseId)
+    .where('ChoreBreak.startDate', '<=', now)
+    .where('ChoreBreak.endDate', '>', now)
+    .where('Resident.active', true)
+    .where(function () { Admin.residentNotExempt(this, now); })
     .returning('*');
 };
 
 exports.getWorkingResidentCount = async function (houseId, now) {
-  const residents = await Admin.getResidents(houseId);
+  const residents = await Admin.getWorkingResidents(houseId, now);
   const choreBreaks = await exports.getChoreBreaks(houseId, now);
   return residents.length - (new Set(choreBreaks.map(cb => cb.residentId))).size;
 };
@@ -317,11 +320,15 @@ exports.getWorkingResidentPercentage = async function (residentId, now) {
     // })
     .select('*');
 
-  // Add an implicit break the month the resident is added
+  // Add an implicit break the month the resident is added or exempted
   const resident = await Admin.getResident(residentId);
   if (monthStart < resident.activeAt) {
     const activeAt = getDateStart(resident.activeAt);
     choreBreaks.push({ startDate: monthStart, endDate: activeAt });
+  }
+  if (resident.exemptAt !== null & resident.exemptAt < monthEnd) {
+    const exemptAt = getDateStart(resident.exemptAt);
+    choreBreaks.push({ startDate: exemptAt, endDate: monthEnd });
   }
 
   // TODO: implement this more efficiently... currently O(n) but could probably be O(1)

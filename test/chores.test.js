@@ -26,6 +26,7 @@ describe('Chores', async () => {
 
   let now;
   let soon;
+  let tomorrow;
   let challengeEnd;
   let proposalEnd;
 
@@ -35,6 +36,7 @@ describe('Chores', async () => {
 
     now = new Date();
     soon = new Date(now.getTime() + MINUTE);
+    tomorrow = new Date(now.getTime() + DAY);
     challengeEnd = new Date(now.getTime() + choresPollLength);
     proposalEnd = new Date(now.getTime() + choresProposalPollLength);
   });
@@ -223,8 +225,8 @@ describe('Chores', async () => {
     });
 
     it('can calculate the interval since the last chore valuation', async () => {
-      const t0 = new Date(2000, 0, 1); // January 1
-      const t1 = new Date(2000, 0, 2); // January 2
+      const t0 = new Date(3000, 0, 1); // January 1
+      const t1 = new Date(3000, 0, 2); // January 2
 
       await db('ChoreValue').insert([
         { choreId: dishes.id, valuedAt: t0, value: 10 },
@@ -237,7 +239,7 @@ describe('Chores', async () => {
     });
 
     it('can calculate the interval on an hourly basis', async () => {
-      const t0 = new Date(2000, 0, 1);
+      const t0 = new Date(3000, 0, 1);
 
       await db('ChoreValue').insert([
         { choreId: dishes.id, valuedAt: t0, value: 10 }
@@ -270,7 +272,7 @@ describe('Chores', async () => {
       await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
       await Chores.setChorePreference(HOUSE, RESIDENT2, sweeping.id, restock.id, 1);
 
-      const t0 = new Date(2000, 3, 10); // April 10 (30 day month), first update gives 72 hours of value
+      const t0 = new Date(3000, 3, 10); // April 10 (30 day month), first update gives 72 hours of value
       const t1 = new Date(t0.getTime() + 48 * HOUR); // 48 hours later
 
       const intervalScalar1 = await Chores.getChoreValueIntervalScalar(HOUSE, t0);
@@ -290,7 +292,7 @@ describe('Chores', async () => {
     });
 
     it('can get the current, updated chore values ', async () => {
-      const t0 = new Date(2000, 3, 10); // April 10 (30 day month), first update gives 72 hours of value
+      const t0 = new Date(3000, 3, 10); // April 10 (30 day month), first update gives 72 hours of value
       const t1 = new Date(t0.getTime() + 48 * HOUR); // 48 hours later
 
       // Calculate the initial 72 hour update
@@ -493,7 +495,7 @@ describe('Chores', async () => {
 
     it('can query a users valid chore claims within a time range', async () => {
       const monthStart = getMonthStart(now);
-      const y2k = new Date(2000, 1, 1);
+      const y2k = new Date(3000, 1, 1);
 
       await db('ChoreValue').insert([
         { choreId: dishes.id, valuedAt: now, value: 10 },
@@ -606,40 +608,65 @@ describe('Chores', async () => {
     });
 
     it('can add, query, and delete chore breaks', async () => {
-      const oneDay = new Date(now.getTime() + 1 * DAY);
-      const twoDays = new Date(now.getTime() + 2 * DAY);
-
       let choreBreaks;
       choreBreaks = await Chores.getChoreBreaks(HOUSE, now);
       expect(choreBreaks.length).to.equal(0);
 
-      await Chores.addChoreBreak(HOUSE, RESIDENT1, now, oneDay, 'Visiting family');
+      const circumstance = 'Visting family';
+      const [ choreBreak ] = await Chores.addChoreBreak(HOUSE, RESIDENT1, now, tomorrow, circumstance);
 
       choreBreaks = await Chores.getChoreBreaks(HOUSE, now);
       expect(choreBreaks.length).to.equal(1);
-      expect(choreBreaks[0].metadata.circumstance).to.equal('Visiting family');
+      expect(choreBreaks[0].metadata.circumstance).to.equal(circumstance);
 
-      await Chores.deleteChoreBreak(choreBreaks[0].id);
+      await Chores.deleteChoreBreak(choreBreak.id);
 
       choreBreaks = await Chores.getChoreBreaks(HOUSE, now);
       expect(choreBreaks.length).to.equal(0);
+    });
 
-      await Chores.addChoreBreak(HOUSE, RESIDENT2, now, oneDay, '');
+    it('can query chore breaks by day', async () => {
+      const twoDays = new Date(now.getTime() + 2 * DAY);
+
+      await Chores.addChoreBreak(HOUSE, RESIDENT2, now, tomorrow, '');
       await Chores.addChoreBreak(HOUSE, RESIDENT2, now, twoDays, '');
 
+      let choreBreaks;
       choreBreaks = await Chores.getChoreBreaks(HOUSE, now);
       expect(choreBreaks.length).to.equal(2);
-      choreBreaks = await Chores.getChoreBreaks(HOUSE, oneDay);
+      choreBreaks = await Chores.getChoreBreaks(HOUSE, tomorrow);
       expect(choreBreaks.length).to.equal(1);
       choreBreaks = await Chores.getChoreBreaks(HOUSE, twoDays);
       expect(choreBreaks.length).to.equal(0);
     });
 
-    it('can exclude inactive residents from the chore valuing', async () => {
+    it('can exclude breaks by inactive and exempt users', async () => {
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, now, tomorrow, '');
+
+      let choreBreaks;
+      choreBreaks = await Chores.getChoreBreaks(HOUSE, now);
+      expect(choreBreaks.length).to.equal(1);
+
+      await Admin.exemptResident(HOUSE, RESIDENT1, now);
+
+      choreBreaks = await Chores.getChoreBreaks(HOUSE, now);
+      expect(choreBreaks.length).to.equal(0);
+
+      await Admin.activateResident(HOUSE, RESIDENT1, now);
+
+      choreBreaks = await Chores.getChoreBreaks(HOUSE, now);
+      expect(choreBreaks.length).to.equal(1);
+
+      await Admin.deactivateResident(HOUSE, RESIDENT1);
+
+      choreBreaks = await Chores.getChoreBreaks(HOUSE, now);
+      expect(choreBreaks.length).to.equal(0);
+    });
+
+    it('can exclude on-break residents from the chore valuing', async () => {
       await Admin.activateResident(HOUSE, RESIDENT3, now);
       await Admin.activateResident(HOUSE, RESIDENT4, now);
 
-      const oneDay = new Date(now.getTime() + 1 * DAY);
       const twoDays = new Date(now.getTime() + 2 * DAY);
       const oneWeek = new Date(now.getTime() + 7 * DAY);
       const twoWeeks = new Date(now.getTime() + 14 * DAY);
@@ -662,7 +689,7 @@ describe('Chores', async () => {
       expect(residentCount).to.equal(2);
 
       // Can handle overlapping breaks
-      await Chores.addChoreBreak(HOUSE, RESIDENT1, now, oneDay, '');
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, now, tomorrow, '');
       residentCount = await Chores.getWorkingResidentCount(HOUSE, now);
       expect(residentCount).to.equal(2);
 
@@ -681,7 +708,7 @@ describe('Chores', async () => {
       expect(residentCount).to.equal(3);
 
       // Will not count breaks in the future
-      await Chores.addChoreBreak(HOUSE, RESIDENT3, oneDay, oneWeek, '');
+      await Chores.addChoreBreak(HOUSE, RESIDENT3, tomorrow, oneWeek, '');
       residentCount = await Chores.getWorkingResidentCount(HOUSE, now);
       expect(residentCount).to.equal(1);
     });
@@ -812,6 +839,52 @@ describe('Chores', async () => {
       await Chores.addChoreBreak(HOUSE, RESIDENT3, feb22, mar1, '');
       workingPercentage = await Chores.getWorkingResidentPercentage(RESIDENT3, feb1);
       expect(workingPercentage).to.equal(0.5);
+    });
+
+    it('can consider the resident exemptAt when calculating active percentage', async () => {
+      const feb1 = new Date(3000, 1, 1); // February, a 28 day month
+      const feb8 = new Date(feb1.getTime() + 7 * DAY);
+      const feb22 = new Date(feb1.getTime() + 21 * DAY);
+
+      let workingPercentage;
+
+      await Admin.activateResident(HOUSE, RESIDENT3, feb1);
+      await Admin.exemptResident(HOUSE, RESIDENT3, feb22);
+
+      // exemptAt used to create implicit break
+      workingPercentage = await Chores.getWorkingResidentPercentage(RESIDENT3, feb1);
+      expect(workingPercentage).to.equal(0.75);
+
+      // Can combine with regular breaks
+      await Chores.addChoreBreak(HOUSE, RESIDENT3, feb8, feb22, '');
+      workingPercentage = await Chores.getWorkingResidentPercentage(RESIDENT3, feb1);
+      expect(workingPercentage).to.equal(0.25);
+    });
+
+    it('can correctly count working residents when someone is exempt', async () => {
+      const twoDays = new Date(now.getTime() + 2 * DAY);
+
+      let workingResidentCount;
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, now);
+      expect(workingResidentCount).to.equal(2);
+
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, tomorrow, twoDays, '');
+
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, now);
+      expect(workingResidentCount).to.equal(2);
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, tomorrow);
+      expect(workingResidentCount).to.equal(1);
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, twoDays);
+      expect(workingResidentCount).to.equal(2);
+
+      await Admin.exemptResident(HOUSE, RESIDENT1, tomorrow);
+
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, now);
+      expect(workingResidentCount).to.equal(2);
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, tomorrow);
+      expect(workingResidentCount).to.equal(1);
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, twoDays);
+      expect(workingResidentCount).to.equal(1);
     });
   });
 

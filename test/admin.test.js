@@ -133,6 +133,69 @@ describe('Admin', async () => {
       const resident = await Admin.getResident(RESIDENT1);
       expect(resident.activeAt.getTime()).to.equal(now.getTime());
     });
+
+    it('can exempt a resident', async () => {
+      await Admin.activateResident(HOUSE1, RESIDENT1, now);
+
+      let resident;
+      resident = await Admin.getResident(RESIDENT1);
+      expect(resident.active).to.be.true;
+      expect(resident.activeAt.getTime()).to.equal(now.getTime());
+      expect(resident.exemptAt).to.equal(null);
+
+      await Admin.exemptResident(HOUSE1, RESIDENT1, now);
+
+      resident = await Admin.getResident(RESIDENT1);
+      expect(resident.active).to.be.true;
+      expect(resident.activeAt.getTime()).to.equal(now.getTime());
+      expect(resident.exemptAt.getTime()).to.equal(now.getTime());
+
+      await Admin.activateResident(HOUSE1, RESIDENT1, soon);
+
+      resident = await Admin.getResident(RESIDENT1);
+      expect(resident.active).to.be.true;
+      expect(resident.activeAt.getTime()).to.equal(soon.getTime());
+      expect(resident.exemptAt).to.equal(null);
+    });
+
+    it('can exempt a resident idempotently if prior exemption exists', async () => {
+      await Admin.activateResident(HOUSE1, RESIDENT1, now);
+      await Admin.exemptResident(HOUSE1, RESIDENT1, now);
+
+      let resident;
+      resident = await Admin.getResident(RESIDENT1);
+      expect(resident.exemptAt.getTime()).to.equal(now.getTime());
+
+      // Later exemption has no effect
+      await Admin.exemptResident(HOUSE1, RESIDENT1, soon);
+
+      resident = await Admin.getResident(RESIDENT1);
+      expect(resident.exemptAt.getTime()).to.equal(now.getTime());
+
+      // Earlier exemption overwrites current exemption
+      const yesterday = new Date(now.getTime() - DAY);
+      await Admin.exemptResident(HOUSE1, RESIDENT1, yesterday);
+
+      resident = await Admin.getResident(RESIDENT1);
+      expect(resident.exemptAt.getTime()).to.equal(yesterday.getTime());
+    });
+
+    it('can get working residents', async () => {
+      await Admin.activateResident(HOUSE1, RESIDENT1, now);
+      await Admin.activateResident(HOUSE1, RESIDENT2, now);
+
+      let workingResidents;
+      workingResidents = await Admin.getWorkingResidents(HOUSE1, now);
+      expect(workingResidents.length).to.equal(2);
+
+      await Admin.exemptResident(HOUSE1, RESIDENT2, soon);
+
+      // Exemption takes effect after exemptAt
+      workingResidents = await Admin.getWorkingResidents(HOUSE1, now);
+      expect(workingResidents.length).to.equal(2);
+      workingResidents = await Admin.getWorkingResidents(HOUSE1, soon);
+      expect(workingResidents.length).to.equal(1);
+    });
   });
 
   describe('utility functions', async () => {
