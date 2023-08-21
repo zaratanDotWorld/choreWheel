@@ -113,7 +113,7 @@ exports.choresRankView = function () {
   const mainText = 'If you feel a chore should be worth more (or less), you can adjust it\'s *speed*. ' +
     'The *faster* a chore is, the more points it will be worth over time.\n\n' +
     'Speed-setting is a *cumulative* process, where every input makes a difference. ' +
-    'It is also an *ongoing, collaborative* process: you can make small (or large) changes at any time, ' +
+    'It is also an *ongoing, collaborative* process: you can make small (or large) changes _at any time_, ' +
     'and encourage others to do the same.\n\n' +
     'First, decide whether you want to *speed up* or *slow down* a chore.';
 
@@ -151,9 +151,10 @@ exports.choresRankView2 = function (direction, choreRankings) {
   });
 
   const mainText = 'Choose chores to update. ' +
-    'Chore speeds are measured in *points-per-thousand* (ppt) and always add up to *1000*.\n\n' +
-    'You can think of updating as \'taking\' speed from some chores and giving it to others, ' +
-    'since something must get slower for something to get faster.\n\n' +
+    'Chore speeds are measured in *points-per-thousand* (ppt) and always add up to *1000*. ' +
+    'A ppt of *0* means a chore gets no points, while a ppt of *1000* means a chore gets _all_ the points.\n\n' +
+    'You can think of updating as "taking" speed from some chores and giving it to others, ' +
+    'since something must get slower for something to get faster (and vice versa).\n\n' +
     '*Some things to keep in mind:*\n\n' +
     '*1.* Taking from *more chores* has a bigger effect.\n' +
     '*2.* Taking from *faster chores* has a bigger effect.\n' +
