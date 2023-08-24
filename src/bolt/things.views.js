@@ -55,7 +55,7 @@ exports.formatUnfulfilledBuy = function (buy) {
 exports.thingsHomeView = function (balance) {
   const docsURI = 'https://github.com/kronosapiens/mirror/wiki/Things';
   const textA = `We use *<${docsURI}|Things>* to spend money together.\n\n` +
-    'Anyone can propose a buy, which requires *one endorsement per $50*. ' +
+    'Anyone can propose a buy, which requires *one upvote per $50*. ' +
     'Successful buys are fulfilled within *3-5 days*.';
 
   const textB = `The house has *$${balance}* left in the account :moneybag:`;
@@ -129,7 +129,7 @@ exports.thingsBuyCallbackView = function (buy, thing, balance, minVotes) {
 
   const textA = `*<@${buy.boughtBy}>* bought *${formattedBuy}* for *$${-buy.value}*. ` +
     `There's *$${balance}* left in the account :money_with_wings:`;
-  const textB = `*${minVotes} endorsement(s)* are required to pass, ` +
+  const textB = `*${minVotes} upvote(s)* are required to pass, ` +
     `voting closes in *${thingsPollLength / HOUR} hours*`;
 
   return [
@@ -142,7 +142,7 @@ exports.thingsBuyCallbackView = function (buy, thing, balance, minVotes) {
 exports.thingsSpecialBuyView = function (numResidents) {
   const minVotes = Math.ceil(thingsMinPctSpecial * numResidents);
   const mainText = 'Propose a special buy. ' +
-    `Special buys are more flexible, but need a minimum of *${minVotes} endorsements.*\n\n` +
+    `Special buys are more flexible, but need a minimum of *${minVotes} upvotes.*\n\n` +
     'Add relevant information about the buy, including any delivery information. ' +
     'Special buys are fulfilled by the person who proposes them, and then reimbursed. ' +
     'Reimbursements are capped at the amount requested.';
@@ -195,7 +195,7 @@ exports.thingsSpecialBuyCallbackView = function (buy, priorBalance, minVotes) {
 
   const textA = `*<@${buy.boughtBy}>* bought the following for *$${-buy.value}*:`;
   const textB = `There's *$${currentBalance}* left in the account :money_with_wings:\n` +
-    `*${minVotes} endorsement(s)* are required to pass, ` +
+    `*${minVotes} upvote(s)* are required to pass, ` +
     `voting closes in *${thingsSpecialPollLength / HOUR} hours*`;
 
   return [

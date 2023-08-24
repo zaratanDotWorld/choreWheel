@@ -50,8 +50,8 @@ exports.choresClaimView = function (chores) {
     };
   });
 
-  const mainText = 'Claims are verified by the house via emoji vote, and require at least *two* thumbs-up votes. ' +
-    'Posting a picture of the work you did in the channel or thread will help others verify your claim.';
+  const mainText = 'Claims are verified by the house and require at least *two upvotes* (including yours). ' +
+    'Posting pictures in the channel or thread will help others check your work.';
 
   return {
     type: 'modal',
@@ -99,7 +99,7 @@ exports.choresClaimCallbackView = function (claim, choreName, totalPoints, month
 
   const textA = `*<@${claim.claimedBy}>* did *${choreName}* for ` +
     `*${claim.value.toFixed(0)} points* ${achievement}${sparkles}`;
-  const textB = '*2 endorsements* are required to pass, ' +
+  const textB = '*2 upvotes* are required to pass, ' +
     `voting closes in *${choresPollLength / HOUR} hours*`;
 
   return [

@@ -141,7 +141,7 @@ app.command('/things-resolved', async ({ ack, command }) => {
 
   if (command.text === 'help') {
     text = 'Show a list of resolved buys, including their buy id. ' +
-    'Buys are resolved after 12 hours, assuming they have received enough endorsements';
+    'Buys are resolved after 12 hours, assuming they have received enough upvotes';
   } else {
     const houseId = command.team_id;
     const now = new Date();

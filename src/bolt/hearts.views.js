@@ -106,7 +106,7 @@ exports.heartsChallengeView = function (numResidents) {
 exports.heartsChallengeCallbackView = function (challenge, quorum, circumstance) {
   const textA = `*<@${challenge.challengerId}>* challenged *<@${challenge.challengeeId}>* ` +
     `for *${challenge.value} heart(s)*, due to the following circumstance:`;
-  const textB = `*${quorum} endorsements* are required to pass, ` +
+  const textB = `*${quorum} upvotes* are required to pass, ` +
     `voting closes in *${heartsPollLength / HOUR} hours*`;
 
   return [
