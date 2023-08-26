@@ -18,8 +18,8 @@ exports.heartEmoji = function (numHearts) {
 };
 
 exports.heartsHomeView = function (numHearts) {
-  const docsURI = 'https://github.com/kronosapiens/mirror/wiki/Hearts';
-  const textA = `We use *<${docsURI}|Hearts>* to keep each other accountable.\n\n` +
+  const docsUrl = 'https://github.com/zaratanDotWorld/mirror/wiki/Hearts';
+  const textA = `We use *<${docsUrl}|Hearts>* to keep each other accountable.\n\n` +
     'Everyone starts with five hearts. We lose hearts when we fail to uphold our commitments, ' +
     'and we earn them back over time (one-half per month), and by exceeding expectations.';
 
@@ -46,7 +46,7 @@ exports.heartsHomeView = function (numHearts) {
 exports.heartsChallengeView = function (numResidents) {
   const initialQuorum = Math.ceil(numResidents * heartsMinPctInitial);
   const criticalQuorum = Math.ceil(numResidents * heartsMinPctCritical);
-  const resolutionURI = 'https://github.com/kronosapiens/mirror/wiki/Conflict-Resolution';
+  const resolutionUrl = 'https://github.com/zaratanDotWorld/mirror/wiki/Conflict-Resolution';
   const mainText = 'If prior attempts at mediating a conflict have failed, it may be time to raise a public dispute.\n\n' +
     'Choose someone to challenge, a number of hearts to take away, and explain the circumstance. ' +
     'The dispute will go to a house vote, and the loser (potentially you) will lose hearts.\n\n' +
@@ -54,7 +54,7 @@ exports.heartsChallengeView = function (numResidents) {
     `If the challengee will end up with less than *${heartsCriticalNum} hearts*, ` +
     `you will need a minimum of *${criticalQuorum} positive votes*. ` +
     'So please make sure you\'ve spoken to others about the issue before raising a dispute.\n\n' +
-    `*<${resolutionURI}|See here>* for more information about conflict resolution.`;
+    `*<${resolutionUrl}|See here>* for more information about conflict resolution.`;
 
   return {
     type: 'modal',

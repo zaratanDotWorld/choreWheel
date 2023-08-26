@@ -53,8 +53,8 @@ exports.formatUnfulfilledBuy = function (buy) {
 };
 
 exports.thingsHomeView = function (balance) {
-  const docsURI = 'https://github.com/kronosapiens/mirror/wiki/Things';
-  const textA = `We use *<${docsURI}|Things>* to spend money together.\n\n` +
+  const docsUrl = 'https://github.com/zaratanDotWorld/mirror/wiki/Things';
+  const textA = `We use *<${docsUrl}|Things>* to spend money together.\n\n` +
     'Anyone can propose a buy, which requires *one upvote per $50*. ' +
     'Successful buys are fulfilled within *3-5 days*.';
 

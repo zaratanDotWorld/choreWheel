@@ -14,7 +14,7 @@ curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
 source ~/.bashrc
 
 # Set up the repository
-git clone https://github.com/kronosapiens/mirror.git
+git clone https://github.com/zaratanDotWorld/mirror.git
 cd mirror
 nvm use
 npm i

@@ -1,6 +1,6 @@
 [Unit]
 Description=Hearts by Mirror
-Documentation=https://github.com/kronosapiens/mirror
+Documentation=https://github.com/zaratanDotWorld/mirror
 After=network.target
 
 [Service]
