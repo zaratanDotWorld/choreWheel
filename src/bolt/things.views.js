@@ -30,7 +30,7 @@ exports.parseResolvedThingBuys = function (unfulfilledBuys) {
     .filter((buy) => buy.resolvedAt !== null)
     .map((buy) => {
       const resolvedAt = buy.resolvedAt.toLocaleDateString();
-      return `\n#${buy.id} [${resolvedAt}] ${exports.formatUnfulfilledBuy(buy)}`;
+      return `\n#${buy.id} [${resolvedAt}] ${exports.formatBuy(buy)}`;
     });
 };
 
@@ -42,14 +42,24 @@ exports.formatThing = function (thing) {
   }
 };
 
-exports.formatUnfulfilledBuy = function (buy) {
+exports.formatBuy = function (buy) {
+  let text;
+
   if (buy.metadata !== null && buy.metadata.special) {
-    return `Special: ${buy.metadata.title} - $${-buy.value}`;
+    text = `Special: ${buy.metadata.title}`;
   } else if (buy.metadata !== null & buy.thingMetadata !== null) {
-    return `${buy.type}: ${buy.name} (${buy.metadata.quantity} x ${buy.thingMetadata.unit}) - $${-buy.value}`;
+    text = `${buy.type}: ${buy.name} (${buy.metadata.quantity} x ${buy.thingMetadata.unit})`;
   } else {
-    return `${buy.type}: ${buy.name} (?) - $${-buy.value}`;
+    text = `${buy.type}: ${buy.name} (?)`;
   }
+
+  if (buy.thingMetadata !== null && buy.thingMetadata.url) {
+    text = `<${buy.thingMetadata.url}|${text}>`;
+  }
+
+  text = `${text} - $${-buy.value}`;
+
+  return text;
 };
 
 exports.thingsHomeView = function (balance) {
@@ -125,9 +135,13 @@ exports.thingsBuyView = function (things) {
 };
 
 exports.thingsBuyCallbackView = function (buy, thing, balance, minVotes) {
-  const formattedBuy = `${thing.name} (${buy.metadata.quantity} x ${thing.metadata.unit})`;
+  // TODO: clean this up somehow
+  buy.type = thing.type;
+  buy.name = thing.name;
+  buy.thingMetadata = thing.metadata;
+  const formattedBuy = exports.formatBuy(buy);
 
-  const textA = `*<@${buy.boughtBy}>* bought *${formattedBuy}* for *$${-buy.value}*. ` +
+  const textA = `*<@${buy.boughtBy}>* bought *${formattedBuy}*. ` +
     `There's *$${balance}* left in the account :money_with_wings:`;
   const textB = `*${minVotes} upvote(s)* are required to pass, ` +
     `voting closes in *${thingsPollLength / HOUR} hours*`;
@@ -216,12 +230,12 @@ exports.thingsBoughtView = function (unfulfilledBuys, fulfilledBuys7, fulfilledB
 
   const pendingBuysText = unfulfilledBuys
     .filter((buy) => buy.resolvedAt === null)
-    .map((buy) => exports.formatUnfulfilledBuy(buy))
+    .map((buy) => exports.formatBuy(buy))
     .join('\n');
 
   const confirmedBuysText = unfulfilledBuys
     .filter((buy) => buy.resolvedAt !== null)
-    .map((buy) => exports.formatUnfulfilledBuy(buy))
+    .map((buy) => exports.formatBuy(buy))
     .join('\n');
 
   const fulfilledBuys7Text = fulfilledBuys7
