@@ -12,6 +12,8 @@ exports.penaltyIncrement = 10; // Per half heart
 exports.achievementBase = 20;
 exports.implicitPref = 0.1 / 2; // Halve the value since it's used twice
 exports.dampingFactor = 0.99;
+exports.choresProposalPollLength = 3 * DAY;
+exports.choreProposalPct = 0.4;
 
 // Hearts
 exports.heartsPollLength = 3 * DAY;

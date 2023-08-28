@@ -8,7 +8,7 @@ chai.use(chaiAsPromised);
 
 const { Chores, Hearts, Polls, Admin } = require('../src/core/index');
 const { YAY, NAY, DAY, HOUR, MINUTE } = require('../src/constants');
-const { pointsPerResident, inflationFactor, penaltyDelay, choresPollLength } = require('../src/config');
+const { pointsPerResident, inflationFactor, penaltyDelay, choresPollLength, choresProposalPollLength } = require('../src/config');
 const { getMonthStart, getNextMonthStart, getPrevMonthEnd } = require('../src/utils');
 const { db } = require('../src/core/db');
 
@@ -27,30 +27,27 @@ describe('Chores', async () => {
   let now;
   let soon;
   let challengeEnd;
+  let proposalEnd;
 
   before(async () => {
-    await db('Chore').del();
-    await db('Resident').del();
     await db('House').del();
-
     await Admin.updateHouse({ slackId: HOUSE });
-
-    [ dishes ] = await Chores.addChore(HOUSE, 'dishes');
-    [ sweeping ] = await Chores.addChore(HOUSE, 'sweeping');
-    [ restock ] = await Chores.addChore(HOUSE, 'restock');
 
     now = new Date();
     soon = new Date(now.getTime() + MINUTE);
     challengeEnd = new Date(now.getTime() + choresPollLength);
+    proposalEnd = new Date(now.getTime() + choresProposalPollLength);
   });
 
   afterEach(async () => {
+    await db('ChoreProposal').del();
     await db('ChoreBreak').del();
     await db('ChoreClaim').del();
     await db('ChoreValue').del();
     await db('ChorePref').del();
     await db('PollVote').del();
     await db('Heart').del();
+    await db('Chore').del();
     await db('Poll').del();
     await db('Resident').del();
   });
@@ -59,12 +56,16 @@ describe('Chores', async () => {
     beforeEach(async () => {
       await Admin.addResident(HOUSE, RESIDENT1, now);
       await Admin.addResident(HOUSE, RESIDENT2, now);
+
+      [ dishes ] = await Chores.addChore(HOUSE, 'dishes');
+      [ sweeping ] = await Chores.addChore(HOUSE, 'sweeping');
+      [ restock ] = await Chores.addChore(HOUSE, 'restock');
     });
 
     it('can list the existing chores', async () => {
-      const allChores = await Chores.getChores(HOUSE);
+      const chores = await Chores.getChores(HOUSE);
 
-      expect(allChores.length).to.equal(3);
+      expect(chores.length).to.equal(3);
     });
 
     it('can set and query for chore values in a time range', async () => {
@@ -158,6 +159,10 @@ describe('Chores', async () => {
     beforeEach(async () => {
       await Admin.addResident(HOUSE, RESIDENT1, now);
       await Admin.addResident(HOUSE, RESIDENT2, now);
+
+      [ dishes ] = await Chores.addChore(HOUSE, 'dishes');
+      [ sweeping ] = await Chores.addChore(HOUSE, 'sweeping');
+      [ restock ] = await Chores.addChore(HOUSE, 'restock');
     });
 
     it('can return uniform preferences implicitly', async () => {
@@ -304,6 +309,10 @@ describe('Chores', async () => {
       await Admin.addResident(HOUSE, RESIDENT2, getPrevMonthEnd(now));
       await Admin.addResident(HOUSE, RESIDENT3, getPrevMonthEnd(now));
       await Admin.addResident(HOUSE, RESIDENT4, getPrevMonthEnd(now));
+
+      [ dishes ] = await Chores.addChore(HOUSE, 'dishes');
+      [ sweeping ] = await Chores.addChore(HOUSE, 'sweeping');
+      [ restock ] = await Chores.addChore(HOUSE, 'restock');
     });
 
     it('can claim a chore', async () => {
@@ -810,6 +819,10 @@ describe('Chores', async () => {
     beforeEach(async () => {
       await Admin.addResident(HOUSE, RESIDENT1, now);
       await Admin.addResident(HOUSE, RESIDENT2, now);
+
+      [ dishes ] = await Chores.addChore(HOUSE, 'dishes');
+      [ sweeping ] = await Chores.addChore(HOUSE, 'sweeping');
+      [ restock ] = await Chores.addChore(HOUSE, 'restock');
     });
 
     it('can get the largest valid chore claim', async () => {
@@ -858,6 +871,188 @@ describe('Chores', async () => {
       const chorePoints2 = await Chores.getAllChorePoints(RESIDENT2, monthStart, challengeEnd);
       expect(chorePoints1.sum).to.equal(-6);
       expect(chorePoints2.sum).to.equal(6);
+    });
+  });
+
+  describe('editing chores', async () => {
+    beforeEach(async () => {
+      await Admin.addResident(HOUSE, RESIDENT1, now);
+      await Admin.addResident(HOUSE, RESIDENT2, now);
+    });
+
+    it('can add a chore', async () => {
+      let chores;
+      chores = await Chores.getChores(HOUSE);
+      expect(chores.length).to.equal(0);
+
+      const description = 'Rice & beans';
+      const [ proposal ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'cooking', { description }, now);
+
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+
+      await Chores.resolveChoreProposal(proposal.id, proposalEnd);
+
+      chores = await Chores.getChores(HOUSE);
+      expect(chores.length).to.equal(1);
+      expect(chores[0].metadata.description).to.equal(description);
+    });
+
+    it('can overwrite an existing chore', async () => {
+      let chores;
+      chores = await Chores.getChores(HOUSE);
+      expect(chores.length).to.equal(0);
+
+      let proposal;
+      const description = 'Rice & beans';
+      [ proposal ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'cooking', { description }, now);
+
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+
+      await Chores.resolveChoreProposal(proposal.id, proposalEnd);
+
+      chores = await Chores.getChores(HOUSE);
+      expect(chores.length).to.equal(1);
+      expect(chores[0].name).to.equal('cooking');
+      expect(chores[0].metadata.description).to.equal(description);
+
+      const newDescription = 'Rice & beans with hot sauce';
+      [ proposal ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'cooking', { description: newDescription }, now);
+
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+
+      await Chores.resolveChoreProposal(proposal.id, proposalEnd);
+      chores = await Chores.getChores(HOUSE);
+      expect(chores.length).to.equal(1);
+      expect(chores[0].name).to.equal('cooking');
+      expect(chores[0].metadata.description).to.equal(newDescription);
+    });
+
+    it('can delete a chore', async () => {
+      const description = 'Washing dishes';
+      const [ addProposal ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'cleaning', { description }, now);
+
+      await Polls.submitVote(addProposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(addProposal.pollId, RESIDENT2, now, YAY);
+
+      await Chores.resolveChoreProposal(addProposal.id, proposalEnd);
+
+      let chores = await Chores.getChores(HOUSE);
+      expect(chores.length).to.equal(1);
+
+      const [ deleteProposal ] = await Chores.createDeleteChoreProposal(HOUSE, RESIDENT1, addProposal.choreId, addProposal.name, now);
+
+      await Polls.submitVote(deleteProposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(deleteProposal.pollId, RESIDENT2, now, YAY);
+
+      await Chores.resolveChoreProposal(deleteProposal.id, proposalEnd);
+
+      chores = await Chores.getChores(HOUSE);
+      expect(chores.length).to.equal(0);
+    });
+
+    it('can edit a chore', async () => {
+      let description = 'Wash clothes';
+      const [ addProposal ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'laundry', { description }, now);
+
+      await Polls.submitVote(addProposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(addProposal.pollId, RESIDENT2, now, YAY);
+
+      await Chores.resolveChoreProposal(addProposal.id, proposalEnd);
+
+      let chores = await Chores.getChores(HOUSE);
+      const laundry = chores.find(x => x.name === 'laundry');
+      const laundryId = laundry.id;
+      expect(laundry.metadata.description).to.equal(description);
+
+      description = 'Wash and dry clothes';
+      const [ editProposal ] = await Chores.createEditChoreProposal(HOUSE, RESIDENT1, laundry.id, 'laundry2', { description }, now);
+
+      await Polls.submitVote(editProposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(editProposal.pollId, RESIDENT2, now, YAY);
+
+      await Chores.resolveChoreProposal(editProposal.id, proposalEnd);
+
+      chores = await Chores.getChores(HOUSE);
+      const laundry2 = chores.find(x => x.name === 'laundry2');
+      expect(laundry2.id).to.equal(laundryId);
+      expect(laundry2.metadata.description).to.equal(description);
+    });
+
+    it('cannot resolve a proposal before the poll is closed', async () => {
+      const description = 'Rice & beans';
+      const [ proposal ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'cooking', { description }, now);
+
+      await expect(Chores.resolveChoreProposal(proposal.id, soon))
+        .to.be.rejectedWith('Poll not closed!');
+    });
+
+    it('cannot resolve a proposal twice', async () => {
+      const description = 'Rice & beans';
+      const [ proposal ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'cooking', { description }, now);
+
+      await Chores.resolveChoreProposal(proposal.id, proposalEnd);
+
+      await expect(Chores.resolveChoreProposal(proposal.id, proposalEnd))
+        .to.be.rejectedWith('Proposal already resolved!');
+    });
+
+    it('cannot approve a proposal with insufficient votes', async () => {
+      await Admin.addResident(HOUSE, RESIDENT3, now);
+      await Admin.addResident(HOUSE, RESIDENT4, now);
+
+      let chores;
+      chores = await Chores.getChores(HOUSE);
+      expect(chores.length).to.equal(0);
+
+      const description = 'Rice & beans';
+      const [ proposal ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'cooking', { description }, now);
+
+      // 40% of 4 residents is 2 upvotes
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, NAY);
+
+      await Chores.resolveChoreProposal(proposal.id, proposalEnd);
+
+      chores = await Chores.getChores(HOUSE);
+      expect(chores.length).to.equal(0);
+
+      // Cannot resolve again
+      await Polls.submitVote(proposal.pollId, RESIDENT3, now, YAY);
+      await expect(Chores.resolveChoreProposal(proposal.id, proposalEnd))
+        .to.be.rejectedWith('Proposal already resolved!');
+    });
+
+    it('can resolve proposals in bulk', async () => {
+      let chores;
+      chores = await Chores.getChores(HOUSE);
+      expect(chores.length).to.equal(0);
+
+      const [ proposal1 ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'cooking', {}, now);
+      const [ proposal2 ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'laundry', {}, now);
+
+      await Polls.submitVote(proposal1.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal1.pollId, RESIDENT2, now, YAY);
+
+      await Polls.submitVote(proposal2.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal2.pollId, RESIDENT1, now, YAY);
+
+      // Not before the polls close
+      await Chores.resolveChoreProposals(HOUSE, soon);
+      chores = await Chores.getChores(HOUSE);
+      expect(chores.length).to.equal(0);
+
+      // Actually resolve
+      await Chores.resolveChoreProposals(HOUSE, proposalEnd);
+      chores = await Chores.getChores(HOUSE);
+      expect(chores.length).to.equal(2);
+
+      // But not twice
+      await Chores.resolveChoreProposals(HOUSE, proposalEnd);
+      chores = await Chores.getChores(HOUSE);
+      expect(chores.length).to.equal(2);
     });
   });
 });
