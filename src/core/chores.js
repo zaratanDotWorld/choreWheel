@@ -12,7 +12,9 @@ const {
   penaltyDelay,
   choresPollLength,
   implicitPref,
-  dampingFactor
+  dampingFactor,
+  choresProposalPollLength,
+  choreProposalPct
 } = require('../config');
 
 const Admin = require('./admin');
@@ -22,9 +24,9 @@ const { PowerRanker } = require('./power');
 
 // Chores
 
-exports.addChore = async function (houseId, name) {
+exports.addChore = async function (houseId, name, metadata) {
   return db('Chore')
-    .insert({ houseId, name, active: true })
+    .insert({ houseId, name, metadata, active: true })
     .onConflict([ 'houseId', 'name' ]).merge()
     .returning('*');
 };
@@ -33,6 +35,14 @@ exports.deleteChore = async function (houseId, name) {
   return db('Chore')
     .where({ houseId, name })
     .update({ active: false });
+};
+
+// NB: add and edit are distinct actions, since editing supports name changes
+exports.editChore = async function (choreId, name, metadata) {
+  return db('Chore')
+    .where({ id: choreId })
+    .update({ name, metadata, active: true })
+    .returning('*');
 };
 
 exports.getChores = async function (houseId) {
@@ -373,4 +383,79 @@ exports.giftChorePoints = async function (houseId, gifterId, recipientId, gifted
       { houseId, claimedBy: recipientId, claimedAt: giftedAt, value }
     ])
     .returning('*');
+};
+
+// Chore Proposals
+
+exports.createChoreProposal = async function (houseId, proposedBy, choreId, name, metadata, active, now) {
+  const [ poll ] = await Polls.createPoll(now, choresProposalPollLength);
+
+  return db('ChoreProposal')
+    .insert({ houseId, proposedBy, choreId, name, metadata, active, pollId: poll.id })
+    .returning('*');
+};
+
+exports.createAddChoreProposal = async function (houseId, proposedBy, name, metadata, now) {
+  return exports.createChoreProposal(houseId, proposedBy, undefined, name, metadata, true, now);
+};
+
+exports.createDeleteChoreProposal = async function (houseId, proposedBy, choreId, name, now) {
+  return exports.createChoreProposal(houseId, proposedBy, choreId, name, undefined, false, now);
+};
+
+exports.createEditChoreProposal = async function (houseId, proposedBy, choreId, name, metadata, now) {
+  return exports.createChoreProposal(houseId, proposedBy, choreId, name, metadata, true, now);
+};
+
+exports.getChoreProposal = async function (proposalId) {
+  return db('ChoreProposal')
+    .select('*')
+    .where({ id: proposalId })
+    .first();
+};
+
+exports.getChoreProposalMinVotes = async function (houseId) {
+  const residents = await Admin.getResidents(houseId);
+  return Math.ceil(choreProposalPct * residents.length);
+};
+
+exports.resolveChoreProposal = async function (proposalId, now) {
+  const proposal = await exports.getChoreProposal(proposalId);
+  if (proposal.resolvedAt !== null) { throw new Error('Proposal already resolved!'); }
+
+  const poll = await Polls.getPoll(proposal.pollId);
+  if (now < poll.endTime) { throw new Error('Poll not closed!'); }
+
+  const minVotes = await exports.getChoreProposalMinVotes(proposal.houseId);
+  const valid = await Polls.isPollValid(proposal.pollId, minVotes);
+
+  if (valid) {
+    // TODO: Can this be improved upon?
+    if (!proposal.active) {
+      await exports.deleteChore(proposal.houseId, proposal.name);
+    } else if (proposal.choreId) {
+      await exports.editChore(proposal.choreId, proposal.name, proposal.metadata);
+    } else {
+      await exports.addChore(proposal.houseId, proposal.name, proposal.metadata);
+    }
+  }
+
+  return db('ChoreProposal')
+    .where({ id: proposalId })
+    .update({ resolvedAt: now })
+    .returning('*');
+};
+
+exports.resolveChoreProposals = async function (houseId, now) {
+  const resolveableChoreProposals = await db('ChoreProposal')
+    .join('Poll', 'ChoreProposal.pollId', 'Poll.id')
+    .where('ChoreProposal.houseId', houseId)
+    .where('Poll.endTime', '<=', now)
+    .where('ChoreProposal.resolvedAt', null)
+    .orderBy('Poll.endTime') // Ensure sequential resolution
+    .select('ChoreProposal.id');
+
+  for (const proposal of resolveableChoreProposals) {
+    await exports.resolveChoreProposal(proposal.id, now);
+  }
 };

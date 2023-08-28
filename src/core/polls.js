@@ -47,3 +47,8 @@ exports.getPollResultCounts = async function (pollId) {
   const nays = votes.filter(v => v.vote === false).length;
   return { yays, nays };
 };
+
+exports.isPollValid = async function (pollId, minVotes) {
+  const { yays, nays } = await exports.getPollResultCounts(pollId);
+  return (yays >= minVotes && yays > nays);
+};
