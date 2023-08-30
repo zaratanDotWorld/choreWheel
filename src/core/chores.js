@@ -52,6 +52,13 @@ exports.getChores = async function (houseId) {
     .where('active', true);
 };
 
+exports.getChore = async function (choreId) {
+  return db('Chore')
+    .select('*')
+    .where({ id: choreId })
+    .first();
+};
+
 // Chore Preferences
 
 exports.getChorePreferences = async function (houseId) {

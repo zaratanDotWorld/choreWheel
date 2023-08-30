@@ -67,6 +67,9 @@ app.event('app_home_opened', async ({ body, event }) => {
     // Resolve any claims
     await Chores.resolveChoreClaims(houseId, now);
 
+    // Resolve any proposals
+    await Chores.resolveChoreProposals(houseId, now);
+
     // Give monthly penalty if needed
     const [ penaltyHeart ] = await Chores.addChorePenalty(houseId, residentId, now);
     if (penaltyHeart !== undefined && penaltyHeart.value < 0) {
@@ -363,6 +366,145 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
     const text = 'You can\'t gift more points than you have! :face_with_monocle:';
     await common.postEphemeral(app, choresOauth, choresChannel, residentId, text);
   }
+});
+
+// Edit flow
+
+app.action('chores-propose', async ({ ack, body }) => {
+  console.log('chores-propose');
+  await ack();
+
+  const houseId = body.team.id;
+  const minVotes = await Chores.getChoreProposalMinVotes(houseId);
+
+  const view = views.choresProposeView(minVotes);
+  await common.openView(app, choresOauth, body.trigger_id, view);
+});
+
+app.action('chores-propose-2', async ({ ack, body }) => {
+  console.log('chores-propose-2');
+  await ack();
+
+  const houseId = body.team.id;
+  const change = body.actions[0].selected_option.value;
+  const [ ADD, DELETE, EDIT ] = [ 'add', 'delete', 'edit' ];
+
+  let view;
+  if (change === ADD) {
+    view = views.choresProposeAddView();
+  } else if (change === DELETE) {
+    const chores = await Chores.getChores(houseId);
+    view = views.choresProposeDeleteView(chores);
+  } else if (change === EDIT) {
+    const chores = await Chores.getChores(houseId);
+    view = views.choresProposeEditView(chores);
+  } else {
+    console.log(`Unrecognized action: ${change}`);
+  }
+
+  await common.pushView(app, choresOauth, body.trigger_id, view);
+});
+
+app.action('chores-propose-edit', async ({ ack, body }) => {
+  console.log('chores-propose-edit');
+  await ack();
+
+  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
+
+  const choreId = body.actions[0].selected_option.value.split('|')[0];
+
+  const chore = await Chores.getChore(choreId);
+
+  const blocks = views.choresProposeEditView2(chore);
+  await common.pushView(app, choresOauth, body.trigger_id, blocks);
+});
+
+app.view('chores-propose-add-callback', async ({ ack, body }) => {
+  console.log('chores-propose-add-callback');
+  await ack({ response_action: 'clear' });
+
+  const residentId = body.user.id;
+  const houseId = body.team.id;
+  const now = new Date();
+
+  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
+
+  const numBlocks = body.view.blocks.length;
+  const nameBlockId = body.view.blocks[numBlocks - 2].block_id;
+  const descriptionBlockId = body.view.blocks[numBlocks - 1].block_id;
+
+  const name = body.view.state.values[nameBlockId].name.value;
+  const description = body.view.state.values[descriptionBlockId].description.value;
+
+  // TODO: if chore exists, return ephemeral and exit
+  // TODO: combine add and edit callbacks
+
+  // Create the chore proposal
+  const [ proposal ] = await Chores.createAddChoreProposal(houseId, residentId, name, { description }, now);
+  await Polls.submitVote(proposal.pollId, residentId, now, YAY);
+
+  const { choresChannel } = await Admin.getHouse(houseId);
+  const minVotes = await Chores.getChoreProposalMinVotes(houseId);
+
+  const text = 'Someone just proposed a chore edit';
+  const blocks = views.choresProposeAddCallbackView(proposal, residentId, minVotes);
+  await common.postMessage(app, choresOauth, choresChannel, text, blocks);
+});
+
+app.view('chores-propose-delete-callback', async ({ ack, body }) => {
+  console.log('chores-propose-delete-callback');
+  await ack({ response_action: 'clear' });
+
+  const residentId = body.user.id;
+  const houseId = body.team.id;
+  const now = new Date();
+
+  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
+
+  const numBlocks = body.view.blocks.length;
+  const choreBlockId = body.view.blocks[numBlocks - 1].block_id;
+  const [ choreId, choreName ] = body.view.state.values[choreBlockId].chores.selected_option.value.split('|');
+
+  // Create the chore proposal
+  const [ proposal ] = await Chores.createDeleteChoreProposal(houseId, residentId, choreId, choreName, now);
+  await Polls.submitVote(proposal.pollId, residentId, now, YAY);
+
+  const { choresChannel } = await Admin.getHouse(houseId);
+  const minVotes = await Chores.getChoreProposalMinVotes(houseId);
+
+  const text = 'Someone just proposed a chore edit';
+  const blocks = views.choresProposeDeleteCallbackView(proposal, residentId, minVotes);
+  await common.postMessage(app, choresOauth, choresChannel, text, blocks);
+});
+
+app.view('chores-propose-edit-callback', async ({ ack, body }) => {
+  console.log('chores-propose-edit-callback');
+  await ack({ response_action: 'clear' });
+
+  const residentId = body.user.id;
+  const houseId = body.team.id;
+  const now = new Date();
+
+  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
+
+  const numBlocks = body.view.blocks.length;
+  const nameBlockId = body.view.blocks[numBlocks - 2].block_id;
+  const descriptionBlockId = body.view.blocks[numBlocks - 1].block_id;
+
+  const [ choreId, choreName ] = body.view.private_metadata.split('|');
+  const name = body.view.state.values[nameBlockId].name.value;
+  const description = body.view.state.values[descriptionBlockId].description.value;
+
+  // Create the chore proposal
+  const [ proposal ] = await Chores.createEditChoreProposal(houseId, residentId, choreId, name, { description }, now);
+  await Polls.submitVote(proposal.pollId, residentId, now, YAY);
+
+  const { choresChannel } = await Admin.getHouse(houseId);
+  const minVotes = await Chores.getChoreProposalMinVotes(houseId);
+
+  const text = 'Someone just proposed a chore edit';
+  const blocks = views.choresProposeEditCallbackView(proposal, residentId, choreName, minVotes);
+  await common.postMessage(app, choresOauth, choresChannel, text, blocks);
 });
 
 // Voting flow
