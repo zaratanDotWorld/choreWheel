@@ -1,7 +1,7 @@
 const voca = require('voca');
 
 const { HOUR } = require('../constants');
-const { pointsPerResident, achievementBase, choresPollLength, penaltyIncrement } = require('../config');
+const { pointsPerResident, achievementBase, choresPollLength, choresProposalPollLength, penaltyIncrement } = require('../config');
 
 const common = require('./common');
 
@@ -35,7 +35,8 @@ exports.choresHomeView = function (balance, owed, active) {
           { type: 'button', action_id: 'chores-claim', text: { type: 'plain_text', text: 'Claim a chore', emoji: true } },
           { type: 'button', action_id: 'chores-rank', text: { type: 'plain_text', text: 'Set chore speeds', emoji: true } },
           { type: 'button', action_id: 'chores-gift', text: { type: 'plain_text', text: 'Gift your points', emoji: true } },
-          { type: 'button', action_id: 'chores-break', text: { type: 'plain_text', text: 'Take a break', emoji: true } }
+          { type: 'button', action_id: 'chores-break', text: { type: 'plain_text', text: 'Take a break', emoji: true } },
+          { type: 'button', action_id: 'chores-propose', text: { type: 'plain_text', text: 'Edit chores list', emoji: true } }
         ]
       }
     ]
@@ -300,4 +301,219 @@ exports.choresBreakView = function (currentTime) {
       }
     ]
   };
+};
+
+// Chore proposals
+
+exports.choresProposeView = function (minVotes) {
+  const mainText = 'Chores are not set in stone. ' +
+    'If you believe things could be flowing better, consider *adding, removing, or changing* some chores. ' +
+    `As a major house decision, a minimum of *${minVotes} upvotes* are required.\n\n` +
+    'When defining chores, a key challenge is finding the right "size". ' +
+    'Bigger chores are harder to do, but easier to prioritize and evaluate. ' +
+    'Smaller chores are the opposite -- easier to do, but harder to prioritize and evaluate.\n\n' +
+    'Ultimately, finding the right balance is an ongoing discovery process.';
+
+  return {
+    type: 'modal',
+    title: { type: 'plain_text', text: 'Chores', emoji: true },
+    close: { type: 'plain_text', text: 'Cancel', emoji: true },
+    blocks: [
+      { type: 'header', text: { type: 'plain_text', text: 'Edit chores list', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
+      {
+        type: 'actions',
+        elements: [
+          {
+            type: 'radio_buttons',
+            action_id: 'chores-propose-2',
+            options: [
+              { text: { type: 'mrkdwn', text: '*Add* a new chore' }, value: 'add' },
+              { text: { type: 'mrkdwn', text: '*Remove* an existing chore' }, value: 'delete' },
+              { text: { type: 'mrkdwn', text: '*Change* an existing chore' }, value: 'edit' }
+            ]
+          }
+        ]
+      }
+    ]
+  };
+};
+
+exports.choresProposeAddView = function () {
+  const mainText = 'Add a new chore.';
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-propose-add-callback',
+    title: { type: 'plain_text', text: 'Chores', emoji: true },
+    submit: { type: 'plain_text', text: 'Submit', emoji: true },
+    close: { type: 'plain_text', text: 'Cancel', emoji: true },
+    blocks: [
+      { type: 'header', text: { type: 'plain_text', text: 'Edit chores list', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Name', emoji: true },
+        element: {
+          type: 'plain_text_input',
+          placeholder: { type: 'plain_text', text: 'Name of the chore', emoji: true },
+          action_id: 'name'
+        }
+      },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Description', emoji: true },
+        element: {
+          type: 'plain_text_input',
+          multiline: true,
+          placeholder: { type: 'plain_text', text: 'Describe the chore (bullet points work well)', emoji: true },
+          action_id: 'description'
+        }
+      }
+    ]
+  };
+};
+
+exports.choresProposeDeleteView = function (chores) {
+  const mappedChores = chores.map((chore) => {
+    return {
+      value: `${chore.id}|${chore.name}`,
+      text: { type: 'plain_text', text: chore.name, emoji: true }
+    };
+  });
+
+  const mainText = 'Remove an existing chore.';
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-propose-delete-callback',
+    title: { type: 'plain_text', text: 'Chores', emoji: true },
+    submit: { type: 'plain_text', text: 'Submit', emoji: true },
+    close: { type: 'plain_text', text: 'Cancel', emoji: true },
+    blocks: [
+      { type: 'header', text: { type: 'plain_text', text: 'Edit chores list', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Chore to remove', emoji: true },
+        element: {
+          type: 'static_select',
+          action_id: 'chores',
+          placeholder: { type: 'plain_text', text: 'Choose a chore', emoji: true },
+          options: mappedChores
+        }
+      }
+    ]
+  };
+};
+
+exports.choresProposeEditView = function (chores) {
+  const mappedChores = chores.map((chore) => {
+    return {
+      value: `${chore.id}|${chore.name}`,
+      text: { type: 'plain_text', text: chore.name, emoji: true }
+    };
+  });
+
+  const mainText = 'Change an existing chore.';
+
+  return {
+    type: 'modal',
+    title: { type: 'plain_text', text: 'Chores', emoji: true },
+    close: { type: 'plain_text', text: 'Cancel', emoji: true },
+    blocks: [
+      { type: 'header', text: { type: 'plain_text', text: 'Edit chores list', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
+      {
+        type: 'actions',
+        elements: [
+          {
+            type: 'static_select',
+            action_id: 'chores-propose-edit',
+            placeholder: { type: 'plain_text', text: 'Choose a chore', emoji: true },
+            options: mappedChores
+          }
+        ]
+      }
+    ]
+  };
+};
+
+exports.choresProposeEditView2 = function (chore) {
+  const mainText = 'Change an existing chore.';
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-propose-edit-callback',
+    private_metadata: `${chore.id}|${chore.name}`,
+    title: { type: 'plain_text', text: 'Chores', emoji: true },
+    submit: { type: 'plain_text', text: 'Submit', emoji: true },
+    close: { type: 'plain_text', text: 'Cancel', emoji: true },
+    blocks: [
+      { type: 'header', text: { type: 'plain_text', text: 'Edit chores list', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Name', emoji: true },
+        element: {
+          type: 'plain_text_input',
+          placeholder: { type: 'plain_text', text: 'Name of the chore', emoji: true },
+          initial_value: chore.name,
+          action_id: 'name'
+        }
+      },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Description', emoji: true },
+        element: {
+          type: 'plain_text_input',
+          multiline: true,
+          initial_value: (chore.metadata) ? chore.metadata.description : undefined,
+          placeholder: { type: 'plain_text', text: 'Describe the chore (bullet points work well)', emoji: true },
+          action_id: 'description'
+        }
+      }
+    ]
+  };
+};
+
+exports.choresProposeAddCallbackView = function (proposal, proposer, minVotes) {
+  const textA = `*<@${proposer}>* wants to *add* a chore:`;
+  const textB = `*${minVotes} upvotes* are required to pass, ` +
+    `voting closes in *${choresProposalPollLength / HOUR} hours*`;
+
+  return [
+    { type: 'section', text: { type: 'mrkdwn', text: textA } },
+    { type: 'section', text: { type: 'mrkdwn', text: `*${proposal.name}*` } },
+    { type: 'section', text: { type: 'mrkdwn', text: proposal.metadata.description } },
+    { type: 'section', text: { type: 'mrkdwn', text: textB } },
+    { type: 'actions', elements: common.makeVoteButtons(proposal.pollId, 1, 0) }
+  ];
+};
+
+exports.choresProposeDeleteCallbackView = function (proposal, proposer, minVotes) {
+  const textA = `*<@${proposer}>* wants to *delete* a chore:`;
+  const textB = `*${minVotes} upvotes* are required to pass, ` +
+    `voting closes in *${choresProposalPollLength / HOUR} hours*`;
+
+  return [
+    { type: 'section', text: { type: 'mrkdwn', text: textA } },
+    { type: 'section', text: { type: 'mrkdwn', text: `*${proposal.name}*` } },
+    { type: 'section', text: { type: 'mrkdwn', text: textB } },
+    { type: 'actions', elements: common.makeVoteButtons(proposal.pollId, 1, 0) }
+  ];
+};
+
+exports.choresProposeEditCallbackView = function (proposal, proposer, choreName, minVotes) {
+  const textA = `*<@${proposer}>* wants to *edit* the *${choreName}* chore:`;
+  const textB = `*${minVotes} upvotes* are required to pass, ` +
+    `voting closes in *${choresProposalPollLength / HOUR} hours*`;
+
+  return [
+    { type: 'section', text: { type: 'mrkdwn', text: textA } },
+    { type: 'section', text: { type: 'mrkdwn', text: `*${proposal.name}*` } },
+    { type: 'section', text: { type: 'mrkdwn', text: proposal.metadata.description } },
+    { type: 'section', text: { type: 'mrkdwn', text: textB } },
+    { type: 'actions', elements: common.makeVoteButtons(proposal.pollId, 1, 0) }
+  ];
 };
