@@ -52,6 +52,16 @@ exports.postMessage = async function (app, oauth, channelId, text, blocks) {
   });
 };
 
+exports.postReply = async function (app, oauth, channelId, ts, text, blocks) {
+  return app.client.chat.postMessage({
+    token: oauth.bot.token,
+    channel: channelId,
+    thread_ts: ts,
+    text,
+    blocks
+  });
+};
+
 exports.publishHome = async function (app, oauth, residentId, view) {
   await app.client.views.publish({
     token: oauth.bot.token,
