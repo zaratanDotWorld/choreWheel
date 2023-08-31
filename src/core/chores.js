@@ -31,6 +31,7 @@ exports.addChore = async function (houseId, name, metadata) {
     .returning('*');
 };
 
+// TODO: Can this be combined into editChore?
 exports.deleteChore = async function (houseId, name) {
   return db('Chore')
     .where({ houseId, name })

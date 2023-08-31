@@ -16,14 +16,6 @@ features:
     - command: /chores-sync
       url: https://chores.mirror.zaratan.world/slack/events
       description: Sync active residents
-    - command: /chores-add
-      url: https://chores.mirror.zaratan.world/slack/events
-      description: Add a chore
-      usage_hint: "[name]"
-    - command: /chores-del
-      url: https://chores.mirror.zaratan.world/slack/events
-      description: Delete a chore
-      usage_hint: "[name]"
 oauth_config:
   redirect_urls:
     - https://chores.mirror.zaratan.world/slack/oauth_redirect

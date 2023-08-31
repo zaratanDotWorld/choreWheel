@@ -96,46 +96,6 @@ app.command('/chores-channel', async ({ ack, command }) => {
   await common.setChannel(app, choresOauth, 'choresChannel', command);
 });
 
-app.command('/chores-add', async ({ ack, command }) => {
-  console.log('/chores-add');
-  await ack();
-
-  let text;
-
-  if (command.text === 'help' || command.text.length === 0) {
-    text = 'Enter the name of a new chore to add it to the list. ' +
-    'If the chore already exists, the command does nothing.';
-  } else if (await common.isAdmin(app, choresOauth, command)) {
-    const choreName = views.formatChoreName(command.text);
-    await Chores.addChore(command.team_id, choreName);
-    text = `${choreName} added to the chores list :star-struck:`;
-  } else {
-    text = ':warning: Only admins can update the chore list...';
-  }
-
-  await common.replyEphemeral(app, choresOauth, command, text);
-});
-
-app.command('/chores-del', async ({ ack, command }) => {
-  console.log('/chores-del');
-  await ack();
-
-  let text;
-
-  if (command.text === 'help' || command.text.length === 0) {
-    text = 'Enter the name of an existing chore to delete it from the list. ' +
-    'If no matching chore is found, the command does nothing.';
-  } else if (await common.isAdmin(app, choresOauth, command)) {
-    const choreName = views.formatChoreName(command.text);
-    await Chores.deleteChore(command.team_id, choreName);
-    text = `${choreName} removed from the chores list :sob:`;
-  } else {
-    text = ':warning: Only admins can update the chore list...';
-  }
-
-  await common.replyEphemeral(app, choresOauth, command, text);
-});
-
 // Claim flow
 
 app.action('chores-claim', async ({ ack, body }) => {
@@ -433,7 +393,7 @@ app.view('chores-propose-add-callback', async ({ ack, body }) => {
   const nameBlockId = body.view.blocks[numBlocks - 2].block_id;
   const descriptionBlockId = body.view.blocks[numBlocks - 1].block_id;
 
-  const name = body.view.state.values[nameBlockId].name.value;
+  const name = views.formatChoreName(body.view.state.values[nameBlockId].name.value);
   const description = body.view.state.values[descriptionBlockId].description.value;
 
   // TODO: if chore exists, return ephemeral and exit
@@ -492,7 +452,7 @@ app.view('chores-propose-edit-callback', async ({ ack, body }) => {
   const descriptionBlockId = body.view.blocks[numBlocks - 1].block_id;
 
   const [ choreId, choreName ] = body.view.private_metadata.split('|');
-  const name = body.view.state.values[nameBlockId].name.value;
+  const name = views.formatChoreName(body.view.state.values[nameBlockId].name.value);
   const description = body.view.state.values[descriptionBlockId].description.value;
 
   // Create the chore proposal
