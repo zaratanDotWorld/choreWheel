@@ -410,7 +410,7 @@ describe('Chores', async () => {
       expect(claimResolution).to.be.undefined;
     });
 
-    it('cannot successfully resolve a claim without two positive votes', async () => {
+    it('cannot successfully resolve a claim without at least two upvotes', async () => {
       await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10 } ]);
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
 

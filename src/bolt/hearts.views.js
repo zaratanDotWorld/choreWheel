@@ -50,9 +50,9 @@ exports.heartsChallengeView = function (numResidents) {
   const mainText = 'If prior attempts at mediating a conflict have failed, it may be time to raise a public dispute.\n\n' +
     'Choose someone to challenge, a number of hearts to take away, and explain the circumstance. ' +
     'The dispute will go to a house vote, and the loser (potentially you) will lose hearts.\n\n' +
-    `To succeed, you will need a minimum of *${initialQuorum} positive votes*. ` +
+    `To succeed, you will need a minimum of *${initialQuorum} upvotes*. ` +
     `If the challengee will end up with less than *${heartsCriticalNum} hearts*, ` +
-    `you will need a minimum of *${criticalQuorum} positive votes*. ` +
+    `you will need a minimum of *${criticalQuorum} upvotes*. ` +
     'So please make sure you\'ve spoken to others about the issue before raising a dispute.\n\n' +
     `*<${resolutionUrl}|See here>* for more information about conflict resolution.`;
 
