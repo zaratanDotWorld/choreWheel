@@ -1,7 +1,7 @@
 const voca = require('voca');
 
 const { HOUR } = require('../constants');
-const { thingsMinPctSpecial, thingsPollLength, thingsSpecialPollLength } = require('../config');
+const { thingsMinPctSpecial, thingsMaxPct, thingsPollLength, thingsSpecialPollLength } = require('../config');
 
 const { makeVoteButtons } = require('./common');
 
@@ -65,7 +65,7 @@ exports.formatBuy = function (buy) {
 exports.thingsHomeView = function (balance) {
   const docsUrl = 'https://github.com/zaratanDotWorld/mirror/wiki/Things';
   const textA = `We use *<${docsUrl}|Things>* to spend money together.\n\n` +
-    'Anyone can propose a buy, which requires *one upvote per $50*. ' +
+    'Anyone can propose a buy, which requires *1 upvote per $50*. ' +
     'Successful buys are fulfilled within *3-5 days*.';
 
   const textB = `The house has *$${balance}* left in the account :moneybag:`;
@@ -155,8 +155,10 @@ exports.thingsBuyCallbackView = function (buy, thing, balance, minVotes) {
 
 exports.thingsSpecialBuyView = function (numResidents) {
   const minVotes = Math.ceil(thingsMinPctSpecial * numResidents);
+  const maxVotes = Math.ceil(thingsMaxPct * numResidents);
+
   const mainText = 'Propose a special buy. ' +
-    `Special buys are more flexible, but need a minimum of *${minVotes} upvotes.*\n\n` +
+    `Special buys are more flexible, but need a minimum of *${minVotes}* (max *${maxVotes}*) *upvote(s).*\n\n` +
     'Add relevant information about the buy, including any delivery information. ' +
     'Special buys are fulfilled by the person who proposes them, and then reimbursed. ' +
     'Reimbursements are capped at the amount requested.';
@@ -204,18 +206,16 @@ exports.thingsSpecialBuyView = function (numResidents) {
   };
 };
 
-exports.thingsSpecialBuyCallbackView = function (buy, priorBalance, minVotes) {
-  const currentBalance = priorBalance + buy.value;
-
+exports.thingsSpecialBuyCallbackView = function (buy, balance, minVotes) {
   const textA = `*<@${buy.boughtBy}>* bought the following for *$${-buy.value}*:`;
-  const textB = `There's *$${currentBalance}* left in the account :money_with_wings:\n` +
+  const textB = `There's *$${balance}* left in the account :money_with_wings:\n` +
     `*${minVotes} upvote(s)* are required to pass, ` +
     `voting closes in *${thingsSpecialPollLength / HOUR} hours*`;
 
   return [
     { type: 'section', text: { type: 'mrkdwn', text: textA } },
     { type: 'section', text: { type: 'mrkdwn', text: `*${buy.metadata.title}*` } },
-    { type: 'section', text: { type: 'mrkdwn', text: `_${buy.metadata.details}_` } },
+    { type: 'section', text: { type: 'mrkdwn', text: buy.metadata.details } },
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
     { type: 'actions', elements: makeVoteButtons(buy.pollId, 1, 0) }
   ];

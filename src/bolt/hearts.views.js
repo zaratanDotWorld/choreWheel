@@ -103,15 +103,15 @@ exports.heartsChallengeView = function (numResidents) {
   };
 };
 
-exports.heartsChallengeCallbackView = function (challenge, quorum, circumstance) {
+exports.heartsChallengeCallbackView = function (challenge, minVotes, circumstance) {
   const textA = `*<@${challenge.challengerId}>* challenged *<@${challenge.challengeeId}>* ` +
     `for *${challenge.value} heart(s)*, due to the following circumstance:`;
-  const textB = `*${quorum} upvotes* are required to pass, ` +
+  const textB = `*${minVotes} upvote(s)* are required to pass, ` +
     `voting closes in *${heartsPollLength / HOUR} hours*`;
 
   return [
     { type: 'section', text: { type: 'mrkdwn', text: textA } },
-    { type: 'section', text: { type: 'mrkdwn', text: `_${circumstance}_` } },
+    { type: 'section', text: { type: 'mrkdwn', text: circumstance } },
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
     { type: 'actions', elements: common.makeVoteButtons(challenge.pollId, 1, 0) }
   ];
