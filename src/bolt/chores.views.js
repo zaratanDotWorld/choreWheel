@@ -51,7 +51,7 @@ exports.choresClaimView = function (chores) {
     };
   });
 
-  const mainText = 'Claims are verified by the house and require at least *two upvotes* (including yours). ' +
+  const mainText = 'Claims are verified by the house and require at least *2 upvotes* (including yours). ' +
     'Posting pictures in the channel or thread will help others check your work.';
 
   return {
@@ -308,7 +308,7 @@ exports.choresBreakView = function (currentTime) {
 exports.choresProposeView = function (minVotes) {
   const mainText = 'Chores are not set in stone. ' +
     'If you believe things could be flowing better, consider *adding, removing, or changing* some chores. ' +
-    `As a major house decision, a minimum of *${minVotes} upvotes* are required.\n\n` +
+    `As a major house decision, a minimum of *${minVotes} upvote(s)* are required.\n\n` +
     'When defining chores, a key challenge is finding the right "size". ' +
     'Bigger chores are harder to do, but easier to prioritize and evaluate. ' +
     'Smaller chores are the opposite -- easier to do, but harder to prioritize and evaluate.\n\n' +
@@ -479,7 +479,7 @@ exports.choresProposeEditView2 = function (chore) {
 
 exports.choresProposeAddCallbackView = function (proposal, proposer, minVotes) {
   const textA = `*<@${proposer}>* wants to *add* a chore:`;
-  const textB = `*${minVotes} upvotes* are required to pass, ` +
+  const textB = `*${minVotes} upvote(s)* are required to pass, ` +
     `voting closes in *${choresProposalPollLength / HOUR} hours*`;
 
   return [
@@ -493,7 +493,7 @@ exports.choresProposeAddCallbackView = function (proposal, proposer, minVotes) {
 
 exports.choresProposeDeleteCallbackView = function (proposal, proposer, minVotes) {
   const textA = `*<@${proposer}>* wants to *delete* a chore:`;
-  const textB = `*${minVotes} upvotes* are required to pass, ` +
+  const textB = `*${minVotes} upvote(s)* are required to pass, ` +
     `voting closes in *${choresProposalPollLength / HOUR} hours*`;
 
   return [
@@ -506,7 +506,7 @@ exports.choresProposeDeleteCallbackView = function (proposal, proposer, minVotes
 
 exports.choresProposeEditCallbackView = function (proposal, proposer, choreName, minVotes) {
   const textA = `*<@${proposer}>* wants to *edit* the *${choreName}* chore:`;
-  const textB = `*${minVotes} upvotes* are required to pass, ` +
+  const textB = `*${minVotes} upvote(s)* are required to pass, ` +
     `voting closes in *${choresProposalPollLength / HOUR} hours*`;
 
   return [
