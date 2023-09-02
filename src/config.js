@@ -12,7 +12,7 @@ exports.penaltyIncrement = 10; // Per half heart
 exports.achievementBase = 20;
 exports.implicitPref = 0.1 / 2; // Halve the value since it's used twice
 exports.dampingFactor = 0.99;
-exports.choresProposalPollLength = 3 * DAY;
+exports.choresProposalPollLength = 2 * DAY;
 exports.choreProposalPct = 0.4;
 
 // Hearts
@@ -27,8 +27,8 @@ exports.karmaProportion = 3;
 exports.karmaMaxHearts = 7;
 
 // Things
-exports.thingsPollLength = 12 * HOUR;
-exports.thingsSpecialPollLength = 3 * DAY;
+exports.thingsPollLength = 6 * HOUR;
+exports.thingsSpecialPollLength = 2 * DAY;
 exports.thingsMinVotesScalar = 50; // One vote per $50
 exports.thingsMinPctSpecial = 0.3; // Minimum threshold for special buys
 exports.thingsMaxPct = 0.6; // Maximum approval threshold
