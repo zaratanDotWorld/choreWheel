@@ -109,17 +109,25 @@ app.action('chores-claim', async ({ ack, body }) => {
   await common.openView(app, choresOauth, body.trigger_id, view);
 });
 
+app.action('chores-claim-2', async ({ ack, body }) => {
+  console.log('chores-claim-2');
+  await ack();
+
+  const choreId = body.actions[0].selected_option.value.split('|')[0];
+  const chore = await Chores.getChore(choreId);
+
+  const view = views.choresClaimView2(chore);
+  await common.pushView(app, choresOauth, body.trigger_id, view);
+});
+
 app.view('chores-claim-callback', async ({ ack, body }) => {
   console.log('chores-claim-callback');
-  await ack();
+  await ack({ response_action: 'clear' });
 
   const residentId = body.user.id;
   const houseId = body.team.id;
 
-  // // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-  const blockIndex = body.view.blocks.length - 1;
-  const blockId = body.view.blocks[blockIndex].block_id;
-  const [ choreId, choreName ] = body.view.state.values[blockId].options.selected_option.value.split('|');
+  const [ choreId, choreName ] = body.view.private_metadata.split('|');
 
   // TODO: Return error to user (not console) if channel is not set
   const { choresChannel } = await Admin.getHouse(houseId);
@@ -376,10 +384,7 @@ app.action('chores-propose-edit', async ({ ack, body }) => {
   console.log('chores-propose-edit');
   await ack();
 
-  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-
   const choreId = body.actions[0].selected_option.value.split('|')[0];
-
   const chore = await Chores.getChore(choreId);
 
   const blocks = views.choresProposeEditView2(chore);

@@ -56,23 +56,39 @@ exports.choresClaimView = function (chores) {
 
   return {
     type: 'modal',
+    title: { type: 'plain_text', text: 'Chores', emoji: true },
+    close: { type: 'plain_text', text: 'Cancel', emoji: true },
+    blocks: [
+      { type: 'header', text: { type: 'plain_text', text: 'Claim a chore', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
+      { type: 'section', text: { type: 'mrkdwn', text: '*Chore to claim*' } },
+      {
+        type: 'actions',
+        elements: [ {
+          type: 'static_select',
+          action_id: 'chores-claim-2',
+          placeholder: { type: 'plain_text', text: 'Choose a chore', emoji: true },
+          options: mappedChores
+        } ]
+      }
+    ]
+  };
+};
+
+exports.choresClaimView2 = function (chore) {
+  const description = (chore.metadata) ? chore.metadata.description : '';
+
+  return {
+    type: 'modal',
     callback_id: 'chores-claim-callback',
+    private_metadata: `${chore.id}|${chore.name}`,
     title: { type: 'plain_text', text: 'Chores', emoji: true },
     submit: { type: 'plain_text', text: 'Claim', emoji: true },
     close: { type: 'plain_text', text: 'Cancel', emoji: true },
     blocks: [
       { type: 'header', text: { type: 'plain_text', text: 'Claim a chore', emoji: true } },
-      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
-      {
-        type: 'input',
-        label: { type: 'plain_text', text: 'Chore to claim', emoji: true },
-        element: {
-          type: 'static_select',
-          action_id: 'options',
-          placeholder: { type: 'plain_text', text: 'Choose a chore', emoji: true },
-          options: mappedChores
-        }
-      }
+      { type: 'section', text: { type: 'mrkdwn', text: `*${chore.name}*` } },
+      { type: 'section', text: { type: 'mrkdwn', text: description } }
     ]
   };
 };
