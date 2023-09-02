@@ -150,14 +150,15 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
 
   const text = 'Someone just completed a chore';
   const blocks = views.choresClaimCallbackView(claim, choreName, recentPoints, monthlyPoints);
-  const { ts } = await common.postMessage(app, choresOauth, choresChannel, text, blocks);
+  await common.postMessage(app, choresOauth, choresChannel, text, blocks);
 
-  // Append the description
-  const chore = await Chores.getChore(choreId);
-  if (chore.metadata && chore.metadata.description) {
-    const text = `*${chore.name}:*\n\n${chore.metadata.description}`;
-    await common.postReply(app, choresOauth, choresChannel, ts, text);
-  }
+  // Temporarily emit this functionality
+  // // Append the description
+  // const chore = await Chores.getChore(choreId);
+  // if (chore.metadata && chore.metadata.description) {
+  //   const text = `*${chore.name}:*\n\n${chore.metadata.description}`;
+  //   await common.postReply(app, choresOauth, choresChannel, ts, text);
+  // }
 });
 
 // Ranking flow
