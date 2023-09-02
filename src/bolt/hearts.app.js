@@ -138,15 +138,21 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
   const { heartsChannel } = await Admin.getHouse(houseId);
   if (heartsChannel === null) { throw new Error('Hearts channel not set!'); }
 
-  // Initiate the challenge
-  const now = new Date();
-  const quorum = await Hearts.getChallengeQuorum(houseId, challengeeId, numHearts, now);
-  const [ challenge ] = await Hearts.issueChallenge(houseId, residentId, challengeeId, numHearts, now, circumstance);
-  await Polls.submitVote(challenge.pollId, residentId, now, YAY);
+  const unresolvedChallenges = await Hearts.getUnresolvedChallenges(houseId, challengeeId);
+  if (unresolvedChallenges.length) {
+    const text = `<@${challengeeId}> is already being challenged!`;
+    await common.postEphemeral(app, heartsOauth, heartsChannel, residentId, text);
+  } else {
+    // Initiate the challenge
+    const now = new Date();
+    const quorum = await Hearts.getChallengeQuorum(houseId, challengeeId, numHearts, now);
+    const [ challenge ] = await Hearts.issueChallenge(houseId, residentId, challengeeId, numHearts, now, circumstance);
+    await Polls.submitVote(challenge.pollId, residentId, now, YAY);
 
-  const text = 'Someone just issued a hearts challenge';
-  const blocks = views.heartsChallengeCallbackView(challenge, quorum, circumstance);
-  await common.postMessage(app, heartsOauth, heartsChannel, text, blocks);
+    const text = 'Someone just issued a hearts challenge';
+    const blocks = views.heartsChallengeCallbackView(challenge, quorum, circumstance);
+    await common.postMessage(app, heartsOauth, heartsChannel, text, blocks);
+  }
 });
 
 // Board flow

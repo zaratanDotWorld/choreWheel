@@ -26,7 +26,6 @@ describe('Hearts', async () => {
   let twoMonths;
 
   before(async () => {
-    await db('Chore').del();
     await db('Resident').del();
     await db('House').del();
 
@@ -187,6 +186,7 @@ describe('Hearts', async () => {
     beforeEach(async () => {
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
       await Hearts.initialiseResident(HOUSE, RESIDENT2, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT3, now);
     });
 
     it('can issue a challenge', async () => {
@@ -245,20 +245,23 @@ describe('Hearts', async () => {
 
     it('can resolve challenges in bulk', async () => {
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now, '');
-      await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now, '');
-      await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, soon, '');
+      await Hearts.issueChallenge(HOUSE, RESIDENT3, RESIDENT1, 2, now, '');
+      await Hearts.issueChallenge(HOUSE, RESIDENT2, RESIDENT3, 3, soon, '');
 
       await Polls.submitVote(challenge.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(challenge.pollId, RESIDENT3, now, YAY);
       await Polls.submitVote(challenge.pollId, RESIDENT4, now, YAY);
       await Polls.submitVote(challenge.pollId, RESIDENT5, now, YAY);
 
+      // Challenger 1 wins, challenger 2 loses, challenge 3 is not yet resolved
       await Hearts.resolveChallenges(HOUSE, challengeEnd);
 
       const hearts1 = await Hearts.getHearts(RESIDENT1, challengeEnd);
       const hearts2 = await Hearts.getHearts(RESIDENT2, challengeEnd);
-      expect(hearts1.sum).to.equal(4);
+      const hearts3 = await Hearts.getHearts(RESIDENT3, challengeEnd);
+      expect(hearts1.sum).to.equal(5);
       expect(hearts2.sum).to.equal(4);
+      expect(hearts3.sum).to.equal(3);
     });
 
     it('cannot resolve a challenge before the poll is closed', async () => {
@@ -303,6 +306,21 @@ describe('Hearts', async () => {
 
       await expect(Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT1, 1, now, ''))
         .to.be.rejectedWith(dbError);
+    });
+
+    it('cannot issue a challenge if one already exists for the challengee', async () => {
+      const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 2, now, 'Rude behavior');
+
+      await expect(Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 2, now, 'Ruder behavior'))
+        .to.be.rejectedWith('Active challenge exists!');
+
+      // Challenger can challenge again
+      await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT3, 2, now, 'Rudest behavior');
+
+      await Hearts.resolveChallenge(challenge.id, challengeEnd);
+
+      // But now you can
+      await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 2, now, 'Ruder behavior');
     });
   });
 

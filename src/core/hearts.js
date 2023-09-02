@@ -82,6 +82,10 @@ exports.regenerateHearts = async function (houseId, residentId, currentTime) {
 // Challenges
 
 exports.issueChallenge = async function (houseId, challengerId, challengeeId, value, challengedAt, circumstance) {
+  const unresolvedChallenges = await exports.getUnresolvedChallenges(houseId, challengeeId);
+
+  if (unresolvedChallenges.length) { throw new Error('Active challenge exists!'); }
+
   const [ poll ] = await Polls.createPoll(challengedAt, heartsPollLength);
 
   return db('HeartChallenge')
@@ -94,6 +98,12 @@ exports.getChallenge = async function (challengeId) {
     .select('*')
     .where('id', challengeId)
     .first();
+};
+
+exports.getUnresolvedChallenges = async function (houseId, challengeeId) {
+  return db('HeartChallenge')
+    .where({ houseId, challengeeId, heartId: null })
+    .select('*');
 };
 
 exports.getChallengeQuorum = async function (houseId, challengeeId, value, challengedAt) {
