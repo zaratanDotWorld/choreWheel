@@ -153,15 +153,11 @@ exports.resolveChallenges = async function (houseId, currentTime) {
 
 // Karma
 
-exports.getKarmaRecipients = function (message) {
-  const regex = /<@(\w+)>\s*\+\+/g; // Matches`<@username>++`
-  const matches = [];
-
+exports.getKarmaRecipients = function (text) {
   let match;
-  while ((match = regex.exec(message))) {
-    matches.push(match[1]);
-  }
-
+  const matches = [];
+  const regex = /<@(\w+)>\s*\+\+/g; // Matches`<@username>++`
+  while ((match = regex.exec(text))) { matches.push(match[1]); }
   return matches;
 };
 

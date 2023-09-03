@@ -96,6 +96,52 @@ app.command('/chores-channel', async ({ ack, command }) => {
   await common.setChannel(app, choresOauth, 'choresChannel', command);
 });
 
+app.command('/chores-exempt', async ({ ack, command }) => {
+  console.log('/chores-exempt');
+  await ack();
+
+  const houseId = command.team_id;
+  const now = new Date();
+
+  let text;
+
+  if (command.text === 'help' || command.text.length === 0) {
+    text = 'Enter "list" to see exempt residents, ' +
+    'or "yes" or "no" followed by the residents to exempt (or unexempt).';
+  } else if (command.text === 'list') {
+    const residents = await Admin.getResidents(houseId);
+    text = '*Exempt Residents:*' + residents
+      .filter(r => r.exemptAt && r.exemptAt <= now)
+      .sort((a, b) => a.exemptAt < b.exemptAt)
+      .map(r => `\n${r.exemptAt.toDateString()} - <@${r.slackId}>`)
+      .join('');
+  } else if (await common.isAdmin(app, choresOauth, command)) {
+    const flag = command.text.split(' ')[0];
+    const args = command.text.split(' ').slice(1).join(' ');
+    const residentIds = common.parseEscapedUsernames(args);
+
+    if (flag === 'yes') {
+      text = 'Exempted';
+      for (const residentId of residentIds) {
+        text += ` <@${residentId}>`;
+        await Admin.exemptResident(houseId, residentId, now);
+      }
+    } else if (flag === 'no') {
+      text = 'Unexempted';
+      for (const residentId of residentIds) {
+        text += ` <@${residentId}>`;
+        await Admin.activateResident(houseId, residentId, now);
+      }
+    } else {
+      text = 'Please start command with either "list" "yes" or "no"';
+    }
+  } else {
+    text = ':warning: Only admins can exempt residents...';
+  }
+
+  await common.replyEphemeral(app, choresOauth, command, text);
+});
+
 // Claim flow
 
 app.action('chores-claim', async ({ ack, body }) => {

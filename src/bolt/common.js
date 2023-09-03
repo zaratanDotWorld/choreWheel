@@ -205,3 +205,11 @@ exports.makeVoteButtons = function (pollId, upvoteCount, downvoteCount) {
     }
   ];
 };
+
+exports.parseEscapedUsernames = function (text) {
+  let match;
+  const matches = [];
+  const regex = /<@(\w+)\|[\w.]+>/g; // Matches`<@username|na.me>`
+  while ((match = regex.exec(text))) { matches.push(match[1]); }
+  return matches;
+};
