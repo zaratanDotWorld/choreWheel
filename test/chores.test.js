@@ -694,11 +694,17 @@ describe('Chores', async () => {
       expect(residentCount).to.equal(2);
 
       // Can handle new breaks by the same user
+      residentCount = await Chores.getWorkingResidentCount(HOUSE, oneWeek);
+      expect(residentCount).to.equal(3);
+
       await Chores.addChoreBreak(HOUSE, RESIDENT1, oneWeek, twoWeeks, '');
       residentCount = await Chores.getWorkingResidentCount(HOUSE, oneWeek);
       expect(residentCount).to.equal(2);
 
       // Will also exclude if break extends across months
+      residentCount = await Chores.getWorkingResidentCount(HOUSE, now);
+      expect(residentCount).to.equal(2);
+
       await Chores.addChoreBreak(HOUSE, RESIDENT2, lastMonth, nextMonth, '');
       residentCount = await Chores.getWorkingResidentCount(HOUSE, now);
       expect(residentCount).to.equal(1);
