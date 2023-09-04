@@ -6,6 +6,7 @@ exports.up = function(knex, Promise) {
         t.string('houseId').references('House.slackId').notNull();
         t.boolean('active').notNull().defaultTo(true);
         t.timestamp('activeAt');
+        t.timestamp('exemptAt');
     });
 };
 
