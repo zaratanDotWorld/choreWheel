@@ -9,7 +9,7 @@ exports.formatChoreName = function (text) {
   return voca(text).latinise().titleCase().value();
 };
 
-exports.choresHomeView = function (balance, owed, active) {
+exports.choresHomeView = function (balance, owed, active, exempt) {
   const progressEmoji = (owed - balance < penaltyIncrement) ? ':white_check_mark:' : ':muscle::skin-tone-4:';
   const docsUrl = 'https://github.com/zaratanDotWorld/mirror/wiki/Chores';
   const textA = `We use *<${docsUrl}|Chores>* to keep the house a nice place to live.\n\n` +
@@ -18,7 +18,9 @@ exports.choresHomeView = function (balance, owed, active) {
     'The points for a chore go up every hour until someone claims them. ' +
     'If you feel a chore should be worth more (or less), you can change the speed at which it gains points.';
 
-  const textB = `You've earned *${balance.toFixed(0)} / ${owed.toFixed(0)} points* this month ${progressEmoji}`;
+  const textB = (exempt)
+    ? '*You are exempt from chores!* :tada:'
+    : `You've earned *${balance.toFixed(0)} / ${owed.toFixed(0)} points* this month ${progressEmoji}`;
   const textC = `There are *${active} people* around today :sunny:`;
 
   return {

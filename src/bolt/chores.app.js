@@ -54,12 +54,16 @@ app.event('app_home_opened', async ({ body, event }) => {
     const monthStart = getMonthStart(now);
 
     await Admin.activateResident(houseId, residentId, now);
+    const resident = await Admin.getResident(residentId);
 
     const chorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
     const workingPercentage = await Chores.getWorkingResidentPercentage(residentId, now);
     const workingResidents = await Chores.getWorkingResidentCount(houseId, now);
 
-    const view = views.choresHomeView(chorePoints.sum || 0, workingPercentage * pointsPerResident, workingResidents);
+    const pointsOwed = workingPercentage * pointsPerResident;
+    const residentExempt = resident.exemptAt && resident.exemptAt <= now;
+
+    const view = views.choresHomeView(chorePoints.sum || 0, pointsOwed, workingResidents, residentExempt);
     await common.publishHome(app, choresOauth, residentId, view);
 
     // This bookkeeping is done after returning the view
