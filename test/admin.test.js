@@ -150,12 +150,23 @@ describe('Admin', async () => {
       expect(resident.activeAt.getTime()).to.equal(now.getTime());
       expect(resident.exemptAt.getTime()).to.equal(soon.getTime());
 
-      await Admin.activateResident(HOUSE1, RESIDENT1, soon);
+      await Admin.unexemptResident(HOUSE1, RESIDENT1);
 
       resident = await Admin.getResident(RESIDENT1);
       expect(resident.active).to.be.true;
-      expect(resident.activeAt.getTime()).to.equal(soon.getTime());
+      expect(resident.activeAt.getTime()).to.equal(now.getTime());
       expect(resident.exemptAt).to.equal(null);
+    });
+
+    it('cannot activate a resident if exempt', async () => {
+      await Admin.activateResident(HOUSE1, RESIDENT1, now);
+      await Admin.exemptResident(HOUSE1, RESIDENT1, soon);
+      await Admin.activateResident(HOUSE1, RESIDENT1, soon);
+
+      const resident = await Admin.getResident(RESIDENT1);
+      expect(resident.active).to.be.true;
+      expect(resident.activeAt.getTime()).to.equal(now.getTime());
+      expect(resident.exemptAt.getTime()).to.equal(soon.getTime());
     });
 
     it('can exempt a resident idempotently if prior exemption exists', async () => {

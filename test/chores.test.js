@@ -652,7 +652,7 @@ describe('Chores', async () => {
       choreBreaks = await Chores.getChoreBreaks(HOUSE, now);
       expect(choreBreaks.length).to.equal(0);
 
-      await Admin.activateResident(HOUSE, RESIDENT1, now);
+      await Admin.unexemptResident(HOUSE, RESIDENT1);
 
       choreBreaks = await Chores.getChoreBreaks(HOUSE, now);
       expect(choreBreaks.length).to.equal(1);

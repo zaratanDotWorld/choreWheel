@@ -26,8 +26,10 @@ exports.getNumHouses = async function () {
 exports.activateResident = async function (houseId, slackId, activeAt) {
   // TODO: incorporate logic into `onConflict`? Want to update activeAt only if !active
   //  See https://knexjs.org/guide/query-builder.html#onconflict
+
+  // If already active or exempt, a no-op
   const resident = await exports.getResident(slackId);
-  if (resident && resident.active && !resident.exemptAt) { return; }
+  if (resident && (resident.active || resident.exemptAt)) { return; }
 
   return db('Resident')
     .insert({ houseId, slackId, activeAt, active: true, exemptAt: null })
@@ -46,6 +48,12 @@ exports.exemptResident = async function (houseId, slackId, exemptAt) {
 
   return db('Resident')
     .insert({ houseId, slackId, exemptAt })
+    .onConflict('slackId').merge();
+};
+
+exports.unexemptResident = async function (houseId, slackId) {
+  return db('Resident')
+    .insert({ houseId, slackId, exemptAt: null })
     .onConflict('slackId').merge();
 };
 

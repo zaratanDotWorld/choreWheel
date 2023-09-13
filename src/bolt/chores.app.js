@@ -130,7 +130,7 @@ app.command('/chores-exempt', async ({ ack, command }) => {
       text = 'Unexempted';
       for (const residentId of residentIds) {
         text += ` <@${residentId}>`;
-        await Admin.activateResident(houseId, residentId, now);
+        await Admin.unexemptResident(houseId, residentId);
       }
     } else {
       text = 'Please start command with either "list" "yes" or "no"';
