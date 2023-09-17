@@ -242,14 +242,9 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   const FASTER = 'faster';
   const SLOWER = 'slower';
 
-  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-
-  const targetBlockId = body.view.blocks[3].block_id;
-  const sourceBlockId = body.view.blocks[4].block_id;
-
   const direction = body.view.private_metadata;
-  const target = body.view.state.values[targetBlockId].chores.selected_option.value;
-  const sources = body.view.state.values[sourceBlockId].chores.selected_options;
+  const target = common.getInputBlock(body.view, 3).chores.selected_option.value;
+  const sources = common.getInputBlock(body.view, 4).chores.selected_options;
   const [ targetChoreId, targetChoreName, targetChoreSpeed ] = target.split('|');
 
   let alphaChoreId;
@@ -315,20 +310,15 @@ app.view('chores-break-callback', async ({ ack, body }) => {
   const residentId = body.user.id;
   const houseId = body.team.id;
 
-  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-
-  const breakStartId = body.view.blocks[2].block_id;
-  const breakEndId = body.view.blocks[3].block_id;
-  const circumstanceId = body.view.blocks[4].block_id;
-
   // Dates come in yyyy-mm-dd format
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const breakStartUtc = new Date(body.view.state.values[breakStartId].date.selected_date);
-  const breakEndUtc = new Date(body.view.state.values[breakEndId].date.selected_date);
-  const circumstance = body.view.state.values[circumstanceId].circumstance.value;
+  const breakStartUtc = new Date(common.getInputBlock(body.view, 2).date.selected_date);
+  const breakEndUtc = new Date(common.getInputBlock(body.view, 3).date.selected_date);
+  const circumstance = common.getInputBlock(body.view, 4).circumstance.value;
 
   // Shift the date to align with the system clock
+  // TODO: This might be brittle / hacky
   const breakStart = shiftDate(breakStartUtc, now.getTimezoneOffset());
   const breakEnd = shiftDate(breakEndUtc, now.getTimezoneOffset());
   const breakDays = parseInt((breakEnd - breakStart) / DAY);
@@ -369,15 +359,9 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
   const residentId = body.user.id;
   const houseId = body.team.id;
 
-  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-
-  const recipientBlockId = body.view.blocks[2].block_id;
-  const valueBlockId = body.view.blocks[3].block_id;
-  const circumstanceBlockId = body.view.blocks[4].block_id;
-
-  const recipientId = body.view.state.values[recipientBlockId].recipient.selected_user;
-  const value = Number(body.view.state.values[valueBlockId].value.value);
-  const circumstance = body.view.state.values[circumstanceBlockId].circumstance.value;
+  const recipientId = common.getInputBlock(body.view, 2).recipient.selected_user;
+  const value = Number(common.getInputBlock(body.view, 3).value.value);
+  const circumstance = common.getInputBlock(body.view, 4).circumstance.value;
   const pointsBalance = Number(body.view.private_metadata);
 
   const { choresChannel } = await Admin.getHouse(houseId);
@@ -450,14 +434,8 @@ app.view('chores-propose-add-callback', async ({ ack, body }) => {
   const houseId = body.team.id;
   const now = new Date();
 
-  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-
-  const numBlocks = body.view.blocks.length;
-  const nameBlockId = body.view.blocks[numBlocks - 2].block_id;
-  const descriptionBlockId = body.view.blocks[numBlocks - 1].block_id;
-
-  const name = views.formatChoreName(body.view.state.values[nameBlockId].name.value);
-  const description = body.view.state.values[descriptionBlockId].description.value;
+  const name = views.formatChoreName(common.getInputBlock(body.view, -2).name.value);
+  const description = common.getInputBlock(body.view, -1).description.value;
 
   // TODO: if chore exists, return ephemeral and exit
   // TODO: combine add and edit callbacks
@@ -482,11 +460,7 @@ app.view('chores-propose-delete-callback', async ({ ack, body }) => {
   const houseId = body.team.id;
   const now = new Date();
 
-  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-
-  const numBlocks = body.view.blocks.length;
-  const choreBlockId = body.view.blocks[numBlocks - 1].block_id;
-  const [ choreId, choreName ] = body.view.state.values[choreBlockId].chores.selected_option.value.split('|');
+  const [ choreId, choreName ] = common.getInputBlock(body.view, -1).chores.selected_option.value.split('|');
 
   // Create the chore proposal
   const [ proposal ] = await Chores.createDeleteChoreProposal(houseId, residentId, choreId, choreName, now);
