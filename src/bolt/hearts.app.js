@@ -125,14 +125,9 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
   const residentId = body.user.id;
   const houseId = body.team.id;
 
-  // // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-  const challengeeBlockId = body.view.blocks[2].block_id;
-  const numHeartsBlockId = body.view.blocks[3].block_id;
-  const circumstanceBlockId = body.view.blocks[4].block_id;
-
-  const challengeeId = body.view.state.values[challengeeBlockId].challengee.selected_user;
-  const numHearts = body.view.state.values[numHeartsBlockId].hearts.selected_option.value;
-  const circumstance = body.view.state.values[circumstanceBlockId].circumstance.value;
+  const challengeeId = common.getInputBlock(body.view, 2).challengee.selected_user;
+  const numHearts = common.getInputBlock(body.view, 3).hearts.selected_option.value;
+  const circumstance = common.getInputBlock(body.view, 4).circumstance.value;
 
   // TODO: Return error to user (not console) if channel is not set
   const { heartsChannel } = await Admin.getHouse(houseId);
