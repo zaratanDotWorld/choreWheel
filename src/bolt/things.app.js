@@ -199,8 +199,8 @@ app.view('things-buy-callback', async ({ ack, body }) => {
   const residentId = body.user.id;
   const houseId = body.team.id;
 
-  const thingId = parseInt(common.getInputBlock(body.view, -2).options.selected_option.value);
-  const quantity = parseInt(common.getInputBlock(body.view, -1).quantity.value);
+  const thingId = parseInt(common.getInputBlock(body, -2).options.selected_option.value);
+  const quantity = parseInt(common.getInputBlock(body, -1).quantity.value);
 
   // Perform the buy
   const now = new Date();
@@ -238,9 +238,9 @@ app.view('things-special-callback', async ({ ack, body }) => {
   const residentId = body.user.id;
   const houseId = body.team.id;
 
-  const title = common.getInputBlock(body.view, -3).title.value.trim();
-  const details = common.getInputBlock(body.view, -2).details.value.trim();
-  const cost = parseInt(common.getInputBlock(body.view, -1).cost.value);
+  const title = common.getInputBlock(body, -3).title.value.trim();
+  const details = common.getInputBlock(body, -2).details.value.trim();
+  const cost = parseInt(common.getInputBlock(body, -1).cost.value);
 
   // Perform the buy
   const now = new Date();
