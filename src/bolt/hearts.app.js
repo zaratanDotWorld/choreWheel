@@ -125,9 +125,9 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
   const residentId = body.user.id;
   const houseId = body.team.id;
 
-  const challengeeId = common.getInputBlock(body.view, 2).challengee.selected_user;
-  const numHearts = common.getInputBlock(body.view, 3).hearts.selected_option.value;
-  const circumstance = common.getInputBlock(body.view, 4).circumstance.value;
+  const challengeeId = common.getInputBlock(body, 2).challengee.selected_user;
+  const numHearts = common.getInputBlock(body, 3).hearts.selected_option.value;
+  const circumstance = common.getInputBlock(body, 4).circumstance.value;
 
   // TODO: Return error to user (not console) if channel is not set
   const { heartsChannel } = await Admin.getHouse(houseId);

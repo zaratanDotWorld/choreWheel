@@ -214,12 +214,9 @@ exports.parseEscapedUsernames = function (text) {
   return matches;
 };
 
-exports.getInputBlock = function (view, blockIdx) {
+exports.getInputBlock = function (body, blockIdx) {
   // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-
-  const blockId = (blockIdx < 0)
-    ? view.blocks[view.blocks.length + blockIdx].block_id
-    : view.blocks[blockIdx].block_id;
-
-  return view.state.values[blockId];
+  const realIdx = (blockIdx < 0) ? body.view.blocks.length + blockIdx : blockIdx;
+  const blockId = body.view.blocks[realIdx].block_id;
+  return body.view.state.values[blockId];
 };
