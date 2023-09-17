@@ -199,12 +199,8 @@ app.view('things-buy-callback', async ({ ack, body }) => {
   const residentId = body.user.id;
   const houseId = body.team.id;
 
-  // // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-  const numBlocks = body.view.blocks.length;
-  const thingBlockId = body.view.blocks[numBlocks - 2].block_id;
-  const quantityBlockId = body.view.blocks[numBlocks - 1].block_id;
-  const thingId = parseInt(body.view.state.values[thingBlockId].options.selected_option.value);
-  const quantity = parseInt(body.view.state.values[quantityBlockId].quantity.value);
+  const thingId = parseInt(common.getInputBlock(body.view, -2).options.selected_option.value);
+  const quantity = parseInt(common.getInputBlock(body.view, -1).quantity.value);
 
   // Perform the buy
   const now = new Date();
@@ -242,14 +238,9 @@ app.view('things-special-callback', async ({ ack, body }) => {
   const residentId = body.user.id;
   const houseId = body.team.id;
 
-  // // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-  const numBlocks = body.view.blocks.length;
-  const titleBlockId = body.view.blocks[numBlocks - 3].block_id;
-  const detailsBlockId = body.view.blocks[numBlocks - 2].block_id;
-  const costBlockId = body.view.blocks[numBlocks - 1].block_id;
-  const title = body.view.state.values[titleBlockId].title.value.trim();
-  const details = body.view.state.values[detailsBlockId].details.value.trim();
-  const cost = parseInt(body.view.state.values[costBlockId].cost.value);
+  const title = common.getInputBlock(body.view, -3).title.value.trim();
+  const details = common.getInputBlock(body.view, -2).details.value.trim();
+  const cost = parseInt(common.getInputBlock(body.view, -1).cost.value);
 
   // Perform the buy
   const now = new Date();
