@@ -4,6 +4,7 @@ const { App, LogLevel } = require('@slack/bolt');
 
 const { Admin, Polls, Hearts } = require('../core/index');
 const { YAY } = require('../constants');
+const { getPrevMonthEnd, getMonthStart } = require('../utils');
 
 const common = require('./common');
 const views = require('./hearts.views');
@@ -77,15 +78,20 @@ app.event('app_home_opened', async ({ body, event }) => {
     }
 
     // Issue karma hearts
-    const numWinners = await Hearts.getNumKarmaWinners(houseId);
-    const karmaHearts = await Hearts.generateKarmaHearts(houseId, now, numWinners);
-    if (karmaHearts.length > 0) {
-      const { heartsChannel } = await Admin.getHouse(houseId);
-      const karmaWinners = karmaHearts.map((heart) => `<@${heart.residentId}>`).join(' and ');
-      const text = (karmaWinners.length > 1)
-        ? `${karmaWinners} get last month's karma hearts :heart_on_fire:`
-        : `${karmaWinners} gets last month's karma heart :heart_on_fire:`;
-      await common.postMessage(app, heartsOauth, heartsChannel, text);
+    // TODO: Refactor to incorporate getNumKarmaWinners into generateKarmaHearts
+    const prevMonthEnd = getPrevMonthEnd(now);
+    const prevMonthStart = getMonthStart(prevMonthEnd);
+    const numWinners = await Hearts.getNumKarmaWinners(houseId, prevMonthStart, prevMonthEnd);
+    if (numWinners > 0) {
+      const karmaHearts = await Hearts.generateKarmaHearts(houseId, now, numWinners);
+      if (karmaHearts.length > 0) {
+        const { heartsChannel } = await Admin.getHouse(houseId);
+        const karmaWinners = karmaHearts.map((heart) => `<@${heart.residentId}>`).join(' and ');
+        const text = (karmaWinners.length > 1)
+          ? `${karmaWinners} get last month's karma hearts :heart_on_fire:`
+          : `${karmaWinners} gets last month's karma heart :heart_on_fire:`;
+        await common.postMessage(app, heartsOauth, heartsChannel, text);
+      }
     }
   }
 });
