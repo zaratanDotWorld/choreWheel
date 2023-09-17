@@ -193,12 +193,19 @@ exports.getKarmaRankings = async function (houseId, startTime, endTime) {
   }).sort((a, b) => b.ranking - a.ranking);
 };
 
-exports.getNumKarmaWinners = async function (houseId) {
+exports.getNumKarmaWinners = async function (houseId, startTime, endTime) {
   const residents = await Admin.getResidents(houseId);
-  return Math.floor(residents.length / karmaProportion);
+  const maxWinners = Math.floor(residents.length / karmaProportion);
+
+  const karma = await exports.getKarma(houseId, startTime, endTime);
+  const uniqueReceivers = (new Set(karma.map(k => k.receiverId))).size;
+
+  return Math.min(maxWinners, uniqueReceivers);
 };
 
 exports.generateKarmaHearts = async function (houseId, currentTime, numWinners) {
+  if (numWinners <= 0) { return []; }
+
   const monthStart = getMonthStart(currentTime);
   const generatedAt = new Date(monthStart.getTime() + karmaDelay);
   if (currentTime < generatedAt) { return []; }
