@@ -203,19 +203,19 @@ exports.getNumKarmaWinners = async function (houseId, startTime, endTime) {
   return Math.min(maxWinners, uniqueReceivers);
 };
 
-exports.generateKarmaHearts = async function (houseId, currentTime, numWinners) {
-  if (numWinners <= 0) { return []; }
-
+exports.generateKarmaHearts = async function (houseId, currentTime) {
   const monthStart = getMonthStart(currentTime);
   const generatedAt = new Date(monthStart.getTime() + karmaDelay);
   if (currentTime < generatedAt) { return []; }
 
+  const prevMonthEnd = getPrevMonthEnd(currentTime);
+  const prevMonthStart = getMonthStart(prevMonthEnd);
+  const numWinners = await exports.getNumKarmaWinners(houseId, prevMonthStart, prevMonthEnd);
+  if (numWinners <= 0) { return []; }
+
   const karmaHearts = await exports.getAgnosticHearts(houseId, generatedAt);
   if (karmaHearts.length === 0) {
-    const prevMonthEnd = getPrevMonthEnd(currentTime);
-    const prevMonthStart = getMonthStart(prevMonthEnd);
     const karmaRankings = await exports.getKarmaRankings(houseId, prevMonthStart, prevMonthEnd);
-    if (karmaRankings.length === 0) { return []; }
 
     for (const winner of karmaRankings.slice(0, numWinners)) {
       const residentId = winner.slackId;
@@ -226,6 +226,8 @@ exports.generateKarmaHearts = async function (houseId, currentTime, numWinners) 
       karmaHearts.push({ houseId, residentId, type, generatedAt, value, metadata });
     }
 
-    return db('Heart').insert(karmaHearts).returning('*');
+    return db('Heart')
+      .insert(karmaHearts)
+      .returning('*');
   } else { return []; }
 };
