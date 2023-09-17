@@ -213,3 +213,13 @@ exports.parseEscapedUsernames = function (text) {
   while ((match = regex.exec(text))) { matches.push(match[1]); }
   return matches;
 };
+
+exports.getInputBlock = function (view, blockIdx) {
+  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
+
+  const blockId = (blockIdx < 0)
+    ? view.blocks[view.blocks.length + blockIdx].block_id
+    : view.blocks[blockIdx].block_id;
+
+  return view.state.values[blockId];
+};
