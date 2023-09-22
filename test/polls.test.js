@@ -95,18 +95,27 @@ describe('Polls', async () => {
 
       const results = await Polls.getPollResults(poll.id);
       expect(results.length).to.equal(3);
-    });
-
-    it('can get the result of a vote', async () => {
-      const [ poll ] = await Polls.createPoll(now, DAY);
-
-      await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
-      await Polls.submitVote(poll.id, RESIDENT2, soon, YAY);
-      await Polls.submitVote(poll.id, RESIDENT3, soon, NAY);
 
       const { yays, nays } = await Polls.getPollResultCounts(poll.id);
       expect(yays).to.equal(2);
       expect(nays).to.equal(1);
+    });
+
+    it('can update a poll metadata', async () => {
+      let poll;
+      [ poll ] = await Polls.createPoll(now, DAY);
+      expect(poll.metadata).to.be.null;
+
+      [ poll ] = await Polls.updateMetadata(poll.id, { foo: 1 });
+      expect(poll.metadata.foo).to.equal(1);
+
+      [ poll ] = await Polls.updateMetadata(poll.id, { bar: 2 });
+      expect(poll.metadata.foo).to.equal(1);
+      expect(poll.metadata.bar).to.equal(2);
+
+      [ poll ] = await Polls.updateMetadata(poll.id, { foo: 3 });
+      expect(poll.metadata.foo).to.equal(3);
+      expect(poll.metadata.bar).to.equal(2);
     });
   });
 });

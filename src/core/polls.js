@@ -52,3 +52,14 @@ exports.isPollValid = async function (pollId, minVotes) {
   const { yays, nays } = await exports.getPollResultCounts(pollId);
   return (yays >= minVotes && yays > nays);
 };
+
+exports.updateMetadata = async function (pollId, metadata) {
+  // NOTE: May be possible as a single operation using a jsonb datatype
+  const poll = await exports.getPoll(pollId);
+  metadata = { ...poll.metadata, ...metadata };
+
+  return db('Poll')
+    .where({ id: pollId })
+    .update({ metadata })
+    .returning('*');
+};
