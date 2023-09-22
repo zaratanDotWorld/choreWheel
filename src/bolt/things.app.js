@@ -218,7 +218,8 @@ app.view('things-buy-callback', async ({ ack, body }) => {
 
   const text = 'Someone just bought a thing';
   const blocks = views.thingsBuyCallbackView(buy, thing, balance.sum, minVotes);
-  await common.postMessage(app, thingsOauth, thingsChannel, text, blocks);
+  const { channel, ts } = await common.postMessage(app, thingsOauth, thingsChannel, text, blocks);
+  await Polls.updateMetadata(buy.pollId, { channel, ts });
 });
 
 app.action('things-special', async ({ ack, body }) => {
@@ -257,7 +258,8 @@ app.view('things-special-callback', async ({ ack, body }) => {
 
   const text = 'Someone just bought a thing';
   const blocks = views.thingsSpecialBuyCallbackView(buy, balance.sum, minVotes);
-  await common.postMessage(app, thingsOauth, thingsChannel, text, blocks);
+  const { channel, ts } = await common.postMessage(app, thingsOauth, thingsChannel, text, blocks);
+  await Polls.updateMetadata(buy.pollId, { channel, ts });
 });
 
 app.action('things-bought', async ({ ack, body }) => {

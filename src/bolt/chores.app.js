@@ -200,7 +200,8 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
 
   const text = 'Someone just completed a chore';
   const blocks = views.choresClaimCallbackView(claim, choreName, recentPoints, monthlyPoints);
-  await common.postMessage(app, choresOauth, choresChannel, text, blocks);
+  const { channel, ts } = await common.postMessage(app, choresOauth, choresChannel, text, blocks);
+  await Polls.updateMetadata(claim.pollId, { channel, ts });
 
   // Temporarily emit this functionality
   // // Append the description
@@ -449,7 +450,8 @@ app.view('chores-propose-add-callback', async ({ ack, body }) => {
 
   const text = 'Someone just proposed a chore edit';
   const blocks = views.choresProposeAddCallbackView(proposal, residentId, minVotes);
-  await common.postMessage(app, choresOauth, choresChannel, text, blocks);
+  const { channel, ts } = await common.postMessage(app, choresOauth, choresChannel, text, blocks);
+  await Polls.updateMetadata(proposal.pollId, { channel, ts });
 });
 
 app.view('chores-propose-delete-callback', async ({ ack, body }) => {
@@ -471,7 +473,8 @@ app.view('chores-propose-delete-callback', async ({ ack, body }) => {
 
   const text = 'Someone just proposed a chore edit';
   const blocks = views.choresProposeDeleteCallbackView(proposal, residentId, minVotes);
-  await common.postMessage(app, choresOauth, choresChannel, text, blocks);
+  const { channel, ts } = await common.postMessage(app, choresOauth, choresChannel, text, blocks);
+  await Polls.updateMetadata(proposal.pollId, { channel, ts });
 });
 
 app.view('chores-propose-edit-callback', async ({ ack, body }) => {
@@ -501,7 +504,8 @@ app.view('chores-propose-edit-callback', async ({ ack, body }) => {
 
   const text = 'Someone just proposed a chore edit';
   const blocks = views.choresProposeEditCallbackView(proposal, residentId, choreName, minVotes);
-  await common.postMessage(app, choresOauth, choresChannel, text, blocks);
+  const { channel, ts } = await common.postMessage(app, choresOauth, choresChannel, text, blocks);
+  await Polls.updateMetadata(proposal.pollId, { channel, ts });
 });
 
 // Voting flow
