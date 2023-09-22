@@ -145,7 +145,8 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
 
     const text = 'Someone just issued a hearts challenge';
     const blocks = views.heartsChallengeCallbackView(challenge, quorum, circumstance);
-    await common.postMessage(app, heartsOauth, heartsChannel, text, blocks);
+    const { channel, ts } = await common.postMessage(app, heartsOauth, heartsChannel, text, blocks);
+    await Polls.updateMetadata(challenge.pollId, { channel, ts });
   }
 });
 
