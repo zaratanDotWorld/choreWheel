@@ -104,7 +104,7 @@ describe('Polls', async () => {
     it('can update a poll metadata', async () => {
       let poll;
       [ poll ] = await Polls.createPoll(now, DAY);
-      expect(poll.metadata).to.be.null;
+      expect(poll.metadata).to.deep.equal({});
 
       [ poll ] = await Polls.updateMetadata(poll.id, { foo: 1 });
       expect(poll.metadata.foo).to.equal(1);

@@ -12,7 +12,7 @@ exports.up = function(knex, Promise) {
         t.boolean('valid').notNull().defaultTo(true);
         t.string('fulfilledBy').references('Resident.slackId');
         t.timestamp('fulfilledAt');
-        t.json('metadata');
+        t.json('metadata').notNull().defaultTo({});
     });
 };
 
