@@ -289,7 +289,9 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
     const text = `Someone slowed down *${targetChoreName}* by *${speedText}*, to *${ppt} ppt* :snail:`;
     await common.postMessage(app, choresOauth, choresChannel, text);
   } else {
-    const text = 'No speed change. Try including more chores.';
+    const text = 'You\'ve already input those preferences. ' +
+      'To have an additional effect, *choose more or different chores*. ' +
+      'Alternatively, *convince others* to support your priorities.';
     await common.postEphemeral(app, choresOauth, choresChannel, residentId, text);
   }
 });
