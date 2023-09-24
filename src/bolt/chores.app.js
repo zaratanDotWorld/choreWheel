@@ -487,15 +487,9 @@ app.view('chores-propose-edit-callback', async ({ ack, body }) => {
   const houseId = body.team.id;
   const now = new Date();
 
-  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-
-  const numBlocks = body.view.blocks.length;
-  const nameBlockId = body.view.blocks[numBlocks - 2].block_id;
-  const descriptionBlockId = body.view.blocks[numBlocks - 1].block_id;
-
   const [ choreId, choreName ] = body.view.private_metadata.split('|');
-  const name = views.formatChoreName(body.view.state.values[nameBlockId].name.value);
-  const description = body.view.state.values[descriptionBlockId].description.value;
+  const name = views.formatChoreName(common.getInputBlock(body, -2).name.value);
+  const description = common.getInputBlock(body, -1).description.value;
 
   // Create the chore proposal
   const [ proposal ] = await Chores.createEditChoreProposal(houseId, residentId, choreId, name, { description }, now);
