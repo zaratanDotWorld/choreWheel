@@ -31,18 +31,12 @@ exports.addChore = async function (houseId, name, metadata) {
     .returning('*');
 };
 
-// TODO: Can this be combined into editChore?
-exports.deleteChore = async function (houseId, name) {
-  return db('Chore')
-    .where({ houseId, name })
-    .update({ active: false });
-};
-
 // NB: add and edit are distinct actions, since editing supports name changes
-exports.editChore = async function (choreId, name, metadata) {
+// Also used for deletion
+exports.editChore = async function (choreId, name, metadata, active) {
   return db('Chore')
     .where({ id: choreId })
-    .update({ name, metadata, active: true })
+    .update({ name, metadata, active })
     .returning('*');
 };
 
@@ -403,6 +397,9 @@ exports.giftChorePoints = async function (houseId, gifterId, recipientId, gifted
 // Chore Proposals
 
 exports.createChoreProposal = async function (houseId, proposedBy, choreId, name, metadata, active, now) {
+  // TODO: Can this be done as a table constraint?
+  if (!(choreId || name)) { throw new Error('Proposal must include either choreId or name!'); }
+
   const [ poll ] = await Polls.createPoll(now, choresProposalPollLength);
 
   return db('ChoreProposal')
@@ -411,11 +408,11 @@ exports.createChoreProposal = async function (houseId, proposedBy, choreId, name
 };
 
 exports.createAddChoreProposal = async function (houseId, proposedBy, name, metadata, now) {
-  return exports.createChoreProposal(houseId, proposedBy, undefined, name, metadata, true, now);
+  return exports.createChoreProposal(houseId, proposedBy, null, name, metadata, true, now);
 };
 
 exports.createDeleteChoreProposal = async function (houseId, proposedBy, choreId, name, now) {
-  return exports.createChoreProposal(houseId, proposedBy, choreId, name, undefined, false, now);
+  return exports.createChoreProposal(houseId, proposedBy, choreId, name, {}, false, now);
 };
 
 exports.createEditChoreProposal = async function (houseId, proposedBy, choreId, name, metadata, now) {
@@ -445,13 +442,10 @@ exports.resolveChoreProposal = async function (proposalId, now) {
   const valid = await Polls.isPollValid(proposal.pollId, minVotes);
 
   if (valid) {
-    // TODO: Can this be improved upon?
-    if (!proposal.active) {
-      await exports.deleteChore(proposal.houseId, proposal.name);
-    } else if (proposal.choreId) {
-      await exports.editChore(proposal.choreId, proposal.name, proposal.metadata);
-    } else {
+    if (!proposal.choreId) {
       await exports.addChore(proposal.houseId, proposal.name, proposal.metadata);
+    } else {
+      await exports.editChore(proposal.choreId, proposal.name, proposal.metadata, proposal.active);
     }
   }
 
