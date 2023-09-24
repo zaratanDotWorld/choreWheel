@@ -144,7 +144,7 @@ describe('Chores', async () => {
       expect(preferences.length).to.equal(3);
 
       // Remove the last two preferences
-      await Chores.deleteChore(HOUSE, restock.name);
+      await Chores.editChore(restock.id, restock.name, {}, false);
 
       preferences = await Chores.getActiveChorePreferences(HOUSE);
       expect(preferences.length).to.equal(1);
@@ -1021,7 +1021,7 @@ describe('Chores', async () => {
       let chores = await Chores.getChores(HOUSE);
       expect(chores.length).to.equal(1);
 
-      const [ deleteProposal ] = await Chores.createDeleteChoreProposal(HOUSE, RESIDENT1, addProposal.choreId, addProposal.name, now);
+      const [ deleteProposal ] = await Chores.createDeleteChoreProposal(HOUSE, RESIDENT1, chores[0].id, chores[0].name, now);
 
       await Polls.submitVote(deleteProposal.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(deleteProposal.pollId, RESIDENT2, now, YAY);
@@ -1058,6 +1058,11 @@ describe('Chores', async () => {
       const laundry2 = chores.find(x => x.name === 'laundry2');
       expect(laundry2.id).to.equal(laundryId);
       expect(laundry2.metadata.description).to.equal(description);
+    });
+
+    it('cannot create a proposal without either a choreId or name', async () => {
+      await expect(Chores.createChoreProposal(HOUSE, RESIDENT1, undefined, undefined, {}, true, now))
+        .to.be.rejectedWith('Proposal must include either choreId or name!');
     });
 
     it('cannot resolve a proposal before the poll is closed', async () => {
