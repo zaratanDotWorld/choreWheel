@@ -426,7 +426,7 @@ app.action('chores-propose-edit', async ({ ack, body }) => {
   console.log('chores-propose-edit');
   await ack();
 
-  const choreId = body.actions[0].selected_option.value.split('|')[0];
+  const { id: choreId } = JSON.parse(body.actions[0].selected_option.value);
   const chore = await Chores.getChore(choreId);
 
   const blocks = views.choresProposeEditView2(chore);
@@ -441,7 +441,7 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
   const houseId = body.team.id;
   const now = new Date();
 
-  let choreId, name, description, proposal;
+  let name, description, chore, proposal;
   const metadata = JSON.parse(body.view.private_metadata);
 
   // Create the chore proposal
@@ -458,8 +458,8 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
       [ proposal ] = await Chores.createEditChoreProposal(houseId, residentId, metadata.chore.id, name, { description }, now);
       break;
     case 'delete':
-      [ choreId, name ] = common.getInputBlock(body, -1).chores.selected_option.value.split('|');
-      [ proposal ] = await Chores.createDeleteChoreProposal(houseId, residentId, choreId, name, now);
+      chore = JSON.parse(common.getInputBlock(body, -1).chores.selected_option.value);
+      [ proposal ] = await Chores.createDeleteChoreProposal(houseId, residentId, chore.id, chore.name, now);
       break;
     default:
       console.log('No match found!');
@@ -471,23 +471,8 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
   const { choresChannel } = await Admin.getHouse(houseId);
   const minVotes = await Chores.getChoreProposalMinVotes(houseId);
 
-  let blocks;
-  switch (metadata.type) {
-    case 'add':
-      blocks = views.choresProposeAddCallbackView(proposal, residentId, minVotes);
-      break;
-    case 'edit':
-      blocks = views.choresProposeEditCallbackView(proposal, residentId, metadata.chore.name, minVotes);
-      break;
-    case 'delete':
-      blocks = views.choresProposeDeleteCallbackView(proposal, residentId, minVotes);
-      break;
-    default:
-      console.log('No match found!');
-      return;
-  }
-
   const text = 'Someone just proposed a chore edit';
+  const blocks = views.choresProposeCallbackView(metadata, proposal, residentId, minVotes);
   const { channel, ts } = await common.postMessage(app, choresOauth, choresChannel, text, blocks);
   await Polls.updateMetadata(proposal.pollId, { channel, ts });
 });

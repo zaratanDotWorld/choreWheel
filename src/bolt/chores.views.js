@@ -396,7 +396,7 @@ exports.choresProposeAddView = function () {
 exports.choresProposeDeleteView = function (chores) {
   const mappedChores = chores.map((chore) => {
     return {
-      value: `${chore.id}|${chore.name}`,
+      value: JSON.stringify({ id: chore.id, name: chore.name }),
       text: { type: 'plain_text', text: chore.name, emoji: true }
     };
   });
@@ -430,7 +430,7 @@ exports.choresProposeDeleteView = function (chores) {
 exports.choresProposeEditView = function (chores) {
   const mappedChores = chores.map((chore) => {
     return {
-      value: `${chore.id}|${chore.name}`,
+      value: JSON.stringify({ id: chore.id }),
       text: { type: 'plain_text', text: chore.name, emoji: true }
     };
   });
@@ -465,7 +465,7 @@ exports.choresProposeEditView2 = function (chore) {
   return {
     type: 'modal',
     callback_id: 'chores-propose-callback',
-    private_metadata: JSON.stringify({ type: 'edit', chore }),
+    private_metadata: JSON.stringify({ type: 'edit', chore: { id: chore.id, name: chore.name } }),
     title: { type: 'plain_text', text: 'Chores', emoji: true },
     submit: { type: 'plain_text', text: 'Submit', emoji: true },
     close: { type: 'plain_text', text: 'Cancel', emoji: true },
@@ -497,43 +497,34 @@ exports.choresProposeEditView2 = function (chore) {
   };
 };
 
-exports.choresProposeAddCallbackView = function (proposal, proposer, minVotes) {
-  const textA = `*<@${proposer}>* wants to *add* a chore:`;
-  const textB = `*${minVotes} upvote(s)* are required to pass, ` +
-    `voting closes in *${choresProposalPollLength / HOUR} hours*`;
+exports.choresProposeCallbackView = function (metadata, proposal, proposer, minVotes) {
+  let mainText;
+  switch (metadata.type) {
+    case 'add':
+      mainText = `*<@${proposer}>* wants to *add* a chore:`;
+      break;
+    case 'edit':
+      mainText = `*<@${proposer}>* wants to *edit* the *${metadata.chore.name}* chore:`;
+      break;
+    case 'delete':
+      mainText = `*<@${proposer}>* wants to *delete* a chore:`;
+      break;
+  }
 
-  return [
-    { type: 'section', text: { type: 'mrkdwn', text: textA } },
-    { type: 'section', text: { type: 'mrkdwn', text: `*${proposal.name}*` } },
-    { type: 'section', text: { type: 'mrkdwn', text: proposal.metadata.description } },
-    { type: 'section', text: { type: 'mrkdwn', text: textB } },
-    { type: 'actions', elements: common.makeVoteButtons(proposal.pollId, 1, 0) }
-  ];
+  const blocks = [];
+  blocks.push({ type: 'section', text: { type: 'mrkdwn', text: mainText } });
+  blocks.push({ type: 'section', text: { type: 'mrkdwn', text: `*${proposal.name}*` } });
+
+  if (proposal.metadata.description) {
+    blocks.push({ type: 'section', text: { type: 'mrkdwn', text: proposal.metadata.description } });
+  }
+
+  blocks.push({ type: 'section', text: { type: 'mrkdwn', text: voteText(minVotes, choresProposalPollLength) } });
+  blocks.push({ type: 'actions', elements: common.makeVoteButtons(proposal.pollId, 1, 0) });
+  return blocks;
 };
 
-exports.choresProposeDeleteCallbackView = function (proposal, proposer, minVotes) {
-  const textA = `*<@${proposer}>* wants to *delete* a chore:`;
-  const textB = `*${minVotes} upvote(s)* are required to pass, ` +
-    `voting closes in *${choresProposalPollLength / HOUR} hours*`;
-
-  return [
-    { type: 'section', text: { type: 'mrkdwn', text: textA } },
-    { type: 'section', text: { type: 'mrkdwn', text: `*${proposal.name}*` } },
-    { type: 'section', text: { type: 'mrkdwn', text: textB } },
-    { type: 'actions', elements: common.makeVoteButtons(proposal.pollId, 1, 0) }
-  ];
-};
-
-exports.choresProposeEditCallbackView = function (proposal, proposer, choreName, minVotes) {
-  const textA = `*<@${proposer}>* wants to *edit* the *${choreName}* chore:`;
-  const textB = `*${minVotes} upvote(s)* are required to pass, ` +
-    `voting closes in *${choresProposalPollLength / HOUR} hours*`;
-
-  return [
-    { type: 'section', text: { type: 'mrkdwn', text: textA } },
-    { type: 'section', text: { type: 'mrkdwn', text: `*${proposal.name}*` } },
-    { type: 'section', text: { type: 'mrkdwn', text: proposal.metadata.description } },
-    { type: 'section', text: { type: 'mrkdwn', text: textB } },
-    { type: 'actions', elements: common.makeVoteButtons(proposal.pollId, 1, 0) }
-  ];
-};
+function voteText (minVotes, pollLength) {
+  return `*${minVotes} upvote(s)* are required to pass, ` +
+    `voting closes in *${pollLength / HOUR} hours*`;
+}
