@@ -400,19 +400,23 @@ app.action('chores-propose-2', async ({ ack, body }) => {
 
   const houseId = body.team.id;
   const change = body.actions[0].selected_option.value;
-  const [ ADD, DELETE, EDIT ] = [ 'add', 'delete', 'edit' ];
 
-  let view;
-  if (change === ADD) {
-    view = views.choresProposeAddView();
-  } else if (change === DELETE) {
-    const chores = await Chores.getChores(houseId);
-    view = views.choresProposeDeleteView(chores);
-  } else if (change === EDIT) {
-    const chores = await Chores.getChores(houseId);
-    view = views.choresProposeEditView(chores);
-  } else {
-    console.log(`Unrecognized action: ${change}`);
+  let chores, view;
+  switch (change) {
+    case 'add':
+      view = views.choresProposeAddView();
+      break;
+    case 'edit':
+      chores = await Chores.getChores(houseId);
+      view = views.choresProposeEditView(chores);
+      break;
+    case 'delete':
+      chores = await Chores.getChores(houseId);
+      view = views.choresProposeDeleteView(chores);
+      break;
+    default:
+      console.log('No match found!');
+      return;
   }
 
   await common.pushView(app, choresOauth, body.trigger_id, view);
@@ -429,77 +433,61 @@ app.action('chores-propose-edit', async ({ ack, body }) => {
   await common.pushView(app, choresOauth, body.trigger_id, blocks);
 });
 
-app.view('chores-propose-add-callback', async ({ ack, body }) => {
-  console.log('chores-propose-add-callback');
+app.view('chores-propose-callback', async ({ ack, body }) => {
+  console.log('chores-propose-callback');
   await ack({ response_action: 'clear' });
 
   const residentId = body.user.id;
   const houseId = body.team.id;
   const now = new Date();
 
-  const name = views.formatChoreName(common.getInputBlock(body, -2).name.value);
-  const description = common.getInputBlock(body, -1).description.value;
-
-  // TODO: if chore exists, return ephemeral and exit
-  // TODO: combine add and edit callbacks
+  let choreId, name, description, proposal;
+  const metadata = JSON.parse(body.view.private_metadata);
 
   // Create the chore proposal
-  const [ proposal ] = await Chores.createAddChoreProposal(houseId, residentId, name, { description }, now);
+  switch (metadata.type) {
+    case 'add':
+      // TODO: if chore exists, return ephemeral and exit
+      name = views.formatChoreName(common.getInputBlock(body, -2).name.value);
+      description = common.getInputBlock(body, -1).description.value;
+      [ proposal ] = await Chores.createAddChoreProposal(houseId, residentId, name, { description }, now);
+      break;
+    case 'edit':
+      name = views.formatChoreName(common.getInputBlock(body, -2).name.value);
+      description = common.getInputBlock(body, -1).description.value;
+      [ proposal ] = await Chores.createEditChoreProposal(houseId, residentId, metadata.chore.id, name, { description }, now);
+      break;
+    case 'delete':
+      [ choreId, name ] = common.getInputBlock(body, -1).chores.selected_option.value.split('|');
+      [ proposal ] = await Chores.createDeleteChoreProposal(houseId, residentId, choreId, name, now);
+      break;
+    default:
+      console.log('No match found!');
+      return;
+  }
+
   await Polls.submitVote(proposal.pollId, residentId, now, YAY);
 
   const { choresChannel } = await Admin.getHouse(houseId);
   const minVotes = await Chores.getChoreProposalMinVotes(houseId);
 
-  const text = 'Someone just proposed a chore edit';
-  const blocks = views.choresProposeAddCallbackView(proposal, residentId, minVotes);
-  const { channel, ts } = await common.postMessage(app, choresOauth, choresChannel, text, blocks);
-  await Polls.updateMetadata(proposal.pollId, { channel, ts });
-});
-
-app.view('chores-propose-delete-callback', async ({ ack, body }) => {
-  console.log('chores-propose-delete-callback');
-  await ack({ response_action: 'clear' });
-
-  const residentId = body.user.id;
-  const houseId = body.team.id;
-  const now = new Date();
-
-  const [ choreId, choreName ] = common.getInputBlock(body, -1).chores.selected_option.value.split('|');
-
-  // Create the chore proposal
-  const [ proposal ] = await Chores.createDeleteChoreProposal(houseId, residentId, choreId, choreName, now);
-  await Polls.submitVote(proposal.pollId, residentId, now, YAY);
-
-  const { choresChannel } = await Admin.getHouse(houseId);
-  const minVotes = await Chores.getChoreProposalMinVotes(houseId);
+  let blocks;
+  switch (metadata.type) {
+    case 'add':
+      blocks = views.choresProposeAddCallbackView(proposal, residentId, minVotes);
+      break;
+    case 'edit':
+      blocks = views.choresProposeEditCallbackView(proposal, residentId, metadata.chore.name, minVotes);
+      break;
+    case 'delete':
+      blocks = views.choresProposeDeleteCallbackView(proposal, residentId, minVotes);
+      break;
+    default:
+      console.log('No match found!');
+      return;
+  }
 
   const text = 'Someone just proposed a chore edit';
-  const blocks = views.choresProposeDeleteCallbackView(proposal, residentId, minVotes);
-  const { channel, ts } = await common.postMessage(app, choresOauth, choresChannel, text, blocks);
-  await Polls.updateMetadata(proposal.pollId, { channel, ts });
-});
-
-app.view('chores-propose-edit-callback', async ({ ack, body }) => {
-  console.log('chores-propose-edit-callback');
-  await ack({ response_action: 'clear' });
-
-  const residentId = body.user.id;
-  const houseId = body.team.id;
-  const now = new Date();
-
-  const [ choreId, choreName ] = body.view.private_metadata.split('|');
-  const name = views.formatChoreName(common.getInputBlock(body, -2).name.value);
-  const description = common.getInputBlock(body, -1).description.value;
-
-  // Create the chore proposal
-  const [ proposal ] = await Chores.createEditChoreProposal(houseId, residentId, choreId, name, { description }, now);
-  await Polls.submitVote(proposal.pollId, residentId, now, YAY);
-
-  const { choresChannel } = await Admin.getHouse(houseId);
-  const minVotes = await Chores.getChoreProposalMinVotes(houseId);
-
-  const text = 'Someone just proposed a chore edit';
-  const blocks = views.choresProposeEditCallbackView(proposal, residentId, choreName, minVotes);
   const { channel, ts } = await common.postMessage(app, choresOauth, choresChannel, text, blocks);
   await Polls.updateMetadata(proposal.pollId, { channel, ts });
 });

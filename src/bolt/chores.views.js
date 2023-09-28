@@ -362,7 +362,8 @@ exports.choresProposeAddView = function () {
 
   return {
     type: 'modal',
-    callback_id: 'chores-propose-add-callback',
+    callback_id: 'chores-propose-callback',
+    private_metadata: JSON.stringify({ type: 'add' }),
     title: { type: 'plain_text', text: 'Chores', emoji: true },
     submit: { type: 'plain_text', text: 'Submit', emoji: true },
     close: { type: 'plain_text', text: 'Cancel', emoji: true },
@@ -404,7 +405,8 @@ exports.choresProposeDeleteView = function (chores) {
 
   return {
     type: 'modal',
-    callback_id: 'chores-propose-delete-callback',
+    callback_id: 'chores-propose-callback',
+    private_metadata: JSON.stringify({ type: 'delete' }),
     title: { type: 'plain_text', text: 'Chores', emoji: true },
     submit: { type: 'plain_text', text: 'Submit', emoji: true },
     close: { type: 'plain_text', text: 'Cancel', emoji: true },
@@ -462,8 +464,8 @@ exports.choresProposeEditView2 = function (chore) {
 
   return {
     type: 'modal',
-    callback_id: 'chores-propose-edit-callback',
-    private_metadata: `${chore.id}|${chore.name}`,
+    callback_id: 'chores-propose-callback',
+    private_metadata: JSON.stringify({ type: 'edit', chore }),
     title: { type: 'plain_text', text: 'Chores', emoji: true },
     submit: { type: 'plain_text', text: 'Submit', emoji: true },
     close: { type: 'plain_text', text: 'Cancel', emoji: true },
