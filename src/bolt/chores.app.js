@@ -441,31 +441,32 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
   const houseId = body.team.id;
   const now = new Date();
 
-  let name, description, chore, proposal;
+  let choreId, name, description, active;
   const metadata = JSON.parse(body.view.private_metadata);
 
-  // Create the chore proposal
   switch (metadata.type) {
     case 'add':
       // TODO: if chore exists, return ephemeral and exit
       name = views.formatChoreName(common.getInputBlock(body, -2).name.value);
       description = common.getInputBlock(body, -1).description.value;
-      [ proposal ] = await Chores.createAddChoreProposal(houseId, residentId, name, { description }, now);
+      [ choreId, active ] = [ null, true ];
       break;
     case 'edit':
       name = views.formatChoreName(common.getInputBlock(body, -2).name.value);
       description = common.getInputBlock(body, -1).description.value;
-      [ proposal ] = await Chores.createEditChoreProposal(houseId, residentId, metadata.chore.id, name, { description }, now);
+      [ choreId, active ] = [ metadata.chore.id, true ];
       break;
     case 'delete':
-      chore = JSON.parse(common.getInputBlock(body, -1).chores.selected_option.value);
-      [ proposal ] = await Chores.createDeleteChoreProposal(houseId, residentId, chore.id, chore.name, now);
+      ({ id: choreId, name } = JSON.parse(common.getInputBlock(body, -1).chores.selected_option.value));
+      [ description, active ] = [ undefined, false ];
       break;
     default:
       console.log('No match found!');
       return;
   }
 
+  // Create the chore proposal
+  const [ proposal ] = await Chores.createChoreProposal(houseId, residentId, choreId, name, { description }, active, now);
   await Polls.submitVote(proposal.pollId, residentId, now, YAY);
 
   const { choresChannel } = await Admin.getHouse(houseId);

@@ -407,18 +407,6 @@ exports.createChoreProposal = async function (houseId, proposedBy, choreId, name
     .returning('*');
 };
 
-exports.createAddChoreProposal = async function (houseId, proposedBy, name, metadata, now) {
-  return exports.createChoreProposal(houseId, proposedBy, null, name, metadata, true, now);
-};
-
-exports.createDeleteChoreProposal = async function (houseId, proposedBy, choreId, name, now) {
-  return exports.createChoreProposal(houseId, proposedBy, choreId, name, {}, false, now);
-};
-
-exports.createEditChoreProposal = async function (houseId, proposedBy, choreId, name, metadata, now) {
-  return exports.createChoreProposal(houseId, proposedBy, choreId, name, metadata, true, now);
-};
-
 exports.getChoreProposal = async function (proposalId) {
   return db('ChoreProposal')
     .select('*')
