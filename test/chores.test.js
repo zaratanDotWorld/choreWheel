@@ -954,18 +954,22 @@ describe('Chores', async () => {
   });
 
   describe('editing chores', async () => {
+    let chores, proposal;
+
     beforeEach(async () => {
       await Admin.activateResident(HOUSE, RESIDENT1, now);
       await Admin.activateResident(HOUSE, RESIDENT2, now);
+
+      [ chores, proposal ] = [ undefined, undefined ];
     });
 
     it('can add a chore', async () => {
-      let chores;
       chores = await Chores.getChores(HOUSE);
       expect(chores.length).to.equal(0);
 
+      const name = 'cooking';
       const description = 'Rice & beans';
-      const [ proposal ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'cooking', { description }, now);
+      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, { description }, true, now);
 
       await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
@@ -978,13 +982,12 @@ describe('Chores', async () => {
     });
 
     it('can overwrite an existing chore', async () => {
-      let chores;
       chores = await Chores.getChores(HOUSE);
       expect(chores.length).to.equal(0);
 
-      let proposal;
-      const description = 'Rice & beans';
-      [ proposal ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'cooking', { description }, now);
+      const name = 'cooking';
+      let description = 'Rice & beans';
+      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, { description }, true, now);
 
       await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
@@ -993,11 +996,11 @@ describe('Chores', async () => {
 
       chores = await Chores.getChores(HOUSE);
       expect(chores.length).to.equal(1);
-      expect(chores[0].name).to.equal('cooking');
+      expect(chores[0].name).to.equal(name);
       expect(chores[0].metadata.description).to.equal(description);
 
-      const newDescription = 'Rice & beans with hot sauce';
-      [ proposal ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'cooking', { description: newDescription }, now);
+      description = 'Rice & beans with hot sauce';
+      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, { description }, true, now);
 
       await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
@@ -1005,59 +1008,62 @@ describe('Chores', async () => {
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
       chores = await Chores.getChores(HOUSE);
       expect(chores.length).to.equal(1);
-      expect(chores[0].name).to.equal('cooking');
-      expect(chores[0].metadata.description).to.equal(newDescription);
+      expect(chores[0].name).to.equal(name);
+      expect(chores[0].metadata.description).to.equal(description);
     });
 
     it('can delete a chore', async () => {
+      const name = 'cleaning';
       const description = 'Washing dishes';
-      const [ addProposal ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'cleaning', { description }, now);
+      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, { description }, true, now);
 
-      await Polls.submitVote(addProposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(addProposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
 
-      await Chores.resolveChoreProposal(addProposal.id, proposalEnd);
+      await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
-      let chores = await Chores.getChores(HOUSE);
+      chores = await Chores.getChores(HOUSE);
       expect(chores.length).to.equal(1);
 
-      const [ deleteProposal ] = await Chores.createDeleteChoreProposal(HOUSE, RESIDENT1, chores[0].id, chores[0].name, now);
+      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, chores[0].id, chores[0].name, {}, false, now);
 
-      await Polls.submitVote(deleteProposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(deleteProposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
 
-      await Chores.resolveChoreProposal(deleteProposal.id, proposalEnd);
+      await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
       chores = await Chores.getChores(HOUSE);
       expect(chores.length).to.equal(0);
     });
 
     it('can edit a chore', async () => {
+      let name = 'laundry';
       let description = 'Wash clothes';
-      const [ addProposal ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'laundry', { description }, now);
+      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, { description }, true, now);
 
-      await Polls.submitVote(addProposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(addProposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
 
-      await Chores.resolveChoreProposal(addProposal.id, proposalEnd);
-
-      let chores = await Chores.getChores(HOUSE);
-      const laundry = chores.find(x => x.name === 'laundry');
-      const laundryId = laundry.id;
-      expect(laundry.metadata.description).to.equal(description);
-
-      description = 'Wash and dry clothes';
-      const [ editProposal ] = await Chores.createEditChoreProposal(HOUSE, RESIDENT1, laundry.id, 'laundry2', { description }, now);
-
-      await Polls.submitVote(editProposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(editProposal.pollId, RESIDENT2, now, YAY);
-
-      await Chores.resolveChoreProposal(editProposal.id, proposalEnd);
+      await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
       chores = await Chores.getChores(HOUSE);
-      const laundry2 = chores.find(x => x.name === 'laundry2');
-      expect(laundry2.id).to.equal(laundryId);
-      expect(laundry2.metadata.description).to.equal(description);
+      let chore = chores.find(x => x.name === name);
+      const initialChoreId = chore.id;
+      expect(chore.metadata.description).to.equal(description);
+
+      name = 'laundry2';
+      description = 'Wash and dry clothes';
+      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, chore.id, name, { description }, true, now);
+
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+
+      await Chores.resolveChoreProposal(proposal.id, proposalEnd);
+
+      chores = await Chores.getChores(HOUSE);
+      chore = chores.find(x => x.name === name);
+      expect(chore.id).to.equal(initialChoreId);
+      expect(chore.metadata.description).to.equal(description);
     });
 
     it('cannot create a proposal without either a choreId or name', async () => {
@@ -1066,16 +1072,18 @@ describe('Chores', async () => {
     });
 
     it('cannot resolve a proposal before the poll is closed', async () => {
+      const name = 'cooking';
       const description = 'Rice & beans';
-      const [ proposal ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'cooking', { description }, now);
+      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, { description }, true, now);
 
       await expect(Chores.resolveChoreProposal(proposal.id, soon))
         .to.be.rejectedWith('Poll not closed!');
     });
 
     it('cannot resolve a proposal twice', async () => {
+      const name = 'cooking';
       const description = 'Rice & beans';
-      const [ proposal ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'cooking', { description }, now);
+      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, { description }, true, now);
 
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
@@ -1087,12 +1095,12 @@ describe('Chores', async () => {
       await Admin.activateResident(HOUSE, RESIDENT3, now);
       await Admin.activateResident(HOUSE, RESIDENT4, now);
 
-      let chores;
       chores = await Chores.getChores(HOUSE);
       expect(chores.length).to.equal(0);
 
+      const name = 'cooking';
       const description = 'Rice & beans';
-      const [ proposal ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'cooking', { description }, now);
+      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, { description }, true, now);
 
       // 40% of 4 residents is 2 upvotes
       await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
@@ -1110,12 +1118,11 @@ describe('Chores', async () => {
     });
 
     it('can resolve proposals in bulk', async () => {
-      let chores;
       chores = await Chores.getChores(HOUSE);
       expect(chores.length).to.equal(0);
 
-      const [ proposal1 ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'cooking', {}, now);
-      const [ proposal2 ] = await Chores.createAddChoreProposal(HOUSE, RESIDENT1, 'laundry', {}, now);
+      const [ proposal1 ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, 'c1', {}, true, now);
+      const [ proposal2 ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, 'c2', {}, true, now);
 
       await Polls.submitVote(proposal1.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(proposal1.pollId, RESIDENT2, now, YAY);
