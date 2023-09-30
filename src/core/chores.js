@@ -31,8 +31,8 @@ exports.addChore = async function (houseId, name, metadata) {
     .returning('*');
 };
 
-// NB: add and edit are distinct actions, since editing supports name changes
-// Also used for deletion
+// NOTE: also used for deletion
+// NOTE: add and edit are distinct actions, since editing supports name changes
 exports.editChore = async function (choreId, name, metadata, active) {
   return db('Chore')
     .where({ id: choreId })

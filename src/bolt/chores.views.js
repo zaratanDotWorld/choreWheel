@@ -347,8 +347,8 @@ exports.choresProposeView = function (minVotes) {
             action_id: 'chores-propose-2',
             options: [
               { text: { type: 'mrkdwn', text: '*Add* a new chore' }, value: 'add' },
-              { text: { type: 'mrkdwn', text: '*Remove* an existing chore' }, value: 'delete' },
-              { text: { type: 'mrkdwn', text: '*Change* an existing chore' }, value: 'edit' }
+              { text: { type: 'mrkdwn', text: '*Change* an existing chore' }, value: 'edit' },
+              { text: { type: 'mrkdwn', text: '*Remove* an existing chore' }, value: 'delete' }
             ]
           }
         ]
@@ -387,40 +387,6 @@ exports.choresProposeAddView = function () {
           multiline: true,
           placeholder: { type: 'plain_text', text: 'Describe the chore (bullet points work well)', emoji: true },
           action_id: 'description'
-        }
-      }
-    ]
-  };
-};
-
-exports.choresProposeDeleteView = function (chores) {
-  const mappedChores = chores.map((chore) => {
-    return {
-      value: JSON.stringify({ id: chore.id, name: chore.name }),
-      text: { type: 'plain_text', text: chore.name, emoji: true }
-    };
-  });
-
-  const mainText = 'Remove an existing chore.';
-
-  return {
-    type: 'modal',
-    callback_id: 'chores-propose-callback',
-    private_metadata: JSON.stringify({ type: 'delete' }),
-    title: { type: 'plain_text', text: 'Chores', emoji: true },
-    submit: { type: 'plain_text', text: 'Submit', emoji: true },
-    close: { type: 'plain_text', text: 'Cancel', emoji: true },
-    blocks: [
-      { type: 'header', text: { type: 'plain_text', text: 'Edit chores list', emoji: true } },
-      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
-      {
-        type: 'input',
-        label: { type: 'plain_text', text: 'Chore to remove', emoji: true },
-        element: {
-          type: 'static_select',
-          action_id: 'chores',
-          placeholder: { type: 'plain_text', text: 'Choose a chore', emoji: true },
-          options: mappedChores
         }
       }
     ]
@@ -491,6 +457,40 @@ exports.choresProposeEditView2 = function (chore) {
           initial_value: (chore.metadata) ? chore.metadata.description : undefined,
           placeholder: { type: 'plain_text', text: 'Describe the chore (bullet points work well)', emoji: true },
           action_id: 'description'
+        }
+      }
+    ]
+  };
+};
+
+exports.choresProposeDeleteView = function (chores) {
+  const mappedChores = chores.map((chore) => {
+    return {
+      value: JSON.stringify({ id: chore.id, name: chore.name }),
+      text: { type: 'plain_text', text: chore.name, emoji: true }
+    };
+  });
+
+  const mainText = 'Remove an existing chore.';
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-propose-callback',
+    private_metadata: JSON.stringify({ type: 'delete' }),
+    title: { type: 'plain_text', text: 'Chores', emoji: true },
+    submit: { type: 'plain_text', text: 'Submit', emoji: true },
+    close: { type: 'plain_text', text: 'Cancel', emoji: true },
+    blocks: [
+      { type: 'header', text: { type: 'plain_text', text: 'Edit chores list', emoji: true } },
+      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
+      {
+        type: 'input',
+        label: { type: 'plain_text', text: 'Chore to remove', emoji: true },
+        element: {
+          type: 'static_select',
+          action_id: 'chores',
+          placeholder: { type: 'plain_text', text: 'Choose a chore', emoji: true },
+          options: mappedChores
         }
       }
     ]
