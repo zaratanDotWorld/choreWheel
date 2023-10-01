@@ -5,7 +5,9 @@ const {
   thingsSpecialPollLength,
   thingsMinVotesScalar,
   thingsMinPctSpecial,
-  thingsMaxPct
+  thingsMaxPct,
+  thingsProposalPct,
+  thingsProposalPollLength
 } = require('../config');
 
 const Admin = require('./admin');
@@ -180,6 +182,66 @@ exports.getFulfilledThingBuys = async function (houseId, startTime, endTime) {
     ]);
 };
 
+// Thing Proposals
+
+exports.createThingProposal = async function (houseId, proposedBy, thingId, type, name, value, metadata, active, now) {
+  // TODO: Can this be done as a table constraint?
+  if (!(thingId || (type && name))) { throw new Error('Proposal must include either thingId or type and name!'); }
+
+  const [ poll ] = await Polls.createPoll(now, thingsProposalPollLength);
+
+  return db('ThingProposal')
+    .insert({ houseId, proposedBy, thingId, type, name, value, metadata, active, pollId: poll.id })
+    .returning('*');
+};
+
+exports.getThingProposal = async function (proposalId) {
+  return db('ThingProposal')
+    .select('*')
+    .where({ id: proposalId })
+    .first();
+};
+
+exports.resolveThingProposal = async function (proposalId, now) {
+  const proposal = await exports.getThingProposal(proposalId);
+  if (proposal.resolvedAt !== null) { throw new Error('Proposal already resolved!'); }
+
+  const poll = await Polls.getPoll(proposal.pollId);
+  if (now < poll.endTime) { throw new Error('Poll not closed!'); }
+
+  const minVotes = await exports.getThingProposalMinVotes(proposal.houseId);
+  const valid = await Polls.isPollValid(proposal.pollId, minVotes);
+
+  if (valid) {
+    const { houseId, thingId, type, name, value, metadata, active } = proposal;
+    if (!thingId) {
+      await exports.addThing(houseId, type, name, value, metadata);
+    } else {
+      await exports.editThing(thingId, type, name, value, metadata, active);
+    }
+  }
+
+  return db('ThingProposal')
+    .where({ id: proposalId })
+    .update({ resolvedAt: now })
+    .returning('*');
+};
+
+// TODO: generalize this along with resolveChoreProposals
+exports.resolveThingProposals = async function (houseId, now) {
+  const resolveableThingProposals = await db('ThingProposal')
+    .join('Poll', 'ThingProposal.pollId', 'Poll.id')
+    .where('ThingProposal.houseId', houseId)
+    .where('Poll.endTime', '<=', now)
+    .where('ThingProposal.resolvedAt', null)
+    .orderBy('Poll.endTime') // Ensure sequential resolution
+    .select('ThingProposal.id');
+
+  for (const proposal of resolveableThingProposals) {
+    await exports.resolveThingProposal(proposal.id, now);
+  }
+};
+
 // Utils
 
 exports.getThingBuyMinVotes = async function (thingBuy, numResidents) {
@@ -190,4 +252,9 @@ exports.getThingBuyMinVotes = async function (thingBuy, numResidents) {
   return (thingBuy.thingId === null)
     ? Math.min(maxVotes, Math.max(minVotesScaled, minVotesSpecial)) // Special buy
     : Math.min(maxVotes, minVotesScaled); // Regular buy
+};
+
+exports.getThingProposalMinVotes = async function (houseId) {
+  const residents = await Admin.getResidents(houseId);
+  return Math.ceil(thingsProposalPct * residents.length);
 };
