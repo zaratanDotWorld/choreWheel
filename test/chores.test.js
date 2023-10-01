@@ -1044,8 +1044,7 @@ describe('Chores', async () => {
 
     it('can delete a chore', async () => {
       const name = 'cleaning';
-      const description = 'Washing dishes';
-      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, { description }, true, now);
+      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, {}, true, now);
 
       await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
@@ -1073,8 +1072,7 @@ describe('Chores', async () => {
 
     it('cannot resolve a proposal before the poll is closed', async () => {
       const name = 'cooking';
-      const description = 'Rice & beans';
-      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, { description }, true, now);
+      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, {}, true, now);
 
       await expect(Chores.resolveChoreProposal(proposal.id, soon))
         .to.be.rejectedWith('Poll not closed!');
@@ -1082,8 +1080,7 @@ describe('Chores', async () => {
 
     it('cannot resolve a proposal twice', async () => {
       const name = 'cooking';
-      const description = 'Rice & beans';
-      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, { description }, true, now);
+      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, {}, true, now);
 
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
@@ -1099,8 +1096,7 @@ describe('Chores', async () => {
       expect(chores.length).to.equal(0);
 
       const name = 'cooking';
-      const description = 'Rice & beans';
-      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, { description }, true, now);
+      [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, {}, true, now);
 
       // 40% of 4 residents is 2 upvotes
       await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);

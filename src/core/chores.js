@@ -430,10 +430,11 @@ exports.resolveChoreProposal = async function (proposalId, now) {
   const valid = await Polls.isPollValid(proposal.pollId, minVotes);
 
   if (valid) {
-    if (!proposal.choreId) {
-      await exports.addChore(proposal.houseId, proposal.name, proposal.metadata);
+    const { houseId, choreId, name, metadata, active } = proposal;
+    if (!choreId) {
+      await exports.addChore(houseId, name, metadata);
     } else {
-      await exports.editChore(proposal.choreId, proposal.name, proposal.metadata, proposal.active);
+      await exports.editChore(choreId, name, metadata, active);
     }
   }
 
