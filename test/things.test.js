@@ -56,17 +56,18 @@ describe('Things', async () => {
 
   describe('managing the list', async () => {
     it('can manage items on the list', async () => {
-      const [ soap ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: SOAP, value: 10 });
-      await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, value: 60 });
+      const [ soap ] = await Things.addThing(HOUSE, PANTRY, SOAP, 10, {});
+      const [ rice ] = await Things.addThing(HOUSE, PANTRY, RICE, 60, {});
 
       let things;
       things = await Things.getThings(HOUSE);
       expect(things.length).to.equal(2);
+      // Sorted alphabetically
       expect(things[0].name).to.equal(RICE);
       expect(things[1].name).to.equal(SOAP);
 
-      await Things.deleteThing(soap.id);
-      await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, value: 20 });
+      await Things.editThing(soap.id, PANTRY, SOAP, 0, {}, false);
+      await Things.editThing(rice.id, PANTRY, RICE, 20, {}, true);
 
       things = await Things.getThings(HOUSE);
       expect(things.length).to.equal(1);
@@ -74,7 +75,7 @@ describe('Things', async () => {
     });
 
     it('can get a thing by id', async () => {
-      const [ soap ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: SOAP, value: 10 });
+      const [ soap ] = await Things.addThing(HOUSE, PANTRY, SOAP, 10, {});
 
       const thing = await Things.getThing(soap.id);
       expect(thing.name).to.equal(soap.name);
@@ -86,8 +87,8 @@ describe('Things', async () => {
     let rice;
 
     beforeEach(async () => {
-      [ soap ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: SOAP, value: 10, metadata: { unit: '20 bars' } });
-      [ rice ] = await Things.updateThing({ houseId: HOUSE, type: PANTRY, name: RICE, value: 60, metadata: { unit: '25 lbs' } });
+      [ soap ] = await Things.addThing(HOUSE, PANTRY, SOAP, 10, { unit: '20 bars' });
+      [ rice ] = await Things.addThing(HOUSE, PANTRY, RICE, 60, { unit: '25 lbs' });
     });
 
     it('can buy a thing from the list', async () => {

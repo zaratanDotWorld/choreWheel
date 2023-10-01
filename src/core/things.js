@@ -13,17 +13,19 @@ const Polls = require('./polls');
 
 // Things
 
-exports.updateThing = async function (thingData) {
+exports.addThing = async function (houseId, type, name, value, metadata) {
   return db('Thing')
-    .insert(thingData)
+    .insert({ houseId, type, name, value, metadata, active: true })
     .onConflict([ 'houseId', 'type', 'name' ]).merge()
     .returning('*');
 };
 
-exports.deleteThing = async function (thingId) {
+// NOTE: also used for deletion
+// NOTE: add and edit are distinct actions, since editing supports name changes
+exports.editThing = async function (thingId, type, name, value, metadata, active) {
   return db('Thing')
     .where({ id: thingId })
-    .update({ active: false })
+    .update({ type, name, value, metadata, active })
     .returning('*');
 };
 
