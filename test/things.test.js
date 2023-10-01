@@ -6,7 +6,7 @@ chai.use(chaiAsPromised);
 
 const { Things, Polls, Admin } = require('../src/core/index');
 const { NAY, YAY, HOUR, DAY } = require('../src/constants');
-const { thingsPollLength, thingsSpecialPollLength } = require('../src/config');
+const { thingsPollLength, thingsSpecialPollLength, thingsProposalPollLength } = require('../src/config');
 const { db } = require('../src/core/db');
 
 describe('Things', async () => {
@@ -25,6 +25,7 @@ describe('Things', async () => {
   let soon;
   let challengeEnd;
   let challengeEndSpecial;
+  let proposalEnd;
   let numResidents;
 
   before(async () => {
@@ -36,6 +37,7 @@ describe('Things', async () => {
     soon = new Date(now.getTime() + HOUR);
     challengeEnd = new Date(now.getTime() + thingsPollLength);
     challengeEndSpecial = new Date(now.getTime() + thingsSpecialPollLength);
+    proposalEnd = new Date(now.getTime() + thingsProposalPollLength);
 
     await Admin.updateHouse({ slackId: HOUSE });
     await Admin.activateResident(HOUSE, RESIDENT1, now);
@@ -48,6 +50,7 @@ describe('Things', async () => {
   });
 
   afterEach(async () => {
+    await db('ThingProposal').del();
     await db('ThingBuy').del();
     await db('Thing').del();
     await db('PollVote').del();
@@ -403,6 +406,207 @@ describe('Things', async () => {
 
       const unfulfilledBuys = await Things.getUnfulfilledThingBuys(HOUSE, now);
       expect(unfulfilledBuys.length).to.equal(2);
+    });
+  });
+
+  describe('editing things', async () => {
+    let things, proposal;
+
+    beforeEach(async () => {
+      await Admin.activateResident(HOUSE, RESIDENT1, now);
+      await Admin.activateResident(HOUSE, RESIDENT2, now);
+
+      [ things, proposal ] = [ undefined, undefined ];
+    });
+
+    it('can add a thing', async () => {
+      things = await Things.getThings(HOUSE);
+      expect(things.length).to.equal(0);
+
+      const unit = '25 lbs';
+      [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, PANTRY, RICE, 20, { unit }, true, now);
+
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+
+      await Things.resolveThingProposal(proposal.id, proposalEnd);
+
+      things = await Things.getThings(HOUSE);
+      expect(things.length).to.equal(1);
+      expect(things[0].type).to.equal(PANTRY);
+      expect(things[0].name).to.equal(RICE);
+      expect(things[0].metadata.unit).to.equal(unit);
+    });
+
+    it('can overwrite an existing thing', async () => {
+      things = await Things.getThings(HOUSE);
+      expect(things.length).to.equal(0);
+
+      let unit = '25 lbs';
+      [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, PANTRY, RICE, 20, { unit }, true, now);
+
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+
+      await Things.resolveThingProposal(proposal.id, proposalEnd);
+
+      things = await Things.getThings(HOUSE);
+      expect(things.length).to.equal(1);
+      expect(things[0].type).to.equal(PANTRY);
+      expect(things[0].name).to.equal(RICE);
+      expect(things[0].value).to.equal(20);
+      expect(things[0].metadata.unit).to.equal(unit);
+
+      unit = '50 lbs';
+      [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, PANTRY, RICE, 30, { unit }, true, now);
+
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+
+      await Things.resolveThingProposal(proposal.id, proposalEnd);
+      things = await Things.getThings(HOUSE);
+      expect(things.length).to.equal(1);
+      expect(things[0].type).to.equal(PANTRY);
+      expect(things[0].name).to.equal(RICE);
+      expect(things[0].value).to.equal(30);
+      expect(things[0].metadata.unit).to.equal(unit);
+    });
+
+    it('can edit a thing', async () => {
+      let type = 'beverage';
+      let name = 'oat milk';
+      let unit = '2 liters';
+      [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, type, name, 20, { unit }, true, now);
+
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+
+      await Things.resolveThingProposal(proposal.id, proposalEnd);
+
+      things = await Things.getThings(HOUSE);
+      let thing = things.find(x => x.name === name);
+      const initialThingId = thing.id;
+      expect(thing.type).to.equal(type);
+      expect(thing.name).to.equal(name);
+      expect(thing.value).to.equal(20);
+      expect(thing.metadata.unit).to.equal(unit);
+
+      type = 'drinks';
+      name = 'dairy alternatives';
+      unit = '48 oz';
+      [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, thing.id, type, name, 25, { unit }, true, now);
+
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+
+      await Things.resolveThingProposal(proposal.id, proposalEnd);
+
+      things = await Things.getThings(HOUSE);
+      thing = things.find(x => x.name === name);
+      expect(thing.id).to.equal(initialThingId);
+      expect(thing.type).to.equal(type);
+      expect(thing.name).to.equal(name);
+      expect(thing.value).to.equal(25);
+      expect(thing.metadata.unit).to.equal(unit);
+    });
+
+    it('can delete a thing', async () => {
+      [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, PANTRY, RICE, 20, {}, true, now);
+
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+
+      await Things.resolveThingProposal(proposal.id, proposalEnd);
+
+      things = await Things.getThings(HOUSE);
+      expect(things.length).to.equal(1);
+
+      [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, things[0].id, PANTRY, RICE, 0, {}, false, now);
+
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+
+      await Things.resolveThingProposal(proposal.id, proposalEnd);
+
+      things = await Things.getThings(HOUSE);
+      expect(things.length).to.equal(0);
+    });
+
+    it('cannot create a proposal without either a thingId or type and name', async () => {
+      await expect(Things.createThingProposal(HOUSE, RESIDENT1, null, PANTRY, null, 0, {}, true, now))
+        .to.be.rejectedWith('Proposal must include either thingId or type and name!');
+
+      await expect(Things.createThingProposal(HOUSE, RESIDENT1, null, null, RICE, 0, {}, true, now))
+        .to.be.rejectedWith('Proposal must include either thingId or type and name!');
+    });
+
+    it('cannot resolve a proposal before the poll is closed', async () => {
+      [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, PANTRY, RICE, 20, {}, true, now);
+
+      await expect(Things.resolveThingProposal(proposal.id, soon))
+        .to.be.rejectedWith('Poll not closed!');
+    });
+
+    it('cannot resolve a proposal twice', async () => {
+      [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, PANTRY, RICE, 20, { }, true, now);
+
+      await Things.resolveThingProposal(proposal.id, proposalEnd);
+
+      await expect(Things.resolveThingProposal(proposal.id, proposalEnd))
+        .to.be.rejectedWith('Proposal already resolved!');
+    });
+
+    it('cannot approve a proposal with insufficient votes', async () => {
+      await Admin.activateResident(HOUSE, RESIDENT3, now);
+      await Admin.activateResident(HOUSE, RESIDENT4, now);
+
+      things = await Things.getThings(HOUSE);
+      expect(things.length).to.equal(0);
+
+      [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, PANTRY, RICE, 20, {}, true, now);
+
+      // 40% of 4 residents is 2 upvotes
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, NAY);
+
+      await Things.resolveThingProposal(proposal.id, proposalEnd);
+
+      things = await Things.getThings(HOUSE);
+      expect(things.length).to.equal(0);
+
+      // Cannot resolve again
+      await Polls.submitVote(proposal.pollId, RESIDENT3, now, YAY);
+      await expect(Things.resolveThingProposal(proposal.id, proposalEnd))
+        .to.be.rejectedWith('Proposal already resolved!');
+    });
+
+    it('can resolve proposals in bulk', async () => {
+      things = await Things.getThings(HOUSE);
+      expect(things.length).to.equal(0);
+
+      const [ proposal1 ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, 't1', 'n1', 0, {}, true, now);
+      const [ proposal2 ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, 't2', 'n2', 0, {}, true, now);
+
+      await Polls.submitVote(proposal1.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal1.pollId, RESIDENT2, now, YAY);
+
+      await Polls.submitVote(proposal2.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal2.pollId, RESIDENT1, now, YAY);
+
+      // Not before the polls close
+      await Things.resolveThingProposals(HOUSE, soon);
+      things = await Things.getThings(HOUSE);
+      expect(things.length).to.equal(0);
+
+      // Actually resolve
+      await Things.resolveThingProposals(HOUSE, proposalEnd);
+      things = await Things.getThings(HOUSE);
+      expect(things.length).to.equal(2);
+
+      // But not twice
+      await Things.resolveThingProposals(HOUSE, proposalEnd);
+      things = await Things.getThings(HOUSE);
+      expect(things.length).to.equal(2);
     });
   });
 });
