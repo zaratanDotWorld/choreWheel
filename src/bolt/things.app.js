@@ -68,50 +68,6 @@ app.command('/things-channel', async ({ ack, command }) => {
   await common.setChannel(app, thingsOauth, 'thingsChannel', command);
 });
 
-app.command('/things-add', async ({ ack, command }) => {
-  console.log('/things-add');
-  await ack();
-
-  let text;
-
-  if (command.text === 'help' || command.text.length === 0) {
-    text = 'Enter the details of a new thing to add it to the list. ' +
-    'Entries have four hyphen-separated parts, e.g. Food - Eggs - 2 dozen - 20. ' +
-    'If the thing already exists, the command does nothing.';
-  } else if (await common.isAdmin(app, thingsOauth, command)) {
-    const [ houseId, active ] = [ command.team_id, true ];
-    const { type, name, unit, value } = views.parseThingAdd(command.text);
-    const [ thing ] = await Things.updateThing({ houseId, type, name, value, active, metadata: { unit } });
-    text = `${views.formatThing(thing)} added to the things list :star-struck:`;
-  } else {
-    text = ':warning: Only admins can update the things list...';
-  }
-
-  await common.replyEphemeral(app, thingsOauth, command, text);
-});
-
-app.command('/things-del', async ({ ack, command }) => {
-  console.log('/things-del');
-  await ack();
-
-  let text;
-
-  if (command.text === 'help' || command.text.length === 0) {
-    text = 'Enter the name of an existing thing to delete it from the list. ' +
-    'Entries have two hyphen-separated parts, e.g. Food - Eggs. ' +
-    'If no matching thing is found, the command does nothing.';
-  } else if (await common.isAdmin(app, thingsOauth, command)) {
-    const [ houseId, value, active ] = [ command.team_id, 0, false ];
-    const { type, name } = views.parseThingDel(command.text);
-    const [ thing ] = await Things.updateThing({ houseId, type, name, value, active });
-    text = `${views.formatThing(thing)} removed from the things list :sob:`;
-  } else {
-    text = ':warning: Only admins can update the things list...';
-  }
-
-  await common.replyEphemeral(app, thingsOauth, command, text);
-});
-
 app.command('/things-load', async ({ ack, command }) => {
   console.log('/things-load');
   await ack();

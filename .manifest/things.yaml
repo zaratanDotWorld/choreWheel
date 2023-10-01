@@ -14,14 +14,6 @@ features:
     - command: /things-channel
       url: https://things.mirror.zaratan.world/slack/events
       description: Use the current channel for app events
-    - command: /things-add
-      url: https://things.mirror.zaratan.world/slack/events
-      description: Add a thing
-      usage_hint: "[type]-[name]-[unit]-[price]"
-    - command: /things-del
-      url: https://things.mirror.zaratan.world/slack/events
-      description: Delete a thing
-      usage_hint: "[type]-[name]"
     - command: /things-load
       url: https://things.mirror.zaratan.world/slack/events
       description: Load money into the house account
