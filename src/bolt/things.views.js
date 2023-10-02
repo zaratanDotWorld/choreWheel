@@ -1,28 +1,22 @@
 const voca = require('voca');
 
 const { HOUR } = require('../constants');
-const { thingsMinPctSpecial, thingsMaxPct, thingsPollLength, thingsSpecialPollLength } = require('../config');
+const { thingsMinPctSpecial, thingsMaxPct, thingsPollLength, thingsSpecialPollLength, thingsProposalPollLength } = require('../config');
 
-const { makeVoteButtons } = require('./common');
+const common = require('./common');
 
 // Things Views
 
-exports.parseThingAdd = function (text) {
-  // [type]-[name]-[unit]-[value]
-  let [ type, name, unit, value ] = text.split('-');
-  type = voca(type).trim().titleCase().value();
-  name = voca(name).trim().titleCase().value();
-  unit = voca(unit).trim().lowerCase().value();
-  value = voca(value).trim().value();
-  return { type, name, unit, value };
+const TITLE = common.blockPlaintext('Things');
+const CLOSE = common.blockPlaintext('Cancel');
+const SUBMIT = common.blockPlaintext('Submit');
+
+exports.parseTitlecase = function (text) {
+  return voca(text).trim().lowerCase().titleCase().value();
 };
 
-exports.parseThingDel = function (text) {
-  // [type]-[name]
-  let [ type, name ] = text.split('-');
-  type = voca(type).trim().titleCase().value();
-  name = voca(name).trim().titleCase().value();
-  return { type, name };
+exports.parseLowercase = function (text) {
+  return voca(text).trim().lowerCase().value();
 };
 
 exports.parseResolvedThingBuys = function (unfulfilledBuys) {
@@ -82,7 +76,8 @@ exports.thingsHomeView = function (balance) {
         elements: [
           { type: 'button', action_id: 'things-buy', text: { type: 'plain_text', text: 'Buy a thing', emoji: true } },
           { type: 'button', action_id: 'things-special', text: { type: 'plain_text', text: 'Buy special thing', emoji: true } },
-          { type: 'button', action_id: 'things-bought', text: { type: 'plain_text', text: 'See bought things', emoji: true } }
+          { type: 'button', action_id: 'things-bought', text: { type: 'plain_text', text: 'See bought things', emoji: true } },
+          { type: 'button', action_id: 'things-propose', text: { type: 'plain_text', text: 'Edit things list', emoji: true } }
         ]
       }
     ]
@@ -149,7 +144,7 @@ exports.thingsBuyCallbackView = function (buy, thing, balance, minVotes) {
   return [
     { type: 'section', text: { type: 'mrkdwn', text: textA } },
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
-    { type: 'actions', elements: makeVoteButtons(buy.pollId, 1, 0) }
+    { type: 'actions', elements: common.makeVoteButtons(buy.pollId, 1, 0) }
   ];
 };
 
@@ -217,7 +212,7 @@ exports.thingsSpecialBuyCallbackView = function (buy, balance, minVotes) {
     { type: 'section', text: { type: 'mrkdwn', text: `*${buy.metadata.title}*` } },
     { type: 'section', text: { type: 'mrkdwn', text: buy.metadata.details } },
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
-    { type: 'actions', elements: makeVoteButtons(buy.pollId, 1, 0) }
+    { type: 'actions', elements: common.makeVoteButtons(buy.pollId, 1, 0) }
   ];
 };
 
@@ -260,4 +255,207 @@ exports.thingsBoughtView = function (unfulfilledBuys, fulfilledBuys7, fulfilledB
       { type: 'section', text: { type: 'mrkdwn', text: `*Fulfilled in the last 90 days:*\n${fulfilledBuys90Text}` } }
     ]
   };
+};
+
+// Thing proposals
+
+exports.thingsProposeView = function (minVotes) {
+  const header = 'Edit thing list';
+  const mainText = 'Choosing a list of things in advance means fewer approvals are needed for any single buy. ' +
+    'It\'s also helpful to keep the list up-to-date as costs and inventories change.\n\n' +
+    'Make sure to consider taxes and shipping when entering costs, otherwise you might accidentally overspend.\n\n' +
+    `As a major house decision, a minimum of *${minVotes} upvote(s)* are required.`;
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockActions([
+    {
+      type: 'radio_buttons',
+      action_id: 'things-propose-2',
+      options: [
+        { value: 'add', text: common.blockMarkdown('*Add* a new thing') },
+        { value: 'edit', text: common.blockMarkdown('*Change* an existing thing') },
+        { value: 'delete', text: common.blockMarkdown('*Remove* an existing thing') }
+      ]
+    }
+  ]));
+
+  return {
+    type: 'modal',
+    title: TITLE,
+    close: CLOSE,
+    blocks
+  };
+};
+
+exports.thingsProposeEditView = function (things) {
+  const header = 'Edit thing list';
+  const mainText = 'Change an existing thing.';
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockActions([
+    {
+      type: 'static_select',
+      action_id: 'things-propose-edit',
+      placeholder: common.blockPlaintext('Choose a thing'),
+      options: things.map((thing) => {
+        return {
+          value: JSON.stringify({ id: thing.id }),
+          text: common.blockPlaintext(exports.formatThing(thing))
+        };
+      })
+    }
+  ]));
+
+  return {
+    type: 'modal',
+    title: TITLE,
+    close: CLOSE,
+    blocks
+  };
+};
+
+// NOTE: used for both add and edit flows
+exports.thingsProposeAddView = function (thing) {
+  let metadata, header, mainText;
+
+  if (thing) {
+    metadata = JSON.stringify({ change: 'edit', thing: { id: thing.id, type: thing.type, name: thing.name } });
+    header = 'Edit thing list';
+    mainText = 'Change an existing thing.';
+  } else {
+    metadata = JSON.stringify({ change: 'add' });
+    header = 'Edit thing list';
+    mainText = 'Add a new thing.';
+  }
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockInput(
+    'Category',
+    {
+      action_id: 'type',
+      type: 'plain_text_input',
+      initial_value: (thing) ? thing.type : undefined,
+      placeholder: common.blockPlaintext('Category of the thing, e.g. Pantry, Beverage')
+    }
+  ));
+  blocks.push(common.blockInput(
+    'Name',
+    {
+      action_id: 'name',
+      type: 'plain_text_input',
+      initial_value: (thing) ? thing.name : undefined,
+      placeholder: common.blockPlaintext('Name of the thing, e.g. Oat Milk, Salt')
+    }
+  ));
+  blocks.push(common.blockInput(
+    'Unit',
+    {
+      action_id: 'unit',
+      type: 'plain_text_input',
+      initial_value: (thing) ? thing.metadata.unit : undefined,
+      placeholder: common.blockPlaintext('Unit sold, e.g. 2 x 24 oz, 2 dozen')
+    }
+  ));
+  blocks.push(common.blockInput(
+    'Cost',
+    {
+      action_id: 'cost',
+      type: 'number_input',
+      min_value: '1',
+      is_decimal_allowed: false,
+      initial_value: (thing) ? thing.value.toString() : undefined,
+      placeholder: common.blockPlaintext('Cost of the thing (including tax & shipping)')
+    }
+  ));
+  blocks.push(common.blockInput(
+    'Link',
+    {
+      action_id: 'url',
+      type: 'url_text_input',
+      initial_value: (thing) ? thing.metadata.url : undefined,
+      placeholder: common.blockPlaintext('Link to the thing')
+    }
+  ));
+
+  return {
+    type: 'modal',
+    callback_id: 'things-propose-callback',
+    private_metadata: metadata,
+    title: TITLE,
+    close: CLOSE,
+    submit: SUBMIT,
+    blocks
+  };
+};
+
+exports.thingsProposeDeleteView = function (things) {
+  const metadata = JSON.stringify({ change: 'delete' });
+
+  const header = 'Edit thing list';
+  const mainText = 'Remove an existing thing.';
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockInput(
+    'Thing to remove',
+    {
+      action_id: 'thing',
+      type: 'static_select',
+      placeholder: common.blockPlaintext('Choose a thing'),
+      options: things.map((thing) => {
+        return {
+          value: JSON.stringify({ id: thing.id, type: thing.type, name: thing.name }),
+          text: common.blockPlaintext(exports.formatThing(thing))
+        };
+      })
+    }
+  ));
+
+  return {
+    type: 'modal',
+    callback_id: 'things-propose-callback',
+    private_metadata: metadata,
+    title: TITLE,
+    close: CLOSE,
+    submit: SUBMIT,
+    blocks
+  };
+};
+
+exports.thingsProposeCallbackView = function (metadata, proposal, minVotes) {
+  let mainText;
+  switch (metadata.change) {
+    case 'add':
+      mainText = `*<@${proposal.proposedBy}>* wants to *add* a thing:`;
+      break;
+    case 'edit':
+      mainText = `*<@${proposal.proposedBy}>* wants to *edit* the *${metadata.thing.type}: ${metadata.thing.name}* thing:`;
+      break;
+    case 'delete':
+      mainText = `*<@${proposal.proposedBy}>* wants to *delete* a thing:`;
+      break;
+  }
+
+  const blocks = [];
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockSection(`*${proposal.type}: ${proposal.name}*`));
+
+  if (proposal.value) {
+    blocks.push(common.blockSection(`${proposal.metadata.unit} - $${proposal.value}`));
+  }
+
+  if (proposal.metadata.url) {
+    blocks.push(common.blockSection(`<${proposal.metadata.url}|Link>`));
+  }
+
+  blocks.push(common.blockSection(common.makeVoteText(minVotes, thingsProposalPollLength)));
+  blocks.push(common.blockActions(common.makeVoteButtons(proposal.pollId, 1, 0)));
+  return blocks;
 };

@@ -1,6 +1,6 @@
 
 const { Admin, Hearts, Polls } = require('../core/index');
-const { SLACKBOT } = require('../constants');
+const { SLACKBOT, HOUR } = require('../constants');
 
 // Utilities
 
@@ -193,6 +193,11 @@ exports.updateVoteCounts = async function (app, oauth, body, action) {
   body.message.blocks[blockIndex].elements = exports.makeVoteButtons(pollId, yays, nays);
 
   await app.client.chat.update(body.message);
+};
+
+exports.makeVoteText = function (minVotes, pollLength) {
+  return `*${minVotes} upvote(s)* are required to pass, ` +
+    `voting closes in *${pollLength / HOUR} hours*`;
 };
 
 exports.makeVoteButtons = function (pollId, upvoteCount, downvoteCount) {
