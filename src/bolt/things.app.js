@@ -56,6 +56,7 @@ app.event('app_home_opened', async ({ body, event }) => {
 
     // This bookkeeping is done after returning the view
     await Things.resolveThingBuys(houseId, now);
+    await Things.resolveThingProposals(houseId, now);
   }
 });
 
@@ -232,6 +233,116 @@ app.action('things-bought', async ({ ack, body }) => {
   const fulfilledBuys90 = await Things.getFulfilledThingBuys(houseId, threeMonthsAgo, now);
   const view = views.thingsBoughtView(unfulfilledBuys, fulfilledBuys7, fulfilledBuys90);
   await common.openView(app, thingsOauth, body.trigger_id, view);
+});
+
+// Proposal flow
+
+app.action('things-propose', async ({ ack, body }) => {
+  console.log('things-propose');
+  await ack();
+
+  const houseId = body.team.id;
+  const minVotes = await Things.getThingProposalMinVotes(houseId);
+
+  const view = views.thingsProposeView(minVotes);
+  await common.openView(app, thingsOauth, body.trigger_id, view);
+});
+
+app.action('things-propose-2', async ({ ack, body }) => {
+  console.log('things-propose-2');
+  await ack();
+
+  const houseId = body.team.id;
+  const change = body.actions[0].selected_option.value;
+
+  let things, view;
+  switch (change) {
+    case 'add':
+      view = views.thingsProposeAddView();
+      break;
+    case 'edit':
+      things = await Things.getThings(houseId);
+      view = views.thingsProposeEditView(things);
+      break;
+    case 'delete':
+      things = await Things.getThings(houseId);
+      view = views.thingsProposeDeleteView(things);
+      break;
+    default:
+      console.log('No match found!');
+      return;
+  }
+
+  await common.pushView(app, thingsOauth, body.trigger_id, view);
+});
+
+app.action('things-propose-edit', async ({ ack, body }) => {
+  console.log('things-propose-edit');
+  await ack();
+
+  const { id: thingId } = JSON.parse(body.actions[0].selected_option.value);
+  const thing = await Things.getThing(thingId);
+
+  const blocks = views.thingsProposeAddView(thing);
+  await common.pushView(app, thingsOauth, body.trigger_id, blocks);
+});
+
+app.view('things-propose-callback', async ({ ack, body }) => {
+  console.log('things-propose-callback');
+  await ack({ response_action: 'clear' });
+
+  const residentId = body.user.id;
+  const houseId = body.team.id;
+  const now = new Date();
+
+  let thingId, type, name, value, unit, url, active;
+  const metadata = JSON.parse(body.view.private_metadata);
+
+  switch (metadata.change) {
+    case 'add':
+      // TODO: if thing exists, return ephemeral and exit
+      type = views.parseTitlecase(common.getInputBlock(body, -5).type.value);
+      name = views.parseTitlecase(common.getInputBlock(body, -4).name.value);
+      unit = views.parseLowercase(common.getInputBlock(body, -3).unit.value);
+      value = common.getInputBlock(body, -2).cost.value;
+      url = common.getInputBlock(body, -1).url.value;
+      [ thingId, active ] = [ null, true ];
+      break;
+    case 'edit':
+      type = views.parseTitlecase(common.getInputBlock(body, -5).type.value);
+      name = views.parseTitlecase(common.getInputBlock(body, -4).name.value);
+      unit = views.parseLowercase(common.getInputBlock(body, -3).unit.value);
+      value = common.getInputBlock(body, -2).cost.value;
+      url = common.getInputBlock(body, -1).url.value;
+      [ thingId, active ] = [ metadata.thing.id, true ];
+      break;
+    case 'delete':
+      ({ id: thingId, type, name } = JSON.parse(common.getInputBlock(body, -1).thing.selected_option.value));
+      [ value, unit, url, active ] = [ 0, undefined, undefined, false ];
+      break;
+    default:
+      console.log('No match found!');
+      return;
+  }
+
+  // Validate URL
+  try {
+    url = new URL(url);
+  } catch {
+    url = undefined;
+  }
+
+  // Create the thing proposal
+  const [ proposal ] = await Things.createThingProposal(houseId, residentId, thingId, type, name, value, { unit, url }, active, now);
+  await Polls.submitVote(proposal.pollId, residentId, now, YAY);
+
+  const { thingsChannel } = await Admin.getHouse(houseId);
+  const minVotes = await Things.getThingProposalMinVotes(houseId);
+
+  const text = 'Someone just proposed a thing edit';
+  const blocks = views.thingsProposeCallbackView(metadata, proposal, minVotes);
+  const { channel, ts } = await common.postMessage(app, thingsOauth, thingsChannel, text, blocks);
+  await Polls.updateMetadata(proposal.pollId, { channel, ts });
 });
 
 // Voting flow
