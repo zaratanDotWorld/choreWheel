@@ -2,6 +2,8 @@
 const { Admin, Hearts, Polls } = require('../core/index');
 const { SLACKBOT } = require('../constants');
 
+// Utilities
+
 exports.homeEndpoint = function (appName) {
   return {
     path: '/',
@@ -24,6 +26,8 @@ exports.isAdmin = async function (app, oauth, command) {
   const { user } = await exports.getUser(app, oauth, command.user_id);
   return user.is_admin;
 };
+
+// Publishing
 
 exports.replyEphemeral = async function (app, oauth, command, text) {
   return app.client.chat.postEphemeral({
@@ -94,6 +98,8 @@ exports.addReaction = async function (app, oauth, payload, emoji) {
     name: emoji
   });
 };
+
+// Internal tools
 
 exports.setChannel = async function (app, oauth, channelType, command) {
   let text;
@@ -219,4 +225,30 @@ exports.getInputBlock = function (body, blockIdx) {
   const realIdx = (blockIdx < 0) ? body.view.blocks.length + blockIdx : blockIdx;
   const blockId = body.view.blocks[realIdx].block_id;
   return body.view.state.values[blockId];
+};
+
+// Block rendering
+
+exports.blockPlaintext = function (text) {
+  return { type: 'plain_text', emoji: true, text };
+};
+
+exports.blockMarkdown = function (text) {
+  return { type: 'mrkdwn', text };
+};
+
+exports.blockHeader = function (text) {
+  return { type: 'header', text: exports.blockPlaintext(text) };
+};
+
+exports.blockSection = function (text) {
+  return { type: 'section', text: exports.blockMarkdown(text) };
+};
+
+exports.blockActions = function (elements) {
+  return { type: 'actions', elements };
+};
+
+exports.blockInput = function (label, element) {
+  return { type: 'input', label: exports.blockPlaintext(label), element };
 };
