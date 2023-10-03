@@ -1,3 +1,4 @@
+const voca = require('voca');
 
 const { Admin, Hearts, Polls } = require('../core/index');
 const { SLACKBOT, HOUR } = require('../constants');
@@ -215,6 +216,14 @@ exports.makeVoteButtons = function (pollId, upvoteCount, downvoteCount) {
       action_id: 'poll-vote-down'
     }
   ];
+};
+
+exports.parseTitlecase = function (text) {
+  return voca(text).trim().lowerCase().titleCase().value();
+};
+
+exports.parseLowercase = function (text) {
+  return voca(text).trim().lowerCase().value();
 };
 
 exports.parseEscapedUsernames = function (text) {

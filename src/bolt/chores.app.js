@@ -429,7 +429,7 @@ app.action('chores-propose-edit', async ({ ack, body }) => {
   const { id: choreId } = JSON.parse(body.actions[0].selected_option.value);
   const chore = await Chores.getChore(choreId);
 
-  const blocks = views.choresProposeEditView2(chore);
+  const blocks = views.choresProposeAddView(chore);
   await common.pushView(app, choresOauth, body.trigger_id, blocks);
 });
 
@@ -444,20 +444,20 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
   let choreId, name, description, active;
   const metadata = JSON.parse(body.view.private_metadata);
 
-  switch (metadata.type) {
+  switch (metadata.change) {
     case 'add':
       // TODO: if chore exists, return ephemeral and exit
-      name = views.formatChoreName(common.getInputBlock(body, -2).name.value);
+      name = common.parseTitlecase(common.getInputBlock(body, -2).name.value);
       description = common.getInputBlock(body, -1).description.value;
       [ choreId, active ] = [ null, true ];
       break;
     case 'edit':
-      name = views.formatChoreName(common.getInputBlock(body, -2).name.value);
+      name = common.parseTitlecase(common.getInputBlock(body, -2).name.value);
       description = common.getInputBlock(body, -1).description.value;
       [ choreId, active ] = [ metadata.chore.id, true ];
       break;
     case 'delete':
-      ({ id: choreId, name } = JSON.parse(common.getInputBlock(body, -1).chores.selected_option.value));
+      ({ id: choreId, name } = JSON.parse(common.getInputBlock(body, -1).chore.selected_option.value));
       [ description, active ] = [ undefined, false ];
       break;
     default:
@@ -473,7 +473,7 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
   const minVotes = await Chores.getChoreProposalMinVotes(houseId);
 
   const text = 'Someone just proposed a chore edit';
-  const blocks = views.choresProposeCallbackView(metadata, proposal, residentId, minVotes);
+  const blocks = views.choresProposeCallbackView(metadata, proposal, minVotes);
   const { channel, ts } = await common.postMessage(app, choresOauth, choresChannel, text, blocks);
   await Polls.updateMetadata(proposal.pollId, { channel, ts });
 });

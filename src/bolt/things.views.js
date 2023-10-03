@@ -1,5 +1,3 @@
-const voca = require('voca');
-
 const { HOUR } = require('../constants');
 const { thingsMinPctSpecial, thingsMaxPct, thingsPollLength, thingsSpecialPollLength, thingsProposalPollLength } = require('../config');
 
@@ -10,14 +8,6 @@ const common = require('./common');
 const TITLE = common.blockPlaintext('Things');
 const CLOSE = common.blockPlaintext('Cancel');
 const SUBMIT = common.blockPlaintext('Submit');
-
-exports.parseTitlecase = function (text) {
-  return voca(text).trim().lowerCase().titleCase().value();
-};
-
-exports.parseLowercase = function (text) {
-  return voca(text).trim().lowerCase().value();
-};
 
 exports.parseResolvedThingBuys = function (unfulfilledBuys) {
   return unfulfilledBuys
@@ -260,7 +250,7 @@ exports.thingsBoughtView = function (unfulfilledBuys, fulfilledBuys7, fulfilledB
 // Thing proposals
 
 exports.thingsProposeView = function (minVotes) {
-  const header = 'Edit thing list';
+  const header = 'Edit things list';
   const mainText = 'Choosing a list of things in advance means fewer approvals are needed for any single buy. ' +
     'It\'s also helpful to keep the list up-to-date as costs and inventories change.\n\n' +
     'Make sure to consider taxes and shipping when entering costs, otherwise you might accidentally overspend.\n\n' +
@@ -290,7 +280,7 @@ exports.thingsProposeView = function (minVotes) {
 };
 
 exports.thingsProposeEditView = function (things) {
-  const header = 'Edit thing list';
+  const header = 'Edit things list';
   const mainText = 'Change an existing thing.';
 
   const blocks = [];
@@ -320,15 +310,14 @@ exports.thingsProposeEditView = function (things) {
 
 // NOTE: used for both add and edit flows
 exports.thingsProposeAddView = function (thing) {
-  let metadata, header, mainText;
+  const header = 'Edit things list';
+  let metadata, mainText;
 
   if (thing) {
     metadata = JSON.stringify({ change: 'edit', thing: { id: thing.id, type: thing.type, name: thing.name } });
-    header = 'Edit thing list';
     mainText = 'Change an existing thing.';
   } else {
     metadata = JSON.stringify({ change: 'add' });
-    header = 'Edit thing list';
     mainText = 'Add a new thing.';
   }
 
@@ -396,8 +385,7 @@ exports.thingsProposeAddView = function (thing) {
 
 exports.thingsProposeDeleteView = function (things) {
   const metadata = JSON.stringify({ change: 'delete' });
-
-  const header = 'Edit thing list';
+  const header = 'Edit things list';
   const mainText = 'Remove an existing thing.';
 
   const blocks = [];

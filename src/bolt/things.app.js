@@ -301,17 +301,17 @@ app.view('things-propose-callback', async ({ ack, body }) => {
   switch (metadata.change) {
     case 'add':
       // TODO: if thing exists, return ephemeral and exit
-      type = views.parseTitlecase(common.getInputBlock(body, -5).type.value);
-      name = views.parseTitlecase(common.getInputBlock(body, -4).name.value);
-      unit = views.parseLowercase(common.getInputBlock(body, -3).unit.value);
+      type = common.parseTitlecase(common.getInputBlock(body, -5).type.value);
+      name = common.parseTitlecase(common.getInputBlock(body, -4).name.value);
+      unit = common.parseLowercase(common.getInputBlock(body, -3).unit.value);
       value = common.getInputBlock(body, -2).cost.value;
       url = common.getInputBlock(body, -1).url.value;
       [ thingId, active ] = [ null, true ];
       break;
     case 'edit':
-      type = views.parseTitlecase(common.getInputBlock(body, -5).type.value);
-      name = views.parseTitlecase(common.getInputBlock(body, -4).name.value);
-      unit = views.parseLowercase(common.getInputBlock(body, -3).unit.value);
+      type = common.parseTitlecase(common.getInputBlock(body, -5).type.value);
+      name = common.parseTitlecase(common.getInputBlock(body, -4).name.value);
+      unit = common.parseLowercase(common.getInputBlock(body, -3).unit.value);
       value = common.getInputBlock(body, -2).cost.value;
       url = common.getInputBlock(body, -1).url.value;
       [ thingId, active ] = [ metadata.thing.id, true ];
