@@ -15,7 +15,7 @@ module.exports = {
     ecmaVersion: 'latest',
   },
   rules: {
-    'max-len': [ ERROR, 150 ],
+    'max-len': [ ERROR, 140 ],
     'no-unused-expressions': OFF,
     'no-unused-vars': [ ERROR, 'local' ],
     'object-shorthand': [ WARN, 'properties' ],

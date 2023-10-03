@@ -302,8 +302,10 @@ describe('Hearts', async () => {
     });
 
     it('cannot challenge oneself', async () => {
-      const dbError = 'insert into "HeartChallenge" ("challengedAt", "challengeeId", "challengerId", "houseId", "metadata", "pollId", "value") ' +
-        'values ($1, $2, $3, $4, $5, $6, $7) returning * - new row for relation "HeartChallenge" violates check constraint "HeartChallenge_check';
+      const dbError = 'insert into "HeartChallenge" ' +
+        '("challengedAt", "challengeeId", "challengerId", "houseId", "metadata", "pollId", "value") ' +
+        'values ($1, $2, $3, $4, $5, $6, $7) returning * ' +
+        '- new row for relation "HeartChallenge" violates check constraint "HeartChallenge_check';
 
       await expect(Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT1, 1, now, ''))
         .to.be.rejectedWith(dbError);
