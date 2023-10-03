@@ -23,7 +23,7 @@ const app = new App({
     'channels:join',
     'chat:write',
     'commands',
-    'users:read'
+    'users:read',
   ],
   installationStore: {
     storeInstallation: async (installation) => {
@@ -35,9 +35,9 @@ const app = new App({
     },
     deleteInstallation: async (installQuery) => {
       return Admin.updateHouse({ slackId: installQuery.teamId, thingsOauth: null });
-    }
+    },
   },
-  installerOptions: { directInstall: true }
+  installerOptions: { directInstall: true },
 });
 
 // Publish the app home

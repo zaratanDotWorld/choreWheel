@@ -12,14 +12,14 @@ exports.homeEndpoint = function (appName) {
     handler: async (_, res) => {
       res.writeHead(200);
       res.end(`Welcome to Mirror - ${appName}!`);
-    }
+    },
   };
 };
 
 exports.getUser = async function (app, oauth, userId) {
   return app.client.users.info({
     token: oauth.bot.token,
-    user: userId
+    user: userId,
   });
 };
 
@@ -35,7 +35,7 @@ exports.replyEphemeral = async function (app, oauth, command, text) {
     token: oauth.bot.token,
     channel: command.channel_id,
     user: command.user_id,
-    text
+    text,
   });
 };
 
@@ -44,7 +44,7 @@ exports.postEphemeral = async function (app, oauth, channelId, residentId, text)
     token: oauth.bot.token,
     channel: channelId,
     user: residentId,
-    text
+    text,
   });
 };
 
@@ -53,7 +53,7 @@ exports.postMessage = async function (app, oauth, channelId, text, blocks) {
     token: oauth.bot.token,
     channel: channelId,
     text,
-    blocks
+    blocks,
   });
 };
 
@@ -63,7 +63,7 @@ exports.postReply = async function (app, oauth, channelId, ts, text, blocks) {
     channel: channelId,
     thread_ts: ts,
     text,
-    blocks
+    blocks,
   });
 };
 
@@ -71,7 +71,7 @@ exports.publishHome = async function (app, oauth, residentId, view) {
   await app.client.views.publish({
     token: oauth.bot.token,
     user_id: residentId,
-    view
+    view,
   });
 };
 
@@ -79,7 +79,7 @@ exports.openView = async function (app, oauth, triggerId, view) {
   return app.client.views.open({
     token: oauth.bot.token,
     trigger_id: triggerId,
-    view
+    view,
   });
 };
 
@@ -87,7 +87,7 @@ exports.pushView = async function (app, oauth, triggerId, view) {
   return app.client.views.push({
     token: oauth.bot.token,
     trigger_id: triggerId,
-    view
+    view,
   });
 };
 
@@ -96,7 +96,7 @@ exports.addReaction = async function (app, oauth, payload, emoji) {
     token: oauth.bot.token,
     channel: payload.channel,
     timestamp: payload.event_ts,
-    name: emoji
+    name: emoji,
   });
 };
 
@@ -207,14 +207,14 @@ exports.makeVoteButtons = function (pollId, upvoteCount, downvoteCount) {
       type: 'button',
       text: { type: 'plain_text', text: `:+1: (${upvoteCount})`, emoji: true },
       value: `${pollId}|1`,
-      action_id: 'poll-vote-up'
+      action_id: 'poll-vote-up',
     },
     {
       type: 'button',
       text: { type: 'plain_text', text: `:-1: (${downvoteCount})`, emoji: true },
       value: `${pollId}|0`,
-      action_id: 'poll-vote-down'
-    }
+      action_id: 'poll-vote-down',
+    },
   ];
 };
 

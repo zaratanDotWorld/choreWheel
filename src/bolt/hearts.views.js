@@ -36,10 +36,10 @@ exports.heartsHomeView = function (numHearts) {
         type: 'actions',
         elements: [
           { type: 'button', action_id: 'hearts-board', text: { type: 'plain_text', text: 'See current hearts', emoji: true } },
-          { type: 'button', action_id: 'hearts-challenge', text: { type: 'plain_text', text: 'Resolve a dispute', emoji: true } }
-        ]
-      }
-    ]
+          { type: 'button', action_id: 'hearts-challenge', text: { type: 'plain_text', text: 'Resolve a dispute', emoji: true } },
+        ],
+      },
+    ],
   };
 };
 
@@ -71,8 +71,8 @@ exports.heartsChallengeView = function (numResidents) {
         element: {
           type: 'users_select',
           placeholder: { type: 'plain_text', text: 'Choose a resident', emoji: true },
-          action_id: 'challengee'
-        }
+          action_id: 'challengee',
+        },
       },
       {
         type: 'input',
@@ -83,11 +83,11 @@ exports.heartsChallengeView = function (numResidents) {
           options: [
             { text: { type: 'plain_text', text: '1', emoji: true }, value: '1' },
             { text: { type: 'plain_text', text: '2', emoji: true }, value: '2' },
-            { text: { type: 'plain_text', text: '3', emoji: true }, value: '3' }
+            { text: { type: 'plain_text', text: '3', emoji: true }, value: '3' },
           ],
           initial_option: { text: { type: 'plain_text', text: '1', emoji: true }, value: '1' },
-          action_id: 'hearts'
-        }
+          action_id: 'hearts',
+        },
       },
       {
         type: 'input',
@@ -96,10 +96,10 @@ exports.heartsChallengeView = function (numResidents) {
           type: 'plain_text_input',
           multiline: true,
           placeholder: { type: 'plain_text', text: 'Explain the circumstance as best you can', emoji: true },
-          action_id: 'circumstance'
-        }
-      }
-    ]
+          action_id: 'circumstance',
+        },
+      },
+    ],
   };
 };
 
@@ -113,7 +113,7 @@ exports.heartsChallengeCallbackView = function (challenge, minVotes, circumstanc
     { type: 'section', text: { type: 'mrkdwn', text: textA } },
     { type: 'section', text: { type: 'mrkdwn', text: circumstance } },
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
-    { type: 'actions', elements: common.makeVoteButtons(challenge.pollId, 1, 0) }
+    { type: 'actions', elements: common.makeVoteButtons(challenge.pollId, 1, 0) },
   ];
 };
 
@@ -133,7 +133,7 @@ exports.heartsBoardView = function (hearts) {
       { type: 'header', text: { type: 'plain_text', text: 'Current hearts', emoji: true } },
       { type: 'section', text: { type: 'mrkdwn', text: mainText } },
       { type: 'divider' },
-      { type: 'section', text: { type: 'mrkdwn', text: heartsText } }
-    ]
+      { type: 'section', text: { type: 'mrkdwn', text: heartsText } },
+    ],
   };
 };

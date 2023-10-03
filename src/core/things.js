@@ -7,7 +7,7 @@ const {
   thingsMinPctSpecial,
   thingsMaxPct,
   thingsProposalPct,
-  thingsProposalPollLength
+  thingsProposalPollLength,
 } = require('../config');
 
 const Admin = require('./admin');
@@ -77,7 +77,7 @@ exports.buyThing = async function (houseId, thingId, boughtBy, boughtAt, price, 
       boughtAt,
       value: -totalCost,
       pollId: poll.id,
-      metadata: { quantity }
+      metadata: { quantity },
     })
     .returning('*');
 };
@@ -96,7 +96,7 @@ exports.buySpecialThing = async function (houseId, boughtBy, boughtAt, price, ti
       boughtAt,
       value: -price,
       pollId: poll.id,
-      metadata: { title, details, special: true }
+      metadata: { title, details, special: true },
     })
     .returning('*');
 };
@@ -155,7 +155,7 @@ exports.getUnfulfilledThingBuys = async function (houseId, currentTime) {
       'Thing.metadata AS thingMetadata',
       'ThingBuy.value',
       'ThingBuy.resolvedAt',
-      'ThingBuy.metadata'
+      'ThingBuy.metadata',
     ]);
 };
 
@@ -178,7 +178,7 @@ exports.getFulfilledThingBuys = async function (houseId, startTime, endTime) {
     .orderBy('value', 'asc')
     .select([
       'Thing.type',
-      'Thing.name'
+      'Thing.name',
     ]);
 };
 

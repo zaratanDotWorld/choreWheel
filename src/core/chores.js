@@ -14,7 +14,7 @@ const {
   implicitPref,
   dampingFactor,
   choresProposalPollLength,
-  choreProposalPct
+  choreProposalPct,
 } = require('../config');
 
 const Admin = require('./admin');
@@ -168,7 +168,7 @@ exports.updateChoreValues = async function (houseId, updateTime) {
       choreId: chore.id,
       valuedAt: updateTime,
       value: chore.ranking * updateScalar,
-      metadata: { ranking: chore.ranking, residents: residentCount }
+      metadata: { ranking: chore.ranking, residents: residentCount },
     };
   });
 
@@ -389,7 +389,7 @@ exports.giftChorePoints = async function (houseId, gifterId, recipientId, gifted
   await db('ChoreClaim')
     .insert([
       { houseId, claimedBy: gifterId, claimedAt: giftedAt, value: -value },
-      { houseId, claimedBy: recipientId, claimedAt: giftedAt, value }
+      { houseId, claimedBy: recipientId, claimedAt: giftedAt, value },
     ])
     .returning('*');
 };

@@ -38,10 +38,10 @@ exports.choresHomeView = function (balance, owed, active, exempt) {
           { type: 'button', action_id: 'chores-rank', text: { type: 'plain_text', text: 'Set chore speeds', emoji: true } },
           { type: 'button', action_id: 'chores-gift', text: { type: 'plain_text', text: 'Gift your points', emoji: true } },
           { type: 'button', action_id: 'chores-break', text: { type: 'plain_text', text: 'Take a break', emoji: true } },
-          { type: 'button', action_id: 'chores-propose', text: { type: 'plain_text', text: 'Edit chores list', emoji: true } }
-        ]
-      }
-    ]
+          { type: 'button', action_id: 'chores-propose', text: { type: 'plain_text', text: 'Edit chores list', emoji: true } },
+        ],
+      },
+    ],
   };
 };
 
@@ -49,7 +49,7 @@ exports.choresClaimView = function (chores) {
   const mappedChores = chores.map((chore) => {
     return {
       value: `${chore.id}|${chore.name}`,
-      text: { type: 'plain_text', text: `${chore.name} - ${chore.value.toFixed(0)} points`, emoji: true }
+      text: { type: 'plain_text', text: `${chore.name} - ${chore.value.toFixed(0)} points`, emoji: true },
     };
   });
 
@@ -70,10 +70,10 @@ exports.choresClaimView = function (chores) {
           type: 'static_select',
           action_id: 'chores-claim-2',
           placeholder: { type: 'plain_text', text: 'Choose a chore', emoji: true },
-          options: mappedChores
-        } ]
-      }
-    ]
+          options: mappedChores,
+        } ],
+      },
+    ],
   };
 };
 
@@ -90,8 +90,8 @@ exports.choresClaimView2 = function (chore) {
     blocks: [
       { type: 'header', text: { type: 'plain_text', text: 'Claim a chore', emoji: true } },
       { type: 'section', text: { type: 'mrkdwn', text: `*${chore.name}*` } },
-      { type: 'section', text: { type: 'mrkdwn', text: description } }
-    ]
+      { type: 'section', text: { type: 'mrkdwn', text: description } },
+    ],
   };
 };
 
@@ -124,7 +124,7 @@ exports.choresClaimCallbackView = function (claim, choreName, totalPoints, month
   return [
     { type: 'section', text: { type: 'mrkdwn', text: textA } },
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
-    { type: 'actions', elements: common.makeVoteButtons(claim.pollId, 1, 0) }
+    { type: 'actions', elements: common.makeVoteButtons(claim.pollId, 1, 0) },
   ];
 };
 
@@ -151,12 +151,12 @@ exports.choresRankView = function () {
             action_id: 'chores-rank-2',
             options: [
               { text: { type: 'mrkdwn', text: '*Speed up a chore* (worth more over time)' }, value: 'faster' },
-              { text: { type: 'mrkdwn', text: '*Slow down a chore* (worth less over time)' }, value: 'slower' }
-            ]
-          }
-        ]
-      }
-    ]
+              { text: { type: 'mrkdwn', text: '*Slow down a chore* (worth less over time)' }, value: 'slower' },
+            ],
+          },
+        ],
+      },
+    ],
   };
 };
 
@@ -165,7 +165,7 @@ exports.choresRankView2 = function (direction, choreRankings) {
     const choreSpeed = (chore.ranking * 1000).toFixed(0);
     return {
       value: `${chore.id}|${chore.name}|${choreSpeed}`,
-      text: { type: 'plain_text', text: `${chore.name} - ${choreSpeed} ppt`, emoji: true }
+      text: { type: 'plain_text', text: `${chore.name} - ${choreSpeed} ppt`, emoji: true },
     };
   });
 
@@ -211,8 +211,8 @@ exports.choresRankView2 = function (direction, choreRankings) {
           type: 'static_select',
           action_id: 'chores',
           placeholder: { type: 'plain_text', text: subTextA, emoji: true },
-          options: mappedChoreRankings
-        }
+          options: mappedChoreRankings,
+        },
       },
       {
         type: 'input',
@@ -221,10 +221,10 @@ exports.choresRankView2 = function (direction, choreRankings) {
           type: 'multi_static_select',
           action_id: 'chores',
           placeholder: { type: 'plain_text', text: subTextB, emoji: true },
-          options: mappedChoreRankings
-        }
-      }
-    ]
+          options: mappedChoreRankings,
+        },
+      },
+    ],
   };
 };
 
@@ -248,8 +248,8 @@ exports.choresGiftView = function (pointsBalance) {
         element: {
           type: 'users_select',
           placeholder: { type: 'plain_text', text: 'Choose a resident', emoji: true },
-          action_id: 'recipient'
-        }
+          action_id: 'recipient',
+        },
       },
       {
         type: 'input',
@@ -257,8 +257,8 @@ exports.choresGiftView = function (pointsBalance) {
         element: {
           type: 'plain_text_input',
           placeholder: { type: 'plain_text', text: 'Enter a number', emoji: true },
-          action_id: 'value'
-        }
+          action_id: 'value',
+        },
       },
       {
         type: 'input',
@@ -266,10 +266,10 @@ exports.choresGiftView = function (pointsBalance) {
         element: {
           type: 'plain_text_input',
           placeholder: { type: 'plain_text', text: 'Tell us why you\'re giving the gift', emoji: true },
-          action_id: 'circumstance'
-        }
-      }
-    ]
+          action_id: 'circumstance',
+        },
+      },
+    ],
   };
 };
 
@@ -295,8 +295,8 @@ exports.choresBreakView = function (currentTime) {
           type: 'datepicker',
           initial_date: formattedTime,
           placeholder: { type: 'plain_text', text: 'Select a date', emoji: true },
-          action_id: 'date'
-        }
+          action_id: 'date',
+        },
       },
       {
         type: 'input',
@@ -305,8 +305,8 @@ exports.choresBreakView = function (currentTime) {
           type: 'datepicker',
           initial_date: formattedTime,
           placeholder: { type: 'plain_text', text: 'Select a date', emoji: true },
-          action_id: 'date'
-        }
+          action_id: 'date',
+        },
       },
       {
         type: 'input',
@@ -314,10 +314,10 @@ exports.choresBreakView = function (currentTime) {
         element: {
           type: 'plain_text_input',
           placeholder: { type: 'plain_text', text: 'Tell us where you\'re going', emoji: true },
-          action_id: 'circumstance'
-        }
-      }
-    ]
+          action_id: 'circumstance',
+        },
+      },
+    ],
   };
 };
 
@@ -343,16 +343,16 @@ exports.choresProposeView = function (minVotes) {
       options: [
         { value: 'add', text: common.blockMarkdown('*Add* a new chore') },
         { value: 'edit', text: common.blockMarkdown('*Change* an existing chore') },
-        { value: 'delete', text: common.blockMarkdown('*Remove* an existing chore') }
-      ]
-    }
+        { value: 'delete', text: common.blockMarkdown('*Remove* an existing chore') },
+      ],
+    },
   ]));
 
   return {
     type: 'modal',
     title: TITLE,
     close: CLOSE,
-    blocks
+    blocks,
   };
 };
 
@@ -371,17 +371,17 @@ exports.choresProposeEditView = function (chores) {
       options: chores.map((chore) => {
         return {
           value: JSON.stringify({ id: chore.id }),
-          text: common.blockPlaintext(chore.name)
+          text: common.blockPlaintext(chore.name),
         };
-      })
-    }
+      }),
+    },
   ]));
 
   return {
     type: 'modal',
     title: TITLE,
     close: CLOSE,
-    blocks
+    blocks,
   };
 };
 
@@ -407,8 +407,8 @@ exports.choresProposeAddView = function (chore) {
       action_id: 'name',
       type: 'plain_text_input',
       initial_value: (chore) ? chore.name : undefined,
-      placeholder: common.blockPlaintext('Name of the chore')
-    }
+      placeholder: common.blockPlaintext('Name of the chore'),
+    },
   ));
   blocks.push(common.blockInput(
     'Description',
@@ -417,8 +417,8 @@ exports.choresProposeAddView = function (chore) {
       type: 'plain_text_input',
       multiline: true,
       initial_value: (chore) ? chore.metadata.description : undefined,
-      placeholder: common.blockPlaintext('Describe the chore (bullet points work well)')
-    }
+      placeholder: common.blockPlaintext('Describe the chore (bullet points work well)'),
+    },
   ));
 
   return {
@@ -428,7 +428,7 @@ exports.choresProposeAddView = function (chore) {
     title: TITLE,
     close: CLOSE,
     submit: SUBMIT,
-    blocks
+    blocks,
   };
 };
 
@@ -449,10 +449,10 @@ exports.choresProposeDeleteView = function (chores) {
       options: chores.map((chore) => {
         return {
           value: JSON.stringify({ id: chore.id, name: chore.name }),
-          text: common.blockPlaintext(chore.name)
+          text: common.blockPlaintext(chore.name),
         };
-      })
-    }
+      }),
+    },
   ));
 
   return {
@@ -462,7 +462,7 @@ exports.choresProposeDeleteView = function (chores) {
     title: TITLE,
     close: CLOSE,
     submit: SUBMIT,
-    blocks
+    blocks,
   };
 };
 

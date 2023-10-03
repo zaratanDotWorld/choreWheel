@@ -1,27 +1,32 @@
+const OFF = 0;
+const WARN = 1;
+const ERROR = 2;
+
 module.exports = {
   env: {
     commonjs: true,
     es2021: true,
     mocha: true,
-    node: true
+    node: true,
   },
   extends: 'semistandard',
   overrides: [],
   parserOptions: {
-    ecmaVersion: 'latest'
+    ecmaVersion: 'latest',
   },
   rules: {
-    'max-len': [ 2, 150 ],
-    'no-unused-expressions': 0,
-    'no-unused-vars': [ 2, 'local' ],
-    'object-shorthand': [ 1, 'properties' ],
-    'array-bracket-spacing': [ 2, 'always' ],
-    'no-only-tests/no-only-tests': [ 2, { fix: true } ]
+    'max-len': [ ERROR, 150 ],
+    'no-unused-expressions': OFF,
+    'no-unused-vars': [ ERROR, 'local' ],
+    'object-shorthand': [ WARN, 'properties' ],
+    'array-bracket-spacing': [ ERROR, 'always' ],
+    'comma-dangle': [ ERROR, 'always-multiline' ],
+    'no-only-tests/no-only-tests': [ ERROR, { fix: true } ],
   },
   ignorePatterns: [
-    'migrations'
+    'migrations',
   ],
   plugins: [
-    'no-only-tests'
-  ]
+    'no-only-tests',
+  ],
 };

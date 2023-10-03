@@ -12,7 +12,7 @@ const {
   karmaProportion,
   karmaMaxHearts,
   heartsRegen,
-  heartsCriticalNum
+  heartsCriticalNum,
 } = require('../config');
 
 const Admin = require('./admin');

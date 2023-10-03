@@ -67,10 +67,10 @@ exports.thingsHomeView = function (balance) {
           { type: 'button', action_id: 'things-buy', text: { type: 'plain_text', text: 'Buy a thing', emoji: true } },
           { type: 'button', action_id: 'things-special', text: { type: 'plain_text', text: 'Buy special thing', emoji: true } },
           { type: 'button', action_id: 'things-bought', text: { type: 'plain_text', text: 'See bought things', emoji: true } },
-          { type: 'button', action_id: 'things-propose', text: { type: 'plain_text', text: 'Edit things list', emoji: true } }
-        ]
-      }
-    ]
+          { type: 'button', action_id: 'things-propose', text: { type: 'plain_text', text: 'Edit things list', emoji: true } },
+        ],
+      },
+    ],
   };
 };
 
@@ -78,7 +78,7 @@ exports.thingsBuyView = function (things) {
   const mappedThings = things.map((thing) => {
     return {
       value: `${thing.id}`,
-      text: { type: 'plain_text', text: exports.formatThing(thing), emoji: true }
+      text: { type: 'plain_text', text: exports.formatThing(thing), emoji: true },
     };
   });
 
@@ -100,8 +100,8 @@ exports.thingsBuyView = function (things) {
           type: 'static_select',
           action_id: 'options',
           placeholder: { type: 'plain_text', text: 'Choose a thing', emoji: true },
-          options: mappedThings
-        }
+          options: mappedThings,
+        },
       },
       {
         type: 'input',
@@ -112,10 +112,10 @@ exports.thingsBuyView = function (things) {
           placeholder: { type: 'plain_text', text: 'Choose number of units', emoji: true },
           initial_value: '1',
           min_value: '0',
-          is_decimal_allowed: false
-        }
-      }
-    ]
+          is_decimal_allowed: false,
+        },
+      },
+    ],
   };
 };
 
@@ -134,7 +134,7 @@ exports.thingsBuyCallbackView = function (buy, thing, balance, minVotes) {
   return [
     { type: 'section', text: { type: 'mrkdwn', text: textA } },
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
-    { type: 'actions', elements: common.makeVoteButtons(buy.pollId, 1, 0) }
+    { type: 'actions', elements: common.makeVoteButtons(buy.pollId, 1, 0) },
   ];
 };
 
@@ -164,8 +164,8 @@ exports.thingsSpecialBuyView = function (numResidents) {
           type: 'plain_text_input',
           multiline: false,
           placeholder: { type: 'plain_text', text: 'Short description of the thing', emoji: true },
-          action_id: 'title'
-        }
+          action_id: 'title',
+        },
       },
       {
         type: 'input',
@@ -174,8 +174,8 @@ exports.thingsSpecialBuyView = function (numResidents) {
           type: 'plain_text_input',
           multiline: true,
           placeholder: { type: 'plain_text', text: 'Add any additional details', emoji: true },
-          action_id: 'details'
-        }
+          action_id: 'details',
+        },
       },
       {
         type: 'input',
@@ -184,10 +184,10 @@ exports.thingsSpecialBuyView = function (numResidents) {
           type: 'number_input',
           is_decimal_allowed: false,
           placeholder: { type: 'plain_text', text: 'Provide the total cost (including tax and shipping)', emoji: true },
-          action_id: 'cost'
-        }
-      }
-    ]
+          action_id: 'cost',
+        },
+      },
+    ],
   };
 };
 
@@ -202,7 +202,7 @@ exports.thingsSpecialBuyCallbackView = function (buy, balance, minVotes) {
     { type: 'section', text: { type: 'mrkdwn', text: `*${buy.metadata.title}*` } },
     { type: 'section', text: { type: 'mrkdwn', text: buy.metadata.details } },
     { type: 'section', text: { type: 'mrkdwn', text: textB } },
-    { type: 'actions', elements: common.makeVoteButtons(buy.pollId, 1, 0) }
+    { type: 'actions', elements: common.makeVoteButtons(buy.pollId, 1, 0) },
   ];
 };
 
@@ -242,8 +242,8 @@ exports.thingsBoughtView = function (unfulfilledBuys, fulfilledBuys7, fulfilledB
       { type: 'section', text: { type: 'mrkdwn', text: `*Pending:*\n${pendingBuysText}` } },
       { type: 'section', text: { type: 'mrkdwn', text: `*Unfulfilled:*\n${confirmedBuysText}` } },
       { type: 'section', text: { type: 'mrkdwn', text: `*Fulfilled in the last 7 days:*\n${fulfilledBuys7Text}` } },
-      { type: 'section', text: { type: 'mrkdwn', text: `*Fulfilled in the last 90 days:*\n${fulfilledBuys90Text}` } }
-    ]
+      { type: 'section', text: { type: 'mrkdwn', text: `*Fulfilled in the last 90 days:*\n${fulfilledBuys90Text}` } },
+    ],
   };
 };
 
@@ -266,16 +266,16 @@ exports.thingsProposeView = function (minVotes) {
       options: [
         { value: 'add', text: common.blockMarkdown('*Add* a new thing') },
         { value: 'edit', text: common.blockMarkdown('*Change* an existing thing') },
-        { value: 'delete', text: common.blockMarkdown('*Remove* an existing thing') }
-      ]
-    }
+        { value: 'delete', text: common.blockMarkdown('*Remove* an existing thing') },
+      ],
+    },
   ]));
 
   return {
     type: 'modal',
     title: TITLE,
     close: CLOSE,
-    blocks
+    blocks,
   };
 };
 
@@ -294,17 +294,17 @@ exports.thingsProposeEditView = function (things) {
       options: things.map((thing) => {
         return {
           value: JSON.stringify({ id: thing.id }),
-          text: common.blockPlaintext(exports.formatThing(thing))
+          text: common.blockPlaintext(exports.formatThing(thing)),
         };
-      })
-    }
+      }),
+    },
   ]));
 
   return {
     type: 'modal',
     title: TITLE,
     close: CLOSE,
-    blocks
+    blocks,
   };
 };
 
@@ -330,8 +330,8 @@ exports.thingsProposeAddView = function (thing) {
       action_id: 'type',
       type: 'plain_text_input',
       initial_value: (thing) ? thing.type : undefined,
-      placeholder: common.blockPlaintext('Category of the thing, e.g. Pantry, Beverage')
-    }
+      placeholder: common.blockPlaintext('Category of the thing, e.g. Pantry, Beverage'),
+    },
   ));
   blocks.push(common.blockInput(
     'Name',
@@ -339,8 +339,8 @@ exports.thingsProposeAddView = function (thing) {
       action_id: 'name',
       type: 'plain_text_input',
       initial_value: (thing) ? thing.name : undefined,
-      placeholder: common.blockPlaintext('Name of the thing, e.g. Oat Milk, Salt')
-    }
+      placeholder: common.blockPlaintext('Name of the thing, e.g. Oat Milk, Salt'),
+    },
   ));
   blocks.push(common.blockInput(
     'Unit',
@@ -348,8 +348,8 @@ exports.thingsProposeAddView = function (thing) {
       action_id: 'unit',
       type: 'plain_text_input',
       initial_value: (thing) ? thing.metadata.unit : undefined,
-      placeholder: common.blockPlaintext('Unit sold, e.g. 2 x 24 oz, 2 dozen')
-    }
+      placeholder: common.blockPlaintext('Unit sold, e.g. 2 x 24 oz, 2 dozen'),
+    },
   ));
   blocks.push(common.blockInput(
     'Cost',
@@ -359,8 +359,8 @@ exports.thingsProposeAddView = function (thing) {
       min_value: '1',
       is_decimal_allowed: false,
       initial_value: (thing) ? thing.value.toString() : undefined,
-      placeholder: common.blockPlaintext('Cost of the thing (including tax & shipping)')
-    }
+      placeholder: common.blockPlaintext('Cost of the thing (including tax & shipping)'),
+    },
   ));
   blocks.push(common.blockInput(
     'Link',
@@ -368,8 +368,8 @@ exports.thingsProposeAddView = function (thing) {
       action_id: 'url',
       type: 'url_text_input',
       initial_value: (thing) ? thing.metadata.url : undefined,
-      placeholder: common.blockPlaintext('Link to the thing')
-    }
+      placeholder: common.blockPlaintext('Link to the thing'),
+    },
   ));
 
   return {
@@ -379,7 +379,7 @@ exports.thingsProposeAddView = function (thing) {
     title: TITLE,
     close: CLOSE,
     submit: SUBMIT,
-    blocks
+    blocks,
   };
 };
 
@@ -400,10 +400,10 @@ exports.thingsProposeDeleteView = function (things) {
       options: things.map((thing) => {
         return {
           value: JSON.stringify({ id: thing.id, type: thing.type, name: thing.name }),
-          text: common.blockPlaintext(exports.formatThing(thing))
+          text: common.blockPlaintext(exports.formatThing(thing)),
         };
-      })
-    }
+      }),
+    },
   ));
 
   return {
@@ -413,7 +413,7 @@ exports.thingsProposeDeleteView = function (things) {
     title: TITLE,
     close: CLOSE,
     submit: SUBMIT,
-    blocks
+    blocks,
   };
 };
 

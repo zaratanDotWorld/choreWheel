@@ -111,7 +111,7 @@ class PowerRanker {
     return new Map(
       Array.from(items)
         .sort((a, b) => a - b) // Javascript is the worst
-        .map((item, ix) => [ item, ix ]) // ItemName -> MatrixIdx
+        .map((item, ix) => [ item, ix ]), // ItemName -> MatrixIdx
     );
   }
 

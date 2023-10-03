@@ -74,7 +74,7 @@ describe('Chores', async () => {
       await db('ChoreValue').insert([
         { choreId: dishes.id, valuedAt: now, value: 10 },
         { choreId: dishes.id, valuedAt: now, value: 5 },
-        { choreId: sweeping.id, valuedAt: now, value: 20 }
+        { choreId: sweeping.id, valuedAt: now, value: 20 },
       ]);
 
       const endTime = new Date(now.getTime() + MINUTE);
@@ -91,7 +91,7 @@ describe('Chores', async () => {
       await db('ChoreValue').insert([
         { choreId: dishes.id, valuedAt: now, value: 10 },
         { choreId: dishes.id, valuedAt: now, value: 5 },
-        { choreId: sweeping.id, valuedAt: now, value: 20 }
+        { choreId: sweeping.id, valuedAt: now, value: 20 },
       ]);
 
       const soon = new Date(now.getTime() + HOUR);
@@ -230,7 +230,7 @@ describe('Chores', async () => {
 
       await db('ChoreValue').insert([
         { choreId: dishes.id, valuedAt: t0, value: 10 },
-        { choreId: dishes.id, valuedAt: t1, value: 10 }
+        { choreId: dishes.id, valuedAt: t1, value: 10 },
       ]);
 
       const t2 = new Date(t1.getTime() + HOUR); // 1 hour
@@ -242,7 +242,7 @@ describe('Chores', async () => {
       const t0 = new Date(3000, 0, 1);
 
       await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: t0, value: 10 }
+        { choreId: dishes.id, valuedAt: t0, value: 10 },
       ]);
 
       const t1 = new Date(t0.getTime() + (HOUR + 10 * MINUTE));
@@ -320,7 +320,7 @@ describe('Chores', async () => {
     it('can claim a chore', async () => {
       await db('ChoreValue').insert([
         { choreId: dishes.id, valuedAt: now, value: 10 },
-        { choreId: dishes.id, valuedAt: now, value: 5 }
+        { choreId: dishes.id, valuedAt: now, value: 5 },
       ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
 
@@ -366,7 +366,7 @@ describe('Chores', async () => {
       await db('ChoreValue').insert([
         { choreId: dishes.id, valuedAt: now, value: 10 },
         { choreId: sweeping.id, valuedAt: now, value: 10 },
-        { choreId: restock.id, valuedAt: soon, value: 10 }
+        { choreId: restock.id, valuedAt: soon, value: 10 },
       ]);
       const [ choreClaim1 ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
       const [ choreClaim2 ] = await Chores.claimChore(HOUSE, sweeping.id, RESIDENT1, now);
@@ -499,7 +499,7 @@ describe('Chores', async () => {
 
       await db('ChoreValue').insert([
         { choreId: dishes.id, valuedAt: now, value: 10 },
-        { choreId: sweeping.id, valuedAt: now, value: 20 }
+        { choreId: sweeping.id, valuedAt: now, value: 20 },
       ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
       await Chores.claimChore(HOUSE, sweeping.id, RESIDENT1, now);
@@ -522,7 +522,7 @@ describe('Chores', async () => {
       await db('ChoreValue').insert([
         { choreId: dishes.id, valuedAt: now, value: 91 },
         { choreId: sweeping.id, valuedAt: now, value: 80 },
-        { choreId: restock.id, valuedAt: now, value: 69 }
+        { choreId: restock.id, valuedAt: now, value: 69 },
       ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
       await Chores.claimChore(HOUSE, sweeping.id, RESIDENT2, now);
@@ -545,7 +545,7 @@ describe('Chores', async () => {
       await db('ChoreValue').insert([
         { choreId: dishes.id, valuedAt: feb1, value: 60 },
         { choreId: sweeping.id, valuedAt: feb1, value: 50 },
-        { choreId: restock.id, valuedAt: feb1, value: 40 }
+        { choreId: restock.id, valuedAt: feb1, value: 40 },
       ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, feb1);
       await Chores.claimChore(HOUSE, sweeping.id, RESIDENT2, feb1);
@@ -908,7 +908,7 @@ describe('Chores', async () => {
       await db('ChoreValue').insert([
         { choreId: dishes.id, valuedAt: now, value: 10 },
         { choreId: restock.id, valuedAt: now, value: 30 },
-        { choreId: sweeping.id, valuedAt: now, value: 20 }
+        { choreId: sweeping.id, valuedAt: now, value: 20 },
       ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
       await Chores.claimChore(HOUSE, restock.id, RESIDENT1, now);
