@@ -14,6 +14,7 @@ exports.implicitPref = 0.1 / 2; // Halve the value since it's used twice
 exports.dampingFactor = 0.99;
 exports.choresProposalPollLength = 2 * DAY;
 exports.choreProposalPct = 0.4;
+exports.breakMinDays = 3;
 
 // Hearts
 exports.heartsPollLength = 3 * DAY;

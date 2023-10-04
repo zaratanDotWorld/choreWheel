@@ -3,7 +3,7 @@ require('dotenv').config();
 const { App, LogLevel } = require('@slack/bolt');
 
 const { Admin, Polls, Chores } = require('../core/index');
-const { pointsPerResident, displayThreshold } = require('../config');
+const { pointsPerResident, displayThreshold, breakMinDays } = require('../config');
 const { YAY, DAY } = require('../constants');
 const { getMonthStart, shiftDate } = require('../utils');
 
@@ -163,7 +163,7 @@ app.action('chores-claim-2', async ({ ack, body }) => {
   console.log('chores-claim-2');
   await ack();
 
-  const choreId = body.actions[0].selected_option.value.split('|')[0];
+  const { id: choreId } = JSON.parse(body.actions[0].selected_option.value);
   const chore = await Chores.getChore(choreId);
 
   const view = views.choresClaimView2(chore);
@@ -177,7 +177,7 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const residentId = body.user.id;
   const houseId = body.team.id;
 
-  const [ choreId, choreName ] = body.view.private_metadata.split('|');
+  const chore = JSON.parse(body.view.private_metadata);
 
   // TODO: Return error to user (not console) if channel is not set
   const { choresChannel } = await Admin.getHouse(houseId);
@@ -188,10 +188,10 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const monthStart = getMonthStart(now);
   const sixMonths = new Date(now.getTime() - 180 * DAY);
   let monthlyPoints = await Chores.getAllChorePoints(residentId, monthStart, now);
-  let recentPoints = await Chores.getChorePoints(residentId, choreId, sixMonths, now);
+  let recentPoints = await Chores.getChorePoints(residentId, chore.id, sixMonths, now);
 
   // Perform the claim
-  const [ claim ] = await Chores.claimChore(houseId, choreId, residentId, now);
+  const [ claim ] = await Chores.claimChore(houseId, chore.id, residentId, now);
   await Polls.submitVote(claim.pollId, residentId, now, YAY);
 
   // Update point values
@@ -199,13 +199,13 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   monthlyPoints = (monthlyPoints.sum || 0) + claim.value;
 
   const text = 'Someone just completed a chore';
-  const blocks = views.choresClaimCallbackView(claim, choreName, recentPoints, monthlyPoints);
+  const blocks = views.choresClaimCallbackView(claim, chore.name, recentPoints, monthlyPoints);
   const { channel, ts } = await common.postMessage(app, choresOauth, choresChannel, text, blocks);
   await Polls.updateMetadata(claim.pollId, { channel, ts });
 
   // Temporarily emit this functionality
   // // Append the description
-  // const chore = await Chores.getChore(choreId);
+  // const chore = await Chores.getChore(chore.id);
   // if (chore.metadata && chore.metadata.description) {
   //   const text = `*${chore.name}:*\n\n${chore.metadata.description}`;
   //   await common.postReply(app, choresOauth, choresChannel, ts, text);
@@ -244,26 +244,25 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   const SLOWER = 'slower';
 
   const direction = body.view.private_metadata;
-  const target = common.getInputBlock(body, 3).chores.selected_option.value;
-  const sources = common.getInputBlock(body, 4).chores.selected_options;
-  const [ targetChoreId, targetChoreName, targetChoreSpeed ] = target.split('|');
+  const targetChore = JSON.parse(common.getInputBlock(body, 3).chores.selected_option.value);
+  const sourceChores = common.getInputBlock(body, 4).chores.selected_options
+    .map((option) => JSON.parse(option.value));
 
   let alphaChoreId;
   let betaChoreId;
   let preference;
 
-  for (const source of sources) {
-    const sourceChoreId = source.value.split('|')[0];
-    if (sourceChoreId === targetChoreId) { continue; }
+  // Value flows from source to target, and from beta to alpha
+  for (const sourceChore of sourceChores) {
+    if (sourceChore.id === targetChore.id) { continue; }
 
-    // Value flows from source to target, and from beta to alpha
-    if (parseInt(targetChoreId) < parseInt(sourceChoreId)) {
-      alphaChoreId = parseInt(targetChoreId);
-      betaChoreId = parseInt(sourceChoreId);
+    if (targetChore.id < sourceChore.id) {
+      alphaChoreId = targetChore.id;
+      betaChoreId = sourceChore.id;
       preference = Number(direction === FASTER);
     } else {
-      alphaChoreId = parseInt(sourceChoreId);
-      betaChoreId = parseInt(targetChoreId);
+      alphaChoreId = sourceChore.id;
+      betaChoreId = targetChore.id;
       preference = Number(direction === SLOWER);
     }
 
@@ -273,20 +272,19 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   }
 
   const choreRankings = await Chores.getCurrentChoreRankings(houseId);
-  const targetChoreRanking = choreRankings.find((chore) => chore.id === parseInt(targetChoreId));
+  const targetChoreRanking = choreRankings.find((chore) => chore.id === targetChore.id);
+  const newSpeed = Math.round(targetChoreRanking.ranking * 1000);
 
   const bigChange = (1000 / choreRankings.length) / 5; // 20% of the average speed
-  const ppt = (targetChoreRanking.ranking * 1000).toFixed(0);
-  const speedDiff = ppt - parseInt(targetChoreSpeed);
+  const speedDiff = newSpeed - targetChore.speed;
   const speedText = (Math.abs(speedDiff) > bigChange) ? 'a lot' : 'a little';
 
   const { choresChannel } = await Admin.getHouse(houseId);
   if (speedDiff > 0) {
-    const text = `Someone sped up *${targetChoreName}* by *${speedText}*, to *${ppt} ppt* :rocket:`;
+    const text = `Someone sped up *${targetChore.name}* by *${speedText}*, to *${newSpeed} ppt* :rocket:`;
     await common.postMessage(app, choresOauth, choresChannel, text);
   } else if (speedDiff < 0) {
-    const { choresChannel } = await Admin.getHouse(houseId);
-    const text = `Someone slowed down *${targetChoreName}* by *${speedText}*, to *${ppt} ppt* :snail:`;
+    const text = `Someone slowed down *${targetChore.name}* by *${speedText}*, to *${newSpeed} ppt* :snail:`;
     await common.postMessage(app, choresOauth, choresChannel, text);
   } else {
     const text = 'You\'ve already input those preferences. ' +
@@ -312,9 +310,9 @@ app.view('chores-break-callback', async ({ ack, body }) => {
 
   const residentId = body.user.id;
   const houseId = body.team.id;
+  const now = new Date();
 
   // Dates come in yyyy-mm-dd format
-  const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const breakStartUtc = new Date(common.getInputBlock(body, 2).date.selected_date);
   const breakEndUtc = new Date(common.getInputBlock(body, 3).date.selected_date);
@@ -327,7 +325,7 @@ app.view('chores-break-callback', async ({ ack, body }) => {
   const breakDays = parseInt((breakEnd - breakStart) / DAY);
 
   const { choresChannel } = await Admin.getHouse(houseId);
-  if (breakStart < todayStart || breakDays < 3) {
+  if (breakStart < todayStart || breakDays < breakMinDays) {
     const text = 'Not a valid chore break :slightly_frowning_face:';
     await common.postEphemeral(app, choresOauth, choresChannel, residentId, text);
   } else {
@@ -361,18 +359,19 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
 
   const residentId = body.user.id;
   const houseId = body.team.id;
+  const now = new Date();
 
+  const currentBalance = Number(body.view.private_metadata);
   const recipientId = common.getInputBlock(body, 2).recipient.selected_user;
-  const value = Number(common.getInputBlock(body, 3).value.value);
+  const points = common.getInputBlock(body, 3).points.value;
   const circumstance = common.getInputBlock(body, 4).circumstance.value;
-  const pointsBalance = Number(body.view.private_metadata);
 
   const { choresChannel } = await Admin.getHouse(houseId);
-  if (value <= pointsBalance) {
+  if (points <= currentBalance) {
     // Make the gift
-    await Chores.giftChorePoints(houseId, residentId, recipientId, new Date(), value);
+    await Chores.giftChorePoints(houseId, residentId, recipientId, now, points);
 
-    const text = `<@${residentId}> just gifted <@${recipientId}> *${value} points* :gift:\n` +
+    const text = `<@${residentId}> just gifted <@${recipientId}> *${points} points* :gift:\n` +
       `_${circumstance}_`;
     await common.postMessage(app, choresOauth, choresChannel, text);
   } else {

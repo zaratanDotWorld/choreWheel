@@ -1,4 +1,3 @@
-const { HOUR } = require('../constants');
 const { pointsPerResident, achievementBase, choresPollLength, choresProposalPollLength, penaltyIncrement } = require('../config');
 
 const common = require('./common');
@@ -12,86 +11,87 @@ const SUBMIT = common.blockPlaintext('Submit');
 exports.choresHomeView = function (balance, owed, active, exempt) {
   const progressEmoji = (owed - balance < penaltyIncrement) ? ':white_check_mark:' : ':muscle::skin-tone-4:';
   const docsUrl = 'https://github.com/zaratanDotWorld/mirror/wiki/Chores';
+
+  const header = 'Welcome to Chores';
   const textA = `We use *<${docsUrl}|Chores>* to keep the house a nice place to live.\n\n` +
     'Instead of a chore wheel or schedule, everyone owes *100 points* per month (UTC time). ' +
     'You earn points by doing chores you want, on your terms.\n\n' +
     'The points for a chore go up every hour until someone claims them. ' +
     'If you feel a chore should be worth more (or less), you can change the speed at which it gains points.';
-
   const textB = (exempt)
     ? '*You are exempt from chores!* :tada:'
     : `You've earned *${balance.toFixed(0)} / ${owed.toFixed(0)} points* this month ${progressEmoji}`;
   const textC = `There are *${active} people* around today :sunny:`;
 
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(textA));
+  blocks.push(common.blockDivider());
+  blocks.push(common.blockSection(textB));
+  blocks.push(common.blockSection(textC));
+  blocks.push(common.blockActions([
+    common.blockButton('chores-claim', 'Claim a chore'),
+    common.blockButton('chores-rank', 'Set chore speeds'),
+    common.blockButton('chores-gift', 'Gift your points'),
+    common.blockButton('chores-break', 'Take a break'),
+    common.blockButton('chores-propose', 'Edit chores list'),
+  ]));
+
   return {
     type: 'home',
-    blocks: [
-      { type: 'header', text: { type: 'plain_text', text: 'Welcome to Chores', emoji: true } },
-      { type: 'section', text: { type: 'mrkdwn', text: textA } },
-      { type: 'divider' },
-      { type: 'section', text: { type: 'mrkdwn', text: textB } },
-      { type: 'section', text: { type: 'mrkdwn', text: textC } },
-      {
-        type: 'actions',
-        elements: [
-          { type: 'button', action_id: 'chores-claim', text: { type: 'plain_text', text: 'Claim a chore', emoji: true } },
-          { type: 'button', action_id: 'chores-rank', text: { type: 'plain_text', text: 'Set chore speeds', emoji: true } },
-          { type: 'button', action_id: 'chores-gift', text: { type: 'plain_text', text: 'Gift your points', emoji: true } },
-          { type: 'button', action_id: 'chores-break', text: { type: 'plain_text', text: 'Take a break', emoji: true } },
-          { type: 'button', action_id: 'chores-propose', text: { type: 'plain_text', text: 'Edit chores list', emoji: true } },
-        ],
-      },
-    ],
+    blocks,
   };
 };
 
 exports.choresClaimView = function (chores) {
-  const mappedChores = chores.map((chore) => {
-    return {
-      value: `${chore.id}|${chore.name}`,
-      text: { type: 'plain_text', text: `${chore.name} - ${chore.value.toFixed(0)} points`, emoji: true },
-    };
-  });
-
+  const header = 'Claim a chore';
   const mainText = 'Claims are verified by the house and require at least *2 upvotes* (including yours). ' +
     'Posting pictures in the channel or thread will help others check your work.';
 
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockSection('*Chore to claim*'));
+  blocks.push(common.blockActions([
+    {
+      type: 'static_select',
+      action_id: 'chores-claim-2',
+      placeholder: common.blockPlaintext('Choose a chore'),
+      options: chores.map((chore) => {
+        return {
+          value: JSON.stringify({ id: chore.id }),
+          text: common.blockPlaintext(`${chore.name} - ${chore.value.toFixed(0)} points`),
+        };
+      }),
+    },
+  ]));
+
   return {
     type: 'modal',
-    title: { type: 'plain_text', text: 'Chores', emoji: true },
-    close: { type: 'plain_text', text: 'Cancel', emoji: true },
-    blocks: [
-      { type: 'header', text: { type: 'plain_text', text: 'Claim a chore', emoji: true } },
-      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
-      { type: 'section', text: { type: 'mrkdwn', text: '*Chore to claim*' } },
-      {
-        type: 'actions',
-        elements: [ {
-          type: 'static_select',
-          action_id: 'chores-claim-2',
-          placeholder: { type: 'plain_text', text: 'Choose a chore', emoji: true },
-          options: mappedChores,
-        } ],
-      },
-    ],
+    title: TITLE,
+    close: CLOSE,
+    blocks,
   };
 };
 
 exports.choresClaimView2 = function (chore) {
-  const description = (chore.metadata) ? chore.metadata.description : '';
+  const metadata = JSON.stringify({ id: chore.id, name: chore.name });
+  const claim = common.blockPlaintext('Claim');
+  const header = 'Claim a chore';
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(`*${chore.name}*`));
+  blocks.push(common.blockSection(chore.metadata.description || ''));
 
   return {
     type: 'modal',
     callback_id: 'chores-claim-callback',
-    private_metadata: `${chore.id}|${chore.name}`,
-    title: { type: 'plain_text', text: 'Chores', emoji: true },
-    submit: { type: 'plain_text', text: 'Claim', emoji: true },
-    close: { type: 'plain_text', text: 'Cancel', emoji: true },
-    blocks: [
-      { type: 'header', text: { type: 'plain_text', text: 'Claim a chore', emoji: true } },
-      { type: 'section', text: { type: 'mrkdwn', text: `*${chore.name}*` } },
-      { type: 'section', text: { type: 'mrkdwn', text: description } },
-    ],
+    private_metadata: metadata,
+    title: TITLE,
+    close: CLOSE,
+    submit: claim,
+    blocks,
   };
 };
 
@@ -116,19 +116,18 @@ exports.choresClaimCallbackView = function (claim, choreName, totalPoints, month
   const achievement = exports.getAchievement(totalPoints);
   const sparkles = exports.getSparkles(monthlyPoints);
 
-  const textA = `*<@${claim.claimedBy}>* did *${choreName}* for ` +
+  const mainText = `*<@${claim.claimedBy}>* did *${choreName}* for ` +
     `*${claim.value.toFixed(0)} points* ${achievement}${sparkles}`;
-  const textB = '*2 upvotes* are required to pass, ' +
-    `voting closes in *${choresPollLength / HOUR} hours*`;
 
-  return [
-    { type: 'section', text: { type: 'mrkdwn', text: textA } },
-    { type: 'section', text: { type: 'mrkdwn', text: textB } },
-    { type: 'actions', elements: common.makeVoteButtons(claim.pollId, 1, 0) },
-  ];
+  const blocks = [];
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockSection(common.makeVoteText(2, choresPollLength)));
+  blocks.push(common.blockActions(common.makeVoteButtons(claim.pollId, 1, 0)));
+  return blocks;
 };
 
 exports.choresRankView = function () {
+  const header = 'Set chore speeds';
   const mainText = 'If you feel a chore should be worth more (or less), you can adjust it\'s *speed*. ' +
     'The *faster* a chore is, the more points it will be worth over time.\n\n' +
     'Speed-setting is a *cumulative* process, where every input makes a difference. ' +
@@ -136,39 +135,38 @@ exports.choresRankView = function () {
     'and encourage others to do the same.\n\n' +
     'First, decide whether you want to *speed up* or *slow down* a chore.';
 
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockActions([
+    {
+      type: 'radio_buttons',
+      action_id: 'chores-rank-2',
+      options: [
+        { value: 'faster', text: common.blockMarkdown('*Speed up a chore* (worth more over time)') },
+        { value: 'slower', text: common.blockMarkdown('*Slow down a chore* (worth less over time)') },
+      ],
+    },
+  ]));
+
   return {
     type: 'modal',
-    title: { type: 'plain_text', text: 'Chores', emoji: true },
-    close: { type: 'plain_text', text: 'Cancel', emoji: true },
-    blocks: [
-      { type: 'header', text: { type: 'plain_text', text: 'Set chore speeds', emoji: true } },
-      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
-      {
-        type: 'actions',
-        elements: [
-          {
-            type: 'radio_buttons',
-            action_id: 'chores-rank-2',
-            options: [
-              { text: { type: 'mrkdwn', text: '*Speed up a chore* (worth more over time)' }, value: 'faster' },
-              { text: { type: 'mrkdwn', text: '*Slow down a chore* (worth less over time)' }, value: 'slower' },
-            ],
-          },
-        ],
-      },
-    ],
+    title: TITLE,
+    close: CLOSE,
+    blocks,
   };
 };
 
 exports.choresRankView2 = function (direction, choreRankings) {
   const mappedChoreRankings = choreRankings.map((chore) => {
-    const choreSpeed = (chore.ranking * 1000).toFixed(0);
+    const choreSpeed = Math.round(chore.ranking * 1000);
     return {
-      value: `${chore.id}|${chore.name}|${choreSpeed}`,
-      text: { type: 'plain_text', text: `${chore.name} - ${choreSpeed} ppt`, emoji: true },
+      value: JSON.stringify({ id: chore.id, name: chore.name, speed: choreSpeed }),
+      text: common.blockPlaintext(`${chore.name} - ${choreSpeed} ppt`),
     };
   });
 
+  const header = 'Set chore speeds';
   const mainText = 'Choose chores to update. ' +
     'Chore speeds are measured in *points-per-thousand* (ppt) and always add up to *1000*. ' +
     'A ppt of *0* means a chore gets no points, while a ppt of *1000* means a chore gets _all_ the points.\n\n' +
@@ -193,131 +191,131 @@ exports.choresRankView2 = function (direction, choreRankings) {
     ? 'Choose some chores to be worth less'
     : 'Choose some chores to be worth more';
 
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockDivider());
+  blocks.push(common.blockInput(
+    textA,
+    {
+      action_id: 'chores',
+      type: 'static_select',
+      placeholder: common.blockPlaintext(subTextA),
+      options: mappedChoreRankings,
+    },
+  ));
+  blocks.push(common.blockInput(
+    textB,
+    {
+      action_id: 'chores',
+      type: 'multi_static_select',
+      placeholder: common.blockPlaintext(subTextB),
+      options: mappedChoreRankings,
+    },
+  ));
+
   return {
     type: 'modal',
     callback_id: 'chores-rank-callback',
     private_metadata: direction,
-    title: { type: 'plain_text', text: 'Chores', emoji: true },
-    submit: { type: 'plain_text', text: 'Submit', emoji: true },
-    close: { type: 'plain_text', text: 'Back', emoji: true },
-    blocks: [
-      { type: 'header', text: { type: 'plain_text', text: 'Set chore speeds', emoji: true } },
-      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
-      { type: 'divider' },
-      {
-        type: 'input',
-        label: { type: 'plain_text', text: textA, emoji: true },
-        element: {
-          type: 'static_select',
-          action_id: 'chores',
-          placeholder: { type: 'plain_text', text: subTextA, emoji: true },
-          options: mappedChoreRankings,
-        },
-      },
-      {
-        type: 'input',
-        label: { type: 'plain_text', text: textB, emoji: true },
-        element: {
-          type: 'multi_static_select',
-          action_id: 'chores',
-          placeholder: { type: 'plain_text', text: subTextB, emoji: true },
-          options: mappedChoreRankings,
-        },
-      },
-    ],
-  };
-};
-
-exports.choresGiftView = function (pointsBalance) {
-  const mainText = 'Gift someone points from your balance. ' +
-    `You have *${pointsBalance.toFixed(0)} points* to gift.`;
-
-  return {
-    type: 'modal',
-    callback_id: 'chores-gift-callback',
-    private_metadata: pointsBalance.toString(),
-    title: { type: 'plain_text', text: 'Chores', emoji: true },
-    submit: { type: 'plain_text', text: 'Submit', emoji: true },
-    close: { type: 'plain_text', text: 'Cancel', emoji: true },
-    blocks: [
-      { type: 'header', text: { type: 'plain_text', text: 'Gift chore points', emoji: true } },
-      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
-      {
-        type: 'input',
-        label: { type: 'plain_text', text: 'Gift recipient', emoji: true },
-        element: {
-          type: 'users_select',
-          placeholder: { type: 'plain_text', text: 'Choose a resident', emoji: true },
-          action_id: 'recipient',
-        },
-      },
-      {
-        type: 'input',
-        label: { type: 'plain_text', text: 'Number of points', emoji: true },
-        element: {
-          type: 'plain_text_input',
-          placeholder: { type: 'plain_text', text: 'Enter a number', emoji: true },
-          action_id: 'value',
-        },
-      },
-      {
-        type: 'input',
-        label: { type: 'plain_text', text: 'Circumstance', emoji: true },
-        element: {
-          type: 'plain_text_input',
-          placeholder: { type: 'plain_text', text: 'Tell us why you\'re giving the gift', emoji: true },
-          action_id: 'circumstance',
-        },
-      },
-    ],
+    title: TITLE,
+    close: CLOSE,
+    submit: SUBMIT,
+    blocks,
   };
 };
 
 exports.choresBreakView = function (currentTime) {
   const formattedTime = `${currentTime.getFullYear()}-${currentTime.getMonth() + 1}-${currentTime.getDate()}`;
+
+  const header = 'Take a break';
   const mainText = 'Take a chore break when you go out of town, ' +
     'and you won\'t owe points for the days that you\'re gone.\n\n' +
     'Breaks must be at least *3 days long* and can\'t be added retroactively, so don\'t forget!';
 
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockInput(
+    'Day you leave',
+    {
+      action_id: 'date',
+      type: 'datepicker',
+      initial_date: formattedTime,
+      placeholder: common.blockPlaintext('Select a date'),
+    },
+  ));
+  blocks.push(common.blockInput(
+    'Day you return',
+    {
+      action_id: 'date',
+      type: 'datepicker',
+      initial_date: formattedTime,
+      placeholder: common.blockPlaintext('Select a date'),
+    },
+  ));
+  blocks.push(common.blockInput(
+    'Circumstance',
+    {
+      action_id: 'circumstance',
+      type: 'plain_text_input',
+      placeholder: common.blockPlaintext('Tell us where you\'re going'),
+    },
+  ));
+
   return {
     type: 'modal',
     callback_id: 'chores-break-callback',
-    title: { type: 'plain_text', text: 'Chores', emoji: true },
-    submit: { type: 'plain_text', text: 'Submit', emoji: true },
-    close: { type: 'plain_text', text: 'Cancel', emoji: true },
-    blocks: [
-      { type: 'header', text: { type: 'plain_text', text: 'Take a break', emoji: true } },
-      { type: 'section', text: { type: 'mrkdwn', text: mainText } },
-      {
-        type: 'input',
-        label: { type: 'plain_text', text: 'Day you leave', emoji: true },
-        element: {
-          type: 'datepicker',
-          initial_date: formattedTime,
-          placeholder: { type: 'plain_text', text: 'Select a date', emoji: true },
-          action_id: 'date',
-        },
-      },
-      {
-        type: 'input',
-        label: { type: 'plain_text', text: 'Day you return', emoji: true },
-        element: {
-          type: 'datepicker',
-          initial_date: formattedTime,
-          placeholder: { type: 'plain_text', text: 'Select a date', emoji: true },
-          action_id: 'date',
-        },
-      },
-      {
-        type: 'input',
-        label: { type: 'plain_text', text: 'Circumstance', emoji: true },
-        element: {
-          type: 'plain_text_input',
-          placeholder: { type: 'plain_text', text: 'Tell us where you\'re going', emoji: true },
-          action_id: 'circumstance',
-        },
-      },
-    ],
+    title: TITLE,
+    close: CLOSE,
+    submit: SUBMIT,
+    blocks,
+  };
+};
+
+exports.choresGiftView = function (currentBalance) {
+  const header = 'Gift chore points';
+  const mainText = 'Gift someone points from your balance. ' +
+    `You have *${currentBalance.toFixed(0)} points* to gift.`;
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockInput(
+    'Recipient',
+    {
+      action_id: 'recipient',
+      type: 'users_select',
+      placeholder: common.blockPlaintext('Choose a resident'),
+    },
+  ));
+  blocks.push(common.blockInput(
+    'Points',
+    {
+      action_id: 'points',
+      type: 'number_input',
+      min_value: '1',
+      is_decimal_allowed: false,
+      placeholder: common.blockPlaintext('Enter a number'),
+    },
+  ));
+  blocks.push(common.blockInput(
+    'Circumstance',
+    {
+      action_id: 'circumstance',
+      type: 'plain_text_input',
+      placeholder: common.blockPlaintext('Tell us why you\'re giving the gift'),
+    },
+  ));
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-gift-callback',
+    private_metadata: currentBalance.toString(),
+    title: TITLE,
+    close: CLOSE,
+    submit: SUBMIT,
+    blocks,
   };
 };
 

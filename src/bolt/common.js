@@ -259,6 +259,14 @@ exports.blockSection = function (text) {
   return { type: 'section', text: exports.blockMarkdown(text) };
 };
 
+exports.blockButton = function (action, text) {
+  return { type: 'button', action_id: action, text: exports.blockPlaintext(text) };
+};
+
+exports.blockDivider = function () {
+  return { type: 'divider' };
+};
+
 exports.blockActions = function (elements) {
   return { type: 'actions', elements };
 };
