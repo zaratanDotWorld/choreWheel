@@ -8,7 +8,7 @@ const TITLE = common.blockPlaintext('Chores');
 const CLOSE = common.blockPlaintext('Cancel');
 const SUBMIT = common.blockPlaintext('Submit');
 
-exports.choresHomeView = function (balance, owed, active, exempt) {
+exports.choresHomeView = function (balance, owed, numActive, exempt) {
   const progressEmoji = (owed - balance < penaltyIncrement) ? ':white_check_mark:' : ':muscle::skin-tone-4:';
   const docsUrl = 'https://github.com/zaratanDotWorld/mirror/wiki/Chores';
 
@@ -21,7 +21,16 @@ exports.choresHomeView = function (balance, owed, active, exempt) {
   const textB = (exempt)
     ? '*You are exempt from chores!* :tada:'
     : `You've earned *${balance.toFixed(0)} / ${owed.toFixed(0)} points* this month ${progressEmoji}`;
-  const textC = `There are *${active} people* around today :sunny:`;
+  const textC = `There are *${numActive} people* around today :sunny:`;
+
+  const actions = [];
+  if (!exempt) {
+    actions.push(common.blockButton('chores-claim', 'Claim a chore'));
+    actions.push(common.blockButton('chores-break', 'Take a break'));
+    actions.push(common.blockButton('chores-gift', 'Gift your points'));
+  }
+  actions.push(common.blockButton('chores-rank', 'Set chore speeds'));
+  actions.push(common.blockButton('chores-propose', 'Edit chores list'));
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
@@ -29,13 +38,7 @@ exports.choresHomeView = function (balance, owed, active, exempt) {
   blocks.push(common.blockDivider());
   blocks.push(common.blockSection(textB));
   blocks.push(common.blockSection(textC));
-  blocks.push(common.blockActions([
-    common.blockButton('chores-claim', 'Claim a chore'),
-    common.blockButton('chores-rank', 'Set chore speeds'),
-    common.blockButton('chores-gift', 'Gift your points'),
-    common.blockButton('chores-break', 'Take a break'),
-    common.blockButton('chores-propose', 'Edit chores list'),
-  ]));
+  blocks.push(common.blockActions(actions));
 
   return {
     type: 'home',
