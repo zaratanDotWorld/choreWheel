@@ -191,21 +191,21 @@ describe('Admin', async () => {
       expect(resident.exemptAt.getTime()).to.equal(yesterday.getTime());
     });
 
-    it('can get working residents', async () => {
+    it('can get voting residents', async () => {
       await Admin.activateResident(HOUSE1, RESIDENT1, now);
       await Admin.activateResident(HOUSE1, RESIDENT2, now);
 
-      let workingResidents;
-      workingResidents = await Admin.getWorkingResidents(HOUSE1, now);
-      expect(workingResidents.length).to.equal(2);
+      let votingResidents;
+      votingResidents = await Admin.getVotingResidents(HOUSE1, now);
+      expect(votingResidents.length).to.equal(2);
 
       await Admin.exemptResident(HOUSE1, RESIDENT2, soon);
 
       // Exemption takes effect after exemptAt
-      workingResidents = await Admin.getWorkingResidents(HOUSE1, now);
-      expect(workingResidents.length).to.equal(2);
-      workingResidents = await Admin.getWorkingResidents(HOUSE1, soon);
-      expect(workingResidents.length).to.equal(1);
+      votingResidents = await Admin.getVotingResidents(HOUSE1, now);
+      expect(votingResidents.length).to.equal(2);
+      votingResidents = await Admin.getVotingResidents(HOUSE1, soon);
+      expect(votingResidents.length).to.equal(1);
     });
   });
 

@@ -63,7 +63,8 @@ exports.getResidents = async function (houseId) {
     .where({ houseId, active: true });
 };
 
-exports.getWorkingResidents = async function (houseId, now) {
+// Voting residents are active and not exempt
+exports.getVotingResidents = async function (houseId, now) {
   return db('Resident')
     .select('*')
     .where({ houseId, active: true })

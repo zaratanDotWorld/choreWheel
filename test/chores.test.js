@@ -674,49 +674,49 @@ describe('Chores', async () => {
       const nextMonth = new Date(now.getTime() + 35 * DAY);
       const twoMonths = new Date(now.getTime() + 60 * DAY);
 
-      let residentCount;
-      residentCount = await Chores.getWorkingResidentCount(HOUSE, now);
-      expect(residentCount).to.equal(4);
+      let workingResidentCount;
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, now);
+      expect(workingResidentCount).to.equal(4);
 
       // Will exclude inactive residents
       await Admin.deactivateResident(HOUSE, RESIDENT4);
-      residentCount = await Chores.getWorkingResidentCount(HOUSE, now);
-      expect(residentCount).to.equal(3);
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, now);
+      expect(workingResidentCount).to.equal(3);
 
       // Will count active breaks
       await Chores.addChoreBreak(HOUSE, RESIDENT1, now, twoDays, '');
-      residentCount = await Chores.getWorkingResidentCount(HOUSE, now);
-      expect(residentCount).to.equal(2);
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, now);
+      expect(workingResidentCount).to.equal(2);
 
       // Can handle overlapping breaks
       await Chores.addChoreBreak(HOUSE, RESIDENT1, now, tomorrow, '');
-      residentCount = await Chores.getWorkingResidentCount(HOUSE, now);
-      expect(residentCount).to.equal(2);
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, now);
+      expect(workingResidentCount).to.equal(2);
 
       // Can handle new breaks by the same user
-      residentCount = await Chores.getWorkingResidentCount(HOUSE, oneWeek);
-      expect(residentCount).to.equal(3);
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, oneWeek);
+      expect(workingResidentCount).to.equal(3);
 
       await Chores.addChoreBreak(HOUSE, RESIDENT1, oneWeek, twoWeeks, '');
-      residentCount = await Chores.getWorkingResidentCount(HOUSE, oneWeek);
-      expect(residentCount).to.equal(2);
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, oneWeek);
+      expect(workingResidentCount).to.equal(2);
 
       // Will also exclude if break extends across months
-      residentCount = await Chores.getWorkingResidentCount(HOUSE, now);
-      expect(residentCount).to.equal(2);
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, now);
+      expect(workingResidentCount).to.equal(2);
 
       await Chores.addChoreBreak(HOUSE, RESIDENT2, lastMonth, nextMonth, '');
-      residentCount = await Chores.getWorkingResidentCount(HOUSE, now);
-      expect(residentCount).to.equal(1);
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, now);
+      expect(workingResidentCount).to.equal(1);
 
       // Will not count breaks in the past
-      residentCount = await Chores.getWorkingResidentCount(HOUSE, twoMonths);
-      expect(residentCount).to.equal(3);
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, twoMonths);
+      expect(workingResidentCount).to.equal(3);
 
       // Will not count breaks in the future
       await Chores.addChoreBreak(HOUSE, RESIDENT3, tomorrow, oneWeek, '');
-      residentCount = await Chores.getWorkingResidentCount(HOUSE, now);
-      expect(residentCount).to.equal(1);
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, now);
+      expect(workingResidentCount).to.equal(1);
     });
 
     it('can return the percent of the period a resident is not on break', async () => {

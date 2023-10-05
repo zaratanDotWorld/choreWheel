@@ -28,6 +28,10 @@ exports.isAdmin = async function (app, oauth, command) {
   return user.is_admin;
 };
 
+exports.isExempt = function (resident, now) {
+  return resident.exemptAt && resident.exemptAt <= now;
+};
+
 // Publishing
 
 exports.replyEphemeral = async function (app, oauth, command, text) {

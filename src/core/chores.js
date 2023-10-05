@@ -158,8 +158,8 @@ exports.updateChoreValues = async function (houseId, updateTime) {
   // If we've updated in the last interval, short-circuit execution
   if (intervalScalar === 0) { return Promise.resolve([]); }
 
-  const residentCount = await exports.getWorkingResidentCount(houseId, updateTime);
-  const updateScalar = (residentCount * pointsPerResident) * intervalScalar * inflationFactor;
+  const workingResidentCount = await exports.getWorkingResidentCount(houseId, updateTime);
+  const updateScalar = (workingResidentCount * pointsPerResident) * intervalScalar * inflationFactor;
   const choreRankings = await exports.getCurrentChoreRankings(houseId);
 
   const choreValues = choreRankings.map(chore => {
@@ -168,7 +168,7 @@ exports.updateChoreValues = async function (houseId, updateTime) {
       choreId: chore.id,
       valuedAt: updateTime,
       value: chore.ranking * updateScalar,
-      metadata: { ranking: chore.ranking, residents: residentCount },
+      metadata: { ranking: chore.ranking, residents: workingResidentCount },
     };
   });
 
@@ -276,6 +276,7 @@ exports.deleteChoreBreak = async function (choreBreakId) {
     .del();
 };
 
+// Only consider breaks from voting residents
 exports.getChoreBreaks = async function (houseId, now) {
   return db('ChoreBreak')
     .leftJoin('Resident', 'ChoreBreak.residentId', 'Resident.slackId')
@@ -287,8 +288,9 @@ exports.getChoreBreaks = async function (houseId, now) {
     .returning('*');
 };
 
+// Working residents are voting residents not on break
 exports.getWorkingResidentCount = async function (houseId, now) {
-  const residents = await Admin.getWorkingResidents(houseId, now);
+  const residents = await Admin.getVotingResidents(houseId, now);
   const choreBreaks = await exports.getChoreBreaks(houseId, now);
   return residents.length - (new Set(choreBreaks.map(cb => cb.residentId))).size;
 };
