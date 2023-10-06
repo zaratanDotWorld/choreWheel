@@ -67,7 +67,8 @@ exports.buyThing = async function (houseId, thingId, boughtBy, boughtAt, price, 
 
   if (houseBalance.sum < totalCost) { throw new Error('Insufficient funds!'); }
 
-  const [ poll ] = await Polls.createPoll(boughtAt, thingsPollLength);
+  const minVotes = await exports.getThingBuyMinVotes(houseId, thingId, totalCost);
+  const [ poll ] = await Polls.createPoll(boughtAt, thingsPollLength, minVotes);
 
   return db('ThingBuy')
     .insert({
@@ -87,7 +88,8 @@ exports.buySpecialThing = async function (houseId, boughtBy, boughtAt, price, ti
 
   if (houseBalance.sum < price) { throw new Error('Insufficient funds!'); }
 
-  const [ poll ] = await Polls.createPoll(boughtAt, thingsSpecialPollLength);
+  const minVotes = await exports.getThingBuyMinVotes(houseId, null, price);
+  const [ poll ] = await Polls.createPoll(boughtAt, thingsSpecialPollLength, minVotes);
 
   return db('ThingBuy')
     .insert({
@@ -108,16 +110,9 @@ exports.getThingBuy = async function (buyId) {
     .first();
 };
 
-exports.resolveThingBuy = async function (buyId, resolvedAt, numResidents) {
+exports.resolveThingBuy = async function (buyId, resolvedAt) {
   const thingBuy = await exports.getThingBuy(buyId);
-  const pollId = thingBuy.pollId;
-  const poll = await Polls.getPoll(pollId);
-
-  if (resolvedAt < poll.endTime) { throw new Error('Poll not closed!'); }
-
-  const minVotes = await exports.getThingBuyMinVotes(thingBuy, numResidents);
-  const { yays, nays } = await Polls.getPollResultCounts(pollId);
-  const valid = (yays >= minVotes && yays > nays);
+  const valid = await Polls.isPollValid(thingBuy.pollId, resolvedAt);
 
   return db('ThingBuy')
     .where({ id: buyId, resolvedAt: null }) // Cannot resolve twice
@@ -133,9 +128,8 @@ exports.resolveThingBuys = async function (houseId, currentTime) {
     .where('ThingBuy.resolvedAt', null)
     .select('ThingBuy.id');
 
-  const residents = await Admin.getResidents(houseId);
   for (const thingBuy of resolveableThingBuys) {
-    await exports.resolveThingBuy(thingBuy.id, currentTime, residents.length);
+    await exports.resolveThingBuy(thingBuy.id, currentTime);
   }
 };
 
@@ -188,7 +182,8 @@ exports.createThingProposal = async function (houseId, proposedBy, thingId, type
   // TODO: Can this be done as a table constraint?
   if (!(thingId || (type && name))) { throw new Error('Proposal must include either thingId or type and name!'); }
 
-  const [ poll ] = await Polls.createPoll(now, thingsProposalPollLength);
+  const minVotes = await exports.getThingProposalMinVotes(houseId);
+  const [ poll ] = await Polls.createPoll(now, thingsProposalPollLength, minVotes);
 
   return db('ThingProposal')
     .insert({ houseId, proposedBy, thingId, type, name, value, metadata, active, pollId: poll.id })
@@ -204,13 +199,10 @@ exports.getThingProposal = async function (proposalId) {
 
 exports.resolveThingProposal = async function (proposalId, now) {
   const proposal = await exports.getThingProposal(proposalId);
+
   if (proposal.resolvedAt !== null) { throw new Error('Proposal already resolved!'); }
 
-  const poll = await Polls.getPoll(proposal.pollId);
-  if (now < poll.endTime) { throw new Error('Poll not closed!'); }
-
-  const minVotes = await exports.getThingProposalMinVotes(proposal.houseId);
-  const valid = await Polls.isPollValid(proposal.pollId, minVotes);
+  const valid = await Polls.isPollValid(proposal.pollId, now);
 
   if (valid) {
     const { houseId, thingId, type, name, value, metadata, active } = proposal;
@@ -244,14 +236,15 @@ exports.resolveThingProposals = async function (houseId, now) {
 
 // Utils
 
-exports.getThingBuyMinVotes = async function (thingBuy, numResidents) {
-  const maxVotes = Math.ceil(thingsMaxPct * numResidents);
-  const minVotesSpecial = Math.ceil(thingsMinPctSpecial * numResidents);
-  const minVotesScaled = Math.ceil(Math.abs(thingBuy.value) / thingsMinVotesScalar);
+exports.getThingBuyMinVotes = async function (houseId, thingId, price) {
+  const residents = await Admin.getResidents(houseId);
+  const maxVotes = Math.ceil(thingsMaxPct * residents.length);
+  const minVotesSpecial = Math.ceil(thingsMinPctSpecial * residents.length);
+  const minVotesScaled = Math.ceil(Math.abs(price) / thingsMinVotesScalar);
 
-  return (thingBuy.thingId === null)
-    ? Math.min(maxVotes, Math.max(minVotesScaled, minVotesSpecial)) // Special buy
-    : Math.min(maxVotes, minVotesScaled); // Regular buy
+  return (thingId)
+    ? Math.min(maxVotes, minVotesScaled) // Regular buy
+    : Math.min(maxVotes, Math.max(minVotesScaled, minVotesSpecial)); // Special buy
 };
 
 exports.getThingProposalMinVotes = async function (houseId) {
