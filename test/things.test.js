@@ -26,7 +26,6 @@ describe('Things', async () => {
   let challengeEnd;
   let challengeEndSpecial;
   let proposalEnd;
-  let numResidents;
 
   before(async () => {
     await db('Thing').del();
@@ -44,9 +43,6 @@ describe('Things', async () => {
     await Admin.activateResident(HOUSE, RESIDENT2, now);
     await Admin.activateResident(HOUSE, RESIDENT3, now);
     await Admin.activateResident(HOUSE, RESIDENT4, now);
-
-    const residents = await Admin.getResidents(HOUSE);
-    numResidents = residents.length;
   });
 
   afterEach(async () => {
@@ -127,21 +123,15 @@ describe('Things', async () => {
     });
 
     it('can get the minimum votes for a buy', async () => {
-      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 500);
-
-      let buy;
       let minVotes;
 
-      [ buy ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, 10, 1);
-      minVotes = await Things.getThingBuyMinVotes(buy, numResidents);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 10);
       expect(minVotes).to.equal(1);
 
-      [ buy ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, 10, 7);
-      minVotes = await Things.getThingBuyMinVotes(buy, numResidents);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 70);
       expect(minVotes).to.equal(2);
 
-      [ buy ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, 10, 20);
-      minVotes = await Things.getThingBuyMinVotes(buy, numResidents);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 200);
       expect(minVotes).to.equal(3);
     });
 
@@ -152,7 +142,7 @@ describe('Things', async () => {
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
 
-      await Things.resolveThingBuy(buy.id, challengeEnd, numResidents);
+      await Things.resolveThingBuy(buy.id, challengeEnd);
 
       const balance = await Things.getHouseBalance(HOUSE, challengeEnd);
       expect(balance.sum).to.equal(90);
@@ -170,7 +160,7 @@ describe('Things', async () => {
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(buy.pollId, RESIDENT2, now, NAY);
 
-      await Things.resolveThingBuy(buy.id, challengeEnd, numResidents);
+      await Things.resolveThingBuy(buy.id, challengeEnd);
 
       const balance = await Things.getHouseBalance(HOUSE, challengeEnd);
       expect(balance.sum).to.equal(100);
@@ -188,7 +178,7 @@ describe('Things', async () => {
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
 
-      await Things.resolveThingBuy(buy.id, challengeEnd, numResidents);
+      await Things.resolveThingBuy(buy.id, challengeEnd);
 
       buy = await Things.getThingBuy(buy.id);
       expect(buy.valid).to.be.false;
@@ -199,7 +189,7 @@ describe('Things', async () => {
 
       const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10, 1);
 
-      await expect(Things.resolveThingBuy(buy.id, soon, numResidents))
+      await expect(Things.resolveThingBuy(buy.id, soon))
         .to.be.rejectedWith('Poll not closed!');
     });
 
@@ -210,9 +200,9 @@ describe('Things', async () => {
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
 
-      await Things.resolveThingBuy(buy.id, challengeEnd, numResidents);
+      await Things.resolveThingBuy(buy.id, challengeEnd);
 
-      [ buy ] = await Things.resolveThingBuy(buy.id, challengeEnd, numResidents);
+      [ buy ] = await Things.resolveThingBuy(buy.id, challengeEnd);
       expect(buy).to.be.undefined;
     });
 
@@ -225,7 +215,7 @@ describe('Things', async () => {
 
       await Polls.submitVote(thingBuy1.pollId, RESIDENT1, now, YAY);
 
-      await Things.resolveThingBuys(HOUSE, challengeEnd, numResidents);
+      await Things.resolveThingBuys(HOUSE, challengeEnd);
 
       const resolvedBuy1 = await Things.getThingBuy(thingBuy1.id);
       expect(resolvedBuy1.valid).to.be.true;
@@ -254,7 +244,7 @@ describe('Things', async () => {
       expect(unfulfilledBuys[0].thingMetadata.unit).to.equal('20 bars');
       expect(unfulfilledBuys[0].metadata.quantity).to.equal(1);
 
-      await Things.resolveThingBuy(buy.id, challengeEnd, numResidents);
+      await Things.resolveThingBuy(buy.id, challengeEnd);
 
       unfulfilledBuys = await Things.getUnfulfilledThingBuys(HOUSE, challengeEnd);
       expect(unfulfilledBuys.length).to.equal(0);
@@ -266,7 +256,7 @@ describe('Things', async () => {
       const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10, 1);
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
-      await Things.resolveThingBuy(buy.id, challengeEnd, numResidents);
+      await Things.resolveThingBuy(buy.id, challengeEnd);
 
       const [ fulfilledBuy ] = await Things.fulfillThingBuy(buy.id, RESIDENT2, challengeEnd);
       expect(fulfilledBuy.fulfilledAt.getTime()).to.equal(challengeEnd.getTime());
@@ -290,9 +280,9 @@ describe('Things', async () => {
       const nextWeekChallengeEnd = new Date(nextWeek.getTime() + thingsPollLength);
       const nextMonthChallengeEnd = new Date(nextMonth.getTime() + thingsPollLength);
 
-      await Things.resolveThingBuy(thingBuy1.id, challengeEnd, numResidents);
-      await Things.resolveThingBuy(thingBuy2.id, nextWeekChallengeEnd, numResidents);
-      await Things.resolveThingBuy(thingBuy3.id, nextMonthChallengeEnd, numResidents);
+      await Things.resolveThingBuy(thingBuy1.id, challengeEnd);
+      await Things.resolveThingBuy(thingBuy2.id, nextWeekChallengeEnd);
+      await Things.resolveThingBuy(thingBuy3.id, nextMonthChallengeEnd);
 
       let fulfilledBuys;
 
@@ -348,10 +338,10 @@ describe('Things', async () => {
       await Polls.submitVote(buy.pollId, RESIDENT3, now, YAY);
 
       // Special buys have a longer voting window
-      await expect(Things.resolveThingBuy(buy.id, challengeEnd, numResidents))
+      await expect(Things.resolveThingBuy(buy.id, challengeEnd))
         .to.be.rejectedWith('Poll not closed!');
 
-      await Things.resolveThingBuy(buy.id, challengeEndSpecial, numResidents);
+      await Things.resolveThingBuy(buy.id, challengeEndSpecial);
 
       const balance = await Things.getHouseBalance(HOUSE, challengeEndSpecial);
       expect(balance.sum).to.equal(50);
@@ -369,7 +359,7 @@ describe('Things', async () => {
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(buy.pollId, RESIDENT2, now, YAY);
 
-      await Things.resolveThingBuy(buy.id, challengeEndSpecial, numResidents);
+      await Things.resolveThingBuy(buy.id, challengeEndSpecial);
 
       const balance = await Things.getHouseBalance(HOUSE, challengeEndSpecial);
       expect(balance.sum).to.equal(250);
@@ -380,21 +370,15 @@ describe('Things', async () => {
     });
 
     it('can get the minimum votes for a special buy', async () => {
-      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 500);
-
-      let buy;
       let minVotes;
 
-      [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 10, 'special', 'details');
-      minVotes = await Things.getThingBuyMinVotes(buy, numResidents);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 10);
       expect(minVotes).to.equal(2);
 
-      [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 100, 'special', 'details');
-      minVotes = await Things.getThingBuyMinVotes(buy, numResidents);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 100);
       expect(minVotes).to.equal(2);
 
-      [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 300, 'special', 'details');
-      minVotes = await Things.getThingBuyMinVotes(buy, numResidents);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 300);
       expect(minVotes).to.equal(3);
     });
 

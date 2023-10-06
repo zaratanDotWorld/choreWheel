@@ -86,7 +86,8 @@ exports.issueChallenge = async function (houseId, challengerId, challengeeId, va
 
   if (unresolvedChallenges.length) { throw new Error('Active challenge exists!'); }
 
-  const [ poll ] = await Polls.createPoll(challengedAt, heartsPollLength);
+  const minVotes = await exports.getChallengeQuorum(houseId, challengeeId, value, challengedAt);
+  const [ poll ] = await Polls.createPoll(challengedAt, heartsPollLength, minVotes);
 
   return db('HeartChallenge')
     .insert({ houseId, challengerId, challengeeId, challengedAt, value, pollId: poll.id, metadata: { circumstance } })
@@ -119,16 +120,8 @@ exports.resolveChallenge = async function (challengeId, resolvedAt) {
 
   if (challenge.heartId !== null) { throw new Error('Challenge already resolved!'); }
 
-  const poll = await Polls.getPoll(challenge.pollId);
-
-  if (resolvedAt < poll.endTime) { throw new Error('Poll not closed!'); }
-
-  // Challenger wins with a majority and minimum quorum
-  const quorum = await exports.getChallengeQuorum(challenge.houseId, challenge.challengeeId, challenge.value, challenge.challengedAt);
-  const { yays, nays } = await Polls.getPollResultCounts(challenge.pollId);
-  const loser = (yays >= quorum && yays > nays)
-    ? challenge.challengeeId
-    : challenge.challengerId;
+  const valid = await Polls.isPollValid(challenge.pollId, resolvedAt);
+  const loser = (valid) ? challenge.challengeeId : challenge.challengerId;
 
   const [ heart ] = await exports.generateHearts(challenge.houseId, loser, HEART_TYPE_CHALLENGE, resolvedAt, -challenge.value);
 

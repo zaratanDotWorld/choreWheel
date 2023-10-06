@@ -215,7 +215,7 @@ exports.claimChore = async function (houseId, choreId, claimedBy, claimedAt) {
 
   if (choreValue.sum === null) { throw new Error('Cannot claim a zero-value chore!'); }
 
-  const [ poll ] = await Polls.createPoll(claimedAt, choresPollLength);
+  const [ poll ] = await Polls.createPoll(claimedAt, choresPollLength, choresMinVotes);
 
   return db('ChoreClaim')
     .insert({ houseId, choreId, claimedBy, claimedAt, value: choreValue.sum, pollId: poll.id })
@@ -224,12 +224,7 @@ exports.claimChore = async function (houseId, choreId, claimedBy, claimedAt) {
 
 exports.resolveChoreClaim = async function (claimId, resolvedAt) {
   const choreClaim = await exports.getChoreClaim(claimId);
-  const poll = await Polls.getPoll(choreClaim.pollId);
-
-  if (resolvedAt < poll.endTime) { throw new Error('Poll not closed!'); }
-
-  const { yays, nays } = await Polls.getPollResultCounts(choreClaim.pollId);
-  const valid = (yays >= choresMinVotes && yays > nays);
+  const valid = await Polls.isPollValid(choreClaim.pollId, resolvedAt);
   const value = await exports.getCurrentChoreValue(choreClaim.choreId, choreClaim.claimedAt);
 
   return db('ChoreClaim')
@@ -400,7 +395,8 @@ exports.createChoreProposal = async function (houseId, proposedBy, choreId, name
   // TODO: Can this be done as a table constraint?
   if (!(choreId || name)) { throw new Error('Proposal must include either choreId or name!'); }
 
-  const [ poll ] = await Polls.createPoll(now, choresProposalPollLength);
+  const minVotes = await exports.getChoreProposalMinVotes(houseId);
+  const [ poll ] = await Polls.createPoll(now, choresProposalPollLength, minVotes);
 
   return db('ChoreProposal')
     .insert({ houseId, proposedBy, choreId, name, metadata, active, pollId: poll.id })
@@ -421,13 +417,10 @@ exports.getChoreProposalMinVotes = async function (houseId) {
 
 exports.resolveChoreProposal = async function (proposalId, now) {
   const proposal = await exports.getChoreProposal(proposalId);
+
   if (proposal.resolvedAt !== null) { throw new Error('Proposal already resolved!'); }
 
-  const poll = await Polls.getPoll(proposal.pollId);
-  if (now < poll.endTime) { throw new Error('Poll not closed!'); }
-
-  const minVotes = await exports.getChoreProposalMinVotes(proposal.houseId);
-  const valid = await Polls.isPollValid(proposal.pollId, minVotes);
+  const valid = await Polls.isPollValid(proposal.pollId, now);
 
   if (valid) {
     const { houseId, choreId, name, metadata, active } = proposal;
