@@ -4,7 +4,7 @@ exports.up = function(knex, Promise) {
         t.timestamps(useTimestamps = true, defaultToNow = true, useCamelCase = true);
         t.timestamp('startTime').notNull();
         t.timestamp('endTime').notNull();
-        // t.integer('minVotes').notNull();
+        t.integer('minVotes').notNull();
         t.json('metadata').notNull().defaultTo({});
     });
 };
