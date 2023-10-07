@@ -121,8 +121,9 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
   console.log('hearts-challenge-callback');
   await ack();
 
-  const residentId = body.user.id;
+  const now = new Date();
   const houseId = body.team.id;
+  const residentId = body.user.id;
 
   const challengeeId = common.getInputBlock(body, 2).challengee.selected_user;
   const numHearts = common.getInputBlock(body, 3).hearts.selected_option.value;
@@ -138,13 +139,13 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
     await common.postEphemeral(app, heartsOauth, heartsChannel, residentId, text);
   } else {
     // Initiate the challenge
-    const now = new Date();
-    const quorum = await Hearts.getChallengeQuorum(houseId, challengeeId, numHearts, now);
     const [ challenge ] = await Hearts.issueChallenge(houseId, residentId, challengeeId, numHearts, now, circumstance);
     await Polls.submitVote(challenge.pollId, residentId, now, YAY);
 
+    const { minVotes } = await Polls.getPoll(challenge.pollId);
+
     const text = 'Someone just issued a hearts challenge';
-    const blocks = views.heartsChallengeCallbackView(challenge, quorum, circumstance);
+    const blocks = views.heartsChallengeCallbackView(challenge, minVotes, circumstance);
     const { channel, ts } = await common.postMessage(app, heartsOauth, heartsChannel, text, blocks);
     await Polls.updateMetadata(challenge.pollId, { channel, ts });
   }

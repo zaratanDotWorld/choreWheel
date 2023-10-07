@@ -469,7 +469,7 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
   await Polls.submitVote(proposal.pollId, residentId, now, YAY);
 
   const { choresChannel } = await Admin.getHouse(houseId);
-  const minVotes = await Chores.getChoreProposalMinVotes(houseId);
+  const { minVotes } = await Polls.getPoll(proposal.pollId);
 
   const text = 'Someone just proposed a chore edit';
   const blocks = views.choresProposeCallbackView(metadata, proposal, minVotes);
