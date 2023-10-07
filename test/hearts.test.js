@@ -293,11 +293,11 @@ describe('Hearts', async () => {
       let quorum;
 
       // Challenge reducing to 3 hearts, needs 40% of 5 residents
-      quorum = await Hearts.getChallengeQuorum(HOUSE, RESIDENT2, 2, now);
+      quorum = await Hearts.getChallengeMinVotes(HOUSE, RESIDENT2, 2, now);
       expect(quorum).to.equal(2);
 
       // Challenge reducing to 1 hearts, needs 70% of 5 residents
-      quorum = await Hearts.getChallengeQuorum(HOUSE, RESIDENT2, 4, now);
+      quorum = await Hearts.getChallengeMinVotes(HOUSE, RESIDENT2, 4, now);
       expect(quorum).to.equal(4);
     });
 

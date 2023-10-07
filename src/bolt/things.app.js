@@ -165,8 +165,7 @@ app.view('things-buy-callback', async ({ ack, body }) => {
   const [ buy ] = await Things.buyThing(houseId, thing.id, residentId, now, thing.value, quantity);
   await Polls.submitVote(buy.pollId, residentId, now, YAY);
 
-  const residents = await Admin.getResidents(houseId);
-  const minVotes = await Things.getThingBuyMinVotes(buy, residents.length);
+  const { minVotes } = await Polls.getPoll(buy.pollId);
   const balance = await Things.getHouseBalance(houseId, now);
 
   // TODO: Return error to user (not console) if channel is not set
@@ -205,8 +204,8 @@ app.view('things-special-callback', async ({ ack, body }) => {
   const [ buy ] = await Things.buySpecialThing(houseId, residentId, now, cost, title, details);
   await Polls.submitVote(buy.pollId, residentId, now, YAY);
 
-  const residents = await Admin.getResidents(houseId);
-  const minVotes = await Things.getThingBuyMinVotes(buy, residents.length);
+  const { minVotes } = await Polls.getPoll(buy.pollId);
+
   const balance = await Things.getHouseBalance(houseId, now);
 
   // TODO: Return error to user (not console) if channel is not set
@@ -337,7 +336,7 @@ app.view('things-propose-callback', async ({ ack, body }) => {
   await Polls.submitVote(proposal.pollId, residentId, now, YAY);
 
   const { thingsChannel } = await Admin.getHouse(houseId);
-  const minVotes = await Things.getThingProposalMinVotes(houseId);
+  const { minVotes } = await Polls.getPoll(proposal.pollId);
 
   const text = 'Someone just proposed a thing edit';
   const blocks = views.thingsProposeCallbackView(metadata, proposal, minVotes);
