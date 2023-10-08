@@ -2,10 +2,12 @@ const sha256 = require('js-sha256');
 
 const { db } = require('./db');
 
-exports.createPoll = async function (startTime, duration, minVotes) {
+const Admin = require('./admin');
+
+exports.createPoll = async function (houseId, startTime, duration, minVotes) {
   const endTime = new Date(startTime.getTime() + duration);
   return db('Poll')
-    .insert({ startTime, endTime, minVotes })
+    .insert({ houseId, startTime, endTime, minVotes })
     .returning('*');
 };
 
@@ -17,9 +19,12 @@ exports.getPoll = async function (pollId) {
 };
 
 exports.submitVote = async function (pollId, residentId, submittedAt, vote) {
-  const encryptedResidentId = sha256(process.env.SALT + residentId);
   const poll = await exports.getPoll(pollId);
+  const resident = await Admin.getResident(residentId);
+  const encryptedResidentId = sha256(process.env.SALT + residentId);
 
+  // TODO: remove first clause post-migration
+  if (poll.houseId && poll.houseId !== resident.houseId) { throw new Error('Invalid user for poll!'); }
   if (poll.endTime <= submittedAt) { throw new Error('Poll has closed!'); }
 
   return db('PollVote')

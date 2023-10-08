@@ -68,7 +68,7 @@ exports.buyThing = async function (houseId, thingId, boughtBy, boughtAt, price, 
   if (houseBalance.sum < totalCost) { throw new Error('Insufficient funds!'); }
 
   const minVotes = await exports.getThingBuyMinVotes(houseId, thingId, totalCost);
-  const [ poll ] = await Polls.createPoll(boughtAt, thingsPollLength, minVotes);
+  const [ poll ] = await Polls.createPoll(houseId, boughtAt, thingsPollLength, minVotes);
 
   return db('ThingBuy')
     .insert({
@@ -89,7 +89,7 @@ exports.buySpecialThing = async function (houseId, boughtBy, boughtAt, price, ti
   if (houseBalance.sum < price) { throw new Error('Insufficient funds!'); }
 
   const minVotes = await exports.getThingBuyMinVotes(houseId, null, price);
-  const [ poll ] = await Polls.createPoll(boughtAt, thingsSpecialPollLength, minVotes);
+  const [ poll ] = await Polls.createPoll(houseId, boughtAt, thingsSpecialPollLength, minVotes);
 
   return db('ThingBuy')
     .insert({
@@ -183,7 +183,7 @@ exports.createThingProposal = async function (houseId, proposedBy, thingId, type
   if (!(thingId || (type && name))) { throw new Error('Proposal must include either thingId or type and name!'); }
 
   const minVotes = await exports.getThingProposalMinVotes(houseId);
-  const [ poll ] = await Polls.createPoll(now, thingsProposalPollLength, minVotes);
+  const [ poll ] = await Polls.createPoll(houseId, now, thingsProposalPollLength, minVotes);
 
   return db('ThingProposal')
     .insert({ houseId, proposedBy, thingId, type, name, value, metadata, active, pollId: poll.id })

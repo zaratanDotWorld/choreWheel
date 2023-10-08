@@ -87,7 +87,7 @@ exports.issueChallenge = async function (houseId, challengerId, challengeeId, va
   if (unresolvedChallenges.length) { throw new Error('Active challenge exists!'); }
 
   const minVotes = await exports.getChallengeMinVotes(houseId, challengeeId, value, challengedAt);
-  const [ poll ] = await Polls.createPoll(challengedAt, heartsPollLength, minVotes);
+  const [ poll ] = await Polls.createPoll(houseId, challengedAt, heartsPollLength, minVotes);
 
   return db('HeartChallenge')
     .insert({ houseId, challengerId, challengeeId, challengedAt, value, pollId: poll.id, metadata: { circumstance } })
