@@ -215,7 +215,7 @@ exports.claimChore = async function (houseId, choreId, claimedBy, claimedAt) {
 
   if (choreValue.sum === null) { throw new Error('Cannot claim a zero-value chore!'); }
 
-  const [ poll ] = await Polls.createPoll(claimedAt, choresPollLength, choresMinVotes);
+  const [ poll ] = await Polls.createPoll(houseId, claimedAt, choresPollLength, choresMinVotes);
 
   return db('ChoreClaim')
     .insert({ houseId, choreId, claimedBy, claimedAt, value: choreValue.sum, pollId: poll.id })
@@ -398,7 +398,7 @@ exports.createChoreProposal = async function (houseId, proposedBy, choreId, name
   if (!(choreId || name)) { throw new Error('Proposal must include either choreId or name!'); }
 
   const minVotes = await exports.getChoreProposalMinVotes(houseId);
-  const [ poll ] = await Polls.createPoll(now, choresProposalPollLength, minVotes);
+  const [ poll ] = await Polls.createPoll(houseId, now, choresProposalPollLength, minVotes);
 
   return db('ChoreProposal')
     .insert({ houseId, proposedBy, choreId, name, metadata, active, pollId: poll.id })

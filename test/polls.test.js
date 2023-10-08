@@ -45,14 +45,14 @@ describe('Polls', async () => {
       [ pollCount ] = await db('Poll').count('*');
       expect(parseInt(pollCount.count)).to.equal(0);
 
-      await Polls.createPoll(now, DAY, 1);
+      await Polls.createPoll(HOUSE, now, DAY, 1);
 
       [ pollCount ] = await db('Poll').count('*');
       expect(parseInt(pollCount.count)).to.equal(1);
     });
 
     it('can vote in a poll', async () => {
-      const [ poll ] = await Polls.createPoll(now, DAY, 1);
+      const [ poll ] = await Polls.createPoll(HOUSE, now, DAY, 1);
 
       await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
 
@@ -62,7 +62,7 @@ describe('Polls', async () => {
     });
 
     it('can update the vote in a poll', async () => {
-      const [ poll ] = await Polls.createPoll(now, DAY, 1);
+      const [ poll ] = await Polls.createPoll(HOUSE, now, DAY, 1);
 
       await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
 
@@ -81,15 +81,25 @@ describe('Polls', async () => {
       expect(votes[0].vote).to.be.null;
     });
 
+    it('cannot vote in a poll if not a member of the house', async () => {
+      const house2 = 'house456';
+      await Admin.updateHouse({ slackId: house2 });
+
+      const [ poll ] = await Polls.createPoll(house2, now, DAY, 1);
+
+      await expect(Polls.submitVote(poll.id, RESIDENT1, soon, YAY))
+        .to.be.rejectedWith('Invalid user for poll!');
+    });
+
     it('cannot update the vote in a poll if the poll is closed', async () => {
-      const [ poll ] = await Polls.createPoll(now, DAY, 1);
+      const [ poll ] = await Polls.createPoll(HOUSE, now, DAY, 1);
 
       await expect(Polls.submitVote(poll.id, RESIDENT1, tomorrow, YAY))
         .to.be.rejectedWith('Poll has closed');
     });
 
     it('can get the results of a vote', async () => {
-      const [ poll ] = await Polls.createPoll(now, DAY, 1);
+      const [ poll ] = await Polls.createPoll(HOUSE, now, DAY, 1);
 
       await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
       await Polls.submitVote(poll.id, RESIDENT2, soon, YAY);
@@ -107,7 +117,7 @@ describe('Polls', async () => {
       let poll;
 
       // Scenario 1: 2 YAY votes required, 2 observed - valid
-      [ poll ] = await Polls.createPoll(now, DAY, 2);
+      [ poll ] = await Polls.createPoll(HOUSE, now, DAY, 2);
 
       await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
       await Polls.submitVote(poll.id, RESIDENT3, soon, YAY);
@@ -115,7 +125,7 @@ describe('Polls', async () => {
       expect(await Polls.isPollValid(poll.id, tomorrow)).to.be.true;
 
       // Scenario 2: 3 YAY votes required, 2 observed - invalid
-      [ poll ] = await Polls.createPoll(now, DAY, 3);
+      [ poll ] = await Polls.createPoll(HOUSE, now, DAY, 3);
 
       await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
       await Polls.submitVote(poll.id, RESIDENT3, soon, YAY);
@@ -123,7 +133,7 @@ describe('Polls', async () => {
       expect(await Polls.isPollValid(poll.id, tomorrow)).to.be.false;
 
       // Scenario 3: 1 YAY vote required, 1 YAY 1 NAY - invalid
-      [ poll ] = await Polls.createPoll(now, DAY, 1);
+      [ poll ] = await Polls.createPoll(HOUSE, now, DAY, 1);
 
       await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
       await Polls.submitVote(poll.id, RESIDENT3, soon, NAY);
@@ -132,7 +142,7 @@ describe('Polls', async () => {
     });
 
     it('cannot determine if a poll is valid before the poll closes', async () => {
-      const [ poll ] = await Polls.createPoll(now, DAY, 2);
+      const [ poll ] = await Polls.createPoll(HOUSE, now, DAY, 2);
 
       await expect(Polls.isPollValid(poll.id, soon))
         .to.be.rejectedWith('Poll not closed!');
@@ -140,7 +150,7 @@ describe('Polls', async () => {
 
     it('can update a poll metadata', async () => {
       let poll;
-      [ poll ] = await Polls.createPoll(now, DAY, 1);
+      [ poll ] = await Polls.createPoll(HOUSE, now, DAY, 1);
       expect(poll.metadata).to.deep.equal({});
 
       [ poll ] = await Polls.updateMetadata(poll.id, { foo: 1 });
