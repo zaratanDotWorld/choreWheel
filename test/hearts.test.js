@@ -8,17 +8,16 @@ const { Hearts, Polls, Admin } = require('../src/core/index');
 const { NAY, YAY, HOUR, HEART_TYPE_UNKNOWN, HEART_TYPE_KARMA, HEART_TYPE_CHALLENGE } = require('../src/constants');
 const { heartsPollLength, heartsBaseline, karmaMaxHearts, karmaDelay } = require('../src/config');
 const { getNextMonthStart } = require('../src/utils');
-const { db } = require('../src/core/db');
+const testHelpers = require('./helpers');
 
 describe('Hearts', async () => {
-  const HOUSE = 'house123';
-
-  const RESIDENT1 = 'RESIDENT1';
-  const RESIDENT2 = 'RESIDENT2';
-  const RESIDENT3 = 'RESIDENT3';
-  const RESIDENT4 = 'RESIDENT4';
-  const RESIDENT5 = 'RESIDENT5';
-  const RESIDENT6 = 'RESIDENT6';
+  const HOUSE = testHelpers.generateSlackId();
+  const RESIDENT1 = testHelpers.generateSlackId();
+  const RESIDENT2 = testHelpers.generateSlackId();
+  const RESIDENT3 = testHelpers.generateSlackId();
+  const RESIDENT4 = testHelpers.generateSlackId();
+  const RESIDENT5 = testHelpers.generateSlackId();
+  const RESIDENT6 = testHelpers.generateSlackId();
 
   let now;
   let soon;
@@ -26,10 +25,7 @@ describe('Hearts', async () => {
   let nextMonth;
   let twoMonths;
 
-  before(async () => {
-    await db('Resident').del();
-    await db('House').del();
-
+  beforeEach(async () => {
     now = new Date();
     soon = new Date(now.getTime() + HOUR);
     challengeEnd = new Date(now.getTime() + heartsPollLength);
@@ -45,11 +41,7 @@ describe('Hearts', async () => {
   });
 
   afterEach(async () => {
-    await db('HeartKarma').del();
-    await db('HeartChallenge').del();
-    await db('Heart').del();
-    await db('PollVote').del();
-    await db('Poll').del();
+    await testHelpers.resetDb();
   });
 
   describe('using hearts', async () => {
@@ -230,7 +222,7 @@ describe('Hearts', async () => {
       expect(hearts2.sum).to.equal(5);
     });
 
-    it('can resolve a challenge where the quorum is not reached', async () => {
+    it('can resolve a challenge where minVotes is not reached', async () => {
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now, '');
 
       // Quorum is 2, only 1 vote is submitted
@@ -289,16 +281,22 @@ describe('Hearts', async () => {
         .to.be.rejectedWith('Challenge already resolved!');
     });
 
-    it('can get the qorum for a challenge', async () => {
-      let quorum;
+    it('can get the minimum votes for a challenge', async () => {
+      let minVotes;
 
-      // Challenge reducing to 3 hearts, needs 40% of 5 residents
-      quorum = await Hearts.getChallengeMinVotes(HOUSE, RESIDENT2, 2, now);
-      expect(quorum).to.equal(2);
+      // Challenge reducing to 3 hearts, needs 40% of 5 residents = 2
+      minVotes = await Hearts.getChallengeMinVotes(HOUSE, RESIDENT2, 2, now);
+      expect(minVotes).to.equal(2);
 
-      // Challenge reducing to 1 hearts, needs 70% of 5 residents
-      quorum = await Hearts.getChallengeMinVotes(HOUSE, RESIDENT2, 4, now);
-      expect(quorum).to.equal(4);
+      // Challenge reducing to 1 hearts, needs 70% of 5 residents = 4
+      minVotes = await Hearts.getChallengeMinVotes(HOUSE, RESIDENT2, 4, now);
+      expect(minVotes).to.equal(4);
+
+      // TODO: restore this test
+      // // Exempt users are not counted
+      // await testHelpers.createExemptUsers(HOUSE, 10);
+      // minVotes = await Hearts.getChallengeMinVotes(HOUSE, RESIDENT2, 2, now);
+      // expect(minVotes).to.equal(2);
     });
 
     it('cannot challenge oneself', async () => {
@@ -331,7 +329,7 @@ describe('Hearts', async () => {
     let nextMonthKarma;
     let twoMonthsKarma;
 
-    before(async () => {
+    beforeEach(async () => {
       await Admin.activateResident(HOUSE, RESIDENT6, now);
 
       nextMonthKarma = new Date(nextMonth.getTime() + karmaDelay);
@@ -372,30 +370,37 @@ describe('Hearts', async () => {
     });
 
     it('can get the number of karma winners based on house size', async () => {
-      const house2 = 'house2';
-      await Admin.updateHouse({ slackId: house2 });
+      const house = testHelpers.generateSlackId();
+      const r1 = testHelpers.generateSlackId();
+      const r2 = testHelpers.generateSlackId();
+      const r3 = testHelpers.generateSlackId();
+      const r4 = testHelpers.generateSlackId();
+      const r5 = testHelpers.generateSlackId();
+      const r6 = testHelpers.generateSlackId();
+
+      await Admin.updateHouse({ slackId: house });
 
       let numWinners;
 
-      await Admin.activateResident(house2, 'r1', now);
-      await Admin.activateResident(house2, 'r2', now);
+      await Admin.activateResident(house, r1, now);
+      await Admin.activateResident(house, r2, now);
       // Create two unique recipients
-      await Hearts.giveKarma(house2, 'r1', 'r2', now);
-      await Hearts.giveKarma(house2, 'r2', 'r1', now);
+      await Hearts.giveKarma(house, r1, r2, now);
+      await Hearts.giveKarma(house, r2, r1, now);
       // Two residents, no karma hearts
-      numWinners = await Hearts.getNumKarmaWinners(house2, now, soon);
+      numWinners = await Hearts.getNumKarmaWinners(house, now, soon);
       expect(numWinners).to.equal(0);
 
-      await Admin.activateResident(house2, 'r3', now);
-      await Admin.activateResident(house2, 'r4', now);
-      await Admin.activateResident(house2, 'r5', now);
+      await Admin.activateResident(house, r3, now);
+      await Admin.activateResident(house, r4, now);
+      await Admin.activateResident(house, r5, now);
       // Five residents, one karma heart
-      numWinners = await Hearts.getNumKarmaWinners(house2, now, soon);
+      numWinners = await Hearts.getNumKarmaWinners(house, now, soon);
       expect(numWinners).to.equal(1);
 
-      await Admin.activateResident(house2, 'r6', now);
+      await Admin.activateResident(house, r6, now);
       // Six residents, two karma hearts
-      numWinners = await Hearts.getNumKarmaWinners(house2, now, soon);
+      numWinners = await Hearts.getNumKarmaWinners(house, now, soon);
       expect(numWinners).to.equal(2);
     });
 

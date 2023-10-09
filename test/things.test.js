@@ -7,15 +7,14 @@ chai.use(chaiAsPromised);
 const { Things, Polls, Admin } = require('../src/core/index');
 const { NAY, YAY, HOUR, DAY } = require('../src/constants');
 const { thingsPollLength, thingsSpecialPollLength, thingsProposalPollLength } = require('../src/config');
-const { db } = require('../src/core/db');
+const testHelpers = require('./helpers');
 
 describe('Things', async () => {
-  const HOUSE = 'house123';
-
-  const RESIDENT1 = 'RESIDENT1';
-  const RESIDENT2 = 'RESIDENT2';
-  const RESIDENT3 = 'RESIDENT3';
-  const RESIDENT4 = 'RESIDENT4';
+  const HOUSE = testHelpers.generateSlackId();
+  const RESIDENT1 = testHelpers.generateSlackId();
+  const RESIDENT2 = testHelpers.generateSlackId();
+  const RESIDENT3 = testHelpers.generateSlackId();
+  const RESIDENT4 = testHelpers.generateSlackId();
 
   const PANTRY = 'pantry';
   const SOAP = 'soap';
@@ -27,11 +26,7 @@ describe('Things', async () => {
   let challengeEndSpecial;
   let proposalEnd;
 
-  before(async () => {
-    await db('Thing').del();
-    await db('Resident').del();
-    await db('House').del();
-
+  beforeEach(async () => {
     now = new Date();
     soon = new Date(now.getTime() + HOUR);
     challengeEnd = new Date(now.getTime() + thingsPollLength);
@@ -46,11 +41,7 @@ describe('Things', async () => {
   });
 
   afterEach(async () => {
-    await db('ThingProposal').del();
-    await db('ThingBuy').del();
-    await db('Thing').del();
-    await db('PollVote').del();
-    await db('Poll').del();
+    await testHelpers.resetDb();
   });
 
   describe('managing the list', async () => {
@@ -131,8 +122,15 @@ describe('Things', async () => {
       minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 70);
       expect(minVotes).to.equal(2);
 
+      // max: ceil( 4 residents * 60% ) = 3
       minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 200);
       expect(minVotes).to.equal(3);
+
+      // TODO: restore this test
+      // // Exempt users are not counted
+      // await testHelpers.createExemptUsers(HOUSE, 10);
+      // minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 500);
+      // expect(minVotes).to.equal(3);
     });
 
     it('can affirm a buy', async () => {
@@ -372,14 +370,22 @@ describe('Things', async () => {
     it('can get the minimum votes for a special buy', async () => {
       let minVotes;
 
+      // min: ceil( 4 residents * 30% ) = 2
       minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 10);
       expect(minVotes).to.equal(2);
 
       minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 100);
       expect(minVotes).to.equal(2);
 
+      // max: ceil( 4 residents * 60% ) = 3
       minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 300);
       expect(minVotes).to.equal(3);
+
+      // TODO: restore this test
+      // // Exempt users are not counted
+      // await testHelpers.createExemptUsers(HOUSE, 10);
+      // minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 500);
+      // expect(minVotes).to.equal(3);
     });
 
     it('can get a list of unfulfilled special buys', async () => {
@@ -538,6 +544,18 @@ describe('Things', async () => {
 
       await expect(Things.resolveThingProposal(proposal.id, proposalEnd))
         .to.be.rejectedWith('Proposal already resolved!');
+    });
+
+    it('can get the minimum votes for a proposal', async () => {
+      // min: ceil( 4 residents * 40% ) = 2
+      const minVotes = await Things.getThingProposalMinVotes(HOUSE);
+      expect(minVotes).to.equal(2);
+
+      // TODO: restore this test
+      // // Exempt users are not counted
+      // await testHelpers.createExemptUsers(HOUSE, 10);
+      // minVotes = await Things.getThingProposalMinVotes(HOUSE);
+      // expect(minVotes).to.equal(2);
     });
 
     it('cannot approve a proposal with insufficient votes', async () => {
