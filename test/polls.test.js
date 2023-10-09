@@ -7,36 +7,31 @@ chai.use(chaiAsPromised);
 const { Polls, Admin } = require('../src/core/index');
 const { HOUR, DAY, NAY, YAY, CANCEL } = require('../src/constants');
 const { db } = require('../src/core/db');
+const testHelpers = require('./helpers');
 
 describe('Polls', async () => {
-  const HOUSE = 'house123';
-
-  const RESIDENT1 = 'RESIDENT1';
-  const RESIDENT2 = 'RESIDENT2';
-  const RESIDENT3 = 'RESIDENT3';
+  const HOUSE = testHelpers.generateSlackId();
+  const RESIDENT1 = testHelpers.generateSlackId();
+  const RESIDENT2 = testHelpers.generateSlackId();
+  const RESIDENT3 = testHelpers.generateSlackId();
 
   let now;
   let soon;
   let tomorrow;
 
-  before(async () => {
-    await db('Chore').del();
-    await db('Resident').del();
-    await db('House').del();
-
-    now = new Date();
-    soon = new Date(now.getTime() + HOUR);
-    tomorrow = new Date(now.getTime() + DAY);
-
+  beforeEach(async () => {
     await Admin.updateHouse({ slackId: HOUSE });
     await Admin.activateResident(HOUSE, RESIDENT1, now);
     await Admin.activateResident(HOUSE, RESIDENT2, now);
     await Admin.activateResident(HOUSE, RESIDENT3, now);
+
+    now = new Date();
+    soon = new Date(now.getTime() + HOUR);
+    tomorrow = new Date(now.getTime() + DAY);
   });
 
   afterEach(async () => {
-    await db('PollVote').del();
-    await db('Poll').del();
+    await testHelpers.resetDb();
   });
 
   describe('using polls', async () => {

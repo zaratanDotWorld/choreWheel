@@ -11,14 +11,14 @@ const { YAY, NAY, DAY, HOUR, MINUTE } = require('../src/constants');
 const { pointsPerResident, inflationFactor, penaltyDelay, choresPollLength, choresProposalPollLength } = require('../src/config');
 const { getMonthStart, getNextMonthStart, getPrevMonthEnd } = require('../src/utils');
 const { db } = require('../src/core/db');
+const testHelpers = require('./helpers');
 
 describe('Chores', async () => {
-  const HOUSE = 'house123';
-
-  const RESIDENT1 = 'RESIDENT1';
-  const RESIDENT2 = 'RESIDENT2';
-  const RESIDENT3 = 'RESIDENT3';
-  const RESIDENT4 = 'RESIDENT4';
+  const HOUSE = testHelpers.generateSlackId();
+  const RESIDENT1 = testHelpers.generateSlackId();
+  const RESIDENT2 = testHelpers.generateSlackId();
+  const RESIDENT3 = testHelpers.generateSlackId();
+  const RESIDENT4 = testHelpers.generateSlackId();
 
   let dishes;
   let sweeping;
@@ -30,8 +30,7 @@ describe('Chores', async () => {
   let challengeEnd;
   let proposalEnd;
 
-  before(async () => {
-    await db('House').del();
+  beforeEach(async () => {
     await Admin.updateHouse({ slackId: HOUSE });
 
     now = new Date();
@@ -42,16 +41,7 @@ describe('Chores', async () => {
   });
 
   afterEach(async () => {
-    await db('ChoreProposal').del();
-    await db('ChoreBreak').del();
-    await db('ChoreClaim').del();
-    await db('ChoreValue').del();
-    await db('ChorePref').del();
-    await db('PollVote').del();
-    await db('Heart').del();
-    await db('Chore').del();
-    await db('Poll').del();
-    await db('Resident').del();
+    await testHelpers.resetDb();
   });
 
   describe('managing chore preferences', async () => {
@@ -103,12 +93,12 @@ describe('Chores', async () => {
     });
 
     it('can set a chore preference', async () => {
-      await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
-      await Chores.setChorePreference(HOUSE, RESIDENT2, dishes.id, sweeping.id, 0);
+      await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.85);
 
       const preferences = await Chores.getChorePreferences(HOUSE);
-      expect(preferences[0].preference).to.equal(1);
-      expect(preferences[1].preference).to.equal(0);
+      expect(preferences[0].preference).to.equal(0.85);
+      expect(preferences[0].alphaChoreId).to.equal(dishes.id);
+      expect(preferences[0].betaChoreId).to.equal(sweeping.id);
     });
 
     it('can update a chore preference', async () => {
@@ -1088,6 +1078,21 @@ describe('Chores', async () => {
         .to.be.rejectedWith('Proposal already resolved!');
     });
 
+    it('can get the minimum votes for a proposal', async () => {
+      await Admin.activateResident(HOUSE, RESIDENT3, now);
+      await Admin.activateResident(HOUSE, RESIDENT4, now);
+
+      // 40% of 4 residents is 2 upvotes
+      const minVotes = await Chores.getChoreProposalMinVotes(HOUSE, now);
+      expect(minVotes).to.equal(2);
+
+      // TODO: restore this test
+      // // Exempt users are not counted
+      // await testHelpers.createExemptUsers(HOUSE, 10);
+      // minVotes = await Chores.getChoreProposalMinVotes(HOUSE, now);
+      // expect(minVotes).to.equal(2);
+    });
+
     it('cannot approve a proposal with insufficient votes', async () => {
       await Admin.activateResident(HOUSE, RESIDENT3, now);
       await Admin.activateResident(HOUSE, RESIDENT4, now);
@@ -1098,7 +1103,6 @@ describe('Chores', async () => {
       const name = 'cooking';
       [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, {}, true, now);
 
-      // 40% of 4 residents is 2 upvotes
       await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(proposal.pollId, RESIDENT2, now, NAY);
 

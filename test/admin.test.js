@@ -7,29 +7,24 @@ chai.use(chaiAsPromised);
 const { Admin } = require('../src/core/index');
 const { HOUR, DAY } = require('../src/constants');
 const { getMonthStart, getMonthEnd, getNextMonthStart, getPrevMonthEnd, getDateStart } = require('../src/utils');
-const { db } = require('../src/core/db');
+const testHelpers = require('./helpers');
 
 describe('Admin', async () => {
-  const HOUSE1 = 'HOUSE1';
-  const HOUSE2 = 'HOUSE2';
-
-  const RESIDENT1 = 'RESIDENT1';
-  const RESIDENT2 = 'RESIDENT2';
+  const HOUSE1 = testHelpers.generateSlackId();
+  const HOUSE2 = testHelpers.generateSlackId();
+  const RESIDENT1 = testHelpers.generateSlackId();
+  const RESIDENT2 = testHelpers.generateSlackId();
 
   let now;
   let soon;
 
-  before(async () => {
-    await db('Resident').del();
-    await db('House').del();
-
+  beforeEach(async () => {
     now = new Date();
     soon = new Date(now.getTime() + HOUR);
   });
 
   afterEach(async () => {
-    await db('Resident').del();
-    await db('House').del();
+    await testHelpers.resetDb();
   });
 
   describe('keeping track of houses', async () => {
@@ -206,6 +201,26 @@ describe('Admin', async () => {
       expect(votingResidents.length).to.equal(2);
       votingResidents = await Admin.getVotingResidents(HOUSE1, soon);
       expect(votingResidents.length).to.equal(1);
+    });
+
+    it('can handle many exempt users', async () => {
+      await Admin.activateResident(HOUSE1, RESIDENT1, now);
+      await Admin.activateResident(HOUSE1, RESIDENT2, now);
+
+      let residents;
+      let votingResidents;
+
+      residents = await Admin.getResidents(HOUSE1);
+      votingResidents = await Admin.getVotingResidents(HOUSE1, now);
+      expect(residents.length).to.equal(2);
+      expect(votingResidents.length).to.equal(2);
+
+      await testHelpers.createExemptUsers(HOUSE1, 10, now);
+
+      residents = await Admin.getResidents(HOUSE1);
+      votingResidents = await Admin.getVotingResidents(HOUSE1, now);
+      expect(residents.length).to.equal(12);
+      expect(votingResidents.length).to.equal(2);
     });
   });
 
