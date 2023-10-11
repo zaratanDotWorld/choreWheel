@@ -45,12 +45,14 @@ const app = new App({
 app.event('app_home_opened', async ({ body, event }) => {
   if (event.tab === 'home') {
     console.log('things home');
+
+    const now = new Date();
     const houseId = body.team_id;
     const residentId = event.user;
-    const now = new Date();
 
     await Admin.activateResident(houseId, residentId, now);
     const balance = await Things.getHouseBalance(houseId, now);
+
     const view = views.thingsHomeView(balance.sum || 0);
     await common.publishHome(app, thingsOauth, residentId, view);
 
@@ -77,9 +79,11 @@ app.command('/things-load', async ({ ack, command }) => {
     const text = 'Enter an amount of money to add to the account for future buys.';
     await common.replyEphemeral(app, thingsOauth, command, text);
   } else if (await common.isAdmin(app, thingsOauth, command)) {
+    const now = new Date();
     const houseId = command.team_id;
     const residentId = command.user_id;
-    const [ thing ] = await Things.loadHouseAccount(houseId, residentId, new Date(), command.text);
+
+    const [ thing ] = await Things.loadHouseAccount(houseId, residentId, now, command.text);
     const { thingsChannel } = await Admin.getHouse(houseId);
 
     const text = `*<@${thing.boughtBy}>* just loaded *$${thing.value}* into the house account :chart_with_upwards_trend:`;
@@ -100,8 +104,8 @@ app.command('/things-resolved', async ({ ack, command }) => {
     text = 'Show a list of resolved buys, including their buy id. ' +
     'Buys are resolved after 12 hours, assuming they have received enough upvotes';
   } else {
-    const houseId = command.team_id;
     const now = new Date();
+    const houseId = command.team_id;
 
     const unfulfilledBuys = await Things.getUnfulfilledThingBuys(houseId, now);
     const parsedResolvedBuys = views.parseResolvedThingBuys(unfulfilledBuys);
@@ -122,9 +126,9 @@ app.command('/things-fulfill', async ({ ack, command }) => {
     'You can fulfill many buys at once by including multiple soace-separated ids, e.g. 23 24 25 28. ' +
     'Fulfilled buys are indicated by their buy id, which you can see by calling /things-resolved.';
   } else if (await common.isAdmin(app, thingsOauth, command)) {
+    const now = new Date();
     const residentId = command.user_id;
     const buyIds = command.text.split(' ');
-    const now = new Date();
 
     for (const buyId of buyIds) {
       await Things.fulfillThingBuy(buyId, residentId, now);
@@ -145,6 +149,7 @@ app.action('things-buy', async ({ ack, body }) => {
   await ack();
 
   const things = await Things.getThings(body.team.id);
+
   const view = views.thingsBuyView(things);
   await common.openView(app, thingsOauth, body.trigger_id, view);
 });
@@ -153,14 +158,14 @@ app.view('things-buy-callback', async ({ ack, body }) => {
   console.log('things-buy-callback');
   await ack();
 
-  const residentId = body.user.id;
+  const now = new Date();
   const houseId = body.team.id;
+  const residentId = body.user.id;
 
   const { id: thingId } = JSON.parse(common.getInputBlock(body, -2).things.selected_option.value);
   const quantity = common.getInputBlock(body, -1).quantity.value;
 
   // Perform the buy
-  const now = new Date();
   const thing = await Things.getThing(thingId);
   const [ buy ] = await Things.buyThing(houseId, thing.id, residentId, now, thing.value, quantity);
   await Polls.submitVote(buy.pollId, residentId, now, YAY);
@@ -184,6 +189,7 @@ app.action('things-special', async ({ ack, body }) => {
 
   const houseId = body.team.id;
   const residents = await Admin.getResidents(houseId);
+
   const view = views.thingsSpecialBuyView(residents.length);
   await common.openView(app, thingsOauth, body.trigger_id, view);
 });
@@ -192,9 +198,9 @@ app.view('things-special-callback', async ({ ack, body }) => {
   console.log('things-special-callback');
   await ack();
 
-  const residentId = body.user.id;
-  const houseId = body.team.id;
   const now = new Date();
+  const houseId = body.team.id;
+  const residentId = body.user.id;
 
   const title = common.getInputBlock(body, -3).title.value.trim();
   const details = common.getInputBlock(body, -2).details.value.trim();
@@ -222,8 +228,9 @@ app.action('things-bought', async ({ ack, body }) => {
   console.log('things-bought');
   await ack();
 
-  const houseId = body.team.id;
   const now = new Date();
+  const houseId = body.team.id;
+
   const oneWeekAgo = new Date(now.getTime() - 7 * DAY);
   const threeMonthsAgo = new Date(now.getTime() - 90 * DAY);
 
@@ -241,6 +248,7 @@ app.action('things-propose', async ({ ack, body }) => {
   await ack();
 
   const houseId = body.team.id;
+
   const minVotes = await Things.getThingProposalMinVotes(houseId);
 
   const view = views.thingsProposeView(minVotes);
@@ -290,9 +298,9 @@ app.view('things-propose-callback', async ({ ack, body }) => {
   console.log('things-propose-callback');
   await ack({ response_action: 'clear' });
 
-  const residentId = body.user.id;
-  const houseId = body.team.id;
   const now = new Date();
+  const houseId = body.team.id;
+  const residentId = body.user.id;
 
   let thingId, type, name, value, unit, url, active;
   const metadata = JSON.parse(body.view.private_metadata);
