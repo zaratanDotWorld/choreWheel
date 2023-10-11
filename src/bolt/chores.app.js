@@ -387,8 +387,9 @@ app.action('chores-propose', async ({ ack, body }) => {
   console.log('chores-propose');
   await ack();
 
+  const now = new Date();
   const houseId = body.team.id;
-  const minVotes = await Chores.getChoreProposalMinVotes(houseId);
+  const minVotes = await Chores.getChoreProposalMinVotes(houseId, now);
 
   const view = views.choresProposeView(minVotes);
   await common.openView(app, choresOauth, body.trigger_id, view);

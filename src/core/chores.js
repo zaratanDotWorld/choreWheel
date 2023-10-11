@@ -397,7 +397,7 @@ exports.createChoreProposal = async function (houseId, proposedBy, choreId, name
   // TODO: Can this be done as a table constraint?
   if (!(choreId || name)) { throw new Error('Proposal must include either choreId or name!'); }
 
-  const minVotes = await exports.getChoreProposalMinVotes(houseId);
+  const minVotes = await exports.getChoreProposalMinVotes(houseId, now);
   const [ poll ] = await Polls.createPoll(houseId, now, choresProposalPollLength, minVotes);
 
   return db('ChoreProposal')
@@ -412,9 +412,9 @@ exports.getChoreProposal = async function (proposalId) {
     .first();
 };
 
-exports.getChoreProposalMinVotes = async function (houseId) {
-  const residents = await Admin.getResidents(houseId);
-  return Math.ceil(choreProposalPct * residents.length);
+exports.getChoreProposalMinVotes = async function (houseId, now) {
+  const votingResidents = await Admin.getVotingResidents(houseId, now);
+  return Math.ceil(choreProposalPct * votingResidents.length);
 };
 
 exports.resolveChoreProposal = async function (proposalId, now) {

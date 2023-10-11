@@ -110,10 +110,11 @@ app.action('hearts-challenge', async ({ ack, body }) => {
   console.log('hearts-challenge');
   await ack();
 
+  const now = new Date();
   const houseId = body.team.id;
 
-  const residents = await Admin.getResidents(houseId);
-  const view = views.heartsChallengeView(residents.length);
+  const votingResidents = await Admin.getVotingResidents(houseId, now);
+  const view = views.heartsChallengeView(votingResidents.length);
   await common.openView(app, heartsOauth, body.trigger_id, view);
 });
 

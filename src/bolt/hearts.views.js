@@ -45,9 +45,9 @@ exports.heartsHomeView = function (numHearts) {
   };
 };
 
-exports.heartsChallengeView = function (numResidents) {
-  const initialQuorum = Math.ceil(numResidents * heartsMinPctInitial);
-  const criticalQuorum = Math.ceil(numResidents * heartsMinPctCritical);
+exports.heartsChallengeView = function (numVotingResidents) {
+  const initialQuorum = Math.ceil(numVotingResidents * heartsMinPctInitial);
+  const criticalQuorum = Math.ceil(numVotingResidents * heartsMinPctCritical);
   const resolutionUrl = 'https://github.com/zaratanDotWorld/mirror/wiki/Conflict-Resolution';
 
   const header = 'Resolve a dispute';

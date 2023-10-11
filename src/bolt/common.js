@@ -189,18 +189,24 @@ exports.syncWorkspaceChannels = async function (app, oauth) {
 
 exports.updateVoteCounts = async function (app, oauth, body, action) {
   const now = new Date();
+  const resident = await Admin.getResident(body.user.id);
 
-  const [ pollId, value ] = action.value.split('|');
-  await Polls.submitVote(pollId, body.user.id, now, value);
+  if (!exports.isExempt(resident, now)) {
+    const [ pollId, value ] = action.value.split('|');
+    await Polls.submitVote(pollId, body.user.id, now, value);
 
-  // Update the vote counts
-  const { yays, nays } = await Polls.getPollResultCounts(pollId);
-  const blockIndex = body.message.blocks.length - 1; // Voting block is last
-  body.message.token = oauth.bot.token;
-  body.message.channel = body.channel.id;
-  body.message.blocks[blockIndex].elements = exports.makeVoteButtons(pollId, yays, nays);
+    // Update the vote counts
+    const { yays, nays } = await Polls.getPollResultCounts(pollId);
+    const blockIndex = body.message.blocks.length - 1; // Voting block is last
+    body.message.token = oauth.bot.token;
+    body.message.channel = body.channel.id;
+    body.message.blocks[blockIndex].elements = exports.makeVoteButtons(pollId, yays, nays);
 
-  await app.client.chat.update(body.message);
+    await app.client.chat.update(body.message);
+  } else {
+    const text = ':warning: Exempt users are not allowed to vote!';
+    await exports.postEphemeral(app, oauth, body.channel.id, body.user.id, text);
+  }
 };
 
 exports.makeVoteText = function (minVotes, pollLength) {

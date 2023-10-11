@@ -187,10 +187,12 @@ app.action('things-special', async ({ ack, body }) => {
   console.log('things-special');
   await ack();
 
+  const now = new Date();
   const houseId = body.team.id;
-  const residents = await Admin.getResidents(houseId);
 
-  const view = views.thingsSpecialBuyView(residents.length);
+  const votingResidents = await Admin.getVotingResidents(houseId, now);
+
+  const view = views.thingsSpecialBuyView(votingResidents.length);
   await common.openView(app, thingsOauth, body.trigger_id, view);
 });
 
@@ -247,9 +249,10 @@ app.action('things-propose', async ({ ack, body }) => {
   console.log('things-propose');
   await ack();
 
+  const now = new Date();
   const houseId = body.team.id;
 
-  const minVotes = await Things.getThingProposalMinVotes(houseId);
+  const minVotes = await Things.getThingProposalMinVotes(houseId, now);
 
   const view = views.thingsProposeView(minVotes);
   await common.openView(app, thingsOauth, body.trigger_id, view);
