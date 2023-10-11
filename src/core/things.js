@@ -67,7 +67,7 @@ exports.buyThing = async function (houseId, thingId, boughtBy, boughtAt, price, 
 
   if (houseBalance.sum < totalCost) { throw new Error('Insufficient funds!'); }
 
-  const minVotes = await exports.getThingBuyMinVotes(houseId, thingId, totalCost);
+  const minVotes = await exports.getThingBuyMinVotes(houseId, thingId, totalCost, boughtAt);
   const [ poll ] = await Polls.createPoll(houseId, boughtAt, thingsPollLength, minVotes);
 
   return db('ThingBuy')
@@ -88,7 +88,7 @@ exports.buySpecialThing = async function (houseId, boughtBy, boughtAt, price, ti
 
   if (houseBalance.sum < price) { throw new Error('Insufficient funds!'); }
 
-  const minVotes = await exports.getThingBuyMinVotes(houseId, null, price);
+  const minVotes = await exports.getThingBuyMinVotes(houseId, null, price, boughtAt);
   const [ poll ] = await Polls.createPoll(houseId, boughtAt, thingsSpecialPollLength, minVotes);
 
   return db('ThingBuy')
@@ -182,7 +182,7 @@ exports.createThingProposal = async function (houseId, proposedBy, thingId, type
   // TODO: Can this be done as a table constraint?
   if (!(thingId || (type && name))) { throw new Error('Proposal must include either thingId or type and name!'); }
 
-  const minVotes = await exports.getThingProposalMinVotes(houseId);
+  const minVotes = await exports.getThingProposalMinVotes(houseId, now);
   const [ poll ] = await Polls.createPoll(houseId, now, thingsProposalPollLength, minVotes);
 
   return db('ThingProposal')
@@ -236,10 +236,10 @@ exports.resolveThingProposals = async function (houseId, now) {
 
 // Utils
 
-exports.getThingBuyMinVotes = async function (houseId, thingId, price) {
-  const residents = await Admin.getResidents(houseId);
-  const maxVotes = Math.ceil(thingsMaxPct * residents.length);
-  const minVotesSpecial = Math.ceil(thingsMinPctSpecial * residents.length);
+exports.getThingBuyMinVotes = async function (houseId, thingId, price, now) {
+  const votingResidents = await Admin.getVotingResidents(houseId, now);
+  const maxVotes = Math.ceil(thingsMaxPct * votingResidents.length);
+  const minVotesSpecial = Math.ceil(thingsMinPctSpecial * votingResidents.length);
   const minVotesScaled = Math.ceil(Math.abs(price) / thingsMinVotesScalar);
 
   return (thingId)
@@ -247,7 +247,7 @@ exports.getThingBuyMinVotes = async function (houseId, thingId, price) {
     : Math.min(maxVotes, Math.max(minVotesScaled, minVotesSpecial)); // Special buy
 };
 
-exports.getThingProposalMinVotes = async function (houseId) {
-  const residents = await Admin.getResidents(houseId);
-  return Math.ceil(thingsProposalPct * residents.length);
+exports.getThingProposalMinVotes = async function (houseId, now) {
+  const votingResidents = await Admin.getVotingResidents(houseId, now);
+  return Math.ceil(thingsProposalPct * votingResidents.length);
 };

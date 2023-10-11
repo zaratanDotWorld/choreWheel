@@ -108,22 +108,23 @@ exports.getUnresolvedChallenges = async function (houseId, challengeeId) {
 };
 
 exports.getChallengeMinVotes = async function (houseId, challengeeId, value, challengedAt) {
-  const residents = await Admin.getResidents(houseId);
+  const votingResidents = await Admin.getVotingResidents(houseId, challengedAt);
   const challengeeHearts = await exports.getHearts(challengeeId, challengedAt);
   return (challengeeHearts.sum - value <= heartsCriticalNum)
-    ? Math.ceil(residents.length * heartsMinPctCritical)
-    : Math.ceil(residents.length * heartsMinPctInitial);
+    ? Math.ceil(votingResidents.length * heartsMinPctCritical)
+    : Math.ceil(votingResidents.length * heartsMinPctInitial);
 };
 
 exports.resolveChallenge = async function (challengeId, resolvedAt) {
   const challenge = await exports.getChallenge(challengeId);
+  const { houseId, challengerId, challengeeId, value } = challenge;
 
   if (challenge.heartId !== null) { throw new Error('Challenge already resolved!'); }
 
   const valid = await Polls.isPollValid(challenge.pollId, resolvedAt);
-  const loser = (valid) ? challenge.challengeeId : challenge.challengerId;
+  const loser = (valid) ? challengeeId : challengerId;
 
-  const [ heart ] = await exports.generateHearts(challenge.houseId, loser, HEART_TYPE_CHALLENGE, resolvedAt, -challenge.value);
+  const [ heart ] = await exports.generateHearts(houseId, loser, HEART_TYPE_CHALLENGE, resolvedAt, -value);
 
   return db('HeartChallenge')
     .where({ id: challengeId })
@@ -131,16 +132,16 @@ exports.resolveChallenge = async function (challengeId, resolvedAt) {
     .returning('*');
 };
 
-exports.resolveChallenges = async function (houseId, currentTime) {
+exports.resolveChallenges = async function (houseId, now) {
   const resolvableChallenges = await db('HeartChallenge')
     .join('Poll', 'HeartChallenge.pollId', 'Poll.id')
     .where('HeartChallenge.houseId', houseId)
-    .where('Poll.endTime', '<=', currentTime)
+    .where('Poll.endTime', '<=', now)
     .where('HeartChallenge.resolvedAt', null)
     .select('HeartChallenge.id');
 
   for (const challenge of resolvableChallenges) {
-    await exports.resolveChallenge(challenge.id, currentTime);
+    await exports.resolveChallenge(challenge.id, now);
   }
 };
 
@@ -187,8 +188,8 @@ exports.getKarmaRankings = async function (houseId, startTime, endTime) {
 };
 
 exports.getNumKarmaWinners = async function (houseId, startTime, endTime) {
-  const residents = await Admin.getResidents(houseId);
-  const maxWinners = Math.floor(residents.length / karmaProportion);
+  const votingResidents = await Admin.getVotingResidents(houseId, endTime);
+  const maxWinners = Math.floor(votingResidents.length / karmaProportion);
 
   const karma = await exports.getKarma(houseId, startTime, endTime);
   const uniqueReceivers = (new Set(karma.map(k => k.receiverId))).size;

@@ -1082,15 +1082,16 @@ describe('Chores', async () => {
       await Admin.activateResident(HOUSE, RESIDENT3, now);
       await Admin.activateResident(HOUSE, RESIDENT4, now);
 
+      let minVotes;
+
       // 40% of 4 residents is 2 upvotes
-      const minVotes = await Chores.getChoreProposalMinVotes(HOUSE, now);
+      minVotes = await Chores.getChoreProposalMinVotes(HOUSE, now);
       expect(minVotes).to.equal(2);
 
-      // TODO: restore this test
-      // // Exempt users are not counted
-      // await testHelpers.createExemptUsers(HOUSE, 10);
-      // minVotes = await Chores.getChoreProposalMinVotes(HOUSE, now);
-      // expect(minVotes).to.equal(2);
+      // Exempt users are not counted
+      await testHelpers.createExemptUsers(HOUSE, 10);
+      minVotes = await Chores.getChoreProposalMinVotes(HOUSE, now);
+      expect(minVotes).to.equal(2);
     });
 
     it('cannot approve a proposal with insufficient votes', async () => {

@@ -292,11 +292,10 @@ describe('Hearts', async () => {
       minVotes = await Hearts.getChallengeMinVotes(HOUSE, RESIDENT2, 4, now);
       expect(minVotes).to.equal(4);
 
-      // TODO: restore this test
-      // // Exempt users are not counted
-      // await testHelpers.createExemptUsers(HOUSE, 10);
-      // minVotes = await Hearts.getChallengeMinVotes(HOUSE, RESIDENT2, 2, now);
-      // expect(minVotes).to.equal(2);
+      // Exempt users are not counted
+      await testHelpers.createExemptUsers(HOUSE, 10);
+      minVotes = await Hearts.getChallengeMinVotes(HOUSE, RESIDENT2, 2, now);
+      expect(minVotes).to.equal(2);
     });
 
     it('cannot challenge oneself', async () => {
