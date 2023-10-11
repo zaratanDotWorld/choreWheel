@@ -104,8 +104,8 @@ app.command('/chores-exempt', async ({ ack, command }) => {
   console.log('/chores-exempt');
   await ack();
 
-  const houseId = command.team_id;
   const now = new Date();
+  const houseId = command.team_id;
 
   let text;
 
@@ -287,7 +287,7 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
     const text = `Someone slowed down *${targetChore.name}* by *${speedText}*, to *${newSpeed} ppt* :snail:`;
     await common.postMessage(app, choresOauth, choresChannel, text);
   } else {
-    const text = 'You\'ve already input those preferences. ' +
+    const text = 'You\'ve already input those preferences.\n\n' +
       'To have an additional effect, *choose more or different chores*. ' +
       'Alternatively, *convince others* to support your priorities.';
     await common.postEphemeral(app, choresOauth, choresChannel, residentId, text);
@@ -308,9 +308,9 @@ app.view('chores-break-callback', async ({ ack, body }) => {
   console.log('chores-break-callback');
   await ack();
 
-  const residentId = body.user.id;
-  const houseId = body.team.id;
   const now = new Date();
+  const houseId = body.team.id;
+  const residentId = body.user.id;
 
   // Dates come in yyyy-mm-dd format
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -344,8 +344,9 @@ app.action('chores-gift', async ({ ack, body }) => {
   console.log('chores-gift');
   await ack();
 
-  const residentId = body.user.id;
   const now = new Date();
+  const residentId = body.user.id;
+
   const monthStart = getMonthStart(now);
   const chorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
 
@@ -357,9 +358,9 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
   console.log('chores-gift-callback');
   await ack();
 
-  const residentId = body.user.id;
-  const houseId = body.team.id;
   const now = new Date();
+  const houseId = body.team.id;
+  const residentId = body.user.id;
 
   const currentBalance = Number(body.view.private_metadata);
   const recipientId = common.getInputBlock(body, 2).recipient.selected_user;
@@ -436,9 +437,9 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
   console.log('chores-propose-callback');
   await ack({ response_action: 'clear' });
 
-  const residentId = body.user.id;
-  const houseId = body.team.id;
   const now = new Date();
+  const houseId = body.team.id;
+  const residentId = body.user.id;
 
   let choreId, name, description, active;
   const metadata = JSON.parse(body.view.private_metadata);

@@ -50,7 +50,6 @@ app.event('app_home_opened', async ({ body, event }) => {
     const residentId = event.user;
 
     const now = new Date();
-
     await Admin.activateResident(houseId, residentId, now);
     await Hearts.initialiseResident(houseId, residentId, now);
 
@@ -112,6 +111,7 @@ app.action('hearts-challenge', async ({ ack, body }) => {
   await ack();
 
   const houseId = body.team.id;
+
   const residents = await Admin.getResidents(houseId);
   const view = views.heartsChallengeView(residents.length);
   await common.openView(app, heartsOauth, body.trigger_id, view);

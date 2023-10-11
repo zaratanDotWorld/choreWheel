@@ -35,12 +35,13 @@ exports.isExempt = function (resident, now) {
 // Publishing
 
 exports.replyEphemeral = async function (app, oauth, command, text) {
-  return app.client.chat.postEphemeral({
-    token: oauth.bot.token,
-    channel: command.channel_id,
-    user: command.user_id,
+  return exports.postEphemeral(
+    app,
+    oauth,
+    command.channel_id,
+    command.user_id,
     text,
-  });
+  );
 };
 
 exports.postEphemeral = async function (app, oauth, channelId, residentId, text) {
@@ -187,8 +188,10 @@ exports.syncWorkspaceChannels = async function (app, oauth) {
 };
 
 exports.updateVoteCounts = async function (app, oauth, body, action) {
+  const now = new Date();
+
   const [ pollId, value ] = action.value.split('|');
-  await Polls.submitVote(pollId, body.user.id, new Date(), value);
+  await Polls.submitVote(pollId, body.user.id, now, value);
 
   // Update the vote counts
   const { yays, nays } = await Polls.getPollResultCounts(pollId);
