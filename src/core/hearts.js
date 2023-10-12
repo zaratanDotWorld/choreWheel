@@ -45,10 +45,11 @@ exports.getHouseHearts = async function (houseId, currentTime) {
     .join('Resident', 'Heart.residentId', 'Resident.slackId')
     .where('Heart.houseId', houseId)
     .where('Resident.active', true)
-    .where('generatedAt', '<=', currentTime)
-    .groupBy('residentId')
-    .select('residentId')
-    .sum('value')
+    .where(function () { Admin.residentNotExempt(this, currentTime); })
+    .where('Heart.generatedAt', '<=', currentTime)
+    .groupBy('Heart.residentId')
+    .select('Heart.residentId')
+    .sum('Heart.value')
     .orderBy('sum', 'desc');
 };
 

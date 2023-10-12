@@ -53,8 +53,10 @@ app.event('app_home_opened', async ({ body, event }) => {
     await Admin.activateResident(houseId, residentId, now);
     await Hearts.initialiseResident(houseId, residentId, now);
 
+    const exempt = await Admin.isExempt(residentId, now);
     const hearts = await Hearts.getHearts(residentId, now);
-    const view = views.heartsHomeView(hearts.sum || 0);
+
+    const view = views.heartsHomeView(hearts.sum || 0, exempt);
     await common.publishHome(app, heartsOauth, residentId, view);
 
     // This bookkeeping is done after returning the view
@@ -135,7 +137,11 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
   if (heartsChannel === null) { throw new Error('Hearts channel not set!'); }
 
   const unresolvedChallenges = await Hearts.getUnresolvedChallenges(houseId, challengeeId);
-  if (unresolvedChallenges.length) {
+
+  if (await Admin.isExempt(challengeeId, now)) {
+    const text = `<@${challengeeId}> is exempt and cannot be challenged :weary:`;
+    await common.postEphemeral(app, heartsOauth, heartsChannel, residentId, text);
+  } else if (unresolvedChallenges.length) {
     const text = `<@${challengeeId}> is already being challenged!`;
     await common.postEphemeral(app, heartsOauth, heartsChannel, residentId, text);
   } else {
@@ -158,8 +164,10 @@ app.action('hearts-board', async ({ ack, body }) => {
   console.log('hearts-board');
   await ack();
 
+  const now = new Date();
   const houseId = body.team.id;
-  const hearts = await Hearts.getHouseHearts(houseId, new Date());
+
+  const hearts = await Hearts.getHouseHearts(houseId, now);
 
   const view = views.heartsBoardView(hearts);
   await common.openView(app, heartsOauth, body.trigger_id, view);

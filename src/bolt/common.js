@@ -28,10 +28,6 @@ exports.isAdmin = async function (app, oauth, command) {
   return user.is_admin;
 };
 
-exports.isExempt = function (resident, now) {
-  return resident.exemptAt && resident.exemptAt <= now;
-};
-
 // Publishing
 
 exports.replyEphemeral = async function (app, oauth, command, text) {
@@ -189,23 +185,24 @@ exports.syncWorkspaceChannels = async function (app, oauth) {
 
 exports.updateVoteCounts = async function (app, oauth, body, action) {
   const now = new Date();
-  const resident = await Admin.getResident(body.user.id);
+  const channelId = body.channel.id;
+  const residentId = body.user.id;
 
-  if (!exports.isExempt(resident, now)) {
+  if (await Admin.isExempt(residentId, now)) {
+    const text = ':warning: Exempt residents are not allowed to vote...';
+    await exports.postEphemeral(app, oauth, channelId, residentId, text);
+  } else {
     const [ pollId, value ] = action.value.split('|');
-    await Polls.submitVote(pollId, body.user.id, now, value);
+    await Polls.submitVote(pollId, residentId, now, value);
 
     // Update the vote counts
     const { yays, nays } = await Polls.getPollResultCounts(pollId);
     const blockIndex = body.message.blocks.length - 1; // Voting block is last
     body.message.token = oauth.bot.token;
-    body.message.channel = body.channel.id;
+    body.message.channel = channelId;
     body.message.blocks[blockIndex].elements = exports.makeVoteButtons(pollId, yays, nays);
 
     await app.client.chat.update(body.message);
-  } else {
-    const text = ':warning: Exempt users are not allowed to vote!';
-    await exports.postEphemeral(app, oauth, body.channel.id, body.user.id, text);
   }
 };
 

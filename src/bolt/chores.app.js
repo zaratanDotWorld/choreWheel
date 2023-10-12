@@ -54,16 +54,14 @@ app.event('app_home_opened', async ({ body, event }) => {
     const monthStart = getMonthStart(now);
 
     await Admin.activateResident(houseId, residentId, now);
-    const resident = await Admin.getResident(residentId);
+    const exempt = await Admin.isExempt(residentId, now);
 
     const chorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
     const workingPercentage = await Chores.getWorkingResidentPercentage(residentId, now);
     const workingResidentCount = await Chores.getWorkingResidentCount(houseId, now);
-
     const pointsOwed = workingPercentage * pointsPerResident;
-    const residentExempt = common.isExempt(resident, now);
 
-    const view = views.choresHomeView(chorePoints.sum || 0, pointsOwed, workingResidentCount, residentExempt);
+    const view = views.choresHomeView(chorePoints.sum || 0, pointsOwed, workingResidentCount, exempt);
     await common.publishHome(app, choresOauth, residentId, view);
 
     // This bookkeeping is done after returning the view
@@ -152,7 +150,8 @@ app.action('chores-claim', async ({ ack, body }) => {
   console.log('chores-claim');
   await ack();
 
-  const choreValues = await Chores.getUpdatedChoreValues(body.team.id, new Date(), pointsPerResident);
+  const now = new Date();
+  const choreValues = await Chores.getUpdatedChoreValues(body.team.id, now, pointsPerResident);
   const filteredChoreValues = choreValues.filter(choreValue => choreValue.value >= displayThreshold);
 
   const view = views.choresClaimView(filteredChoreValues);
@@ -174,8 +173,9 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   console.log('chores-claim-callback');
   await ack({ response_action: 'clear' });
 
-  const residentId = body.user.id;
+  const now = new Date();
   const houseId = body.team.id;
+  const residentId = body.user.id;
 
   const chore = JSON.parse(body.view.private_metadata);
 
@@ -184,7 +184,6 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   if (choresChannel === null) { throw new Error('Chores channel not set!'); }
 
   // Get chore points over last six months
-  const now = new Date();
   const monthStart = getMonthStart(now);
   const sixMonths = new Date(now.getTime() - 180 * DAY);
   let monthlyPoints = await Chores.getAllChorePoints(residentId, monthStart, now);
@@ -368,16 +367,20 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
   const circumstance = common.getInputBlock(body, 4).circumstance.value;
 
   const { choresChannel } = await Admin.getHouse(houseId);
-  if (points <= currentBalance) {
+
+  if (await Admin.isExempt(recipientId, now)) {
+    const text = `<@${recipientId}> is exempt and cannot earn points :confused:`;
+    await common.postEphemeral(app, choresOauth, choresChannel, residentId, text);
+  } else if (points > currentBalance) {
+    const text = 'You can\'t gift more points than you have! :face_with_monocle:';
+    await common.postEphemeral(app, choresOauth, choresChannel, residentId, text);
+  } else {
     // Make the gift
     await Chores.giftChorePoints(houseId, residentId, recipientId, now, points);
 
     const text = `<@${residentId}> just gifted <@${recipientId}> *${points} points* :gift:\n` +
       `_${circumstance}_`;
     await common.postMessage(app, choresOauth, choresChannel, text);
-  } else {
-    const text = 'You can\'t gift more points than you have! :face_with_monocle:';
-    await common.postEphemeral(app, choresOauth, choresChannel, residentId, text);
   }
 });
 

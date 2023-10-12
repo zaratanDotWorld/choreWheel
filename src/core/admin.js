@@ -72,11 +72,16 @@ exports.getVotingResidents = async function (houseId, now) {
     .where(function () { exports.residentNotExempt(this, now); });
 };
 
-exports.getResident = async function (slackId) {
+exports.getResident = async function (residentId) {
   return db('Resident')
     .select('*')
-    .where({ slackId })
+    .where({ slackId: residentId })
     .first();
+};
+
+exports.isExempt = async function (residentId, now) {
+  const resident = await exports.getResident(residentId);
+  return resident.exemptAt && resident.exemptAt <= now;
 };
 
 // Subqueries

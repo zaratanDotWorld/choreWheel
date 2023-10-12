@@ -44,7 +44,7 @@ exports.formatBuy = function (buy) {
   return text;
 };
 
-exports.thingsHomeView = function (balance) {
+exports.thingsHomeView = function (balance, exempt) {
   const docsUrl = 'https://github.com/zaratanDotWorld/mirror/wiki/Things';
 
   const header = 'Welcome to Things';
@@ -53,17 +53,20 @@ exports.thingsHomeView = function (balance) {
     'Successful buys are fulfilled within *3-5 days*.';
   const textB = `The house has *$${balance}* left in the account :moneybag:`;
 
+  const actions = [];
+  if (!exempt) {
+    actions.push(common.blockButton('things-buy', 'Buy a thing'));
+    actions.push(common.blockButton('things-special', 'Buy special thing'));
+    actions.push(common.blockButton('things-propose', 'Edit things list'));
+  }
+  actions.push(common.blockButton('things-bought', 'See bought things'));
+
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(textA));
   blocks.push(common.blockDivider());
   blocks.push(common.blockSection(textB));
-  blocks.push(common.blockActions([
-    common.blockButton('things-buy', 'Buy a thing'),
-    common.blockButton('things-special', 'Buy special thing'),
-    common.blockButton('things-bought', 'See bought things'),
-    common.blockButton('things-propose', 'Edit things list'),
-  ]));
+  blocks.push(common.blockActions(actions));
 
   return {
     type: 'home',

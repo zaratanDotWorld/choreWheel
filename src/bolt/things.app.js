@@ -51,9 +51,11 @@ app.event('app_home_opened', async ({ body, event }) => {
     const residentId = event.user;
 
     await Admin.activateResident(houseId, residentId, now);
-    const balance = await Things.getHouseBalance(houseId, now);
 
-    const view = views.thingsHomeView(balance.sum || 0);
+    const balance = await Things.getHouseBalance(houseId, now);
+    const exempt = await Admin.isExempt(residentId, now);
+
+    const view = views.thingsHomeView(balance.sum || 0, exempt);
     await common.publishHome(app, thingsOauth, residentId, view);
 
     // This bookkeeping is done after returning the view

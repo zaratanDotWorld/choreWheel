@@ -20,24 +20,27 @@ exports.heartEmoji = function (numHearts) {
   return emoji.repeat(Math.max(1, Math.floor(numHearts)));
 };
 
-exports.heartsHomeView = function (numHearts) {
+exports.heartsHomeView = function (numHearts, exempt) {
   const docsUrl = 'https://github.com/zaratanDotWorld/mirror/wiki/Hearts';
 
   const header = 'Welcome to Hearts';
   const textA = `We use *<${docsUrl}|Hearts>* to keep each other accountable.\n\n` +
     'Everyone starts with *5 hearts*. We lose hearts when we fail to uphold our commitments, ' +
-    'and we regain hearts slowly over time (*0.5 per month*) or by earning karma.';
+    'and we regain hearts slowly over time (*1/2 per month*) or by earning karma :sparkles:';
   const textB = `You have *${numHearts}* hearts: ${exports.heartEmoji(numHearts)}`;
+
+  const actions = [];
+  if (!exempt) {
+    actions.push(common.blockButton('hearts-challenge', 'Resolve a dispute'));
+  }
+  actions.push(common.blockButton('hearts-board', 'See current hearts'));
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(textA));
   blocks.push(common.blockDivider());
   blocks.push(common.blockSection(textB));
-  blocks.push(common.blockActions([
-    common.blockButton('hearts-challenge', 'Resolve a dispute'),
-    common.blockButton('hearts-board', 'See current hearts'),
-  ]));
+  blocks.push(common.blockActions(actions));
 
   return {
     type: 'home',

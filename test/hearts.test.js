@@ -73,9 +73,19 @@ describe('Hearts', async () => {
       await Hearts.generateHearts(HOUSE, RESIDENT2, HEART_TYPE_UNKNOWN, now, 1);
 
       const hearts = await Hearts.getHouseHearts(HOUSE, now);
-
+      expect(hearts.length).to.equal(2);
       expect(hearts[0].sum).to.equal(2);
       expect(hearts[1].sum).to.equal(1);
+    });
+
+    it('can exclude exempt users from the hearts list', async () => {
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_TYPE_UNKNOWN, now, 2);
+      await Hearts.generateHearts(HOUSE, RESIDENT2, HEART_TYPE_UNKNOWN, now, 1);
+
+      await Admin.exemptResident(HOUSE, RESIDENT2, now);
+
+      const hearts = await Hearts.getHouseHearts(HOUSE, now);
+      expect(hearts.length).to.equal(1);
     });
 
     it('can aggregate positive and negative hearts', async () => {
