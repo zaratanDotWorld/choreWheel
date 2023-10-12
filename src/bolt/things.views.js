@@ -10,7 +10,7 @@ const SUBMIT = common.blockPlaintext('Submit');
 
 exports.parseResolvedThingBuys = function (unfulfilledBuys) {
   return unfulfilledBuys
-    .filter((buy) => buy.resolvedAt !== null)
+    .filter((buy) => buy.resolvedAt)
     .map((buy) => {
       const resolvedAt = buy.resolvedAt.toLocaleDateString();
       return `\n#${buy.id} [${resolvedAt}] ${exports.formatBuy(buy)}`;
@@ -18,25 +18,29 @@ exports.parseResolvedThingBuys = function (unfulfilledBuys) {
 };
 
 exports.formatThing = function (thing) {
-  if (thing.metadata !== null) {
-    return `${thing.type}: ${thing.name} (${thing.metadata.unit}) - $${thing.value}`;
+  if (thing.metadata) {
+    return `${thing.name} (${thing.metadata.unit}) - $${thing.value}`;
   } else {
-    return `${thing.type}: ${thing.name} (?) - $${thing.value}`;
+    return `${thing.name} (?) - $${thing.value}`;
   }
+};
+
+exports.formatTypedThing = function (thing) {
+  return `${thing.type}: ${exports.formatThing(thing)}`;
 };
 
 exports.formatBuy = function (buy) {
   let text;
 
-  if (buy.metadata !== null && buy.metadata.special) {
+  if (buy.metadata && buy.metadata.special) {
     text = `Special: ${buy.metadata.title}`;
-  } else if (buy.metadata !== null & buy.thingMetadata !== null) {
+  } else if (buy.metadata && buy.thingMetadata) {
     text = `${buy.type}: ${buy.name} (${buy.metadata.quantity} x ${buy.thingMetadata.unit})`;
   } else {
     text = `${buy.type}: ${buy.name} (?)`;
   }
 
-  if (buy.thingMetadata !== null && buy.thingMetadata.url) {
+  if (buy.thingMetadata && buy.thingMetadata.url) {
     text = `<${buy.thingMetadata.url}|${text}>`;
   }
 
@@ -79,6 +83,8 @@ exports.thingsBuyView = function (things) {
   const header = 'Buy a thing';
   const mainText = 'Choose something to buy. Make sure you have support for large buys!';
 
+  const types = new Set(things.map(thing => thing.type));
+
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
@@ -88,14 +94,22 @@ exports.thingsBuyView = function (things) {
       action_id: 'things',
       type: 'static_select',
       placeholder: common.blockPlaintext('Choose a thing'),
-      options: things.map((thing) => {
-        return {
-          value: JSON.stringify({ id: thing.id }),
-          text: common.blockPlaintext(exports.formatThing(thing)),
-        };
-      }),
+      option_groups: [ ...types ].map(type =>
+        common.blockOptionGroup(
+          type,
+          things
+            .filter(thing => thing.type === type)
+            .map(thing => {
+              return {
+                value: JSON.stringify({ id: thing.id }),
+                text: common.blockPlaintext(exports.formatThing(thing)),
+              };
+            }),
+        ),
+      ),
     },
   ));
+
   blocks.push(common.blockInput(
     'Amount to buy',
     {
@@ -293,7 +307,7 @@ exports.thingsProposeEditView = function (things) {
       options: things.map((thing) => {
         return {
           value: JSON.stringify({ id: thing.id }),
-          text: common.blockPlaintext(exports.formatThing(thing)),
+          text: common.blockPlaintext(exports.formatTypedThing(thing)),
         };
       }),
     },
@@ -399,7 +413,7 @@ exports.thingsProposeDeleteView = function (things) {
       options: things.map((thing) => {
         return {
           value: JSON.stringify({ id: thing.id, type: thing.type, name: thing.name }),
-          text: common.blockPlaintext(exports.formatThing(thing)),
+          text: common.blockPlaintext(exports.formatTypedThing(thing)),
         };
       }),
     },

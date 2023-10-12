@@ -284,3 +284,7 @@ exports.blockActions = function (elements) {
 exports.blockInput = function (label, element) {
   return { type: 'input', label: exports.blockPlaintext(label), element };
 };
+
+exports.blockOptionGroup = function (label, options) {
+  return { label: exports.blockPlaintext(label), options };
+};
