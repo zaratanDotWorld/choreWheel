@@ -135,7 +135,7 @@ exports.syncWorkspace = async function (app, oauth, command, syncMembers, syncCh
       text += `${numResidents} active residents`;
     }
 
-    if (syncMembers & syncChannels) {
+    if (syncMembers && syncChannels) {
       text += ' and ';
     }
 
@@ -153,7 +153,7 @@ exports.syncWorkspaceMembers = async function (app, oauth, houseId) {
 
   const { members } = await app.client.users.list({ token: oauth.bot.token });
   for (const member of members) {
-    if (!member.is_bot & member.id !== SLACKBOT) {
+    if (!member.is_bot && member.id !== SLACKBOT) {
       if (member.deleted) {
         await Admin.deactivateResident(houseId, member.id);
       } else {

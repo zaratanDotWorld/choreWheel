@@ -296,6 +296,7 @@ exports.getWorkingResidentCount = async function (houseId, now) {
 };
 
 exports.getWorkingResidentPercentage = async function (residentId, now) {
+  const resident = await Admin.getResident(residentId);
   const monthStart = getMonthStart(now);
   const monthEnd = getMonthEnd(now);
 
@@ -311,13 +312,13 @@ exports.getWorkingResidentPercentage = async function (residentId, now) {
     // })
     .select('*');
 
-  // Add an implicit break the month the resident is added or exempted
-  const resident = await Admin.getResident(residentId);
+  // Add an implicit break the month the resident is added
   if (monthStart < resident.activeAt) {
     const activeAt = getDateStart(resident.activeAt);
     choreBreaks.push({ startDate: monthStart, endDate: activeAt });
   }
-  if (resident.exemptAt !== null & resident.exemptAt < monthEnd) {
+  // Add an implicit break after the resident is exempted
+  if (resident.exemptAt && resident.exemptAt < monthEnd) {
     const exemptAt = getDateStart(resident.exemptAt);
     choreBreaks.push({ startDate: exemptAt, endDate: monthEnd });
   }
@@ -334,6 +335,7 @@ exports.getWorkingResidentPercentage = async function (residentId, now) {
       startDate = new Date(startDate.getTime() + DAY);
     }
   }
+
   const numWorkingDays = Array.from(workingDays.values()).filter(x => x).length;
   return numWorkingDays / daysInMonth;
 };

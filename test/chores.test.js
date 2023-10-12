@@ -841,6 +841,7 @@ describe('Chores', async () => {
       const feb1 = new Date(3000, 1, 1); // February, a 28 day month
       const feb8 = new Date(feb1.getTime() + 7 * DAY);
       const feb22 = new Date(feb1.getTime() + 21 * DAY);
+      const mar1 = new Date(feb1.getTime() + 28 * DAY);
 
       let workingPercentage;
 
@@ -855,6 +856,10 @@ describe('Chores', async () => {
       await Chores.addChoreBreak(HOUSE, RESIDENT3, feb8, feb22, '');
       workingPercentage = await Chores.getWorkingResidentPercentage(RESIDENT3, feb1);
       expect(workingPercentage).to.equal(0.25);
+
+      // Next month, owes no points
+      workingPercentage = await Chores.getWorkingResidentPercentage(RESIDENT3, mar1);
+      expect(workingPercentage).to.equal(0);
     });
 
     it('can correctly count working residents when someone is exempt', async () => {
