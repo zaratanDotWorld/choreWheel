@@ -1,7 +1,7 @@
 const voca = require('voca');
 
 const { Admin, Hearts, Polls } = require('../core/index');
-const { SLACKBOT, HOUR } = require('../constants');
+const { SLACKBOT, HOUR, YAY, NAY } = require('../constants');
 
 // Utilities
 
@@ -192,7 +192,7 @@ exports.updateVoteCounts = async function (app, oauth, body, action) {
     const text = ':warning: Exempt residents are not allowed to vote...';
     await exports.postEphemeral(app, oauth, channelId, residentId, text);
   } else {
-    const [ pollId, value ] = action.value.split('|');
+    const { pollId, value } = JSON.parse(action.value);
     await Polls.submitVote(pollId, residentId, now, value);
 
     // Update the vote counts
@@ -211,19 +211,19 @@ exports.makeVoteText = function (minVotes, pollLength) {
     `voting closes in *${pollLength / HOUR} hours*`;
 };
 
-exports.makeVoteButtons = function (pollId, upvoteCount, downvoteCount) {
+exports.makeVoteButtons = function (pollId, upvotes, downvotes) {
   return [
     {
       type: 'button',
-      text: { type: 'plain_text', text: `:+1: (${upvoteCount})`, emoji: true },
-      value: `${pollId}|1`,
       action_id: 'poll-vote-up',
+      text: exports.blockPlaintext(`:+1: (${upvotes})`),
+      value: JSON.stringify({ pollId, value: YAY }),
     },
     {
       type: 'button',
-      text: { type: 'plain_text', text: `:-1: (${downvoteCount})`, emoji: true },
-      value: `${pollId}|0`,
       action_id: 'poll-vote-down',
+      text: exports.blockPlaintext(`:-1: (${downvotes})`),
+      value: JSON.stringify({ pollId, value: NAY }),
     },
   ];
 };
