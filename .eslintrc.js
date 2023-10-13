@@ -21,6 +21,9 @@ module.exports = {
     'object-shorthand': [ WARN, 'properties' ],
     'array-bracket-spacing': [ ERROR, 'always' ],
     'comma-dangle': [ ERROR, 'always-multiline' ],
+    'eqeqeq': [ ERROR, 'always' ], // eslint-disable-line quote-props
+    'no-fallthrough': [ ERROR ],
+    'no-bitwise': [ ERROR ],
     'no-only-tests/no-only-tests': [ ERROR, { fix: true } ],
   },
   ignorePatterns: [
