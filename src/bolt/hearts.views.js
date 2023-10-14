@@ -3,8 +3,6 @@ const { heartsPollLength, heartsCriticalNum, heartsMinPctInitial, heartsMinPctCr
 const common = require('./common');
 
 const TITLE = common.blockPlaintext('Hearts');
-const CLOSE = common.blockPlaintext('Cancel');
-const SUBMIT = common.blockPlaintext('Submit');
 
 exports.heartEmoji = function (numHearts) {
   let emoji;
@@ -104,8 +102,8 @@ exports.heartsChallengeView = function (numVotingResidents) {
     type: 'modal',
     callback_id: 'hearts-challenge-callback',
     title: TITLE,
-    close: CLOSE,
-    submit: SUBMIT,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
     blocks,
   };
 };
@@ -141,7 +139,7 @@ exports.heartsBoardView = function (hearts) {
   return {
     type: 'modal',
     title: TITLE,
-    close: CLOSE,
+    close: common.CLOSE,
     blocks,
   };
 };

@@ -288,3 +288,6 @@ exports.blockInput = function (label, element) {
 exports.blockOptionGroup = function (label, options) {
   return { label: exports.blockPlaintext(label), options };
 };
+
+exports.CLOSE = exports.blockPlaintext('Cancel');
+exports.SUBMIT = exports.blockPlaintext('Submit');

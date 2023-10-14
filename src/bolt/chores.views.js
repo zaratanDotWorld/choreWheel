@@ -5,8 +5,6 @@ const common = require('./common');
 // Chores views
 
 const TITLE = common.blockPlaintext('Chores');
-const CLOSE = common.blockPlaintext('Cancel');
-const SUBMIT = common.blockPlaintext('Submit');
 
 exports.choresHomeView = function (balance, owed, numActive, exempt) {
   const progressEmoji = (owed - balance < penaltyIncrement) ? ':white_check_mark:' : ':muscle::skin-tone-4:';
@@ -72,14 +70,13 @@ exports.choresClaimView = function (chores) {
   return {
     type: 'modal',
     title: TITLE,
-    close: CLOSE,
+    close: common.CLOSE,
     blocks,
   };
 };
 
 exports.choresClaimView2 = function (chore) {
   const metadata = JSON.stringify({ id: chore.id, name: chore.name });
-  const claim = common.blockPlaintext('Claim');
   const header = 'Claim a chore';
 
   const blocks = [];
@@ -92,8 +89,8 @@ exports.choresClaimView2 = function (chore) {
     callback_id: 'chores-claim-callback',
     private_metadata: metadata,
     title: TITLE,
-    close: CLOSE,
-    submit: claim,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
     blocks,
   };
 };
@@ -155,7 +152,7 @@ exports.choresRankView = function () {
   return {
     type: 'modal',
     title: TITLE,
-    close: CLOSE,
+    close: common.CLOSE,
     blocks,
   };
 };
@@ -222,8 +219,8 @@ exports.choresRankView2 = function (direction, choreRankings) {
     callback_id: 'chores-rank-callback',
     private_metadata: direction,
     title: TITLE,
-    close: CLOSE,
-    submit: SUBMIT,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
     blocks,
   };
 };
@@ -270,8 +267,8 @@ exports.choresBreakView = function (currentTime) {
     type: 'modal',
     callback_id: 'chores-break-callback',
     title: TITLE,
-    close: CLOSE,
-    submit: SUBMIT,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
     blocks,
   };
 };
@@ -316,8 +313,8 @@ exports.choresGiftView = function (currentBalance) {
     callback_id: 'chores-gift-callback',
     private_metadata: currentBalance.toString(),
     title: TITLE,
-    close: CLOSE,
-    submit: SUBMIT,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
     blocks,
   };
 };
@@ -352,7 +349,7 @@ exports.choresProposeView = function (minVotes) {
   return {
     type: 'modal',
     title: TITLE,
-    close: CLOSE,
+    close: common.CLOSE,
     blocks,
   };
 };
@@ -381,7 +378,7 @@ exports.choresProposeEditView = function (chores) {
   return {
     type: 'modal',
     title: TITLE,
-    close: CLOSE,
+    close: common.CLOSE,
     blocks,
   };
 };
@@ -427,8 +424,8 @@ exports.choresProposeAddView = function (chore) {
     callback_id: 'chores-propose-callback',
     private_metadata: metadata,
     title: TITLE,
-    close: CLOSE,
-    submit: SUBMIT,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
     blocks,
   };
 };
@@ -461,8 +458,8 @@ exports.choresProposeDeleteView = function (chores) {
     callback_id: 'chores-propose-callback',
     private_metadata: metadata,
     title: TITLE,
-    close: CLOSE,
-    submit: SUBMIT,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
     blocks,
   };
 };

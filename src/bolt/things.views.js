@@ -5,8 +5,6 @@ const common = require('./common');
 // Things Views
 
 const TITLE = common.blockPlaintext('Things');
-const CLOSE = common.blockPlaintext('Cancel');
-const SUBMIT = common.blockPlaintext('Submit');
 
 exports.parseResolvedThingBuys = function (unfulfilledBuys) {
   return unfulfilledBuys
@@ -79,7 +77,6 @@ exports.thingsHomeView = function (balance, exempt) {
 };
 
 exports.thingsBuyView = function (things) {
-  const buy = common.blockPlaintext('Buy');
   const header = 'Buy a thing';
   const mainText = 'Choose something to buy. Make sure you have support for large buys!';
 
@@ -126,8 +123,8 @@ exports.thingsBuyView = function (things) {
     type: 'modal',
     callback_id: 'things-buy-callback',
     title: TITLE,
-    close: CLOSE,
-    submit: buy,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
     blocks,
   };
 };
@@ -153,7 +150,6 @@ exports.thingsSpecialBuyView = function (numResidents) {
   const minVotes = Math.ceil(thingsMinPctSpecial * numResidents);
   const maxVotes = Math.ceil(thingsMaxPct * numResidents);
 
-  const buy = common.blockPlaintext('Buy');
   const header = 'Buy special thing';
   const mainText = 'Propose a special buy. ' +
     `Special buys are more flexible, but need a minimum of *${minVotes}* (max *${maxVotes}*) *upvote(s).*\n\n` +
@@ -197,8 +193,8 @@ exports.thingsSpecialBuyView = function (numResidents) {
     type: 'modal',
     callback_id: 'things-special-callback',
     title: TITLE,
-    close: CLOSE,
-    submit: buy,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
     blocks,
   };
 };
@@ -255,7 +251,7 @@ exports.thingsBoughtView = function (unfulfilledBuys, fulfilledBuys7, fulfilledB
   return {
     type: 'modal',
     title: TITLE,
-    close: CLOSE,
+    close: common.CLOSE,
     blocks,
   };
 };
@@ -287,7 +283,7 @@ exports.thingsProposeView = function (minVotes) {
   return {
     type: 'modal',
     title: TITLE,
-    close: CLOSE,
+    close: common.CLOSE,
     blocks,
   };
 };
@@ -316,7 +312,7 @@ exports.thingsProposeEditView = function (things) {
   return {
     type: 'modal',
     title: TITLE,
-    close: CLOSE,
+    close: common.CLOSE,
     blocks,
   };
 };
@@ -390,8 +386,8 @@ exports.thingsProposeAddView = function (thing) {
     callback_id: 'things-propose-callback',
     private_metadata: metadata,
     title: TITLE,
-    close: CLOSE,
-    submit: SUBMIT,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
     blocks,
   };
 };
@@ -424,8 +420,8 @@ exports.thingsProposeDeleteView = function (things) {
     callback_id: 'things-propose-callback',
     private_metadata: metadata,
     title: TITLE,
-    close: CLOSE,
-    submit: SUBMIT,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
     blocks,
   };
 };
