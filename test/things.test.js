@@ -401,9 +401,6 @@ describe('Things', async () => {
     let things, proposal;
 
     beforeEach(async () => {
-      await Admin.activateResident(HOUSE, RESIDENT1, now);
-      await Admin.activateResident(HOUSE, RESIDENT2, now);
-
       [ things, proposal ] = [ undefined, undefined ];
     });
 
@@ -558,9 +555,6 @@ describe('Things', async () => {
     });
 
     it('cannot approve a proposal with insufficient votes', async () => {
-      await Admin.activateResident(HOUSE, RESIDENT3, now);
-      await Admin.activateResident(HOUSE, RESIDENT4, now);
-
       things = await Things.getThings(HOUSE);
       expect(things.length).to.equal(0);
 

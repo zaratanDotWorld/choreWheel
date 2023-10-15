@@ -1144,6 +1144,8 @@ describe('Chores', async () => {
     });
 
     it('can resolve proposals in bulk', async () => {
+      await Admin.activateResident(HOUSE, RESIDENT3, now); // Avoid auto-closing polls
+
       chores = await Chores.getChores(HOUSE);
       expect(chores.length).to.equal(0);
 

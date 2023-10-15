@@ -20,14 +20,14 @@ describe('Polls', async () => {
   let tomorrow;
 
   beforeEach(async () => {
+    now = new Date();
+    soon = new Date(now.getTime() + HOUR);
+    tomorrow = new Date(now.getTime() + DAY);
+
     await Admin.updateHouse({ slackId: HOUSE });
     await Admin.activateResident(HOUSE, RESIDENT1, now);
     await Admin.activateResident(HOUSE, RESIDENT2, now);
     await Admin.activateResident(HOUSE, RESIDENT3, now);
-
-    now = new Date();
-    soon = new Date(now.getTime() + HOUR);
-    tomorrow = new Date(now.getTime() + DAY);
   });
 
   afterEach(async () => {
@@ -51,7 +51,7 @@ describe('Polls', async () => {
 
       await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
 
-      const votes = await Polls.getPollVotes(poll.id);
+      const votes = await Polls.getPollResults(poll.id);
       expect(votes.length).to.equal(1);
       expect(votes[0].vote).to.be.true;
     });
@@ -65,13 +65,13 @@ describe('Polls', async () => {
 
       await Polls.submitVote(poll.id, RESIDENT1, soon, NAY);
 
-      votes = await Polls.getPollVotes(poll.id);
+      votes = await Polls.getPollResults(poll.id);
       expect(votes.length).to.equal(1);
       expect(votes[0].vote).to.be.false;
 
       await Polls.submitVote(poll.id, RESIDENT1, soon, CANCEL);
 
-      votes = await Polls.getPollVotes(poll.id);
+      votes = await Polls.getPollResults(poll.id);
       expect(votes.length).to.equal(1);
       expect(votes[0].vote).to.be.null;
     });
@@ -106,6 +106,30 @@ describe('Polls', async () => {
       const { yays, nays } = await Polls.getPollResultCounts(poll.id);
       expect(yays).to.equal(2);
       expect(nays).to.equal(1);
+    });
+
+    it('can close a poll once everyone has voted', async () => {
+      const [ poll ] = await Polls.createPoll(HOUSE, now, DAY, 1);
+
+      let endTime;
+
+      await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
+
+      ({ endTime } = await Polls.getPoll(poll.id));
+      expect(endTime.getTime()).to.equal(tomorrow.getTime());
+
+      await Polls.submitVote(poll.id, RESIDENT2, soon, YAY);
+
+      ({ endTime } = await Polls.getPoll(poll.id));
+      expect(endTime.getTime()).to.equal(tomorrow.getTime());
+
+      await Polls.submitVote(poll.id, RESIDENT3, soon, YAY);
+
+      ({ endTime } = await Polls.getPoll(poll.id));
+      expect(endTime.getTime()).to.equal(soon.getTime());
+
+      const pollResults = await Polls.getPollResults(poll.id);
+      expect(pollResults.length).to.equal(3);
     });
 
     it('can determine if a poll is valid', async () => {

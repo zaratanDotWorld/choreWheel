@@ -13,9 +13,9 @@ exports.createPoll = async function (houseId, startTime, duration, minVotes) {
 
 exports.getPoll = async function (pollId) {
   return db('Poll')
-    .select('*')
-    .where('id', pollId)
-    .first();
+    .where({ id: pollId })
+    .first()
+    .select('*');
 };
 
 exports.submitVote = async function (pollId, residentId, submittedAt, vote) {
@@ -27,15 +27,19 @@ exports.submitVote = async function (pollId, residentId, submittedAt, vote) {
   if (poll.houseId && poll.houseId !== resident.houseId) { throw new Error('Invalid user for poll!'); }
   if (poll.endTime <= submittedAt) { throw new Error('Poll has closed!'); }
 
-  return db('PollVote')
+  await db('PollVote')
     .insert({ pollId, encryptedResidentId, submittedAt, vote })
-    .onConflict([ 'pollId', 'encryptedResidentId' ]).merge()
-    .returning('*');
-};
+    .onConflict([ 'pollId', 'encryptedResidentId' ]).merge();
 
-exports.getPollVotes = async function (pollId) {
-  return db('PollVote')
-    .where({ pollId });
+  const pollResults = await exports.getPollResults(pollId);
+  const votingResidents = await Admin.getVotingResidents(poll.houseId, submittedAt);
+
+  // If everyone has voted, close the poll
+  if (pollResults.length >= votingResidents.length) {
+    await db('Poll')
+      .where({ id: pollId })
+      .update({ endTime: submittedAt });
+  }
 };
 
 exports.getPollResults = async function (pollId) {
@@ -43,7 +47,8 @@ exports.getPollResults = async function (pollId) {
   const poll = await exports.getPoll(pollId);
   return db('PollVote')
     .where({ pollId })
-    .whereBetween('submittedAt', [ poll.startTime, poll.endTime ]);
+    .whereBetween('submittedAt', [ poll.startTime, poll.endTime ]) // Inclusive
+    .select('*');
 };
 
 exports.getPollResultCounts = async function (pollId) {
