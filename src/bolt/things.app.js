@@ -307,26 +307,27 @@ app.view('things-propose-callback', async ({ ack, body }) => {
   const houseId = body.team.id;
   const residentId = body.user.id;
 
-  let thingId, type, name, value, unit, url, active;
-  const metadata = JSON.parse(body.view.private_metadata);
+  function parseSubmission (body) {
+    const type = common.parseTitlecase(common.getInputBlock(body, -5).type.value);
+    const name = common.parseTitlecase(common.getInputBlock(body, -4).name.value);
+    const unit = common.parseLowercase(common.getInputBlock(body, -3).unit.value);
+    const value = common.getInputBlock(body, -2).cost.value;
+    const url = common.getInputBlock(body, -1).url.value;
+    return { type, name, unit, value, url };
+  }
 
-  switch (metadata.change) {
+  let thingId, type, name, value, unit, url, active;
+  const privateMetadata = JSON.parse(body.view.private_metadata);
+
+  switch (privateMetadata.change) {
     case 'add':
       // TODO: if thing exists, return ephemeral and exit
-      type = common.parseTitlecase(common.getInputBlock(body, -5).type.value);
-      name = common.parseTitlecase(common.getInputBlock(body, -4).name.value);
-      unit = common.parseLowercase(common.getInputBlock(body, -3).unit.value);
-      value = common.getInputBlock(body, -2).cost.value;
-      url = common.getInputBlock(body, -1).url.value;
+      ({ type, name, unit, value, url } = parseSubmission(body));
       [ thingId, active ] = [ null, true ];
       break;
     case 'edit':
-      type = common.parseTitlecase(common.getInputBlock(body, -5).type.value);
-      name = common.parseTitlecase(common.getInputBlock(body, -4).name.value);
-      unit = common.parseLowercase(common.getInputBlock(body, -3).unit.value);
-      value = common.getInputBlock(body, -2).cost.value;
-      url = common.getInputBlock(body, -1).url.value;
-      [ thingId, active ] = [ metadata.thing.id, true ];
+      ({ type, name, unit, value, url } = parseSubmission(body));
+      [ thingId, active ] = [ privateMetadata.thing.id, true ];
       break;
     case 'delete':
       ({ id: thingId, type, name } = JSON.parse(common.getInputBlock(body, -1).thing.selected_option.value));
@@ -345,14 +346,15 @@ app.view('things-propose-callback', async ({ ack, body }) => {
   }
 
   // Create the thing proposal
-  const [ proposal ] = await Things.createThingProposal(houseId, residentId, thingId, type, name, value, { unit, url }, active, now);
+  const metadata = { unit, url };
+  const [ proposal ] = await Things.createThingProposal(houseId, residentId, thingId, type, name, value, metadata, active, now);
   await Polls.submitVote(proposal.pollId, residentId, now, YAY);
 
   const { thingsChannel } = await Admin.getHouse(houseId);
   const { minVotes } = await Polls.getPoll(proposal.pollId);
 
   const text = 'Someone just proposed a thing edit';
-  const blocks = views.thingsProposeCallbackView(metadata, proposal, minVotes);
+  const blocks = views.thingsProposeCallbackView(privateMetadata, proposal, minVotes);
   const { channel, ts } = await common.postMessage(app, thingsOauth, thingsChannel, text, blocks);
   await Polls.updateMetadata(proposal.pollId, { channel, ts });
 });

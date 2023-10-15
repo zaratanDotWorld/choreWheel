@@ -445,20 +445,24 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
   const houseId = body.team.id;
   const residentId = body.user.id;
 
-  let choreId, name, description, active;
-  const metadata = JSON.parse(body.view.private_metadata);
+  function parseSubmission (body) {
+    name = common.parseTitlecase(common.getInputBlock(body, -2).name.value);
+    description = common.getInputBlock(body, -1).description.value;
+    return { name, description };
+  }
 
-  switch (metadata.change) {
+  let choreId, name, description, active;
+  const privateMetadata = JSON.parse(body.view.private_metadata);
+
+  switch (privateMetadata.change) {
     case 'add':
       // TODO: if chore exists, return ephemeral and exit
-      name = common.parseTitlecase(common.getInputBlock(body, -2).name.value);
-      description = common.getInputBlock(body, -1).description.value;
+      ({ name, description } = parseSubmission(body));
       [ choreId, active ] = [ null, true ];
       break;
     case 'edit':
-      name = common.parseTitlecase(common.getInputBlock(body, -2).name.value);
-      description = common.getInputBlock(body, -1).description.value;
-      [ choreId, active ] = [ metadata.chore.id, true ];
+      ({ name, description } = parseSubmission(body));
+      [ choreId, active ] = [ privateMetadata.chore.id, true ];
       break;
     case 'delete':
       ({ id: choreId, name } = JSON.parse(common.getInputBlock(body, -1).chore.selected_option.value));
@@ -470,14 +474,15 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
   }
 
   // Create the chore proposal
-  const [ proposal ] = await Chores.createChoreProposal(houseId, residentId, choreId, name, { description }, active, now);
+  const metadata = { description };
+  const [ proposal ] = await Chores.createChoreProposal(houseId, residentId, choreId, name, metadata, active, now);
   await Polls.submitVote(proposal.pollId, residentId, now, YAY);
 
   const { choresChannel } = await Admin.getHouse(houseId);
   const { minVotes } = await Polls.getPoll(proposal.pollId);
 
   const text = 'Someone just proposed a chore edit';
-  const blocks = views.choresProposeCallbackView(metadata, proposal, minVotes);
+  const blocks = views.choresProposeCallbackView(privateMetadata, proposal, minVotes);
   const { channel, ts } = await common.postMessage(app, choresOauth, choresChannel, text, blocks);
   await Polls.updateMetadata(proposal.pollId, { channel, ts });
 });
