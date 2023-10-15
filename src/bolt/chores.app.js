@@ -238,35 +238,16 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   const residentId = body.user.id;
   const houseId = body.team.id;
 
-  const FASTER = 'faster';
-  const SLOWER = 'slower';
-
   const direction = body.view.private_metadata;
-  const targetChore = JSON.parse(common.getInputBlock(body, 3).chores.selected_option.value);
-  const sourceChores = common.getInputBlock(body, 4).chores.selected_options
-    .map((option) => JSON.parse(option.value));
+  const targetChore = JSON.parse(common.getInputBlock(body, -2).chores.selected_option.value);
+  const sourceChores = common.getInputBlock(body, -1).chores.selected_options.map((option) => JSON.parse(option.value));
+  const strength = 100 / 200 + 0.5; // Scale (0, 100) -> (0.5, 1.0)
+  const preference = (direction === 'faster') ? strength : 1 - strength;
 
-  let alphaChoreId;
-  let betaChoreId;
-  let preference;
-
-  // Value flows from source to target, and from beta to alpha
+  // Perform the update
   for (const sourceChore of sourceChores) {
-    if (sourceChore.id === targetChore.id) { continue; }
-
-    if (targetChore.id < sourceChore.id) {
-      alphaChoreId = targetChore.id;
-      betaChoreId = sourceChore.id;
-      preference = Number(direction === FASTER);
-    } else {
-      alphaChoreId = sourceChore.id;
-      betaChoreId = targetChore.id;
-      preference = Number(direction === SLOWER);
-    }
-
-    // Perform the update
-    await Chores.setChorePreference(houseId, residentId, alphaChoreId, betaChoreId, preference);
-    console.log(`Chore preference updated, ${alphaChoreId} vs ${betaChoreId} at ${preference}`);
+    await Chores.setChorePreference(houseId, residentId, targetChore.id, sourceChore.id, preference);
+    console.log(`Chore preference set: ${targetChore.name} <- ${sourceChore.name} @ ${preference}`);
   }
 
   const choreRankings = await Chores.getCurrentChoreRankings(houseId);
