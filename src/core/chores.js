@@ -74,7 +74,20 @@ exports.getActiveChorePreferences = async function (houseId) {
     .select('alphaChoreId', 'betaChoreId', 'preference');
 };
 
-exports.setChorePreference = async function (houseId, residentId, alphaChoreId, betaChoreId, preference) {
+exports.setChorePreference = async function (houseId, residentId, targetChoreId, sourceChoreId, preference) {
+  if (targetChoreId === sourceChoreId) { return; }
+
+  // Value flows from source to target, and from beta to alpha
+  let alphaChoreId, betaChoreId;
+  if (targetChoreId < sourceChoreId) {
+    alphaChoreId = targetChoreId;
+    betaChoreId = sourceChoreId;
+  } else {
+    alphaChoreId = sourceChoreId;
+    betaChoreId = targetChoreId;
+    preference = 1 - preference;
+  }
+
   return db('ChorePref')
     .insert({ houseId, residentId, alphaChoreId, betaChoreId, preference })
     .onConflict([ 'houseId', 'residentId', 'alphaChoreId', 'betaChoreId' ]).merge();

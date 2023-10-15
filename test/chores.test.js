@@ -110,6 +110,26 @@ describe('Chores', async () => {
       expect(preferences[0].preference).to.equal(0);
     });
 
+    it('can automatically sort a chore preference', async () => {
+      let preference;
+
+      // Dishes is sorted before sweeping
+      expect(dishes.id).to.be.lt(sweeping.id);
+
+      await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.7);
+      [ preference ] = await Chores.getChorePreferences(HOUSE);
+      expect(preference.preference).to.equal(0.7);
+
+      // Flip the order of arguments flips the preference
+      await Chores.setChorePreference(HOUSE, RESIDENT1, sweeping.id, dishes.id, 0.7);
+      [ preference ] = await Chores.getChorePreferences(HOUSE);
+      expect(preference.preference).to.equal(0.3);
+    });
+
+    it('can return a no-op if source and target are the same', async () => {
+      await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, dishes.id, 1);
+    });
+
     it('can query for active chore preferences', async () => {
       await Admin.activateResident(HOUSE, RESIDENT3, now);
 
