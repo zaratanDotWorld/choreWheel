@@ -40,6 +40,17 @@ const app = new App({
   installerOptions: { directInstall: true },
 });
 
+// Define publishing functions
+
+async function postMessage (houseId, text, blocks) {
+  const { thingsChannel } = await Admin.getHouse(houseId);
+  return common.postMessage(app, thingsOauth, thingsChannel, text, blocks);
+}
+
+async function replyEphemeral (command, text) {
+  return common.replyEphemeral(app, thingsOauth, command, text);
+}
+
 // Publish the app home
 
 app.event('app_home_opened', async ({ body, event }) => {
@@ -79,20 +90,19 @@ app.command('/things-load', async ({ ack, command }) => {
 
   if (command.text === 'help' || command.text.length === 0) {
     const text = 'Enter an amount of money to add to the account for future buys.';
-    await common.replyEphemeral(app, thingsOauth, command, text);
+    await replyEphemeral(command, text);
   } else if (await common.isAdmin(app, thingsOauth, command)) {
     const now = new Date();
     const houseId = command.team_id;
     const residentId = command.user_id;
 
     const [ thing ] = await Things.loadHouseAccount(houseId, residentId, now, command.text);
-    const { thingsChannel } = await Admin.getHouse(houseId);
 
     const text = `*<@${thing.boughtBy}>* just loaded *$${thing.value}* into the house account :chart_with_upwards_trend:`;
-    await common.postMessage(app, thingsOauth, thingsChannel, text);
+    await postMessage(houseId, text);
   } else {
     const text = ':warning: Only admins can load the house account...';
-    await common.replyEphemeral(app, thingsOauth, command, text);
+    await replyEphemeral(command, text);
   }
 });
 
@@ -114,7 +124,7 @@ app.command('/things-resolved', async ({ ack, command }) => {
     text = `Resolved buys not yet fulfilled:${parsedResolvedBuys}`;
   }
 
-  await common.replyEphemeral(app, thingsOauth, command, text);
+  await replyEphemeral(command, text);
 });
 
 app.command('/things-fulfill', async ({ ack, command }) => {
@@ -141,7 +151,7 @@ app.command('/things-fulfill', async ({ ack, command }) => {
     text = ':warning: Only admins can fulfill buys...';
   }
 
-  await common.replyEphemeral(app, thingsOauth, command, text);
+  await replyEphemeral(command, text);
 });
 
 // Buy flow
@@ -175,13 +185,9 @@ app.view('things-buy-callback', async ({ ack, body }) => {
   const { minVotes } = await Polls.getPoll(buy.pollId);
   const balance = await Things.getHouseBalance(houseId, now);
 
-  // TODO: Return error to user (not console) if channel is not set
-  const { thingsChannel } = await Admin.getHouse(houseId);
-  if (thingsChannel === null) { throw new Error('Things channel not set!'); }
-
   const text = 'Someone just bought a thing';
   const blocks = views.thingsBuyCallbackView(buy, thing, balance.sum, minVotes);
-  const { channel, ts } = await common.postMessage(app, thingsOauth, thingsChannel, text, blocks);
+  const { channel, ts } = await postMessage(houseId, text, blocks);
   await Polls.updateMetadata(buy.pollId, { channel, ts });
 });
 
@@ -215,16 +221,11 @@ app.view('things-special-callback', async ({ ack, body }) => {
   await Polls.submitVote(buy.pollId, residentId, now, YAY);
 
   const { minVotes } = await Polls.getPoll(buy.pollId);
-
   const balance = await Things.getHouseBalance(houseId, now);
-
-  // TODO: Return error to user (not console) if channel is not set
-  const { thingsChannel } = await Admin.getHouse(houseId);
-  if (thingsChannel === null) { throw new Error('Things channel not set!'); }
 
   const text = 'Someone just bought a thing';
   const blocks = views.thingsSpecialBuyCallbackView(buy, balance.sum, minVotes);
-  const { channel, ts } = await common.postMessage(app, thingsOauth, thingsChannel, text, blocks);
+  const { channel, ts } = await postMessage(houseId, text, blocks);
   await Polls.updateMetadata(buy.pollId, { channel, ts });
 });
 
@@ -350,12 +351,11 @@ app.view('things-propose-callback', async ({ ack, body }) => {
   const [ proposal ] = await Things.createThingProposal(houseId, residentId, thingId, type, name, value, metadata, active, now);
   await Polls.submitVote(proposal.pollId, residentId, now, YAY);
 
-  const { thingsChannel } = await Admin.getHouse(houseId);
   const { minVotes } = await Polls.getPoll(proposal.pollId);
 
   const text = 'Someone just proposed a thing edit';
   const blocks = views.thingsProposeCallbackView(privateMetadata, proposal, minVotes);
-  const { channel, ts } = await common.postMessage(app, thingsOauth, thingsChannel, text, blocks);
+  const { channel, ts } = await postMessage(houseId, text, blocks);
   await Polls.updateMetadata(proposal.pollId, { channel, ts });
 });
 

@@ -41,6 +41,18 @@ const app = new App({
   installerOptions: { directInstall: true },
 });
 
+// Define publishing functions
+
+async function postMessage (houseId, text, blocks) {
+  const { heartsChannel } = await Admin.getHouse(houseId);
+  return common.postMessage(app, heartsOauth, heartsChannel, text, blocks);
+}
+
+async function postEphemeral (houseId, residentId, text) {
+  const { heartsChannel } = await Admin.getHouse(houseId);
+  return common.postEphemeral(app, heartsOauth, heartsChannel, residentId, text);
+}
+
 // Publish the app home
 
 app.event('app_home_opened', async ({ body, event }) => {
@@ -60,32 +72,30 @@ app.event('app_home_opened', async ({ body, event }) => {
     await common.publishHome(app, heartsOauth, residentId, view);
 
     // This bookkeeping is done after returning the view
-    const { heartsChannel } = await Admin.getHouse(houseId);
 
     // Resolve any challanges
     await Hearts.resolveChallenges(houseId, now);
     const challengeHearts = await Hearts.getAgnosticHearts(houseId, now);
     for (const challengeHeart of challengeHearts) {
       const text = `<@${challengeHeart.residentId}> lost a challenge, and *${(-challengeHeart.value).toFixed(0)}* heart(s)...`;
-      await common.postMessage(app, heartsOauth, heartsChannel, text);
+      await postMessage(houseId, text);
     }
 
     // Regenerate the monthly half-heart
     const [ regenHeart ] = await Hearts.regenerateHearts(houseId, residentId, now);
     if (regenHeart !== undefined && regenHeart.value > 0) {
       const text = `You regenerated *${regenHeart.value.toFixed(1)}* heart(s)!`;
-      await common.postEphemeral(app, heartsOauth, heartsChannel, residentId, text);
+      await postEphemeral(houseId, residentId, text);
     }
 
     // Issue karma hearts
     const karmaHearts = await Hearts.generateKarmaHearts(houseId, now);
     if (karmaHearts.length > 0) {
-      const { heartsChannel } = await Admin.getHouse(houseId);
       const karmaWinners = karmaHearts.map((heart) => `<@${heart.residentId}>`).join(' and ');
       const text = (karmaWinners.length > 1)
         ? `${karmaWinners} get last month's karma hearts :heart_on_fire:`
         : `${karmaWinners} gets last month's karma heart :heart_on_fire:`;
-      await common.postMessage(app, heartsOauth, heartsChannel, text);
+      await postMessage(houseId, text);
     }
   }
 });
@@ -132,18 +142,14 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
   const numHearts = common.getInputBlock(body, 3).hearts.selected_option.value;
   const circumstance = common.getInputBlock(body, 4).circumstance.value;
 
-  // TODO: Return error to user (not console) if channel is not set
-  const { heartsChannel } = await Admin.getHouse(houseId);
-  if (heartsChannel === null) { throw new Error('Hearts channel not set!'); }
-
   const unresolvedChallenges = await Hearts.getUnresolvedChallenges(houseId, challengeeId);
 
   if (await Admin.isExempt(challengeeId, now)) {
     const text = `<@${challengeeId}> is exempt and cannot be challenged :weary:`;
-    await common.postEphemeral(app, heartsOauth, heartsChannel, residentId, text);
+    await postEphemeral(houseId, residentId, text);
   } else if (unresolvedChallenges.length) {
     const text = `<@${challengeeId}> is already being challenged!`;
-    await common.postEphemeral(app, heartsOauth, heartsChannel, residentId, text);
+    await postEphemeral(houseId, residentId, text);
   } else {
     // Initiate the challenge
     const [ challenge ] = await Hearts.issueChallenge(houseId, residentId, challengeeId, numHearts, now, circumstance);
@@ -153,7 +159,7 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
 
     const text = 'Someone just issued a hearts challenge';
     const blocks = views.heartsChallengeCallbackView(challenge, minVotes, circumstance);
-    const { channel, ts } = await common.postMessage(app, heartsOauth, heartsChannel, text, blocks);
+    const { channel, ts } = await postMessage(houseId, text, blocks);
     await Polls.updateMetadata(challenge.pollId, { channel, ts });
   }
 });

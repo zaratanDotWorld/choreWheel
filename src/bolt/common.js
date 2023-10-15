@@ -31,13 +31,8 @@ exports.isAdmin = async function (app, oauth, command) {
 // Publishing
 
 exports.replyEphemeral = async function (app, oauth, command, text) {
-  return exports.postEphemeral(
-    app,
-    oauth,
-    command.channel_id,
-    command.user_id,
-    text,
-  );
+  const { channel_id: channelId, user_id: residentId } = command;
+  return exports.postEphemeral(app, oauth, channelId, residentId, text);
 };
 
 exports.postEphemeral = async function (app, oauth, channelId, residentId, text) {

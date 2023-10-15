@@ -42,6 +42,18 @@ const app = new App({
   installerOptions: { directInstall: true },
 });
 
+// Define publishing functions
+
+async function postMessage (houseId, text, blocks) {
+  const { choresChannel } = await Admin.getHouse(houseId);
+  return common.postMessage(app, choresOauth, choresChannel, text, blocks);
+}
+
+async function postEphemeral (houseId, residentId, text) {
+  const { choresChannel } = await Admin.getHouse(houseId);
+  return common.postEphemeral(app, choresOauth, choresChannel, residentId, text);
+}
+
 // Publish the app home
 
 app.event('app_home_opened', async ({ body, event }) => {
@@ -75,9 +87,8 @@ app.event('app_home_opened', async ({ body, event }) => {
     // Give monthly penalty if needed
     const [ penaltyHeart ] = await Chores.addChorePenalty(houseId, residentId, now);
     if (penaltyHeart !== undefined && penaltyHeart.value < 0) {
-      const { choresChannel } = await Admin.getHouse(houseId);
       const text = `You missed too many chores last month, and lost *${penaltyHeart.value.toFixed(1)}* hearts...`;
-      await common.postEphemeral(app, choresOauth, choresChannel, residentId, text); // TODO: make public?
+      await postEphemeral(houseId, residentId, text); // TODO: make public?
     }
   }
 });
@@ -179,10 +190,6 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
 
   const chore = JSON.parse(body.view.private_metadata);
 
-  // TODO: Return error to user (not console) if channel is not set
-  const { choresChannel } = await Admin.getHouse(houseId);
-  if (choresChannel === null) { throw new Error('Chores channel not set!'); }
-
   // Get chore points over last six months
   const monthStart = getMonthStart(now);
   const sixMonths = new Date(now.getTime() - 180 * DAY);
@@ -199,16 +206,8 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
 
   const text = 'Someone just completed a chore';
   const blocks = views.choresClaimCallbackView(claim, chore.name, recentPoints, monthlyPoints);
-  const { channel, ts } = await common.postMessage(app, choresOauth, choresChannel, text, blocks);
+  const { channel, ts } = await postMessage(houseId, text, blocks);
   await Polls.updateMetadata(claim.pollId, { channel, ts });
-
-  // Temporarily emit this functionality
-  // // Append the description
-  // const chore = await Chores.getChore(chore.id);
-  // if (chore.metadata && chore.metadata.description) {
-  //   const text = `*${chore.name}:*\n\n${chore.metadata.description}`;
-  //   await common.postReply(app, choresOauth, choresChannel, ts, text);
-  // }
 });
 
 // Ranking flow
@@ -278,18 +277,17 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   const speedDiff = newSpeed - targetChore.speed;
   const speedText = (Math.abs(speedDiff) > bigChange) ? 'a lot' : 'a little';
 
-  const { choresChannel } = await Admin.getHouse(houseId);
   if (speedDiff > 0) {
     const text = `Someone sped up *${targetChore.name}* by *${speedText}*, to *${newSpeed} ppt* :rocket:`;
-    await common.postMessage(app, choresOauth, choresChannel, text);
+    await postMessage(houseId, text);
   } else if (speedDiff < 0) {
     const text = `Someone slowed down *${targetChore.name}* by *${speedText}*, to *${newSpeed} ppt* :snail:`;
-    await common.postMessage(app, choresOauth, choresChannel, text);
+    await postMessage(houseId, text);
   } else {
     const text = 'You\'ve already input those preferences.\n\n' +
       'To have an additional effect, *choose more or different chores*. ' +
       'Alternatively, *convince others* to support your priorities.';
-    await common.postEphemeral(app, choresOauth, choresChannel, residentId, text);
+    await postEphemeral(houseId, residentId, text);
   }
 });
 
@@ -323,17 +321,16 @@ app.view('chores-break-callback', async ({ ack, body }) => {
   const breakEnd = shiftDate(breakEndUtc, now.getTimezoneOffset());
   const breakDays = parseInt((breakEnd - breakStart) / DAY);
 
-  const { choresChannel } = await Admin.getHouse(houseId);
   if (breakStart < todayStart || breakDays < breakMinDays) {
     const text = 'Not a valid chore break :slightly_frowning_face:';
-    await common.postEphemeral(app, choresOauth, choresChannel, residentId, text);
+    await postEphemeral(houseId, residentId, text);
   } else {
     // Record the break
     await Chores.addChoreBreak(houseId, residentId, breakStart, breakEnd, circumstance);
     const text = `<@${residentId}> is taking a *${breakDays}-day* break ` +
         `starting ${breakStart.toDateString()} :beach_with_umbrella:\n` +
         `_${circumstance}_`;
-    await common.postMessage(app, choresOauth, choresChannel, text);
+    await postMessage(houseId, text);
   }
 });
 
@@ -366,21 +363,19 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
   const points = common.getInputBlock(body, 3).points.value;
   const circumstance = common.getInputBlock(body, 4).circumstance.value;
 
-  const { choresChannel } = await Admin.getHouse(houseId);
-
   if (await Admin.isExempt(recipientId, now)) {
     const text = `<@${recipientId}> is exempt and cannot earn points :confused:`;
-    await common.postEphemeral(app, choresOauth, choresChannel, residentId, text);
+    await postEphemeral(houseId, residentId, text);
   } else if (points > currentBalance) {
     const text = 'You can\'t gift more points than you have! :face_with_monocle:';
-    await common.postEphemeral(app, choresOauth, choresChannel, residentId, text);
+    await postEphemeral(houseId, residentId, text);
   } else {
     // Make the gift
     await Chores.giftChorePoints(houseId, residentId, recipientId, now, points);
 
     const text = `<@${residentId}> just gifted <@${recipientId}> *${points} points* :gift:\n` +
       `_${circumstance}_`;
-    await common.postMessage(app, choresOauth, choresChannel, text);
+    await postMessage(houseId, text);
   }
 });
 
@@ -478,12 +473,11 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
   const [ proposal ] = await Chores.createChoreProposal(houseId, residentId, choreId, name, metadata, active, now);
   await Polls.submitVote(proposal.pollId, residentId, now, YAY);
 
-  const { choresChannel } = await Admin.getHouse(houseId);
   const { minVotes } = await Polls.getPoll(proposal.pollId);
 
   const text = 'Someone just proposed a chore edit';
   const blocks = views.choresProposeCallbackView(privateMetadata, proposal, minVotes);
-  const { channel, ts } = await common.postMessage(app, choresOauth, choresChannel, text, blocks);
+  const { channel, ts } = await postMessage(houseId, text, blocks);
   await Polls.updateMetadata(proposal.pollId, { channel, ts });
 });
 
