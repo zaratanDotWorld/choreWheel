@@ -23,8 +23,9 @@ exports.heartsHomeView = function (numHearts, exempt) {
 
   const header = 'Welcome to Hearts';
   const textA = `We use *<${docsUrl}|Hearts>* to keep each other accountable.\n\n` +
-    'Everyone starts with *5 hearts*. We lose hearts when we fail to uphold our commitments, ' +
-    'and we regain hearts slowly over time (*1/2 per month*) or by earning karma :sparkles:';
+    'Everyone starts with *5 hearts*.\n\n' +
+    'We lose hearts when we fail to uphold our commitments. ' +
+    'We regain hearts over time *(½ per month)*, or by earning karma :sparkles:';
   const textB = (exempt)
     ? '*You are exempt from hearts!* :balloon:'
     : `You have *${numHearts}* hearts: ${exports.heartEmoji(numHearts)}`;
