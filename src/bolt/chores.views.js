@@ -23,7 +23,9 @@ exports.choresHomeView = function (balance, owed, numActive, exempt) {
 
   const actions = [];
   if (!exempt) {
-    actions.push(common.blockButton('chores-claim', 'Claim a chore'));
+    if (balance < owed) {
+      actions.push(common.blockButton('chores-claim', 'Claim a chore'));
+    }
     actions.push(common.blockButton('chores-break', 'Take a break'));
     actions.push(common.blockButton('chores-gift', 'Gift your points'));
     actions.push(common.blockButton('chores-propose', 'Edit chores list'));
