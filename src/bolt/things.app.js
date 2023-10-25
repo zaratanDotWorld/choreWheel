@@ -27,14 +27,17 @@ const app = new App({
   ],
   installationStore: {
     storeInstallation: async (installation) => {
-      return Admin.updateHouse({ slackId: installation.team.id, thingsOauth: installation });
+      await Admin.addHouse(installation.team.id);
+      await Admin.updateHouse(installation.team.id, { thingsOauth: installation });
+      console.log(`things installed @ ${installation.team.id}`);
     },
     fetchInstallation: async (installQuery) => {
-      ({ thingsOauth } = await Admin.getHouse(installQuery.teamId));
+      ({ thingsOauth } = (await Admin.getHouse(installQuery.teamId)).metadata);
       return thingsOauth;
     },
     deleteInstallation: async (installQuery) => {
-      return Admin.updateHouse({ slackId: installQuery.teamId, thingsOauth: null });
+      await Admin.updateHouse(installQuery.teamId, { thingsOauth: null });
+      console.log(`things uninstalled @ ${installQuery.teamId}`);
     },
   },
   installerOptions: { directInstall: true },

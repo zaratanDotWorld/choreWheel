@@ -106,7 +106,7 @@ exports.setChannel = async function (app, oauth, channelType, command) {
     'The app will use this channel to post polls or share public activity.';
   } else if (await exports.isAdmin(app, oauth, command)) {
     const [ houseId, channelId ] = [ command.team_id, command.channel_id ];
-    await Admin.updateHouse({ slackId: houseId, [channelType]: channelId });
+    await Admin.updateHouse(houseId, { [channelType]: channelId });
     await app.client.conversations.join({ token: oauth.bot.token, channel: channelId });
     text = `App events channel set to *<#${channelId}>* :fire:`;
   } else {
