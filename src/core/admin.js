@@ -2,23 +2,28 @@ const { db } = require('./db');
 
 // Houses
 
-exports.updateHouse = async function (houseData) {
+exports.addHouse = async function (slackId) {
   return db('House')
-    .insert(houseData)
-    .onConflict('slackId').merge();
+    .insert({ slackId })
+    .onConflict('slackId').ignore();
 };
 
-exports.getHouse = async function (houseId) {
+exports.getHouse = async function (slackId) {
   return db('House')
-    .where({ slackId: houseId })
+    .where({ slackId })
     .select('*')
     .first();
 };
 
-exports.getNumHouses = async function () {
+exports.updateHouse = async function (slackId, metadata) {
+  // NOTE: May be possible as a single operation using a jsonb datatype
+  const house = await exports.getHouse(slackId);
+  metadata = { ...house.metadata, ...metadata };
+
   return db('House')
-    .count('id')
-    .first();
+    .where({ slackId })
+    .update({ metadata })
+    .returning('*');
 };
 
 // Residents
