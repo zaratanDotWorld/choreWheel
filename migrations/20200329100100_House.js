@@ -4,14 +4,7 @@ exports.up = function(knex, Promise) {
         t.timestamps(useTimestamps = true, defaultToNow = true, useCamelCase = true);
         t.string('name').unique();
         t.string('slackId').unique().notNull(); // Slack Team Id
-        t.jsonb('choresOauth');
-        t.string('choresChannel');
-        t.jsonb('heartsOauth');
-        t.string('heartsChannel');
-        t.jsonb('thingsOauth');
-        t.string('thingsChannel');
-        t.jsonb('hangsOauth');
-        t.string('hangsChannel');
+        t.json('metadata').notNull().defaultTo({});
     });
 };
 
