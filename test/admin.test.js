@@ -8,6 +8,7 @@ const { Admin } = require('../src/core/index');
 const { HOUR, DAY } = require('../src/constants');
 const { getMonthStart, getMonthEnd, getNextMonthStart, getPrevMonthEnd, getDateStart } = require('../src/utils');
 const testHelpers = require('./helpers');
+const { db } = require('../src/core/db');
 
 describe('Admin', async () => {
   const HOUSE1 = testHelpers.generateSlackId();
@@ -30,55 +31,66 @@ describe('Admin', async () => {
   describe('keeping track of houses', async () => {
     it('can add a house', async () => {
       let numHouses;
-      numHouses = await Admin.getNumHouses();
+
+      [ numHouses ] = await db('House').count('*');
       expect(parseInt(numHouses.count)).to.equal(0);
 
-      await Admin.updateHouse({ slackId: HOUSE1 });
+      await Admin.addHouse(HOUSE1);
 
-      numHouses = await Admin.getNumHouses();
+      [ numHouses ] = await db('House').count('*');
       expect(parseInt(numHouses.count)).to.equal(1);
 
-      await Admin.updateHouse({ slackId: HOUSE2 });
+      await Admin.addHouse(HOUSE2);
 
-      numHouses = await Admin.getNumHouses();
+      [ numHouses ] = await db('House').count('*');
       expect(parseInt(numHouses.count)).to.equal(2);
     });
 
     it('can add a house idempotently', async () => {
       let numHouses;
-      numHouses = await Admin.getNumHouses();
+      [ numHouses ] = await db('House').count('*');
       expect(parseInt(numHouses.count)).to.equal(0);
 
-      await Admin.updateHouse({ slackId: HOUSE1 });
-      await Admin.updateHouse({ slackId: HOUSE2 });
+      await Admin.addHouse(HOUSE1);
+      await Admin.addHouse(HOUSE2);
 
-      numHouses = await Admin.getNumHouses();
+      [ numHouses ] = await db('House').count('*');
       expect(parseInt(numHouses.count)).to.equal(2);
 
-      await Admin.updateHouse({ slackId: HOUSE1 });
-      await Admin.updateHouse({ slackId: HOUSE2 });
+      await Admin.addHouse(HOUSE1);
+      await Admin.addHouse(HOUSE2);
 
-      numHouses = await Admin.getNumHouses();
+      [ numHouses ] = await db('House').count('*');
       expect(parseInt(numHouses.count)).to.equal(2);
     });
 
     it('can update house info', async () => {
+      await Admin.addHouse(HOUSE1);
+
       const choresChannel = 'choresChannel';
       const thingsChannel = 'thingsChannel';
 
-      await Admin.updateHouse({ slackId: HOUSE1, choresChannel });
-      await Admin.updateHouse({ slackId: HOUSE1, thingsChannel });
+      await Admin.updateHouse(HOUSE1, { choresChannel });
+      await Admin.updateHouse(HOUSE1, { thingsChannel });
 
-      const house = await Admin.getHouse(HOUSE1);
-      expect(house.choresChannel).to.equal(choresChannel);
-      expect(house.thingsChannel).to.equal(thingsChannel);
+      let metadata;
+
+      ({ metadata } = await Admin.getHouse(HOUSE1));
+      expect(metadata.choresChannel).to.equal(choresChannel);
+      expect(metadata.thingsChannel).to.equal(thingsChannel);
+
+      await Admin.updateHouse(HOUSE1, { thingsChannel: null });
+
+      ({ metadata } = await Admin.getHouse(HOUSE1));
+      expect(metadata.choresChannel).to.equal(choresChannel);
+      expect(metadata.thingsChannel).to.be.null;
     });
   });
 
   describe('keeping track of residents', async () => {
     beforeEach(async () => {
-      await Admin.updateHouse({ slackId: HOUSE1 });
-      await Admin.updateHouse({ slackId: HOUSE2 });
+      await Admin.addHouse(HOUSE1);
+      await Admin.addHouse(HOUSE2);
     });
 
     it('can activate a resident', async () => {

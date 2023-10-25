@@ -24,7 +24,7 @@ describe('Polls', async () => {
     soon = new Date(now.getTime() + HOUR);
     tomorrow = new Date(now.getTime() + DAY);
 
-    await Admin.updateHouse({ slackId: HOUSE });
+    await Admin.addHouse(HOUSE);
     await Admin.activateResident(HOUSE, RESIDENT1, now);
     await Admin.activateResident(HOUSE, RESIDENT2, now);
     await Admin.activateResident(HOUSE, RESIDENT3, now);
@@ -78,7 +78,7 @@ describe('Polls', async () => {
 
     it('cannot vote in a poll if not a member of the house', async () => {
       const house2 = 'house456';
-      await Admin.updateHouse({ slackId: house2 });
+      await Admin.addHouse(house2);
 
       const [ poll ] = await Polls.createPoll(house2, now, DAY, 1);
 

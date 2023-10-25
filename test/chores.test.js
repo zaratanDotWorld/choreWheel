@@ -31,7 +31,7 @@ describe('Chores', async () => {
   let proposalEnd;
 
   beforeEach(async () => {
-    await Admin.updateHouse({ slackId: HOUSE });
+    await Admin.addHouse(HOUSE);
 
     now = new Date();
     soon = new Date(now.getTime() + MINUTE);

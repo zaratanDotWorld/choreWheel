@@ -33,7 +33,7 @@ describe('Things', async () => {
     challengeEndSpecial = new Date(now.getTime() + thingsSpecialPollLength);
     proposalEnd = new Date(now.getTime() + thingsProposalPollLength);
 
-    await Admin.updateHouse({ slackId: HOUSE });
+    await Admin.addHouse(HOUSE);
     await Admin.activateResident(HOUSE, RESIDENT1, now);
     await Admin.activateResident(HOUSE, RESIDENT2, now);
     await Admin.activateResident(HOUSE, RESIDENT3, now);

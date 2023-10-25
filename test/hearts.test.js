@@ -32,7 +32,7 @@ describe('Hearts', async () => {
     nextMonth = getNextMonthStart(now);
     twoMonths = getNextMonthStart(nextMonth);
 
-    await Admin.updateHouse({ slackId: HOUSE });
+    await Admin.addHouse(HOUSE);
     await Admin.activateResident(HOUSE, RESIDENT1, now);
     await Admin.activateResident(HOUSE, RESIDENT2, now);
     await Admin.activateResident(HOUSE, RESIDENT3, now);
@@ -387,7 +387,7 @@ describe('Hearts', async () => {
       const r5 = testHelpers.generateSlackId();
       const r6 = testHelpers.generateSlackId();
 
-      await Admin.updateHouse({ slackId: house });
+      await Admin.addHouse(house);
 
       let numWinners;
 
