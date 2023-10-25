@@ -28,14 +28,17 @@ const app = new App({
   ],
   installationStore: {
     storeInstallation: async (installation) => {
-      return Admin.updateHouse({ slackId: installation.team.id, heartsOauth: installation });
+      await Admin.addHouse(installation.team.id);
+      await Admin.updateHouse(installation.team.id, { heartsOauth: installation });
+      console.log(`hearts installed @ ${installation.team.id}`);
     },
     fetchInstallation: async (installQuery) => {
-      ({ heartsOauth } = await Admin.getHouse(installQuery.teamId));
+      ({ heartsOauth } = (await Admin.getHouse(installQuery.teamId)).metadata);
       return heartsOauth;
     },
     deleteInstallation: async (installQuery) => {
-      return Admin.updateHouse({ slackId: installQuery.teamId, heartsOauth: null });
+      await Admin.updateHouse(installQuery.teamId, { heartsOauth: null });
+      console.log(`hearts uninstalled @ ${installQuery.teamId}`);
     },
   },
   installerOptions: { directInstall: true },

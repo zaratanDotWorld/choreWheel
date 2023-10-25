@@ -29,14 +29,17 @@ const app = new App({
   ],
   installationStore: {
     storeInstallation: async (installation) => {
-      return Admin.updateHouse({ slackId: installation.team.id, choresOauth: installation });
+      await Admin.addHouse(installation.team.id);
+      await Admin.updateHouse(installation.team.id, { choresOauth: installation });
+      console.log(`chores installed @ ${installation.team.id}`);
     },
     fetchInstallation: async (installQuery) => {
-      ({ choresOauth } = await Admin.getHouse(installQuery.teamId));
+      ({ choresOauth } = (await Admin.getHouse(installQuery.teamId)).metadata);
       return choresOauth;
     },
     deleteInstallation: async (installQuery) => {
-      return Admin.updateHouse({ slackId: installQuery.teamId, choresOauth: null });
+      await Admin.updateHouse(installQuery.teamId, { choresOauth: null });
+      console.log(`chores uninstalled @ ${installQuery.teamId}`);
     },
   },
   installerOptions: { directInstall: true },
@@ -45,13 +48,13 @@ const app = new App({
 // Define publishing functions
 
 async function postMessage (houseId, text, blocks) {
-  const { choresChannel } = await Admin.getHouse(houseId);
-  return common.postMessage(app, choresOauth, choresChannel, text, blocks);
+  const { metadata } = await Admin.getHouse(houseId);
+  return common.postMessage(app, choresOauth, metadata.choresChannel, text, blocks);
 }
 
 async function postEphemeral (houseId, residentId, text) {
-  const { choresChannel } = await Admin.getHouse(houseId);
-  return common.postEphemeral(app, choresOauth, choresChannel, residentId, text);
+  const { metadata } = await Admin.getHouse(houseId);
+  return common.postEphemeral(app, choresOauth, metadata.choresChannel, residentId, text);
 }
 
 // Publish the app home
