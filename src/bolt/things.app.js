@@ -46,8 +46,8 @@ const app = new App({
 // Define publishing functions
 
 async function postMessage (houseId, text, blocks) {
-  const { thingsChannel } = await Admin.getHouse(houseId);
-  return common.postMessage(app, thingsOauth, thingsChannel, text, blocks);
+  const { metadata } = await Admin.getHouse(houseId);
+  return common.postMessage(app, thingsOauth, metadata.thingsChannel, text, blocks);
 }
 
 async function replyEphemeral (command, text) {

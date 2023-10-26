@@ -47,13 +47,13 @@ const app = new App({
 // Define publishing functions
 
 async function postMessage (houseId, text, blocks) {
-  const { heartsChannel } = await Admin.getHouse(houseId);
-  return common.postMessage(app, heartsOauth, heartsChannel, text, blocks);
+  const { metadata } = await Admin.getHouse(houseId);
+  return common.postMessage(app, heartsOauth, metadata.heartsChannel, text, blocks);
 }
 
 async function postEphemeral (houseId, residentId, text) {
-  const { heartsChannel } = await Admin.getHouse(houseId);
-  return common.postEphemeral(app, heartsOauth, heartsChannel, residentId, text);
+  const { metadata } = await Admin.getHouse(houseId);
+  return common.postEphemeral(app, heartsOauth, metadata.heartsChannel, residentId, text);
 }
 
 // Publish the app home
