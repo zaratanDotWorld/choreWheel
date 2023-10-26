@@ -116,6 +116,15 @@ exports.setChannel = async function (app, oauth, channelType, command) {
   await exports.replyEphemeral(app, oauth, command, text);
 };
 
+exports.setDefaultChannel = async function (app, oauth, channelType, houseId) {
+  const { metadata } = await Admin.getHouse(houseId);
+  if (!metadata[channelType]) {
+    const channels = await app.client.conversations.list({ token: oauth.bot.token, exclude_archived: true });
+    const defaultChannel = channels.find(channel => channel.is_general).id; // #general is default
+    await Admin.updateHouse(houseId, { [channelType]: defaultChannel });
+  }
+};
+
 exports.syncWorkspace = async function (app, oauth, command, syncMembers, syncChannels) {
   let text;
 

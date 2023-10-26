@@ -64,6 +64,8 @@ app.event('app_home_opened', async ({ body, event }) => {
     const houseId = body.team_id;
     const residentId = event.user;
 
+    await common.setDefaultChannel(app, thingsOauth, 'thingsChannel', houseId);
+
     await Admin.activateResident(houseId, residentId, now);
 
     const balance = await Things.getHouseBalance(houseId, now);

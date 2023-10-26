@@ -61,10 +61,13 @@ async function postEphemeral (houseId, residentId, text) {
 app.event('app_home_opened', async ({ body, event }) => {
   if (event.tab === 'home') {
     console.log('hearts home');
+
+    const now = new Date();
     const houseId = body.team_id;
     const residentId = event.user;
 
-    const now = new Date();
+    await common.setDefaultChannel(app, heartsOauth, 'heartsChannel', houseId);
+
     await Admin.activateResident(houseId, residentId, now);
     await Hearts.initialiseResident(houseId, residentId, now);
 

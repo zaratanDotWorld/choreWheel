@@ -62,15 +62,17 @@ async function postEphemeral (houseId, residentId, text) {
 app.event('app_home_opened', async ({ body, event }) => {
   if (event.tab === 'home') {
     console.log('chores home');
+
+    const now = new Date();
     const houseId = body.team_id;
     const residentId = event.user;
 
-    const now = new Date();
-    const monthStart = getMonthStart(now);
+    await common.setDefaultChannel(app, choresOauth, 'choresChannel', houseId);
 
     await Admin.activateResident(houseId, residentId, now);
     const exempt = await Admin.isExempt(residentId, now);
 
+    const monthStart = getMonthStart(now);
     const chorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
     const workingPercentage = await Chores.getWorkingResidentPercentage(residentId, now);
     const workingResidentCount = await Chores.getWorkingResidentCount(houseId, now);
