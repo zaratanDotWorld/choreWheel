@@ -18,8 +18,8 @@ exports.breakMinDays = 3;
 
 // Hearts
 exports.heartsPollLength = 3 * DAY;
-exports.heartsBaseline = 5;
-exports.heartsRegen = 0.5;
+exports.heartsBaselineAmount = 5;
+exports.heartsRegenAmount = 0.5;
 exports.heartsMinPctInitial = 0.4; // For removing initial hearts
 exports.heartsMinPctCritical = 0.7; // For removing the final two hearts
 exports.heartsCriticalNum = 2;

@@ -5,8 +5,8 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
 const { Hearts, Polls, Admin } = require('../src/core/index');
-const { NAY, YAY, HOUR, HEART_TYPE_UNKNOWN, HEART_TYPE_KARMA, HEART_TYPE_CHALLENGE } = require('../src/constants');
-const { heartsPollLength, heartsBaseline, karmaMaxHearts, karmaDelay } = require('../src/config');
+const { NAY, YAY, HOUR, HEART_UNKNOWN, HEART_KARMA, HEART_CHALLENGE } = require('../src/constants');
+const { heartsPollLength, heartsBaselineAmount, karmaMaxHearts, karmaDelay } = require('../src/config');
 const { getNextMonthStart } = require('../src/utils');
 const testHelpers = require('./helpers');
 
@@ -46,9 +46,9 @@ describe('Hearts', async () => {
 
   describe('using hearts', async () => {
     it('can generate hearts for residents', async () => {
-      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_TYPE_UNKNOWN, now, 1);
-      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_TYPE_UNKNOWN, now, 1);
-      await Hearts.generateHearts(HOUSE, RESIDENT2, HEART_TYPE_UNKNOWN, now, 1);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 1);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 1);
+      await Hearts.generateHearts(HOUSE, RESIDENT2, HEART_UNKNOWN, now, 1);
 
       const hearts1 = await Hearts.getHearts(RESIDENT1, now);
       const hearts2 = await Hearts.getHearts(RESIDENT2, now);
@@ -60,17 +60,17 @@ describe('Hearts', async () => {
     });
 
     it('can query for specific hearts', async () => {
-      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_TYPE_CHALLENGE, now, 1);
-      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_TYPE_KARMA, now, 2);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_CHALLENGE, now, 1);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_KARMA, now, 2);
 
       const heart = await Hearts.getHeart(RESIDENT1, now);
       expect(heart.value).to.equal(1);
-      expect(heart.type).to.equal(HEART_TYPE_CHALLENGE);
+      expect(heart.type).to.equal(HEART_CHALLENGE);
     });
 
     it('can get hearts for the house at once', async () => {
-      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_TYPE_UNKNOWN, now, 2);
-      await Hearts.generateHearts(HOUSE, RESIDENT2, HEART_TYPE_UNKNOWN, now, 1);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 2);
+      await Hearts.generateHearts(HOUSE, RESIDENT2, HEART_UNKNOWN, now, 1);
 
       const hearts = await Hearts.getHouseHearts(HOUSE, now);
       expect(hearts.length).to.equal(2);
@@ -79,8 +79,8 @@ describe('Hearts', async () => {
     });
 
     it('can exclude exempt users from the hearts list', async () => {
-      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_TYPE_UNKNOWN, now, 2);
-      await Hearts.generateHearts(HOUSE, RESIDENT2, HEART_TYPE_UNKNOWN, now, 1);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 2);
+      await Hearts.generateHearts(HOUSE, RESIDENT2, HEART_UNKNOWN, now, 1);
 
       await Admin.exemptResident(HOUSE, RESIDENT2, now);
 
@@ -89,9 +89,9 @@ describe('Hearts', async () => {
     });
 
     it('can aggregate positive and negative hearts', async () => {
-      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_TYPE_UNKNOWN, now, 2);
-      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_TYPE_UNKNOWN, now, 1);
-      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_TYPE_UNKNOWN, now, -2);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 2);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 1);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, -2);
 
       const hearts = await Hearts.getHearts(RESIDENT1, now);
 
@@ -99,8 +99,8 @@ describe('Hearts', async () => {
     });
 
     it('can handle fractional hearts', async () => {
-      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_TYPE_UNKNOWN, now, 2.5);
-      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_TYPE_UNKNOWN, now, -0.75);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 2.5);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, -0.75);
 
       const hearts = await Hearts.getHearts(RESIDENT1, now);
 
@@ -112,21 +112,31 @@ describe('Hearts', async () => {
 
       let hearts;
       hearts = await Hearts.getHearts(RESIDENT1, now);
-      expect(hearts.sum).to.equal(heartsBaseline);
+      expect(hearts.sum).to.equal(heartsBaselineAmount);
 
       // But only once
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
 
       hearts = await Hearts.getHearts(RESIDENT1, now);
-      expect(hearts.sum).to.equal(heartsBaseline);
+      expect(hearts.sum).to.equal(heartsBaselineAmount);
 
       // Even if they go back to zero
-      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_TYPE_UNKNOWN, now, -heartsBaseline);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, -heartsBaselineAmount);
 
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
 
       hearts = await Hearts.getHearts(RESIDENT1, now);
       expect(hearts.sum).to.equal(0);
+    });
+  });
+
+  describe('regenerating hearts', async () => {
+    it('can calculate the regen amount', async () => {
+      expect(Hearts.getRegenAmount(1.0)).to.almost.equal(0.5);
+      expect(Hearts.getRegenAmount(4.9)).to.almost.equal(0.1);
+      expect(Hearts.getRegenAmount(5.0)).to.almost.equal(0.0);
+      expect(Hearts.getRegenAmount(5.1)).to.almost.equal(-0.1);
+      expect(Hearts.getRegenAmount(7.0)).to.almost.equal(-0.5);
     });
 
     it('can regenerate hearts', async () => {
@@ -139,7 +149,7 @@ describe('Hearts', async () => {
       expect(hearts.sum).to.equal(null);
 
       // Generate a heart, now regeneration works
-      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_TYPE_UNKNOWN, now, 1);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 1);
 
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, nextMonth);
 
@@ -173,7 +183,7 @@ describe('Hearts', async () => {
       expect(hearts.sum).to.equal(5);
 
       // Or overloaded
-      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_TYPE_UNKNOWN, nextMonth, 1);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, nextMonth, 1);
 
       hearts = await Hearts.getHearts(RESIDENT1, nextMonth);
       expect(hearts.sum).to.equal(6);
@@ -448,7 +458,7 @@ describe('Hearts', async () => {
       expect(karmaHearts.length).to.equal(1);
       expect(karmaHearts[0].residentId).to.equal(RESIDENT2);
       expect(karmaHearts[0].value).to.equal(1);
-      expect(karmaHearts[0].type).to.equal(HEART_TYPE_KARMA);
+      expect(karmaHearts[0].type).to.equal(HEART_KARMA);
       expect(karmaHearts[0].metadata.ranking).to.equal(0.4947733825104661);
 
       // But not twice
@@ -456,7 +466,7 @@ describe('Hearts', async () => {
       expect(karmaHearts.length).to.equal(0);
 
       // If they're at the limit, they get less
-      await Hearts.generateHearts(HOUSE, RESIDENT4, HEART_TYPE_UNKNOWN, nextMonthKarma, karmaMaxHearts - 0.5);
+      await Hearts.generateHearts(HOUSE, RESIDENT4, HEART_UNKNOWN, nextMonthKarma, karmaMaxHearts - 0.5);
       await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT4, nextMonthKarma);
 
       karmaHearts = await Hearts.generateKarmaHearts(HOUSE, twoMonthsKarma);

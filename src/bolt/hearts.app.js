@@ -91,7 +91,7 @@ app.event('app_home_opened', async ({ body, event }) => {
       await postMessage(houseId, text);
     }
 
-    // Regenerate the monthly half-heart
+    // Regenerate lost hearts // decay karma hearts
     const [ regenHeart ] = await Hearts.regenerateHearts(houseId, residentId, now);
     if (regenHeart !== undefined && regenHeart.value > 0) {
       const text = `You regenerated *${regenHeart.value.toFixed(1)}* heart(s)!`;
