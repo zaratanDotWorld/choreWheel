@@ -6,15 +6,6 @@ const common = require('./common');
 
 const TITLE = common.blockPlaintext('Things');
 
-exports.parseResolvedThingBuys = function (unfulfilledBuys) {
-  return unfulfilledBuys
-    .filter((buy) => buy.resolvedAt)
-    .map((buy) => {
-      const resolvedAt = buy.resolvedAt.toLocaleDateString();
-      return `\n#${buy.id} [${resolvedAt}] ${exports.formatBuy(buy)}`;
-    });
-};
-
 exports.formatThing = function (thing) {
   if (thing.metadata) {
     return `${thing.name} (${thing.metadata.unit}) - $${thing.value}`;
@@ -46,6 +37,8 @@ exports.formatBuy = function (buy) {
   return text;
 };
 
+// Home view
+
 exports.thingsHomeView = function (balance, exempt) {
   const docsUrl = 'https://github.com/zaratanDotWorld/mirror/wiki/Things';
 
@@ -75,6 +68,46 @@ exports.thingsHomeView = function (balance, exempt) {
     blocks,
   };
 };
+
+// Slash commands
+
+exports.thingsFulfillView = function (unfulfilledBuys) {
+  const header = 'Fulfill some buys';
+  const text = 'Once you\'ve fulfilled some buys, you can check them off here.';
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(text));
+  blocks.push(common.blockDivider());
+  blocks.push(common.blockInput(
+    'Buys to fulfill',
+    {
+      action_id: 'buys',
+      type: 'multi_static_select',
+      placeholder: common.blockPlaintext('Choose some buys'),
+      options: unfulfilledBuys
+        .filter((buy) => buy.resolvedAt)
+        .map((buy) => {
+          const resolvedAt = buy.resolvedAt.toLocaleDateString();
+          return {
+            value: JSON.stringify({ id: buy.id }),
+            text: common.blockPlaintext(`[${resolvedAt}] ${exports.formatBuy(buy)}`),
+          };
+        }),
+    },
+  ));
+
+  return {
+    type: 'modal',
+    callback_id: 'things-fulfill-callback',
+    title: TITLE,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
+    blocks,
+  };
+};
+
+// Core actions
 
 exports.thingsBuyView = function (things) {
   const header = 'Buy a thing';
@@ -106,7 +139,6 @@ exports.thingsBuyView = function (things) {
       ),
     },
   ));
-
   blocks.push(common.blockInput(
     'Amount to buy',
     {
