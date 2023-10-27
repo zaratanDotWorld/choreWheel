@@ -18,13 +18,9 @@ features:
       url: https://things.mirror.zaratan.world/slack/events
       description: Load money into the house account
       usage_hint: "[amount]"
-    - command: /things-resolved
-      url: https://things.mirror.zaratan.world/slack/events
-      description: Get list of resolved buys
     - command: /things-fulfill
       url: https://things.mirror.zaratan.world/slack/events
       description: Mark buys as fulfilled
-      usage_hint: "[id] [id] ..."
 oauth_config:
   redirect_urls:
     - https://things.mirror.zaratan.world/slack/oauth_redirect
