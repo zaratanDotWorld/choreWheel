@@ -50,6 +50,11 @@ async function postMessage (houseId, text, blocks) {
   return common.postMessage(app, thingsOauth, metadata.thingsChannel, text, blocks);
 }
 
+async function postEphemeral (houseId, residentId, text) {
+  const { metadata } = await Admin.getHouse(houseId);
+  return common.postEphemeral(app, thingsOauth, metadata.thingsChannel, residentId, text);
+}
+
 async function replyEphemeral (command, text) {
   return common.replyEphemeral(app, thingsOauth, command, text);
 }
@@ -115,52 +120,41 @@ app.command('/things-load', async ({ ack, command }) => {
   }
 });
 
-app.command('/things-resolved', async ({ ack, command }) => {
-  console.log('/things-resolved');
-  await ack();
-
-  let text;
-
-  if (command.text === 'help') {
-    text = 'Show a list of resolved buys, including their buy id. ' +
-    'Buys are resolved after 12 hours, assuming they have received enough upvotes';
-  } else {
-    const now = new Date();
-    const houseId = command.team_id;
-
-    const unfulfilledBuys = await Things.getUnfulfilledThingBuys(houseId, now);
-    const parsedResolvedBuys = views.parseResolvedThingBuys(unfulfilledBuys);
-    text = `Resolved buys not yet fulfilled:${parsedResolvedBuys}`;
-  }
-
-  await replyEphemeral(command, text);
-});
-
 app.command('/things-fulfill', async ({ ack, command }) => {
   console.log('/things-fulfill');
   await ack();
 
-  let text;
-
-  if (command.text === 'help' || command.text.length === 0) {
-    text = 'Indicate that buys have been externally fulfilled, and remove them from the list. ' +
-    'You can fulfill many buys at once by including multiple soace-separated ids, e.g. 23 24 25 28. ' +
-    'Fulfilled buys are indicated by their buy id, which you can see by calling /things-resolved.';
+  if (command.text === 'help') {
+    await replyEphemeral(command, 'Allow workspace admins to fulfill resolved buys.');
   } else if (await common.isAdmin(app, thingsOauth, command)) {
     const now = new Date();
-    const residentId = command.user_id;
-    const buyIds = command.text.split(' ');
+    const houseId = command.team_id;
 
-    for (const buyId of buyIds) {
-      await Things.fulfillThingBuy(buyId, residentId, now);
-    }
-
-    text = `Fulfilled the following buys: ${buyIds.join(' ')}`;
+    const unfulfilledBuys = await Things.getUnfulfilledThingBuys(houseId, now);
+    const view = views.thingsFulfillView(unfulfilledBuys);
+    await common.openView(app, thingsOauth, command.trigger_id, view);
   } else {
-    text = ':warning: Only admins can fulfill buys...';
+    await replyEphemeral(command, ':warning: Only admins can fulfill buys...');
+  }
+});
+
+app.view('things-fulfill-callback', async ({ ack, body }) => {
+  console.log('things-fulfill-callback');
+  await ack();
+
+  const now = new Date();
+  const houseId = body.team.id;
+  const residentId = body.user.id;
+
+  const buys = common.getInputBlock(body, -1).buys.selected_options
+    .map((buy) => JSON.parse(buy.value));
+
+  for (const buy of buys) {
+    await Things.fulfillThingBuy(buy.id, residentId, now);
   }
 
-  await replyEphemeral(command, text);
+  const text = 'Fulfillment succeeded :shopping_bags:';
+  await postEphemeral(houseId, residentId, text);
 });
 
 // Buy flow
