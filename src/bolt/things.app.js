@@ -102,10 +102,14 @@ app.command('/things-load', async ({ ack, command }) => {
   console.log('/things-load');
   await ack();
 
+  if (!(await common.isAdmin(app, thingsOauth, command))) {
+    await common.replyAdminOnly(app, thingsOauth, command);
+    return;
+  }
+
   if (command.text === 'help' || command.text.length === 0) {
-    const text = 'Enter an amount of money to add to the account for future buys.';
-    await replyEphemeral(command, text);
-  } else if (await common.isAdmin(app, thingsOauth, command)) {
+    await replyEphemeral(command, 'Enter an amount of money to add to the account.');
+  } else {
     const now = new Date();
     const houseId = command.team_id;
     const residentId = command.user_id;
@@ -114,9 +118,6 @@ app.command('/things-load', async ({ ack, command }) => {
 
     const text = `*<@${thing.boughtBy}>* just loaded *$${thing.value}* into the house account :chart_with_upwards_trend:`;
     await postMessage(houseId, text);
-  } else {
-    const text = ':warning: Only admins can load the house account...';
-    await replyEphemeral(command, text);
   }
 });
 
@@ -124,17 +125,20 @@ app.command('/things-fulfill', async ({ ack, command }) => {
   console.log('/things-fulfill');
   await ack();
 
+  if (!(await common.isAdmin(app, thingsOauth, command))) {
+    await common.replyAdminOnly(app, thingsOauth, command);
+    return;
+  }
+
   if (command.text === 'help') {
     await replyEphemeral(command, 'Allow workspace admins to fulfill resolved buys.');
-  } else if (await common.isAdmin(app, thingsOauth, command)) {
+  } else {
     const now = new Date();
     const houseId = command.team_id;
 
     const unfulfilledBuys = await Things.getUnfulfilledThingBuys(houseId, now);
     const view = views.thingsFulfillView(unfulfilledBuys);
     await common.openView(app, thingsOauth, command.trigger_id, view);
-  } else {
-    await replyEphemeral(command, ':warning: Only admins can fulfill buys...');
   }
 });
 

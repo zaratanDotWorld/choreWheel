@@ -190,13 +190,18 @@ exports.introHomeView = function (appName) {
   };
 };
 
+exports.replyAdminOnly = function (app, oauth, command) {
+  const text = ':warning: This function is admin-only :warning:';
+  return exports.replyEphemeral(app, oauth, command, text);
+};
+
 exports.updateVoteCounts = async function (app, oauth, body, action) {
   const now = new Date();
   const channelId = body.channel.id;
   const residentId = body.user.id;
 
   if (await Admin.isExempt(residentId, now)) {
-    const text = ':warning: Exempt residents are not allowed to vote...';
+    const text = ':warning: Exempt residents are not allowed to vote :warning:';
     await exports.postEphemeral(app, oauth, channelId, residentId, text);
   } else {
     const { pollId, value } = JSON.parse(action.value);
