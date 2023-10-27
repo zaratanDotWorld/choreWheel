@@ -18,7 +18,7 @@ exports.formatTypedThing = function (thing) {
   return `${thing.type}: ${exports.formatThing(thing)}`;
 };
 
-exports.formatBuy = function (buy) {
+exports.formatBuy = function (buy, url = true) {
   let text;
 
   if (buy.metadata && buy.metadata.special) {
@@ -29,7 +29,7 @@ exports.formatBuy = function (buy) {
     text = `${buy.type}: ${buy.name} (?)`;
   }
 
-  if (buy.thingMetadata && buy.thingMetadata.url) {
+  if (url && buy.thingMetadata && buy.thingMetadata.url) {
     text = `<${buy.thingMetadata.url}|${text}>`;
   }
 
@@ -88,10 +88,9 @@ exports.thingsFulfillView = function (unfulfilledBuys) {
       options: unfulfilledBuys
         .filter((buy) => buy.resolvedAt)
         .map((buy) => {
-          const resolvedAt = buy.resolvedAt.toLocaleDateString();
           return {
             value: JSON.stringify({ id: buy.id }),
-            text: common.blockPlaintext(`[${resolvedAt}] ${exports.formatBuy(buy)}`),
+            text: common.blockPlaintext(exports.formatBuy(buy, false).slice(0, 75)),
           };
         }),
     },
