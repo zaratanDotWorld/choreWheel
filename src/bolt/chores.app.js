@@ -124,6 +124,11 @@ app.command('/chores-exempt', async ({ ack, command }) => {
   console.log('/chores-exempt');
   await ack();
 
+  if (!(await common.isAdmin(app, choresOauth, command))) {
+    await common.replyAdminOnly(app, choresOauth, command);
+    return;
+  }
+
   const now = new Date();
   const houseId = command.team_id;
 
@@ -139,7 +144,7 @@ app.command('/chores-exempt', async ({ ack, command }) => {
       .sort((a, b) => a.exemptAt < b.exemptAt)
       .map(r => `\n${r.exemptAt.toDateString()} - <@${r.slackId}>`)
       .join('');
-  } else if (await common.isAdmin(app, choresOauth, command)) {
+  } else {
     const flag = command.text.split(' ')[0];
     const args = command.text.split(' ').slice(1).join(' ');
     const residentIds = common.parseEscapedUsernames(args);
@@ -159,8 +164,6 @@ app.command('/chores-exempt', async ({ ack, command }) => {
     } else {
       text = 'Please start command with either "list" "yes" or "no"';
     }
-  } else {
-    text = ':warning: Only admins can exempt residents...';
   }
 
   await common.replyEphemeral(app, choresOauth, command, text);
