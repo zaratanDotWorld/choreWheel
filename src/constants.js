@@ -9,8 +9,8 @@ exports.CANCEL = undefined;
 
 exports.SLACKBOT = 'USLACKBOT';
 
-exports.HEART_TYPE_UNKNOWN = 0;
-exports.HEART_TYPE_REGEN = 1;
-exports.HEART_TYPE_CHALLENGE = 2;
-exports.HEART_TYPE_KARMA = 3;
-exports.HEART_TYPE_CHORE = 4;
+exports.HEART_UNKNOWN = 0;
+exports.HEART_REGEN = 1;
+exports.HEART_CHALLENGE = 2;
+exports.HEART_KARMA = 3;
+exports.HEART_CHORE = 4;
