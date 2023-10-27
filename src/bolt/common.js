@@ -178,6 +178,18 @@ exports.syncWorkspaceChannels = async function (app, oauth) {
   return workspaceChannels.length;
 };
 
+exports.introHomeView = function (appName) {
+  const commandName = `/${voca.lowerCase(appName)}-channel`;
+
+  const text = `:wave::skin-tone-4: Thanks for installing *${appName}.*\n\n` +
+    `Set a channel using \`${commandName}\` to unlock app functionality.`;
+
+  return {
+    type: 'home',
+    blocks: [ exports.blockSection(text) ],
+  };
+};
+
 exports.updateVoteCounts = async function (app, oauth, body, action) {
   const now = new Date();
   const channelId = body.channel.id;

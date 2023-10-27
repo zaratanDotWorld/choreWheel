@@ -62,21 +62,29 @@ async function postEphemeral (houseId, residentId, text) {
 app.event('app_home_opened', async ({ body, event }) => {
   if (event.tab === 'home') {
     console.log('chores home');
+
+    const now = new Date();
     const houseId = body.team_id;
     const residentId = event.user;
 
-    const now = new Date();
-    const monthStart = getMonthStart(now);
-
     await Admin.activateResident(houseId, residentId, now);
-    const exempt = await Admin.isExempt(residentId, now);
 
-    const chorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
-    const workingPercentage = await Chores.getWorkingResidentPercentage(residentId, now);
-    const workingResidentCount = await Chores.getWorkingResidentCount(houseId, now);
-    const pointsOwed = workingPercentage * pointsPerResident;
+    let view;
+    if ((await Admin.getHouse(houseId)).metadata.choresChannel) {
+      const monthStart = getMonthStart(now);
+      const chorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
 
-    const view = views.choresHomeView(chorePoints.sum || 0, pointsOwed, workingResidentCount, exempt);
+      const workingPercentage = await Chores.getWorkingResidentPercentage(residentId, now);
+      const pointsOwed = workingPercentage * pointsPerResident;
+
+      const workingResidentCount = await Chores.getWorkingResidentCount(houseId, now);
+      const exempt = await Admin.isExempt(residentId, now);
+
+      view = views.choresHomeView(chorePoints.sum || 0, pointsOwed, workingResidentCount, exempt);
+    } else {
+      view = common.introHomeView('Chores');
+    }
+
     await common.publishHome(app, choresOauth, residentId, view);
 
     // This bookkeeping is done after returning the view

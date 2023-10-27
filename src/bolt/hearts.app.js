@@ -61,17 +61,24 @@ async function postEphemeral (houseId, residentId, text) {
 app.event('app_home_opened', async ({ body, event }) => {
   if (event.tab === 'home') {
     console.log('hearts home');
+
+    const now = new Date();
     const houseId = body.team_id;
     const residentId = event.user;
 
-    const now = new Date();
     await Admin.activateResident(houseId, residentId, now);
     await Hearts.initialiseResident(houseId, residentId, now);
 
-    const exempt = await Admin.isExempt(residentId, now);
-    const hearts = await Hearts.getHearts(residentId, now);
+    let view;
+    if ((await Admin.getHouse(houseId)).metadata.heartsChannel) {
+      const hearts = await Hearts.getHearts(residentId, now);
+      const exempt = await Admin.isExempt(residentId, now);
 
-    const view = views.heartsHomeView(hearts.sum || 0, exempt);
+      view = views.heartsHomeView(hearts.sum || 0, exempt);
+    } else {
+      view = common.introHomeView('Hearts');
+    }
+
     await common.publishHome(app, heartsOauth, residentId, view);
 
     // This bookkeeping is done after returning the view
