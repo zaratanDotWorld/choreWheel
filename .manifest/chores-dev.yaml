@@ -16,6 +16,10 @@ features:
     - command: /chores-sync
       url: https://zaratan.ngrok.io/slack/events
       description: Sync active residents
+    - command: /chores-stats
+      url: https://zaratan.ngrok.io/slack/events
+      description: Show more details about monthly chores
+      should_escape: true
     - command: /chores-exempt
       url: https://zaratan.ngrok.io/slack/events
       description: Exempt residents from chores
