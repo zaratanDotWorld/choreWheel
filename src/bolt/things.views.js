@@ -319,7 +319,7 @@ exports.thingsProposeView = function (minVotes) {
   };
 };
 
-exports.thingsProposeEditView = function (things) {
+exports.thingsProposeEditView = function (things, branch = '') {
   const header = 'Edit things list';
   const mainText = 'Change an existing thing.';
 
@@ -329,7 +329,7 @@ exports.thingsProposeEditView = function (things) {
   blocks.push(common.blockActions([
     {
       type: 'static_select',
-      action_id: 'things-propose-edit',
+      action_id: `things-propose-edit${branch}`,
       placeholder: common.blockPlaintext('Choose a thing'),
       options: things.map((thing) => {
         return {
@@ -349,7 +349,7 @@ exports.thingsProposeEditView = function (things) {
 };
 
 // NOTE: used for both add and edit flows
-exports.thingsProposeAddView = function (thing) {
+exports.thingsProposeAddView = function (thing, branch = '') {
   const header = 'Edit things list';
   let metadata, mainText;
 
@@ -414,7 +414,7 @@ exports.thingsProposeAddView = function (thing) {
 
   return {
     type: 'modal',
-    callback_id: 'things-propose-callback',
+    callback_id: `things-propose-callback${branch}`,
     private_metadata: metadata,
     title: TITLE,
     close: common.CLOSE,
