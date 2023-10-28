@@ -302,10 +302,17 @@ exports.getChoreBreaks = async function (houseId, now) {
 };
 
 // Working residents are voting residents not on break
-exports.getWorkingResidentCount = async function (houseId, now) {
+exports.getWorkingResidents = async function (houseId, now) {
   const residents = await Admin.getVotingResidents(houseId, now);
   const choreBreaks = await exports.getChoreBreaks(houseId, now);
-  return residents.length - (new Set(choreBreaks.map(cb => cb.residentId))).size;
+
+  const breakSet = new Set(choreBreaks.map(cb => cb.residentId));
+  return residents.filter(r => !breakSet.has(r.slackId));
+};
+
+exports.getWorkingResidentCount = async function (houseId, now) {
+  const workingResidents = await exports.getWorkingResidents(houseId, now);
+  return workingResidents.length;
 };
 
 exports.getWorkingResidentPercentage = async function (residentId, now) {
