@@ -28,6 +28,13 @@ exports.isAdmin = async function (app, oauth, command) {
   return user.is_admin;
 };
 
+exports.parseUrl = function (url) {
+  url = url.startsWith('http') ? url : `https://${url}`;
+  try {
+    return new URL(url);
+  } catch {}
+};
+
 // Publishing
 
 exports.replyEphemeral = async function (app, oauth, command, text) {

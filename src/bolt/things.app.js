@@ -130,16 +130,13 @@ app.command('/things-fulfill', async ({ ack, command }) => {
     return;
   }
 
-  if (command.text === 'help') {
-    await replyEphemeral(command, 'Allow workspace admins to fulfill resolved buys.');
-  } else {
-    const now = new Date();
-    const houseId = command.team_id;
+  const now = new Date();
+  const houseId = command.team_id;
 
-    const unfulfilledBuys = await Things.getUnfulfilledThingBuys(houseId, now);
-    const view = views.thingsFulfillView(unfulfilledBuys);
-    await common.openView(app, thingsOauth, command.trigger_id, view);
-  }
+  const unfulfilledBuys = await Things.getUnfulfilledThingBuys(houseId, now);
+
+  const view = views.thingsFulfillView(unfulfilledBuys);
+  await common.openView(app, thingsOauth, command.trigger_id, view);
 });
 
 app.view('things-fulfill-callback', async ({ ack, body }) => {
@@ -158,6 +155,52 @@ app.view('things-fulfill-callback', async ({ ack, body }) => {
   }
 
   const text = 'Fulfillment succeeded :shopping_bags:';
+  await postEphemeral(houseId, residentId, text);
+});
+
+app.command('/things-update', async ({ ack, command }) => {
+  console.log('/things-update');
+  await ack();
+
+  if (!(await common.isAdmin(app, thingsOauth, command))) {
+    await common.replyAdminOnly(app, thingsOauth, command);
+    return;
+  }
+
+  const houseId = command.team_id;
+  const things = await Things.getThings(houseId);
+
+  // TODO: improve this (hacky) implementation
+  const view = views.thingsProposeEditView(things, '-admin');
+  await common.openView(app, thingsOauth, command.trigger_id, view);
+});
+
+app.action('things-propose-edit-admin', async ({ ack, body }) => {
+  console.log('things-update-2');
+  await ack();
+
+  const { id: thingId } = JSON.parse(body.actions[0].selected_option.value);
+  const thing = await Things.getThing(thingId);
+
+  const blocks = views.thingsProposeAddView(thing, '-admin');
+  await common.pushView(app, thingsOauth, body.trigger_id, blocks);
+});
+
+app.view('things-propose-callback-admin', async ({ ack, body }) => {
+  console.log('things-update-callback');
+  await ack({ response_action: 'clear' });
+
+  const houseId = body.team.id;
+  const residentId = body.user.id;
+
+  const { thing } = JSON.parse(body.view.private_metadata);
+  const { type, name, unit, value, url } = parseThingsEditSubmission(body);
+
+  // Update the thing
+  const metadata = { unit, url };
+  await Things.editThing(thing.id, type, name, value, metadata, true);
+
+  const text = 'Update succeeded :floppy_disk:';
   await postEphemeral(houseId, residentId, text);
 });
 
@@ -315,26 +358,17 @@ app.view('things-propose-callback', async ({ ack, body }) => {
   const houseId = body.team.id;
   const residentId = body.user.id;
 
-  function parseSubmission (body) {
-    const type = common.parseTitlecase(common.getInputBlock(body, -5).type.value);
-    const name = common.parseTitlecase(common.getInputBlock(body, -4).name.value);
-    const unit = common.parseLowercase(common.getInputBlock(body, -3).unit.value);
-    const value = common.getInputBlock(body, -2).cost.value;
-    const url = common.getInputBlock(body, -1).url.value;
-    return { type, name, unit, value, url };
-  }
-
   let thingId, type, name, value, unit, url, active;
   const privateMetadata = JSON.parse(body.view.private_metadata);
 
   switch (privateMetadata.change) {
     case 'add':
       // TODO: if thing exists, return ephemeral and exit
-      ({ type, name, unit, value, url } = parseSubmission(body));
+      ({ type, name, unit, value, url } = parseThingsEditSubmission(body));
       [ thingId, active ] = [ null, true ];
       break;
     case 'edit':
-      ({ type, name, unit, value, url } = parseSubmission(body));
+      ({ type, name, unit, value, url } = parseThingsEditSubmission(body));
       [ thingId, active ] = [ privateMetadata.thing.id, true ];
       break;
     case 'delete':
@@ -344,13 +378,6 @@ app.view('things-propose-callback', async ({ ack, body }) => {
     default:
       console.log('No match found!');
       return;
-  }
-
-  // Validate URL
-  try {
-    url = new URL(url);
-  } catch {
-    url = undefined;
   }
 
   // Create the thing proposal
@@ -374,6 +401,17 @@ app.action(/poll-vote/, async ({ ack, body, action }) => {
 
   await common.updateVoteCounts(app, thingsOauth, body, action);
 });
+
+// Utils
+
+function parseThingsEditSubmission (body) {
+  const type = common.parseTitlecase(common.getInputBlock(body, -5).type.value);
+  const name = common.parseTitlecase(common.getInputBlock(body, -4).name.value);
+  const unit = common.parseLowercase(common.getInputBlock(body, -3).unit.value);
+  const value = common.getInputBlock(body, -2).cost.value;
+  const url = common.parseUrl(common.getInputBlock(body, -1).url.value);
+  return { type, name, unit, value, url };
+}
 
 // Launch the app
 
