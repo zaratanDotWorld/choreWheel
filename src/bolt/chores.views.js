@@ -6,6 +6,8 @@ const common = require('./common');
 
 const TITLE = common.blockPlaintext('Chores');
 
+// Home view
+
 exports.choresHomeView = function (balance, owed, numActive, exempt) {
   const progressEmoji = (owed - balance < penaltyIncrement) ? ':white_check_mark:' : ':muscle::skin-tone-4:';
   const docsUrl = 'https://github.com/zaratanDotWorld/mirror/wiki/Chores';
@@ -45,6 +47,36 @@ exports.choresHomeView = function (balance, owed, numActive, exempt) {
     blocks,
   };
 };
+
+// Slash commands
+
+exports.choresStatsView = function (choreBreaks, workingResidents) {
+  const header = 'See chore details';
+  const mainText = 'Extra details about monthly chores.';
+
+  const breakText = '*Your chore breaks:*\n' +
+    choreBreaks.map(cb => `\n${cb.startDate.toDateString()} - ${cb.endDate.toDateString()}`)
+      .join('');
+
+  const workingText = '*Around today:*\n' +
+    workingResidents.map(wr => `\n<@${wr.slackId}>`)
+      .join('');
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockSection(breakText));
+  blocks.push(common.blockSection(workingText));
+
+  return {
+    type: 'modal',
+    title: TITLE,
+    close: common.CLOSE,
+    blocks,
+  };
+};
+
+// Main actions
 
 exports.choresClaimView = function (chores) {
   const header = 'Claim a chore';

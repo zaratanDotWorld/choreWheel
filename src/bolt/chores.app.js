@@ -120,6 +120,22 @@ app.command('/chores-channel', async ({ ack, command }) => {
   await common.setChannel(app, choresOauth, 'choresChannel', command);
 });
 
+app.command('/chores-stats', async ({ ack, command }) => {
+  console.log('/chores-stats');
+  await ack();
+
+  const now = new Date();
+  const houseId = command.team_id;
+  const residentId = command.user_id;
+
+  const workingResidents = await Chores.getWorkingResidents(houseId, now);
+  const choreBreaks = (await Chores.getChoreBreaks(houseId, now))
+    .filter(cb => cb.residentId === residentId);
+
+  const view = views.choresStatsView(choreBreaks, workingResidents);
+  await common.openView(app, choresOauth, command.trigger_id, view);
+});
+
 app.command('/chores-exempt', async ({ ack, command }) => {
   console.log('/chores-exempt');
   await ack();
