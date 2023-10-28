@@ -14,13 +14,20 @@ features:
     - command: /things-channel
       url: https://things.mirror.zaratan.world/slack/events
       description: Use the current channel for app events
+      should_escape: false
     - command: /things-load
       url: https://things.mirror.zaratan.world/slack/events
       description: Load money into the house account
+      should_escape: false
       usage_hint: "[amount]"
     - command: /things-fulfill
       url: https://things.mirror.zaratan.world/slack/events
       description: Mark buys as fulfilled
+      should_escape: false
+    - command: /things-update
+      url: https://things.mirror.zaratan.world/slack/events
+      description: Update thing details
+      should_escape: false
 oauth_config:
   redirect_urls:
     - https://things.mirror.zaratan.world/slack/oauth_redirect
