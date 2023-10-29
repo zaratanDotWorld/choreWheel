@@ -13,18 +13,19 @@ features:
     - command: /chores-channel
       url: https://chores.mirror.zaratan.world/slack/events
       description: Use the current channel for app events
+      should_escape: false
     - command: /chores-sync
       url: https://chores.mirror.zaratan.world/slack/events
       description: Sync active residents
+      should_escape: false
     - command: /chores-stats
       url: https://chores.mirror.zaratan.world/slack/events
       description: Show more details about monthly chores
-      should_escape: true
+      should_escape: false
     - command: /chores-exempt
       url: https://chores.mirror.zaratan.world/slack/events
       description: Exempt residents from chores
-      usage_hint: list, yes/no [@resident] [@resident] ...
-      should_escape: true
+      should_escape: false
 oauth_config:
   redirect_urls:
     - https://chores.mirror.zaratan.world/slack/oauth_redirect
