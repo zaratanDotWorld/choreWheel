@@ -77,6 +77,51 @@ exports.choresStatsView = function (choreBreaks, workingResidents) {
   };
 };
 
+exports.choresExemptView = function (exemptResidents) {
+  const header = 'Set chore exemptions';
+  const mainText = 'Exempt residents are excused from chores and cannot create or vote on polls.';
+
+  const exemptText = '*Current exemptions:*\n' +
+    exemptResidents
+      .sort((a, b) => a.exemptAt < b.exemptAt)
+      .map(r => `\n${r.exemptAt.toDateString()} - <@${r.slackId}>`)
+      .join('');
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockSection(exemptText));
+  blocks.push(common.blockDivider());
+  blocks.push(common.blockInput(
+    'Action',
+    {
+      action_id: 'action',
+      type: 'radio_buttons',
+      options: [
+        { value: 'exempt', text: common.blockMarkdown('*Exempt* some residents') },
+        { value: 'unexempt', text: common.blockMarkdown('*Unexempt* some residents') },
+      ],
+    },
+  ));
+  blocks.push(common.blockInput(
+    'Residents',
+    {
+      action_id: 'residents',
+      type: 'multi_users_select',
+      placeholder: common.blockPlaintext('Choose some residents'),
+    },
+  ));
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-exempt-callback',
+    title: TITLE,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
+    blocks,
+  };
+};
+
 // Main actions
 
 exports.choresClaimView = function (chores) {

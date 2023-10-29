@@ -148,41 +148,45 @@ app.command('/chores-exempt', async ({ ack, command }) => {
   const now = new Date();
   const houseId = command.team_id;
 
+  const exemptResidents = (await Admin.getResidents(houseId))
+    .filter(r => r.exemptAt && r.exemptAt <= now);
+
+  const view = views.choresExemptView(exemptResidents);
+  await common.openView(app, choresOauth, command.trigger_id, view);
+});
+
+app.view('chores-exempt-callback', async ({ ack, body }) => {
+  console.log('chores-exempt-callback');
+  await ack();
+
+  const now = new Date();
+  const houseId = body.team.id;
+  const residentId = body.user.id;
+
+  const action = common.getInputBlock(body, -2).action.selected_option.value;
+  const residentIds = common.getInputBlock(body, -1).residents.selected_users;
+
   let text;
 
-  if (command.text === 'help' || command.text.length === 0) {
-    text = 'Enter "list" to see exempt residents, ' +
-    'or "yes" or "no" followed by the residents to exempt (or unexempt).';
-  } else if (command.text === 'list') {
-    const residents = await Admin.getResidents(houseId);
-    text = '*Exempt Residents:*' + residents
-      .filter(r => r.exemptAt && r.exemptAt <= now)
-      .sort((a, b) => a.exemptAt < b.exemptAt)
-      .map(r => `\n${r.exemptAt.toDateString()} - <@${r.slackId}>`)
-      .join('');
-  } else {
-    const flag = command.text.split(' ')[0];
-    const args = command.text.split(' ').slice(1).join(' ');
-    const residentIds = common.parseEscapedUsernames(args);
-
-    if (flag === 'yes') {
-      text = 'Exempted';
+  switch (action) {
+    case 'exempt':
       for (const residentId of residentIds) {
-        text += ` <@${residentId}>`;
         await Admin.exemptResident(houseId, residentId, now);
       }
-    } else if (flag === 'no') {
-      text = 'Unexempted';
+      text = 'Exemption succeeded :fire:';
+      break;
+    case 'unexempt':
       for (const residentId of residentIds) {
-        text += ` <@${residentId}>`;
         await Admin.unexemptResident(houseId, residentId);
       }
-    } else {
-      text = 'Please start command with either "list" "yes" or "no"';
-    }
+      text = 'Unexemption succeeded :fire:';
+      break;
+    default:
+      console.log('No match found!');
+      return;
   }
 
-  await common.replyEphemeral(app, choresOauth, command, text);
+  await postEphemeral(houseId, residentId, text);
 });
 
 // Claim flow
