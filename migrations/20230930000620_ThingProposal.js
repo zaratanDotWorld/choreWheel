@@ -13,7 +13,7 @@ exports.up = function(knex) {
     t.string('name').notNull();
     t.float('value').notNull().defaultTo(0);
     t.boolean('active').notNull().defaultTo(true);
-    t.json('metadata').notNull().defaultTo({});
+    t.jsonb('metadata').notNull().defaultTo({});
     t.integer('pollId').references('Poll.id').notNull();
     t.timestamp('resolvedAt');
   });

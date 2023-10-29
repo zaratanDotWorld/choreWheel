@@ -6,7 +6,7 @@ exports.up = function(knex, Promise) {
         t.timestamp('startTime').notNull();
         t.timestamp('endTime').notNull();
         t.integer('minVotes').notNull();
-        t.json('metadata').notNull().defaultTo({});
+        t.jsonb('metadata').notNull().defaultTo({});
     });
 };
 

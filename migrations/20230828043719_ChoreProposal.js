@@ -11,7 +11,7 @@ exports.up = function(knex) {
     t.integer('choreId').references('Chore.id');
     t.string('name');
     t.boolean('active').notNull().defaultTo(true);
-    t.json('metadata').notNull().defaultTo({});
+    t.jsonb('metadata').notNull().defaultTo({});
     t.integer('pollId').references('Poll.id').notNull();
     t.timestamp('resolvedAt');
   });

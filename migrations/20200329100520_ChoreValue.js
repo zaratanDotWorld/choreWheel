@@ -6,7 +6,7 @@ exports.up = function(knex, Promise) {
         t.integer('choreId').references('Chore.id').notNull();
         t.timestamp('valuedAt').notNull();
         t.float('value').notNull();
-        t.json('metadata').notNull().defaultTo({});
+        t.jsonb('metadata').notNull().defaultTo({});
     });
 };
 

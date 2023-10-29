@@ -14,7 +14,7 @@ exports.up = function(knex) {
         t.integer('pollId').references('Poll.id').notNull();
         t.timestamp('resolvedAt');
         t.integer('heartId').references('Heart.id');
-        t.json('metadata').notNull().defaultTo({});
+        t.jsonb('metadata').notNull().defaultTo({});
         t.check('?? != ??', ['challengerId', 'challengeeId']);
     });
 };

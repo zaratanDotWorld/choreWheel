@@ -7,7 +7,7 @@ exports.up = function(knex, Promise) {
         t.string('name').notNull();
         t.float('value').notNull().defaultTo(0);
         t.boolean('active').notNull().defaultTo(true);
-        t.json('metadata').notNull().defaultTo({});
+        t.jsonb('metadata').notNull().defaultTo({});
         t.unique(['houseId', 'type', 'name']);
     });
 };

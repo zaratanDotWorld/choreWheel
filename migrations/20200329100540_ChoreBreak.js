@@ -6,7 +6,7 @@ exports.up = function(knex, Promise) {
         t.string('residentId').references('Resident.slackId').notNull();
         t.date('startDate').notNull();
         t.date('endDate').notNull();
-        t.json('metadata').notNull().defaultTo({});
+        t.jsonb('metadata').notNull().defaultTo({});
         t.check('?? < ??', ['startDate', 'endDate']);
     });
 };

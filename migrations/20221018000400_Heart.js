@@ -11,7 +11,7 @@ exports.up = function(knex) {
         t.tinyint('type').notNull().defaultTo(0);
         t.timestamp('generatedAt').notNull();
         t.float('value').notNull();
-        t.json('metadata').notNull().defaultTo({});
+        t.jsonb('metadata').notNull().defaultTo({});
     });
 };
 
