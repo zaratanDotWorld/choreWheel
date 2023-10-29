@@ -255,14 +255,6 @@ exports.parseLowercase = function (text) {
   return voca(text).trim().lowerCase().value();
 };
 
-exports.parseEscapedUsernames = function (text) {
-  let match;
-  const matches = [];
-  const regex = /<@(\w+)\|[\w.]+>/g; // Matches`<@username|na.me>`
-  while ((match = regex.exec(text))) { matches.push(match[1]); }
-  return matches;
-};
-
 exports.getInputBlock = function (body, blockIdx) {
   // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
   const realIdx = (blockIdx < 0) ? body.view.blocks.length + blockIdx : blockIdx;
