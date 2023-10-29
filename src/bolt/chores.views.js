@@ -16,8 +16,9 @@ exports.choresHomeView = function (balance, owed, numActive, exempt) {
   const textA = `We use *<${docsUrl}|Chores>* to keep the house a nice place to live.\n\n` +
     'Instead of a chore wheel or schedule, everyone owes *100 points* per month (UTC time). ' +
     'You earn points by doing chores you want, on your terms.\n\n' +
-    'The points for a chore go up every hour until someone claims them. ' +
-    'If you feel a chore should be worth more (or less), you can change the speed at which it gains points.';
+    'The points for a chore go up *every hour* until someone claims them. ' +
+    'If you feel a chore should be worth more (or less), you can change it\'s *priority*. ' +
+    'If you think a chore should be *added, changed, or removed*, you can propose that as well.';
   const textB = (exempt)
     ? '*You are exempt from chores!* :tada:'
     : `You've earned *${balance.toFixed(0)} / ${owed.toFixed(0)} points* this month ${progressEmoji}`;
@@ -32,7 +33,7 @@ exports.choresHomeView = function (balance, owed, numActive, exempt) {
     actions.push(common.blockButton('chores-gift', 'Gift your points'));
     actions.push(common.blockButton('chores-propose', 'Edit chores list'));
   }
-  actions.push(common.blockButton('chores-rank', 'Set chore speeds'));
+  actions.push(common.blockButton('chores-rank', 'Set priorities'));
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
@@ -161,13 +162,11 @@ exports.choresClaimCallbackView = function (claim, choreName, totalPoints, month
 };
 
 exports.choresRankView = function () {
-  const header = 'Set chore speeds';
-  const mainText = 'If you feel a chore should be worth more (or less), you can adjust it\'s *speed*. ' +
-    'The *faster* a chore is, the more points it will be worth over time.\n\n' +
-    'Speed-setting is a *cumulative* process, where every input makes a difference. ' +
-    'It is also an *ongoing, collaborative* process: you can make small (or large) changes _at any time_, ' +
-    'and encourage others to do the same.\n\n' +
-    'First, decide whether you want to *speed up* or *slow down* a chore.';
+  const header = 'Set chore priorities';
+  const mainText = 'If you feel a chore should be worth more (or less), you can change it\'s *priority*. ' +
+    'The higher priority a chore is, the more points it will be worth over time.\n\n' +
+    'Priority-setting is a *cumulative, collaborative, and ongoing* process, ' +
+    'where every input makes a difference, and anyone can make small (or large) changes at any time.';
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
@@ -177,8 +176,8 @@ exports.choresRankView = function () {
       type: 'radio_buttons',
       action_id: 'chores-rank-2',
       options: [
-        { value: 'faster', text: common.blockMarkdown('*Speed up a chore* (worth more over time)') },
-        { value: 'slower', text: common.blockMarkdown('*Slow down a chore* (worth less over time)') },
+        { value: 'faster', text: common.blockMarkdown('*Prioritize a chore* (more points over time)') },
+        { value: 'slower', text: common.blockMarkdown('*Deprioritize a chore* (less points over time)') },
       ],
     },
   ]));
@@ -193,37 +192,37 @@ exports.choresRankView = function () {
 
 exports.choresRankView2 = function (direction, choreRankings) {
   const mappedChoreRankings = choreRankings.map((chore) => {
-    const choreSpeed = Math.round(chore.ranking * 1000);
+    const priority = Math.round(chore.ranking * 1000);
     return {
-      value: JSON.stringify({ id: chore.id, name: chore.name, speed: choreSpeed }),
-      text: common.blockPlaintext(`${chore.name} - ${choreSpeed} ppt`),
+      value: JSON.stringify({ id: chore.id, name: chore.name, priority }),
+      text: common.blockPlaintext(`${chore.name} - ${priority} ppt`),
     };
   });
 
-  const header = 'Set chore speeds';
+  const header = 'Set chore priorities';
   const mainText = 'Choose chores to update. ' +
-    'Chore speeds are measured in *points-per-thousand* (ppt) and always add up to *1000*. ' +
+    'Chore priorities are measured in *points-per-thousand* (ppt) and always add up to *1000*. ' +
     'A ppt of *0* means a chore gets no points, while a ppt of *1000* means a chore gets _all_ the points.\n\n' +
-    'You can think of updating as "taking" speed from some chores and giving it to others, ' +
-    'since something must get slower for something to get faster (and vice versa).\n\n' +
+    'You can think of updating as "taking" priority from some chores and giving it to others, ' +
+    'since something must lose priority for something to gain priority (and vice versa).\n\n' +
     '*Some things to keep in mind:*\n\n' +
     '*1.* Taking from *more chores* has a bigger effect.\n' +
-    '*2.* Taking from *faster chores* has a bigger effect.\n' +
+    '*2.* Taking from *high-priority chores* has a bigger effect.\n' +
     '*3.* *More participants* have a bigger effect.';
 
   const textA = direction === 'faster'
-    ? 'Chore to speed up (worth more over time)'
-    : 'Chore to slow down (worth less over time)';
+    ? 'Chore to prioritize'
+    : 'Chore to deprioritize';
   const textB = direction === 'faster'
-    ? 'Chores to slow down (worth less over time)'
-    : 'Chores to speed up (worth more over time)';
+    ? 'Chores to deprioritize'
+    : 'Chores to prioritize';
 
   const subTextA = direction === 'faster'
-    ? 'Choose a chore to be worth more'
-    : 'Choose a chore to be worth less';
+    ? 'Choose a chore to be worth more over time'
+    : 'Choose a chore to be worth less over time';
   const subTextB = direction === 'faster'
-    ? 'Choose some chores to be worth less'
-    : 'Choose some chores to be worth more';
+    ? 'Choose some chores to be worth less over time'
+    : 'Choose some chores to be worth more over time';
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
