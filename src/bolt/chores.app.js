@@ -270,7 +270,9 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
 
   const direction = body.view.private_metadata;
   const targetChore = JSON.parse(common.getInputBlock(body, -2).chores.selected_option.value);
-  const sourceChores = common.getInputBlock(body, -1).chores.selected_options.map((option) => JSON.parse(option.value));
+  const sourceChores = common.getInputBlock(body, -1).chores.selected_options
+    .map((option) => JSON.parse(option.value));
+
   const strength = 100 / 200 + 0.5; // Scale (0, 100) -> (0.5, 1.0)
   const preference = (direction === 'faster') ? strength : 1 - strength;
 
@@ -282,17 +284,17 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
 
   const choreRankings = await Chores.getCurrentChoreRankings(houseId);
   const targetChoreRanking = choreRankings.find((chore) => chore.id === targetChore.id);
-  const newSpeed = Math.round(targetChoreRanking.ranking * 1000);
+  const priority = Math.round(targetChoreRanking.ranking * 1000);
 
-  const bigChange = (1000 / choreRankings.length) / 5; // 20% of the average speed
-  const speedDiff = newSpeed - targetChore.speed;
-  const speedText = (Math.abs(speedDiff) > bigChange) ? 'a lot' : 'a little';
+  const bigChange = (1000 / choreRankings.length) / 5; // 20% of the average priority
+  const change = priority - targetChore.priority;
+  const changeText = (Math.abs(change) > bigChange) ? 'a lot' : 'a little';
 
-  if (speedDiff > 0) {
-    const text = `Someone sped up *${targetChore.name}* by *${speedText}*, to *${newSpeed} ppt* :rocket:`;
+  if (change > 0) {
+    const text = `Someone prioritized *${targetChore.name}* by *${changeText}*, to *${priority} ppt* :rocket:`;
     await postMessage(houseId, text);
-  } else if (speedDiff < 0) {
-    const text = `Someone slowed down *${targetChore.name}* by *${speedText}*, to *${newSpeed} ppt* :snail:`;
+  } else if (change < 0) {
+    const text = `Someone deprioritized *${targetChore.name}* by *${changeText}*, to *${priority} ppt* :snail:`;
     await postMessage(houseId, text);
   } else {
     const text = 'You\'ve already input those preferences.\n\n' +
