@@ -391,14 +391,6 @@ exports.calculatePenalty = async function (residentId, penaltyTime) {
 
 // Chore Point Gifting
 
-exports.getLargestChoreClaim = async function (residentId, startTime, endTime) {
-  return db('ChoreClaim')
-    .where({ claimedBy: residentId, valid: true })
-    .whereBetween('claimedAt', [ startTime, endTime ])
-    .orderBy('value', 'desc')
-    .first();
-};
-
 exports.giftChorePoints = async function (houseId, gifterId, recipientId, giftedAt, value) {
   const monthStart = getMonthStart(giftedAt);
   const gifterChorePoints = await exports.getAllChorePoints(gifterId, monthStart, giftedAt);

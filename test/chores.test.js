@@ -919,20 +919,6 @@ describe('Chores', async () => {
       [ restock ] = await Chores.addChore(HOUSE, 'restock');
     });
 
-    it('can get the largest valid chore claim', async () => {
-      await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: now, value: 10 },
-        { choreId: restock.id, valuedAt: now, value: 30 },
-        { choreId: sweeping.id, valuedAt: now, value: 20 },
-      ]);
-      await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
-      await Chores.claimChore(HOUSE, restock.id, RESIDENT1, now);
-      await Chores.claimChore(HOUSE, sweeping.id, RESIDENT1, now);
-
-      const choreClaim = await Chores.getLargestChoreClaim(RESIDENT1, now, now);
-      expect(choreClaim.value).to.equal(30);
-    });
-
     it('can gift chore points', async () => {
       await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10 } ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
