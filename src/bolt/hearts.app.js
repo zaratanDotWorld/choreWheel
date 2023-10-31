@@ -216,6 +216,12 @@ app.event('message', async ({ payload }) => {
 
     await common.addReaction(app, heartsOauth, payload, 'sparkles');
   }
+
+  if (karmaRecipients.length > 1 && karmaRecipients.length < 10) {
+    const numbers = [ 'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine' ];
+
+    await common.addReaction(app, heartsOauth, payload, numbers[karmaRecipients.length]);
+  }
 });
 
 // Launch the app
