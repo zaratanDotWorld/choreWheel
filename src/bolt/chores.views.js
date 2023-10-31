@@ -51,23 +51,24 @@ exports.choresHomeView = function (balance, owed, numActive, exempt) {
 
 // Slash commands
 
-exports.choresStatsView = function (choreBreaks, workingResidents) {
-  const header = 'See chore details';
-  const mainText = 'Extra details about monthly chores.';
+exports.choresStatsView = function (choreClaims, choreBreaks) {
+  const header = 'See chore stats';
+  const mainText = 'Extra information about monthly chores.';
 
-  const breakText = '*Your chore breaks:*\n' +
-    choreBreaks.map(cb => `\n${cb.startDate.toDateString()} - ${cb.endDate.toDateString()}`)
-      .join('');
+  const claimText = '*Your claimed chores:*\n' +
+  choreClaims.map(cc => `\n${cc.claimedAt.toDateString()} - ${cc.name} - ${cc.value.toFixed(1)} points`)
+    .join('');
 
-  const workingText = '*Around today:*\n' +
-    workingResidents.map(wr => `\n<@${wr.slackId}>`)
+  const breakText = '*Current chore breaks:*\n' +
+    choreBreaks.map(cb => `\n${cb.startDate.toDateString()} - ${cb.endDate.toDateString()} - <@${cb.residentId}>`)
       .join('');
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockDivider());
+  blocks.push(common.blockSection(claimText));
   blocks.push(common.blockSection(breakText));
-  blocks.push(common.blockSection(workingText));
 
   return {
     type: 'modal',
