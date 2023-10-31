@@ -128,11 +128,14 @@ app.command('/chores-stats', async ({ ack, command }) => {
   const houseId = command.team_id;
   const residentId = command.user_id;
 
-  const workingResidents = await Chores.getWorkingResidents(houseId, now);
-  const choreBreaks = (await Chores.getChoreBreaks(houseId, now))
-    .filter(cb => cb.residentId === residentId);
+  const monthStart = getMonthStart(now);
 
-  const view = views.choresStatsView(choreBreaks, workingResidents);
+  // TODO: Calculate remaining points in the month
+
+  const choreClaims = await Chores.getChoreClaims(residentId, monthStart, now);
+  const choreBreaks = await Chores.getChoreBreaks(houseId, now);
+
+  const view = views.choresStatsView(choreClaims, choreBreaks);
   await common.openView(app, choresOauth, command.trigger_id, view);
 });
 
