@@ -147,8 +147,7 @@ exports.getChoreValueIntervalScalar = async function (houseId, currentTime) {
     : new Date(currentTime.getTime() - bootstrapDuration); // First update assigns a fixed amount of value
 
   const hoursSinceUpdate = Math.floor((currentTime - lastUpdate) / HOUR);
-  const daysInMonth = getMonthEnd(currentTime).getDate();
-  const hoursInMonth = 24 * daysInMonth;
+  const hoursInMonth = 24 * getMonthEnd(currentTime).getDate();
 
   // TODO: handle scenario where interval spans 2 months
 
@@ -213,12 +212,20 @@ exports.getChoreClaim = async function (claimId) {
     .first();
 };
 
+exports.getChoreClaims = async function (claimedBy, startTime, endTime) {
+  return db('ChoreClaim')
+    .join('Chore', 'ChoreClaim.choreId', 'Chore.id')
+    .where({ claimedBy, valid: true })
+    .whereBetween('claimedAt', [ startTime, endTime ])
+    .orderBy('claimedAt')
+    .select('*');
+};
+
 exports.getLatestChoreClaim = async function (choreId, currentTime) {
   return db('ChoreClaim')
     .select('*')
-    .where({ choreId })
+    .where({ choreId, valid: true })
     .where('claimedAt', '<', currentTime) // TODO: should this be <= ??
-    .whereNot({ valid: false })
     .orderBy('claimedAt', 'desc')
     .first();
 };

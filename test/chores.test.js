@@ -334,9 +334,10 @@ describe('Chores', async () => {
       ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
 
-      const choreClaim = await Chores.getLatestChoreClaim(dishes.id, soon);
-      expect(choreClaim.claimedBy).to.equal(RESIDENT1);
-      expect(choreClaim.value).to.equal(15);
+      const choreClaims = await Chores.getChoreClaims(RESIDENT1, now, soon);
+      expect(choreClaims.length).to.equal(1);
+      expect(choreClaims[0].claimedBy).to.equal(RESIDENT1);
+      expect(choreClaims[0].value).to.equal(15);
     });
 
     it('cannot claim a chore with a zero value', async () => {
