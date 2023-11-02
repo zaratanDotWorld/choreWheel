@@ -92,17 +92,20 @@ app.event('app_home_opened', async ({ body, event }) => {
     }
 
     // Regenerate lost hearts // decay karma hearts
-    const [ regenHeart ] = await Hearts.regenerateHearts(houseId, residentId, now);
-    if (regenHeart !== undefined && regenHeart.value > 0) {
-      const text = `You regenerated *${regenHeart.value.toFixed(1)}* heart(s)!`;
-      await postEphemeral(houseId, residentId, text);
+    const regenHearts = await Hearts.regenerateHouseHearts(houseId, now);
+    for (const regenHeart of regenHearts) {
+      // Notify for regeneration only
+      if (regenHeart.value > 0) {
+        const text = `You regenerated *${regenHeart.value.toFixed(1)}* heart(s)!`;
+        await postEphemeral(houseId, regenHeart.residentId, text);
+      }
     }
 
     // Issue karma hearts
     const karmaHearts = await Hearts.generateKarmaHearts(houseId, now);
-    if (karmaHearts.length > 0) {
+    if (karmaHearts.length) {
       const karmaWinners = karmaHearts.map((heart) => `<@${heart.residentId}>`).join(' and ');
-      const text = (karmaWinners.length > 1)
+      const text = (karmaHearts.length > 1)
         ? `${karmaWinners} get last month's karma hearts :heart_on_fire:`
         : `${karmaWinners} gets last month's karma heart :heart_on_fire:`;
       await postMessage(houseId, text);
