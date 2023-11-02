@@ -66,12 +66,19 @@ exports.initialiseResident = async function (houseId, residentId, currentTime) {
   } else { return []; }
 };
 
-exports.regenerateHearts = async function (houseId, residentId, currentTime) {
-  const regenTime = getMonthStart(currentTime);
-  if (currentTime < regenTime) { return []; }
+exports.regenerateHouseHearts = async function (houseId, now) {
+  const houseHearts = (await Admin.getVotingResidents(houseId, now))
+    .map((resident) => exports.regenerateHearts(houseId, resident.slackId, now));
+
+  return (await Promise.all(houseHearts)).flat();
+};
+
+exports.regenerateHearts = async function (houseId, residentId, now) {
+  const regenTime = getMonthStart(now);
+  if (now < regenTime) { return []; }
 
   const regeneration = await exports.getHeart(residentId, regenTime);
-  if (regeneration === undefined) {
+  if (!regeneration) {
     const hearts = await exports.getHearts(residentId, regenTime);
     if (hearts.sum === null) { return []; } // Don't regenerate if not initialized
 
@@ -217,7 +224,7 @@ exports.generateKarmaHearts = async function (houseId, currentTime) {
   if (numWinners <= 0) { return []; }
 
   const karmaHearts = await exports.getAgnosticHearts(houseId, generatedAt);
-  if (karmaHearts.length === 0) {
+  if (!karmaHearts.length) {
     const karmaRankings = await exports.getKarmaRankings(houseId, prevMonthStart, prevMonthEnd);
 
     for (const winner of karmaRankings.slice(0, numWinners)) {
