@@ -193,6 +193,24 @@ describe('Hearts', async () => {
       hearts = await Hearts.getHearts(RESIDENT1, nextMonth);
       expect(hearts.sum).to.equal(6);
     });
+
+    it('can regenerate hearts in bulk', async () => {
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 1);
+      await Hearts.generateHearts(HOUSE, RESIDENT2, HEART_UNKNOWN, now, 7);
+
+      let hearts;
+      hearts = await Hearts.regenerateHouseHearts(HOUSE, nextMonth);
+      expect(hearts.length).to.equal(2);
+      expect(hearts[0].value).to.equal(0.5);
+      expect(hearts[1].value).to.equal(-0.5);
+
+      // Bulk regeneration is robust to network failures
+      await Hearts.generateHearts(HOUSE, RESIDENT3, HEART_UNKNOWN, now, 3);
+
+      hearts = await Hearts.regenerateHouseHearts(HOUSE, nextMonth);
+      expect(hearts.length).to.equal(1);
+      expect(hearts[0].value).to.equal(0.5);
+    });
   });
 
   describe('making challenges', async () => {
