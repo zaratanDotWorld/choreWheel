@@ -5,7 +5,7 @@ const { App, LogLevel } = require('@slack/bolt');
 const { Admin, Polls, Chores } = require('../core/index');
 const { pointsPerResident, displayThreshold, breakMinDays } = require('../config');
 const { YAY, DAY } = require('../constants');
-const { getMonthStart, shiftDate } = require('../utils');
+const { getMonthStart, shiftDate, getPrevMonthEnd } = require('../utils');
 
 const common = require('./common');
 const views = require('./chores.views');
@@ -135,13 +135,21 @@ app.command('/chores-stats', async ({ ack, command }) => {
   const residentId = command.user_id;
 
   const monthStart = getMonthStart(now);
+  const prevMonthEnd = getPrevMonthEnd(now);
+  const prevMonthStart = getMonthStart(prevMonthEnd);
 
   // TODO: Calculate remaining points in the month
 
   const choreClaims = await Chores.getChoreClaims(residentId, monthStart, now);
   const choreBreaks = await Chores.getChoreBreaks(houseId, now);
 
-  const view = views.choresStatsView(choreClaims, choreBreaks);
+  const chorePoints = [];
+  for (const resident of (await Admin.getVotingResidents(houseId, now))) {
+    const choreStats = await Chores.getChoreStats(resident.slackId, prevMonthStart, prevMonthEnd);
+    chorePoints.push({ residentId: resident.slackId, ...choreStats });
+  }
+
+  const view = views.choresStatsView(choreClaims, choreBreaks, chorePoints);
   await common.openView(app, choresOauth, command.trigger_id, view);
 });
 
