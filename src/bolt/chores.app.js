@@ -72,15 +72,11 @@ app.event('app_home_opened', async ({ body, event }) => {
     let view;
     if ((await Admin.getHouse(houseId)).metadata.choresChannel) {
       const monthStart = getMonthStart(now);
-      const chorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
-
-      const workingPercentage = await Chores.getWorkingResidentPercentage(residentId, now);
-      const pointsOwed = workingPercentage * pointsPerResident;
-
+      const choreStats = await Chores.getChoreStats(residentId, monthStart, now);
       const workingResidentCount = await Chores.getWorkingResidentCount(houseId, now);
       const exempt = await Admin.isExempt(residentId, now);
 
-      view = views.choresHomeView(chorePoints.sum || 0, pointsOwed, workingResidentCount, exempt);
+      view = views.choresHomeView(choreStats, workingResidentCount, exempt);
     } else {
       view = common.introHomeView('Chores');
     }

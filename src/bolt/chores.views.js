@@ -8,10 +8,13 @@ const TITLE = common.blockPlaintext('Chores');
 
 // Home view
 
-exports.choresHomeView = function (balance, owed, numActive, exempt) {
-  const progressEmoji = (owed - balance < penaltyIncrement) ? ':white_check_mark:' : ':muscle::skin-tone-4:';
-  const docsUrl = 'https://github.com/zaratanDotWorld/mirror/wiki/Chores';
+exports.choresHomeView = function (choreStats, numActive, exempt) {
+  const { pointsEarned, pointsOwed } = choreStats;
+  const progressEmoji = (pointsOwed - pointsEarned < penaltyIncrement)
+    ? ':white_check_mark:'
+    : ':muscle::skin-tone-4:';
 
+  const docsUrl = 'https://github.com/zaratanDotWorld/mirror/wiki/Chores';
   const header = 'Welcome to Chores';
   const textA = `We use *<${docsUrl}|Chores>* to keep the house a nice place to live.\n\n` +
     'Instead of a chore wheel or schedule, everyone owes *100 points* per month (UTC time). ' +
@@ -21,12 +24,12 @@ exports.choresHomeView = function (balance, owed, numActive, exempt) {
     'If you think a chore should be *added, changed, or removed*, you can propose that as well.';
   const textB = (exempt)
     ? '*You are exempt from chores!* :tada:'
-    : `You've earned *${balance.toFixed(0)} / ${owed.toFixed(0)} points* this month ${progressEmoji}`;
+    : `You've earned *${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} points* this month ${progressEmoji}`;
   const textC = `There are *${numActive} people* around today :sunny:`;
 
   const actions = [];
   if (!exempt) {
-    if (balance < owed) {
+    if (pointsEarned < pointsOwed) {
       actions.push(common.blockButton('chores-claim', 'Claim a chore'));
     }
     actions.push(common.blockButton('chores-break', 'Take a break'));
