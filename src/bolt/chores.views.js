@@ -51,7 +51,7 @@ exports.choresHomeView = function (balance, owed, numActive, exempt) {
 
 // Slash commands
 
-exports.choresStatsView = function (choreClaims, choreBreaks) {
+exports.choresStatsView = function (choreClaims, choreBreaks, chorePoints) {
   const header = 'See chore stats';
   const mainText = 'Extra information about monthly chores.';
 
@@ -63,12 +63,17 @@ exports.choresStatsView = function (choreClaims, choreBreaks) {
     choreBreaks.map(cb => `\n${cb.startDate.toDateString()} - ${cb.endDate.toDateString()} - <@${cb.residentId}>`)
       .join('');
 
+  const pointsText = '*Last month\'s chore points:*\n' +
+    chorePoints.map(cp => `\n<@${cp.residentId}> - ${cp.pointsEarned.toFixed(0)} / ${cp.pointsOwed.toFixed(0)}`)
+      .join('');
+
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
   blocks.push(common.blockDivider());
   blocks.push(common.blockSection(claimText));
   blocks.push(common.blockSection(breakText));
+  blocks.push(common.blockSection(pointsText));
 
   return {
     type: 'modal',
