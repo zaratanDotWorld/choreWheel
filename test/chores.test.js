@@ -586,12 +586,41 @@ describe('Chores', async () => {
       let penaltyHeart;
       const penaltyTime = new Date(getNextMonthStart(now).getTime() + penaltyDelay);
       const beforeTime = new Date(penaltyTime.getTime() - 1);
+
       [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, beforeTime);
       expect(penaltyHeart).to.be.undefined;
+
       [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
       expect(penaltyHeart.value).to.equal(-2.5);
+
       [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
       expect(penaltyHeart).to.be.undefined;
+    });
+
+    it('can add chore penalties in bulk', async () => {
+      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT2, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT3, now);
+
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 100 } ]);
+      await db('ChoreValue').insert([ { choreId: restock.id, valuedAt: now, value: 50 } ]);
+      await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
+      await Chores.claimChore(HOUSE, restock.id, RESIDENT2, now);
+
+      const penaltyTime = new Date(getNextMonthStart(now).getTime() + penaltyDelay);
+
+      let penaltyHearts;
+      penaltyHearts = await Chores.addChorePenalties(HOUSE, penaltyTime);
+      expect(penaltyHearts.length).to.equal(3);
+      expect(penaltyHearts[0].value).to.equal(0);
+      expect(penaltyHearts[1].value).to.equal(-2.5);
+      expect(penaltyHearts[2].value).to.equal(-5.0);
+
+      // Bulk penalties is robust to network failures
+      await Hearts.initialiseResident(HOUSE, RESIDENT4, now);
+      penaltyHearts = await Chores.addChorePenalties(HOUSE, penaltyTime);
+      expect(penaltyHearts.length).to.equal(1);
+      expect(penaltyHearts[0].value).to.equal(-5.0);
     });
 
     it('cannot penalize before initialized', async () => {
