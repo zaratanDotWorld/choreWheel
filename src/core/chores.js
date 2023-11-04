@@ -367,13 +367,21 @@ exports.getWorkingResidentPercentage = async function (residentId, now) {
   return numWorkingDays / daysInMonth;
 };
 
+exports.addChorePenalties = async function (houseId, now) {
+  // TODO: Add specialized Hearts query to avoid two roundtrips to database
+  const chorePenalties = (await Admin.getVotingResidents(houseId, now))
+    .map((resident) => exports.addChorePenalty(houseId, resident.slackId, now));
+
+  return (await Promise.all(chorePenalties)).flat();
+};
+
 exports.addChorePenalty = async function (houseId, residentId, currentTime) {
   const monthStart = getMonthStart(currentTime);
   const penaltyTime = new Date(monthStart.getTime() + penaltyDelay);
   if (currentTime < penaltyTime) { return []; }
 
-  const penalty = await Hearts.getHeart(residentId, penaltyTime);
-  if (penalty === undefined) {
+  const penaltyHeart = await Hearts.getHeart(residentId, penaltyTime);
+  if (!penaltyHeart) {
     const hearts = await Hearts.getHearts(residentId, penaltyTime);
     if (hearts.sum === null) { return []; } // Don't penalize if not initialized
 
