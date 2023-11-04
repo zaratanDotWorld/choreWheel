@@ -4,7 +4,7 @@
   "description": "Chore wheel x1000",
   "repository": "git@github.com:zaratanDotWorld/mirror.git",
   "author": "Daniel Kronovet <krono@zaratan.world>",
-  "license": "UNLICENSED",
+  "license": "AGPL-3.0-or-later",
   "scripts": {
     "app:chores": "node src/bolt/chores.app.js",
     "app:things": "node src/bolt/things.app.js",
