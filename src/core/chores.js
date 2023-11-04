@@ -392,14 +392,20 @@ exports.addChorePenalty = async function (houseId, residentId, currentTime) {
   }
 };
 
+exports.getChoreStats = async function (residentId, startTime, endTime) {
+  const pointsEarned = (await exports.getAllChorePoints(residentId, startTime, endTime)).sum || 0;
+  const workingPercentage = await exports.getWorkingResidentPercentage(residentId, endTime);
+  const pointsOwed = pointsPerResident * workingPercentage;
+
+  return { pointsEarned, pointsOwed };
+};
+
 exports.calculatePenalty = async function (residentId, penaltyTime) {
   const prevMonthEnd = getPrevMonthEnd(penaltyTime);
   const prevMonthStart = getMonthStart(prevMonthEnd);
-  const chorePoints = await exports.getAllChorePoints(residentId, prevMonthStart, prevMonthEnd);
-  const workingPercentage = await exports.getWorkingResidentPercentage(residentId, prevMonthEnd);
+  const choreStats = await exports.getChoreStats(residentId, prevMonthStart, prevMonthEnd);
 
-  const pointsOwed = pointsPerResident * workingPercentage;
-  const deficiency = Math.max(pointsOwed - chorePoints.sum, 0);
+  const deficiency = Math.max(choreStats.pointsOwed - choreStats.pointsEarned, 0);
   const truncatedDeficiency = Math.floor(deficiency / penaltyIncrement) * penaltyIncrement;
   return truncatedDeficiency / (2 * penaltyIncrement);
 };
