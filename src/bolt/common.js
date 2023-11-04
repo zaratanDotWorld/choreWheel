@@ -226,7 +226,7 @@ exports.updateVoteCounts = async function (app, oauth, body, action) {
 };
 
 exports.makeVoteText = function (minVotes, pollLength) {
-  return `*${minVotes} upvote(s)* are required to pass, ` +
+  return `At least *${minVotes} upvote(s)* are needed to pass, ` +
     `voting closes in *${pollLength / HOUR} hours*`;
 };
 
