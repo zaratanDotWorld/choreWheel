@@ -117,7 +117,11 @@ app.command('/chores-channel', async ({ ack, command }) => {
   console.log('/chores-channel');
   await ack();
 
-  await common.setChannel(app, choresOauth, 'choresChannel', command);
+  await common.setChannel(app, choresOauth, command, 'choresChannel');
+
+  if (command.text !== 'help') {
+    await common.syncWorkspace(app, choresOauth, command, true, false);
+  }
 });
 
 app.command('/chores-stats', async ({ ack, command }) => {

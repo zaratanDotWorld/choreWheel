@@ -105,19 +105,22 @@ exports.addReaction = async function (app, oauth, payload, emoji) {
 
 // Internal tools
 
-exports.setChannel = async function (app, oauth, channelType, command) {
+exports.setChannel = async function (app, oauth, command, channelType) {
+  if (!(await exports.isAdmin(app, oauth, command))) {
+    await exports.replyAdminOnly(app, oauth, command);
+    return;
+  }
+
   let text;
 
   if (command.text === 'help') {
-    text = 'Set the current channel as the log channel for the app. ' +
-    'The app will use this channel to post polls or share public activity.';
-  } else if (await exports.isAdmin(app, oauth, command)) {
+    text = 'Set the current channel as the events channel for the app. ' +
+    'The app will use this channel to post polls and share public activity.';
+  } else {
     const [ houseId, channelId ] = [ command.team_id, command.channel_id ];
     await Admin.updateHouse(houseId, { [channelType]: channelId });
     await app.client.conversations.join({ token: oauth.bot.token, channel: channelId });
     text = `App events channel set to *<#${channelId}>* :fire:`;
-  } else {
-    text = ':warning: Only admins can set the channels...';
   }
 
   await exports.replyEphemeral(app, oauth, command, text);

@@ -95,7 +95,7 @@ app.command('/things-channel', async ({ ack, command }) => {
   console.log('/things-channel');
   await ack();
 
-  await common.setChannel(app, thingsOauth, 'thingsChannel', command);
+  await common.setChannel(app, thingsOauth, command, 'thingsChannel');
 });
 
 app.command('/things-load', async ({ ack, command }) => {
