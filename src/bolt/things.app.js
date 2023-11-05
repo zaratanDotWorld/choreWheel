@@ -148,7 +148,7 @@ app.view('things-fulfill-callback', async ({ ack, body }) => {
   const residentId = body.user.id;
 
   const buys = common.getInputBlock(body, -1).buys.selected_options
-    .map((buy) => JSON.parse(buy.value));
+    .map(buy => JSON.parse(buy.value));
 
   for (const buy of buys) {
     await Things.fulfillThingBuy(buy.id, residentId, now);

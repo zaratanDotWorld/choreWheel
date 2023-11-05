@@ -68,7 +68,7 @@ exports.initialiseResident = async function (houseId, residentId, currentTime) {
 
 exports.regenerateHouseHearts = async function (houseId, now) {
   const houseHearts = (await Admin.getVotingResidents(houseId, now))
-    .map((resident) => exports.regenerateHearts(houseId, resident.slackId, now));
+    .map(resident => exports.regenerateHearts(houseId, resident.slackId, now));
 
   return (await Promise.all(houseHearts)).flat();
 };
@@ -190,7 +190,7 @@ exports.getKarmaRankings = async function (houseId, startTime, endTime) {
   if (karma.length === 0) { return []; }
 
   const residentSet = new Set(residents.map(r => r.slackId));
-  const formattedKarma = karma.map(k => {
+  const formattedKarma = karma.map((k) => {
     return { alpha: k.receiverId, beta: k.giverId, preference: 1 };
   });
 
@@ -198,7 +198,7 @@ exports.getKarmaRankings = async function (houseId, startTime, endTime) {
   const powerRanker = new PowerRanker(residentSet, formattedKarma, residents.length, 0.01);
   const rankings = powerRanker.run();
 
-  return residents.map(resident => {
+  return residents.map((resident) => {
     return { id: resident.id, slackId: resident.slackId, ranking: rankings.get(resident.slackId) };
   }).sort((a, b) => b.ranking - a.ranking);
 };

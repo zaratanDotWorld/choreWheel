@@ -20,6 +20,7 @@ module.exports = {
     'no-unused-vars': [ ERROR, 'local' ],
     'object-shorthand': [ WARN, 'properties' ],
     'array-bracket-spacing': [ ERROR, 'always' ],
+    'arrow-parens': [ ERROR, 'as-needed', { requireForBlockBody: true } ],
     'comma-dangle': [ ERROR, 'always-multiline' ],
     'eqeqeq': [ ERROR, 'always' ], // eslint-disable-line quote-props
     'no-fallthrough': [ ERROR ],

@@ -128,14 +128,14 @@ exports.getCurrentChoreRankings = async function (houseId) {
   const preferences = await exports.getActiveChorePreferences(houseId);
 
   const choresSet = new Set(chores.map(c => c.id));
-  const formattedPreferences = preferences.map(p => {
+  const formattedPreferences = preferences.map((p) => {
     return { alpha: p.alphaChoreId, beta: p.betaChoreId, preference: p.preference };
   });
 
   const powerRanker = new PowerRanker(choresSet, formattedPreferences, residents.length, implicitPref);
   const rankings = powerRanker.run(d = dampingFactor); // eslint-disable-line no-undef
 
-  return chores.map(chore => {
+  return chores.map((chore) => {
     return { id: chore.id, name: chore.name, ranking: rankings.get(chore.id) };
   }).sort((a, b) => b.ranking - a.ranking);
 };
@@ -174,7 +174,7 @@ exports.updateChoreValues = async function (houseId, updateTime) {
   const updateScalar = (workingResidentCount * pointsPerResident) * intervalScalar * inflationFactor;
   const choreRankings = await exports.getCurrentChoreRankings(houseId);
 
-  const choreValues = choreRankings.map(chore => {
+  const choreValues = choreRankings.map((chore) => {
     return {
       houseId,
       choreId: chore.id,
@@ -196,7 +196,7 @@ exports.getUpdatedChoreValues = async function (houseId, updateTime) {
 
   // O(n**2), too bad
   choreValues.forEach((choreValue) => {
-    const choreValueUpdate = choreValueUpdates.find((update) => update.choreId === choreValue.id);
+    const choreValueUpdate = choreValueUpdates.find(update => update.choreId === choreValue.id);
     choreValue.value += (choreValueUpdate) ? choreValueUpdate.value : 0;
   });
 
@@ -370,7 +370,7 @@ exports.getWorkingResidentPercentage = async function (residentId, now) {
 exports.addChorePenalties = async function (houseId, now) {
   // TODO: Add specialized Hearts query to avoid two roundtrips to database
   const chorePenalties = (await Admin.getVotingResidents(houseId, now))
-    .map((resident) => exports.addChorePenalty(houseId, resident.slackId, now));
+    .map(resident => exports.addChorePenalty(houseId, resident.slackId, now));
 
   return (await Promise.all(chorePenalties)).flat();
 };

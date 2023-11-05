@@ -60,7 +60,7 @@ class PowerRanker {
 
     // Add the preferences to the off-diagonals, removing the implicit neutral preference
     // Recall that preference > 0.5 is flow towards, preference < 0.5 is flow away
-    preferences.forEach(p => {
+    preferences.forEach((p) => {
       const alphaIx = itemMap.get(p.alpha);
       const betaIx = itemMap.get(p.beta);
       matrix.data[betaIx][alphaIx] += p.preference - implicitPref;
@@ -80,7 +80,7 @@ class PowerRanker {
     // Normalize matrix
     matrix = matrix.clone(); // Make a copy for safety
     matrix.data = matrix.data
-      .map(row => {
+      .map((row) => {
         const rowSum = this.#sum(row);
         return row.map(x => x / rowSum);
       });

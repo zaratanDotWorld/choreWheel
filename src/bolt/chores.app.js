@@ -288,7 +288,7 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   const direction = body.view.private_metadata;
   const targetChore = JSON.parse(common.getInputBlock(body, -2).chores.selected_option.value);
   const sourceChores = common.getInputBlock(body, -1).chores.selected_options
-    .map((option) => JSON.parse(option.value));
+    .map(option => JSON.parse(option.value));
 
   const strength = 100 / 200 + 0.5; // Scale (0, 100) -> (0.5, 1.0)
   const preference = (direction === 'faster') ? strength : 1 - strength;
@@ -300,7 +300,7 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   }
 
   const choreRankings = await Chores.getCurrentChoreRankings(houseId);
-  const targetChoreRanking = choreRankings.find((chore) => chore.id === targetChore.id);
+  const targetChoreRanking = choreRankings.find(chore => chore.id === targetChore.id);
   const priority = Math.round(targetChoreRanking.ranking * 1000);
 
   const bigChange = (1000 / choreRankings.length) / 5; // 20% of the average priority

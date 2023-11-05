@@ -86,7 +86,7 @@ exports.thingsFulfillView = function (unfulfilledBuys) {
       type: 'multi_static_select',
       placeholder: common.blockPlaintext('Choose some buys'),
       options: unfulfilledBuys
-        .filter((buy) => buy.resolvedAt)
+        .filter(buy => buy.resolvedAt)
         .map((buy) => {
           return {
             value: JSON.stringify({ id: buy.id }),
@@ -128,7 +128,7 @@ exports.thingsBuyView = function (things) {
           type,
           things
             .filter(thing => thing.type === type)
-            .map(thing => {
+            .map((thing) => {
               return {
                 value: JSON.stringify({ id: thing.id }),
                 text: common.blockPlaintext(exports.formatThing(thing)),
@@ -253,21 +253,21 @@ exports.thingsBoughtView = function (unfulfilledBuys, fulfilledBuys7, fulfilledB
     '(excluding special buys)';
 
   const pendingBuysText = unfulfilledBuys
-    .filter((buy) => buy.resolvedAt === null)
-    .map((buy) => exports.formatBuy(buy))
+    .filter(buy => buy.resolvedAt === null)
+    .map(buy => exports.formatBuy(buy))
     .join('\n');
 
   const confirmedBuysText = unfulfilledBuys
-    .filter((buy) => buy.resolvedAt !== null)
-    .map((buy) => exports.formatBuy(buy))
+    .filter(buy => buy.resolvedAt !== null)
+    .map(buy => exports.formatBuy(buy))
     .join('\n');
 
   const fulfilledBuys7Text = fulfilledBuys7
-    .map((buy) => `${buy.type}: ${buy.name} ($${-buy.value})`)
+    .map(buy => `${buy.type}: ${buy.name} ($${-buy.value})`)
     .join('\n');
 
   const fulfilledBuys90Text = fulfilledBuys90
-    .map((buy) => `${buy.type}: ${buy.name} ($${-buy.value})`)
+    .map(buy => `${buy.type}: ${buy.name} ($${-buy.value})`)
     .join('\n');
 
   const blocks = [];

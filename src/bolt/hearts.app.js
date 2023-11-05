@@ -104,7 +104,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     // Issue karma hearts
     const karmaHearts = await Hearts.generateKarmaHearts(houseId, now);
     if (karmaHearts.length) {
-      const karmaWinners = karmaHearts.map((heart) => `<@${heart.residentId}>`).join(' and ');
+      const karmaWinners = karmaHearts.map(heart => `<@${heart.residentId}>`).join(' and ');
       const text = (karmaHearts.length > 1)
         ? `${karmaWinners} get last month's karma hearts :heart_on_fire:`
         : `${karmaWinners} gets last month's karma heart :heart_on_fire:`;
