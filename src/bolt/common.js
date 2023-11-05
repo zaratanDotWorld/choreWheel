@@ -233,19 +233,19 @@ exports.makeVoteText = function (minVotes, pollLength) {
     `voting closes in *${pollLength / HOUR} hours*`;
 };
 
-exports.makeVoteButtons = function (pollId, upvotes, downvotes) {
+exports.makeVoteButtons = function (pollId, yays, nays) {
   return [
     {
       type: 'button',
       action_id: 'poll-vote-up',
-      text: exports.blockPlaintext(`:+1: (${upvotes})`),
-      value: JSON.stringify({ pollId, value: YAY }),
+      text: exports.blockPlaintext(`:+1: (${yays})`),
+      value: JSON.stringify({ pollId, yays, value: YAY }),
     },
     {
       type: 'button',
       action_id: 'poll-vote-down',
-      text: exports.blockPlaintext(`:-1: (${downvotes})`),
-      value: JSON.stringify({ pollId, value: NAY }),
+      text: exports.blockPlaintext(`:-1: (${nays})`),
+      value: JSON.stringify({ pollId, nays, value: NAY }),
     },
   ];
 };
