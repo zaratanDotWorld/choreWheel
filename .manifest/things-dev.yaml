@@ -34,6 +34,7 @@ oauth_config:
     - https://zaratan.ngrok.io/slack/oauth_redirect
   scopes:
     bot:
+      - channels:history
       - channels:join
       - chat:write
       - commands
