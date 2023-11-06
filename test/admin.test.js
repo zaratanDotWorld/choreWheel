@@ -157,11 +157,11 @@ describe('Admin', async () => {
       expect(resident.activeAt.getTime()).to.equal(now.getTime());
       expect(resident.exemptAt.getTime()).to.equal(soon.getTime());
 
-      await Admin.unexemptResident(HOUSE1, RESIDENT1);
+      await Admin.unexemptResident(HOUSE1, RESIDENT1, soon);
 
       resident = await Admin.getResident(RESIDENT1);
       expect(resident.active).to.be.true;
-      expect(resident.activeAt.getTime()).to.equal(now.getTime());
+      expect(resident.activeAt.getTime()).to.equal(soon.getTime());
       expect(resident.exemptAt).to.equal(null);
     });
 

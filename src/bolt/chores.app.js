@@ -190,7 +190,7 @@ app.view('chores-exempt-callback', async ({ ack, body }) => {
       break;
     case 'unexempt':
       for (const residentId of residentIds) {
-        await Admin.unexemptResident(houseId, residentId);
+        await Admin.unexemptResident(houseId, residentId, now);
       }
       text = 'Unexemption succeeded :fire:';
       break;

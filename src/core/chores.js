@@ -339,12 +339,12 @@ exports.getWorkingResidentPercentage = async function (residentId, now) {
     // })
     .select('*');
 
-  // Add an implicit break the month the resident is added
+  // Add an implicit break before activeAt
   if (monthStart < resident.activeAt) {
     const activeAt = getDateStart(resident.activeAt);
     choreBreaks.push({ startDate: monthStart, endDate: activeAt });
   }
-  // Add an implicit break after the resident is exempted
+  // Add an implicit break after exemptAt
   if (resident.exemptAt && resident.exemptAt < monthEnd) {
     const exemptAt = getDateStart(resident.exemptAt);
     choreBreaks.push({ startDate: exemptAt, endDate: monthEnd });

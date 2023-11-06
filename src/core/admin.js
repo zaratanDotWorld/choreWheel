@@ -56,9 +56,9 @@ exports.exemptResident = async function (houseId, slackId, exemptAt) {
     .onConflict('slackId').merge();
 };
 
-exports.unexemptResident = async function (houseId, slackId) {
+exports.unexemptResident = async function (houseId, slackId, activeAt) {
   return db('Resident')
-    .insert({ houseId, slackId, exemptAt: null })
+    .insert({ houseId, slackId, activeAt, exemptAt: null })
     .onConflict('slackId').merge();
 };
 
