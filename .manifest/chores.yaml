@@ -31,6 +31,7 @@ oauth_config:
     - https://chores.mirror.zaratan.world/slack/oauth_redirect
   scopes:
     bot:
+      - channels:history
       - channels:join
       - chat:write
       - commands
