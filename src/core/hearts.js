@@ -40,13 +40,13 @@ exports.getHearts = async function (residentId, currentTime) {
     .first();
 };
 
-exports.getHouseHearts = async function (houseId, currentTime) {
+exports.getHouseHearts = async function (houseId, now) {
   return db('Heart')
     .join('Resident', 'Heart.residentId', 'Resident.slackId')
     .where('Heart.houseId', houseId)
-    .where('Resident.active', true)
-    .where(function () { Admin.residentNotExempt(this, currentTime); })
-    .where('Heart.generatedAt', '<=', currentTime)
+    .where('Heart.generatedAt', '<=', now)
+    .where('Resident.activeAt', '<=', now)
+    .where(function () { Admin.residentNotExempt(this, now); })
     .groupBy('Heart.residentId')
     .select('Heart.residentId')
     .sum('Heart.value')
@@ -185,7 +185,7 @@ exports.giveKarma = async function (houseId, giverId, receiverId, givenAt) {
 };
 
 exports.getKarmaRankings = async function (houseId, startTime, endTime) {
-  const residents = await Admin.getResidents(houseId);
+  const residents = await Admin.getResidents(houseId, endTime);
   const karma = await exports.getKarma(houseId, startTime, endTime);
   if (karma.length === 0) { return []; }
 

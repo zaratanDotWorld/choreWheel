@@ -95,7 +95,7 @@ describe('Chores', async () => {
     it('can set a chore preference', async () => {
       await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.85);
 
-      const preferences = await Chores.getChorePreferences(HOUSE);
+      const preferences = await Chores.getChorePreferences(HOUSE, now);
       expect(preferences[0].preference).to.equal(0.85);
       expect(preferences[0].alphaChoreId).to.equal(dishes.id);
       expect(preferences[0].betaChoreId).to.equal(sweeping.id);
@@ -105,7 +105,7 @@ describe('Chores', async () => {
       await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
       await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0);
 
-      const preferences = await Chores.getChorePreferences(HOUSE);
+      const preferences = await Chores.getChorePreferences(HOUSE, now);
       expect(preferences.length).to.equal(1);
       expect(preferences[0].preference).to.equal(0);
     });
@@ -117,12 +117,12 @@ describe('Chores', async () => {
       expect(dishes.id).to.be.lt(sweeping.id);
 
       await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.7);
-      [ preference ] = await Chores.getChorePreferences(HOUSE);
+      [ preference ] = await Chores.getChorePreferences(HOUSE, now);
       expect(preference.preference).to.equal(0.7);
 
       // Flip the order of arguments flips the preference
       await Chores.setChorePreference(HOUSE, RESIDENT1, sweeping.id, dishes.id, 0.7);
-      [ preference ] = await Chores.getChorePreferences(HOUSE);
+      [ preference ] = await Chores.getChorePreferences(HOUSE, now);
       expect(preference.preference).to.equal(0.3);
     });
 
@@ -138,31 +138,31 @@ describe('Chores', async () => {
       await Chores.setChorePreference(HOUSE, RESIDENT3, sweeping.id, restock.id, 1.0);
 
       let preferences;
-      preferences = await Chores.getActiveChorePreferences(HOUSE);
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
       expect(preferences.length).to.equal(3);
 
       // Remove the third preference
       await Admin.deactivateResident(HOUSE, RESIDENT3);
 
-      preferences = await Chores.getActiveChorePreferences(HOUSE);
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
       expect(preferences.length).to.equal(2);
 
       // Restore the third preference
       await Admin.activateResident(HOUSE, RESIDENT3, now);
 
-      preferences = await Chores.getActiveChorePreferences(HOUSE);
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
       expect(preferences.length).to.equal(3);
 
       // Remove the last two preferences
       await Chores.editChore(restock.id, restock.name, {}, false);
 
-      preferences = await Chores.getActiveChorePreferences(HOUSE);
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
       expect(preferences.length).to.equal(1);
 
       // Restore the last two preferences
       await Chores.addChore(HOUSE, restock.name);
 
-      preferences = await Chores.getActiveChorePreferences(HOUSE);
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
       expect(preferences.length).to.equal(3);
     });
   });
@@ -178,7 +178,7 @@ describe('Chores', async () => {
     });
 
     it('can return uniform preferences implicitly', async () => {
-      const choreRankings = await Chores.getCurrentChoreRankings(HOUSE);
+      const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
       expect(choreRankings[0].ranking).to.almost.equal(0.3333333333333333);
       expect(choreRankings[1].ranking).to.almost.equal(0.3333333333333333);
@@ -190,7 +190,7 @@ describe('Chores', async () => {
       await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
       await Chores.setChorePreference(HOUSE, RESIDENT2, sweeping.id, restock.id, 1);
 
-      const choreRankings = await Chores.getCurrentChoreRankings(HOUSE);
+      const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
       expect(choreRankings[0].ranking).to.almost.equal(0.7489979877837285);
       expect(choreRankings[1].ranking).to.almost.equal(0.17833693651364188);
@@ -202,7 +202,7 @@ describe('Chores', async () => {
       await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.7);
       await Chores.setChorePreference(HOUSE, RESIDENT2, sweeping.id, restock.id, 0.7);
 
-      const choreRankings = await Chores.getCurrentChoreRankings(HOUSE);
+      const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
       expect(choreRankings[0].ranking).to.almost.equal(0.4351476115449498);
       expect(choreRankings[1].ranking).to.almost.equal(0.4108001133052762);
@@ -214,7 +214,7 @@ describe('Chores', async () => {
       await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
       await Chores.setChorePreference(HOUSE, RESIDENT2, sweeping.id, restock.id, 0);
 
-      const choreRankings = await Chores.getCurrentChoreRankings(HOUSE);
+      const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
       expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.4791504809209527);
       expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.04169903815809436);
@@ -227,7 +227,7 @@ describe('Chores', async () => {
       await Chores.setChorePreference(HOUSE, RESIDENT1, sweeping.id, restock.id, 1);
       await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, restock.id, 0);
 
-      const choreRankings = await Chores.getCurrentChoreRankings(HOUSE);
+      const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
       expect(choreRankings[0].ranking).to.almost.equal(0.3333333333333333);
       expect(choreRankings[1].ranking).to.almost.equal(0.3333333333333333);

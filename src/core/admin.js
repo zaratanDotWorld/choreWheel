@@ -29,25 +29,23 @@ exports.updateHouse = async function (slackId, metadata) {
 // Residents
 
 exports.activateResident = async function (houseId, slackId, activeAt) {
-  // TODO: incorporate logic into `onConflict`? Want to update activeAt only if !active
-  //  See https://knexjs.org/guide/query-builder.html#onconflict
-
-  // If already active or exempt, a no-op
+  // No-op if already active or exempt
   const resident = await exports.getResident(slackId);
-  if (resident && (resident.active || resident.exemptAt)) { return; }
+  if (resident && (resident.activeAt || resident.exemptAt)) { return; }
 
   return db('Resident')
-    .insert({ houseId, slackId, activeAt, active: true, exemptAt: null })
+    .insert({ houseId, slackId, activeAt, exemptAt: null })
     .onConflict('slackId').merge();
 };
 
 exports.deactivateResident = async function (houseId, slackId) {
   return db('Resident')
-    .insert({ houseId, slackId, active: false })
+    .insert({ houseId, slackId, activeAt: null })
     .onConflict('slackId').merge();
 };
 
 exports.exemptResident = async function (houseId, slackId, exemptAt) {
+  // No-op if already exempt
   const resident = await exports.getResident(slackId);
   if (resident && resident.exemptAt && resident.exemptAt <= exemptAt) { return; }
 
@@ -62,25 +60,26 @@ exports.unexemptResident = async function (houseId, slackId, activeAt) {
     .onConflict('slackId').merge();
 };
 
-exports.getResidents = async function (houseId) {
+exports.getResidents = async function (houseId, now) {
   return db('Resident')
-    .select('*')
-    .where({ houseId, active: true });
+    .where({ houseId })
+    .where('activeAt', '<=', now)
+    .select('*');
 };
 
-// Voting residents are active and not exempt
+// Voting residents are active && !exempt
 exports.getVotingResidents = async function (houseId, now) {
   return db('Resident')
-    .select('*')
-    .where({ houseId, active: true })
+    .where({ houseId })
     .where('activeAt', '<=', now)
-    .where(function () { exports.residentNotExempt(this, now); });
+    .where(function () { exports.residentNotExempt(this, now); })
+    .select('*');
 };
 
 exports.getResident = async function (residentId) {
   return db('Resident')
-    .select('*')
     .where({ slackId: residentId })
+    .select('*')
     .first();
 };
 
