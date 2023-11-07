@@ -253,17 +253,18 @@ exports.resolveChoreClaim = async function (claimId, resolvedAt) {
     .returning('*');
 };
 
-exports.resolveChoreClaims = async function (houseId, currentTime) {
+exports.resolveChoreClaims = async function (houseId, now) {
   const resolvableChoreClaims = await db('ChoreClaim')
     .join('Poll', 'ChoreClaim.pollId', 'Poll.id')
     .where('ChoreClaim.houseId', houseId)
     .where('ChoreClaim.resolvedAt', null)
-    .where('Poll.endTime', '<=', currentTime)
+    .where('Poll.endTime', '<=', now)
     .select('ChoreClaim.id');
 
-  for (const choreClaim of resolvableChoreClaims) {
-    await exports.resolveChoreClaim(choreClaim.id, currentTime);
-  }
+  const resolvedChoreClaims = resolvableChoreClaims
+    .map(choreClaim => exports.resolveChoreClaim(choreClaim.id, now));
+
+  return (await Promise.all(resolvedChoreClaims)).flat();
 };
 
 exports.getChorePoints = async function (claimedBy, choreId, startTime, endTime) {
@@ -475,7 +476,7 @@ exports.resolveChoreProposal = async function (proposalId, now) {
 };
 
 exports.resolveChoreProposals = async function (houseId, now) {
-  const resolveableChoreProposals = await db('ChoreProposal')
+  const resolveableProposals = await db('ChoreProposal')
     .join('Poll', 'ChoreProposal.pollId', 'Poll.id')
     .where('ChoreProposal.houseId', houseId)
     .where('Poll.endTime', '<=', now)
@@ -483,7 +484,8 @@ exports.resolveChoreProposals = async function (houseId, now) {
     .orderBy('Poll.endTime') // Ensure sequential resolution
     .select('ChoreProposal.id');
 
-  for (const proposal of resolveableChoreProposals) {
-    await exports.resolveChoreProposal(proposal.id, now);
-  }
+  const resolvedProposals = resolveableProposals
+    .map(proposal => exports.resolveChoreProposal(proposal.id, now));
+
+  return (await Promise.all(resolvedProposals)).flat();
 };
