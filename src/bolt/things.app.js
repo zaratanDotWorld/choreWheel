@@ -85,8 +85,16 @@ app.event('app_home_opened', async ({ body, event }) => {
     await common.publishHome(app, thingsOauth, residentId, view);
 
     // This bookkeeping is done after returning the view
-    await Things.resolveThingBuys(houseId, now);
-    await Things.resolveThingProposals(houseId, now);
+
+    // Resolve any buys
+    for (const resolvedBuy of (await Things.resolveThingBuys(houseId, now))) {
+      await common.updateVoteResults(app, thingsOauth, resolvedBuy.pollId);
+    }
+
+    // Resolve any proposals
+    for (const resolvedProposal of (await Things.resolveThingProposals(houseId, now))) {
+      await common.updateVoteResults(app, thingsOauth, resolvedProposal.pollId);
+    }
   }
 });
 
