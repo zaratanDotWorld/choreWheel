@@ -86,16 +86,18 @@ app.event('app_home_opened', async ({ body, event }) => {
     // This bookkeeping is done after returning the view
 
     // Resolve any challanges
-    await Hearts.resolveChallenges(houseId, now);
-    const challengeHearts = await Hearts.getAgnosticHearts(houseId, now);
-    for (const challengeHeart of challengeHearts) {
-      const text = `<@${challengeHeart.residentId}> lost a challenge, and *${(-challengeHeart.value).toFixed(0)}* heart(s)...`;
+    for (const resolvedChallenge of (await Hearts.resolveChallenges(houseId, now))) {
+      await common.updateVoteResults(app, heartsOauth, resolvedChallenge.pollId);
+    }
+
+    for (const challengeHeart of (await Hearts.getAgnosticHearts(houseId, now))) {
+      const text = `<@${challengeHeart.residentId}> lost a challenge, ` +
+        `and *${(-challengeHeart.value).toFixed(0)}* heart(s)...`;
       await postMessage(houseId, text);
     }
 
     // Regenerate lost hearts // decay karma hearts
-    const regenHearts = await Hearts.regenerateHouseHearts(houseId, now);
-    for (const regenHeart of regenHearts) {
+    for (const regenHeart of (await Hearts.regenerateHouseHearts(houseId, now))) {
       // Notify for regeneration only
       if (regenHeart.value > 0) {
         const text = `You regenerated *${regenHeart.value.toFixed(1)}* heart(s)!`;

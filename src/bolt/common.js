@@ -253,7 +253,7 @@ exports.updateVoteResults = async function (app, oauth, pollId) {
   const { nays } = JSON.parse(voteButtons[1].value);
 
   const result = valid ? 'passed' : 'failed';
-  const resultText = `:hourglass: Vote *${result}* *${yays}* to *${nays}*`;
+  const resultText = `:hourglass: Vote *${result}*, *${yays}* to *${nays}*`;
 
   // Update the results
   message.token = oauth.bot.token;
