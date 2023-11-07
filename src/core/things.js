@@ -120,17 +120,18 @@ exports.resolveThingBuy = async function (buyId, resolvedAt) {
     .returning('*');
 };
 
-exports.resolveThingBuys = async function (houseId, currentTime) {
-  const resolveableThingBuys = await db('ThingBuy')
+exports.resolveThingBuys = async function (houseId, now) {
+  const resolveableBuys = await db('ThingBuy')
     .join('Poll', 'ThingBuy.pollId', 'Poll.id')
     .where('ThingBuy.houseId', houseId)
-    .where('Poll.endTime', '<=', currentTime)
+    .where('Poll.endTime', '<=', now)
     .where('ThingBuy.resolvedAt', null)
     .select('ThingBuy.id');
 
-  for (const thingBuy of resolveableThingBuys) {
-    await exports.resolveThingBuy(thingBuy.id, currentTime);
-  }
+  const resolvedBuys = resolveableBuys
+    .map(buy => exports.resolveThingBuy(buy.id, now));
+
+  return (await Promise.all(resolvedBuys)).flat();
 };
 
 exports.getUnfulfilledThingBuys = async function (houseId, currentTime) {
@@ -221,7 +222,7 @@ exports.resolveThingProposal = async function (proposalId, now) {
 
 // TODO: generalize this along with resolveChoreProposals
 exports.resolveThingProposals = async function (houseId, now) {
-  const resolveableThingProposals = await db('ThingProposal')
+  const resolvableProposals = await db('ThingProposal')
     .join('Poll', 'ThingProposal.pollId', 'Poll.id')
     .where('ThingProposal.houseId', houseId)
     .where('Poll.endTime', '<=', now)
@@ -229,9 +230,10 @@ exports.resolveThingProposals = async function (houseId, now) {
     .orderBy('Poll.endTime') // Ensure sequential resolution
     .select('ThingProposal.id');
 
-  for (const proposal of resolveableThingProposals) {
-    await exports.resolveThingProposal(proposal.id, now);
-  }
+  const resolvedProposals = resolvableProposals
+    .map(proposal => exports.resolveThingProposal(proposal.id, now));
+
+  return (await Promise.all(resolvedProposals)).flat();
 };
 
 // Utils

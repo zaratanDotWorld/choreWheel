@@ -156,9 +156,10 @@ exports.resolveChallenges = async function (houseId, now) {
     .where('HeartChallenge.resolvedAt', null)
     .select('HeartChallenge.id');
 
-  for (const challenge of resolvableChallenges) {
-    await exports.resolveChallenge(challenge.id, now);
-  }
+  const resolvedChallenges = resolvableChallenges
+    .map(challenge => exports.resolveChallenge(challenge.id, now));
+
+  return (await Promise.all(resolvedChallenges)).flat();
 };
 
 // Karma
