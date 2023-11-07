@@ -103,6 +103,16 @@ exports.addReaction = async function (app, oauth, payload, emoji) {
   });
 };
 
+exports.getMessage = async function (app, oauth, channelId, ts) {
+  return app.client.conversations.history({
+    token: oauth.bot.token,
+    channel: channelId,
+    latest: ts,
+    inclusive: true,
+    limit: 1,
+  });
+};
+
 // Internal tools
 
 exports.setChannel = async function (app, oauth, command, channelType) {
@@ -213,19 +223,44 @@ exports.updateVoteCounts = async function (app, oauth, body, action) {
   if (await Admin.isExempt(residentId, now)) {
     const text = ':warning: Exempt residents are not allowed to vote :warning:';
     await exports.postEphemeral(app, oauth, channelId, residentId, text);
-  } else {
-    const { pollId, value } = JSON.parse(action.value);
-    await Polls.submitVote(pollId, residentId, now, value);
-
-    // Update the vote counts
-    const { yays, nays } = await Polls.getPollResultCounts(pollId);
-    const blockIndex = body.message.blocks.length - 1; // Voting block is last
-    body.message.token = oauth.bot.token;
-    body.message.channel = channelId;
-    body.message.blocks[blockIndex].elements = exports.makeVoteButtons(pollId, yays, nays);
-
-    await app.client.chat.update(body.message);
+    return;
   }
+
+  const { pollId, value } = JSON.parse(action.value);
+  await Polls.submitVote(pollId, residentId, now, value);
+
+  // Update the vote counts
+  const { yays, nays } = await Polls.getPollResultCounts(pollId);
+  const voteBlock = body.message.blocks.length - 1;
+  body.message.token = oauth.bot.token;
+  body.message.channel = channelId;
+  body.message.blocks[voteBlock].elements = exports.makeVoteButtons(pollId, yays, nays);
+
+  await app.client.chat.update(body.message);
+};
+
+exports.updateVoteResults = async function (app, oauth, pollId) {
+  const { metadata } = await Polls.getPoll(pollId);
+  const valid = await Polls.isPollValid(pollId);
+
+  const body = await exports.getMessage(app, oauth, metadata.channel, metadata.ts);
+  const message = body.messages[0];
+
+  // Parse current vote counts;
+  const voteBlock = message.blocks.length - 1;
+  const voteButtons = message.blocks[voteBlock].elements;
+  const { yays } = JSON.parse(voteButtons[0].value);
+  const { nays } = JSON.parse(voteButtons[1].value);
+
+  const result = valid ? 'passed' : 'failed';
+  const resultText = `:hourglass: Vote *${result}* *${yays}* to *${nays}*`;
+
+  // Update the results
+  message.token = oauth.bot.token;
+  message.channel = metadata.channel;
+  message.blocks[voteBlock] = exports.blockSection(resultText);
+
+  await app.client.chat.update(message);
 };
 
 exports.makeVoteText = function (minVotes, pollLength) {
