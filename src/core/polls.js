@@ -14,8 +14,8 @@ exports.createPoll = async function (houseId, startTime, duration, minVotes) {
 exports.getPoll = async function (pollId) {
   return db('Poll')
     .where({ id: pollId })
-    .first()
-    .select('*');
+    .select('*')
+    .first();
 };
 
 exports.submitVote = async function (pollId, residentId, submittedAt, vote) {

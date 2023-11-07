@@ -95,17 +95,17 @@ describe('Admin', async () => {
 
     it('can activate a resident', async () => {
       let residents;
-      residents = await Admin.getResidents(HOUSE1);
+      residents = await Admin.getResidents(HOUSE1, now);
       expect(residents.length).to.equal(0);
 
       await Admin.activateResident(HOUSE1, RESIDENT1, now);
 
-      residents = await Admin.getResidents(HOUSE1);
+      residents = await Admin.getResidents(HOUSE1, now);
       expect(residents.length).to.equal(1);
 
       await Admin.activateResident(HOUSE1, RESIDENT2, now);
 
-      residents = await Admin.getResidents(HOUSE1);
+      residents = await Admin.getResidents(HOUSE1, now);
       expect(residents.length).to.equal(2);
 
       const resident1 = await Admin.getResident(RESIDENT1);
@@ -114,13 +114,13 @@ describe('Admin', async () => {
 
     it('can activate a resident idempotently', async () => {
       let residents;
-      residents = await Admin.getResidents(HOUSE1);
+      residents = await Admin.getResidents(HOUSE1, now);
       expect(residents.length).to.equal(0);
 
       await Admin.activateResident(HOUSE1, RESIDENT1, now);
       await Admin.activateResident(HOUSE1, RESIDENT1, soon);
 
-      residents = await Admin.getResidents(HOUSE1);
+      residents = await Admin.getResidents(HOUSE1, now);
       expect(residents.length).to.equal(1);
       expect(residents[0].activeAt.getTime()).to.equal(now.getTime());
     });
@@ -129,16 +129,16 @@ describe('Admin', async () => {
       await Admin.activateResident(HOUSE1, RESIDENT1, now);
 
       let residents;
-      residents = await Admin.getResidents(HOUSE1);
+      residents = await Admin.getResidents(HOUSE1, now);
       expect(residents.length).to.equal(1);
 
       await Admin.deactivateResident(HOUSE1, RESIDENT1);
 
-      residents = await Admin.getResidents(HOUSE1);
+      residents = await Admin.getResidents(HOUSE1, now);
       expect(residents.length).to.equal(0);
 
       const resident = await Admin.getResident(RESIDENT1);
-      expect(resident.activeAt.getTime()).to.equal(now.getTime());
+      expect(resident.activeAt).to.equal(null);
     });
 
     it('can exempt a resident', async () => {
@@ -146,21 +146,18 @@ describe('Admin', async () => {
 
       let resident;
       resident = await Admin.getResident(RESIDENT1);
-      expect(resident.active).to.be.true;
       expect(resident.activeAt.getTime()).to.equal(now.getTime());
       expect(resident.exemptAt).to.equal(null);
 
       await Admin.exemptResident(HOUSE1, RESIDENT1, soon);
 
       resident = await Admin.getResident(RESIDENT1);
-      expect(resident.active).to.be.true;
       expect(resident.activeAt.getTime()).to.equal(now.getTime());
       expect(resident.exemptAt.getTime()).to.equal(soon.getTime());
 
       await Admin.unexemptResident(HOUSE1, RESIDENT1, soon);
 
       resident = await Admin.getResident(RESIDENT1);
-      expect(resident.active).to.be.true;
       expect(resident.activeAt.getTime()).to.equal(soon.getTime());
       expect(resident.exemptAt).to.equal(null);
     });
@@ -171,7 +168,6 @@ describe('Admin', async () => {
       await Admin.activateResident(HOUSE1, RESIDENT1, soon);
 
       const resident = await Admin.getResident(RESIDENT1);
-      expect(resident.active).to.be.true;
       expect(resident.activeAt.getTime()).to.equal(now.getTime());
       expect(resident.exemptAt.getTime()).to.equal(soon.getTime());
     });
@@ -222,14 +218,14 @@ describe('Admin', async () => {
       let residents;
       let votingResidents;
 
-      residents = await Admin.getResidents(HOUSE1);
+      residents = await Admin.getResidents(HOUSE1, now);
       votingResidents = await Admin.getVotingResidents(HOUSE1, now);
       expect(residents.length).to.equal(2);
       expect(votingResidents.length).to.equal(2);
 
       await testHelpers.createExemptUsers(HOUSE1, 10, now);
 
-      residents = await Admin.getResidents(HOUSE1);
+      residents = await Admin.getResidents(HOUSE1, now);
       votingResidents = await Admin.getVotingResidents(HOUSE1, now);
       expect(residents.length).to.equal(12);
       expect(votingResidents.length).to.equal(2);

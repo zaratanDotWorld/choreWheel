@@ -62,13 +62,13 @@ exports.getChorePreferences = async function (houseId) {
     .select('alphaChoreId', 'betaChoreId', 'preference');
 };
 
-exports.getActiveChorePreferences = async function (houseId) {
+exports.getActiveChorePreferences = async function (houseId, now) {
   return db('ChorePref')
     .join('Chore AS AlphaChore', 'ChorePref.alphaChoreId', 'AlphaChore.id')
     .join('Chore AS BetaChore', 'ChorePref.betaChoreId', 'BetaChore.id')
     .join('Resident', 'ChorePref.residentId', 'Resident.slackId')
     .where('ChorePref.houseId', houseId)
-    .where('Resident.active', true)
+    .where('Resident.activeAt', '<=', now)
     .where('AlphaChore.active', true)
     .where('BetaChore.active', true)
     .select('alphaChoreId', 'betaChoreId', 'preference');
@@ -122,10 +122,10 @@ exports.getCurrentChoreValues = async function (houseId, currentTime) {
   return choreValues;
 };
 
-exports.getCurrentChoreRankings = async function (houseId) {
+exports.getCurrentChoreRankings = async function (houseId, now) {
   const chores = await exports.getChores(houseId);
-  const residents = await Admin.getResidents(houseId);
-  const preferences = await exports.getActiveChorePreferences(houseId);
+  const residents = await Admin.getResidents(houseId, now);
+  const preferences = await exports.getActiveChorePreferences(houseId, now);
 
   const choresSet = new Set(chores.map(c => c.id));
   const formattedPreferences = preferences.map((p) => {
@@ -172,7 +172,7 @@ exports.updateChoreValues = async function (houseId, updateTime) {
 
   const workingResidentCount = await exports.getWorkingResidentCount(houseId, updateTime);
   const updateScalar = (workingResidentCount * pointsPerResident) * intervalScalar * inflationFactor;
-  const choreRankings = await exports.getCurrentChoreRankings(houseId);
+  const choreRankings = await exports.getCurrentChoreRankings(houseId, updateTime);
 
   const choreValues = choreRankings.map((chore) => {
     return {
@@ -303,7 +303,7 @@ exports.getChoreBreaks = async function (houseId, now) {
     .where('ChoreBreak.houseId', houseId)
     .where('ChoreBreak.startDate', '<=', now)
     .where('ChoreBreak.endDate', '>', now)
-    .where('Resident.active', true)
+    .where('Resident.activeAt', '<=', now)
     .where(function () { Admin.residentNotExempt(this, now); })
     .returning('*');
 };

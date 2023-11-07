@@ -161,7 +161,7 @@ app.command('/chores-exempt', async ({ ack, command }) => {
   const now = new Date();
   const houseId = command.team_id;
 
-  const exemptResidents = (await Admin.getResidents(houseId))
+  const exemptResidents = (await Admin.getResidents(houseId, now))
     .filter(r => r.exemptAt && r.exemptAt <= now);
 
   const view = views.choresExemptView(exemptResidents);
@@ -271,8 +271,11 @@ app.action('chores-rank-2', async ({ ack, body }) => {
   console.log('chores-rank-2');
   await ack();
 
+  const now = new Date();
+  const houseId = body.team.id;
+
   const direction = body.actions[0].selected_option.value;
-  const choreRankings = await Chores.getCurrentChoreRankings(body.team.id);
+  const choreRankings = await Chores.getCurrentChoreRankings(houseId, now);
 
   const view = views.choresRankView2(direction, choreRankings);
   await common.pushView(app, choresOauth, body.trigger_id, view);
@@ -282,6 +285,7 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   console.log('chores-rank-callback');
   await ack({ response_action: 'clear' });
 
+  const now = new Date();
   const residentId = body.user.id;
   const houseId = body.team.id;
 
@@ -299,7 +303,7 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
     console.log(`Chore preference set: ${targetChore.name} <- ${sourceChore.name} @ ${preference}`);
   }
 
-  const choreRankings = await Chores.getCurrentChoreRankings(houseId);
+  const choreRankings = await Chores.getCurrentChoreRankings(houseId, now);
   const targetChoreRanking = choreRankings.find(chore => chore.id === targetChore.id);
   const priority = Math.round(targetChoreRanking.ranking * 1000);
 

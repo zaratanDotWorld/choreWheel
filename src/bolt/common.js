@@ -155,8 +155,8 @@ exports.syncWorkspace = async function (app, oauth, command, syncMembers, syncCh
 
 exports.syncWorkspaceMembers = async function (app, oauth, houseId) {
   const now = new Date();
-
   const { members } = await app.client.users.list({ token: oauth.bot.token });
+
   for (const member of members) {
     if (!member.is_bot && member.id !== SLACKBOT) {
       if (member.deleted) {
@@ -168,7 +168,7 @@ exports.syncWorkspaceMembers = async function (app, oauth, houseId) {
     }
   }
 
-  const residents = await Admin.getResidents(houseId);
+  const residents = await Admin.getResidents(houseId, now);
   return residents.length;
 };
 
