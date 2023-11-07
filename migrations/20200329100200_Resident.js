@@ -4,7 +4,6 @@ exports.up = function(knex, Promise) {
         t.timestamps(useTimestamps = true, defaultToNow = true, useCamelCase = true);
         t.string('slackId').unique().notNull(); // Slack-generated userId, workspace-specific
         t.string('houseId').references('House.slackId').notNull();
-        t.boolean('active').notNull().defaultTo(true);
         t.timestamp('activeAt');
         t.timestamp('exemptAt');
     });
