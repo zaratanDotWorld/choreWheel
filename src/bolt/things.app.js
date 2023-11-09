@@ -88,11 +88,13 @@ app.event('app_home_opened', async ({ body, event }) => {
 
     // Resolve any buys
     for (const resolvedBuy of (await Things.resolveThingBuys(houseId, now))) {
+      console.log(`resolved thingBuy ${resolvedBuy.id}`);
       await common.updateVoteResults(app, thingsOauth, resolvedBuy.pollId);
     }
 
     // Resolve any proposals
     for (const resolvedProposal of (await Things.resolveThingProposals(houseId, now))) {
+      console.log(`resolved thingProposal ${resolvedProposal.id}`);
       await common.updateVoteResults(app, thingsOauth, resolvedProposal.pollId);
     }
   }

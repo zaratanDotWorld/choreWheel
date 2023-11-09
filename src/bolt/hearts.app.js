@@ -87,6 +87,7 @@ app.event('app_home_opened', async ({ body, event }) => {
 
     // Resolve any challanges
     for (const resolvedChallenge of (await Hearts.resolveChallenges(houseId, now))) {
+      console.log(`resolved heartChallenge ${resolvedChallenge.id}`);
       await common.updateVoteResults(app, heartsOauth, resolvedChallenge.pollId);
     }
 
