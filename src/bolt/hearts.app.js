@@ -13,7 +13,7 @@ let heartsOauth;
 // Create the app
 
 const app = new App({
-  logLevel: LogLevel.INFO,
+  logLevel: LogLevel.WARN,
   clientId: process.env.HEARTS_CLIENT_ID,
   clientSecret: process.env.HEARTS_CLIENT_SECRET,
   signingSecret: process.env.HEARTS_SIGNING_SECRET,

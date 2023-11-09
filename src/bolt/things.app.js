@@ -13,7 +13,7 @@ let thingsOauth;
 // Create the app
 
 const app = new App({
-  logLevel: LogLevel.INFO,
+  logLevel: LogLevel.WARN,
   clientId: process.env.THINGS_CLIENT_ID,
   clientSecret: process.env.THINGS_CLIENT_SECRET,
   signingSecret: process.env.THINGS_SIGNING_SECRET,

@@ -15,7 +15,7 @@ let choresOauth;
 // Create the app
 
 const app = new App({
-  logLevel: LogLevel.INFO,
+  logLevel: LogLevel.WARN,
   signingSecret: process.env.CHORES_SIGNING_SECRET,
   clientId: process.env.CHORES_CLIENT_ID,
   clientSecret: process.env.CHORES_CLIENT_SECRET,
