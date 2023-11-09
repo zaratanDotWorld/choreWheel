@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('newrelic');
 
 const { App, LogLevel } = require('@slack/bolt');
 
