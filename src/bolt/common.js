@@ -307,6 +307,8 @@ exports.getInputBlock = function (body, blockIdx) {
   return body.view.state.values[blockId];
 };
 
+exports.feedbackLink = '<mailto:support@zaratan.world|Submit Feedback>';
+
 // Block rendering
 
 exports.blockPlaintext = function (text) {

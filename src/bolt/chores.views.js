@@ -41,6 +41,7 @@ exports.choresHomeView = function (choreStats, numActive, exempt) {
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(textA));
+  blocks.push(common.blockSection(common.feedbackLink));
   blocks.push(common.blockDivider());
   blocks.push(common.blockSection(textB));
   blocks.push(common.blockSection(textC));
