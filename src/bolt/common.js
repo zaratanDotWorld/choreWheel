@@ -260,7 +260,8 @@ exports.updateVoteResults = async function (app, oauth, pollId) {
   const { nays } = JSON.parse(voteButtons[1].value);
 
   const result = valid ? 'passed' : 'failed';
-  const resultText = `:hourglass: Vote *${result}*, *${yays}* to *${nays}*`;
+  const emoji = valid ? ' :white_check_mark: ' : ' :x: '; // Extra spacing
+  const resultText = `Vote *${result}*, *${yays}* to *${nays}* ${emoji}`;
 
   // Update the results
   message.token = oauth.bot.token;
