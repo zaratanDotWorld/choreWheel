@@ -28,9 +28,10 @@ or `cd` into this directory and run `sudo ./setup.sh`.
 #### `mirror-*.service`
 
 The `systemd` config file for running the apps.
+
 Run `sudo cp .deploy/mirror-*.service /etc/systemd/system/` and then
 `systemctl daemon-reload` to load the configuration file. The service can then be
-managed using `systemctl {start, stop, restart, status} mirror-chores` as needed.
+managed using `systemctl {start, stop, restart, status} mirror-*` as needed.
 
 In order to run these commands, you must explicitly set a password for the
 user. This can be done using `sudo passwd <username>`.
@@ -39,11 +40,13 @@ user. This can be done using `sudo passwd <username>`.
 
 The `logrotate` config files for the apps, used to manage log rotation
 and preserve the memory of the EC2 instance.
+
 Run `sudo cp .deploy/mirror-*.conf /etc/logrotate.d/`.
 
 #### `mirror-logging.yml`
 
 We use New Relic for application monitoring. Application logs are exported to
 New Relic's service using the configuration found in this file.
+
 Run `sudo cp .deploy/mirror-logging.yml /etc/newrelic-infra/logging.d/`
 to begin exporting logs.
