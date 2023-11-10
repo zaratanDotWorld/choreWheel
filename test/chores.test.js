@@ -423,7 +423,17 @@ describe('Chores', async () => {
       expect(claimResolution).to.be.undefined;
     });
 
-    it('cannot successfully resolve a claim without at least two upvotes', async () => {
+    it('can successfully resolve a small claim with only one upvote', async () => {
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 9 } ]);
+      const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
+
+      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
+
+      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, challengeEnd);
+      expect(resolvedClaim.valid).to.be.true;
+    });
+
+    it('cannot successfully resolve a large claim without at least two upvotes', async () => {
       await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10 } ]);
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
 

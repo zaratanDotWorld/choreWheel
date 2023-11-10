@@ -257,13 +257,14 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   // Perform the claim
   const [ claim ] = await Chores.claimChore(houseId, chore.id, residentId, now);
   await Polls.submitVote(claim.pollId, residentId, now, YAY);
+  const { minVotes } = await Polls.getPoll(claim.pollId);
 
-  // Update point values
+  // Get latest point values
   recentPoints = (recentPoints.sum || 0) + claim.value;
   monthlyPoints = (monthlyPoints.sum || 0) + claim.value;
 
   const text = 'Someone just completed a chore';
-  const blocks = views.choresClaimCallbackView(claim, chore.name, recentPoints, monthlyPoints);
+  const blocks = views.choresClaimCallbackView(claim, chore.name, minVotes, recentPoints, monthlyPoints);
   const { channel, ts } = await postMessage(houseId, text, blocks);
   await Polls.updateMetadata(claim.pollId, { channel, ts });
 });

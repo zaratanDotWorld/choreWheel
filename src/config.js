@@ -3,6 +3,7 @@ const { HOUR, DAY } = require('./constants');
 // Chores
 exports.choresPollLength = DAY;
 exports.choresMinVotes = 2;
+exports.choreMinVotesThreshold = 10;
 exports.pointsPerResident = 100;
 exports.bootstrapDuration = 72 * HOUR;
 exports.inflationFactor = 1.00;

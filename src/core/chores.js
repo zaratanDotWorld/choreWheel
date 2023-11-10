@@ -8,6 +8,7 @@ const {
   inflationFactor,
   bootstrapDuration,
   choresMinVotes,
+  choreMinVotesThreshold,
   penaltyIncrement,
   penaltyDelay,
   choresPollLength,
@@ -231,25 +232,26 @@ exports.getLatestChoreClaim = async function (choreId, currentTime) {
 };
 
 exports.claimChore = async function (houseId, choreId, claimedBy, claimedAt) {
-  const choreValue = await exports.getCurrentChoreValue(choreId, claimedAt);
+  const choreValue = (await exports.getCurrentChoreValue(choreId, claimedAt)).sum;
 
-  if (choreValue.sum === null) { throw new Error('Cannot claim a zero-value chore!'); }
+  if (choreValue === null) { throw new Error('Cannot claim a zero-value chore!'); }
 
-  const [ poll ] = await Polls.createPoll(houseId, claimedAt, choresPollLength, choresMinVotes);
+  const minVotes = (choreValue >= choreMinVotesThreshold) ? choresMinVotes : 1;
+  const [ poll ] = await Polls.createPoll(houseId, claimedAt, choresPollLength, minVotes);
 
   return db('ChoreClaim')
-    .insert({ houseId, choreId, claimedBy, claimedAt, value: choreValue.sum, pollId: poll.id })
+    .insert({ houseId, choreId, claimedBy, claimedAt, value: choreValue, pollId: poll.id })
     .returning('*');
 };
 
 exports.resolveChoreClaim = async function (claimId, resolvedAt) {
   const choreClaim = await exports.getChoreClaim(claimId);
   const valid = await Polls.isPollValid(choreClaim.pollId, resolvedAt);
-  const value = await exports.getCurrentChoreValue(choreClaim.choreId, choreClaim.claimedAt);
+  const value = (await exports.getCurrentChoreValue(choreClaim.choreId, choreClaim.claimedAt)).sum;
 
   return db('ChoreClaim')
     .where({ id: claimId, resolvedAt: null }) // Cannot resolve twice
-    .update({ resolvedAt, valid, value: value.sum })
+    .update({ resolvedAt, valid, value })
     .returning('*');
 };
 

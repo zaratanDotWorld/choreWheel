@@ -136,8 +136,9 @@ exports.choresExemptView = function (exemptResidents) {
 
 exports.choresClaimView = function (chores) {
   const header = 'Claim a chore';
-  const mainText = 'Claims are verified by the house and require at least *2 upvotes* (including yours). ' +
-    'Posting pictures in the channel or thread will help others check your work.';
+  const mainText = 'Claims are verified by the house. ' +
+    'Large claims (*10+ points*) require at least *2 upvotes*, including yours. ' +
+    'Posting pictures will help others check your work.';
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
@@ -202,8 +203,8 @@ exports.getSparkles = function (monthlyPoints) {
   return ':sparkles:'.repeat(numSparkles);
 };
 
-exports.choresClaimCallbackView = function (claim, choreName, totalPoints, monthlyPoints) {
-  const achievement = exports.getAchievement(totalPoints);
+exports.choresClaimCallbackView = function (claim, choreName, minVotes, recentPoints, monthlyPoints) {
+  const achievement = exports.getAchievement(recentPoints);
   const sparkles = exports.getSparkles(monthlyPoints);
 
   const mainText = `*<@${claim.claimedBy}>* did *${choreName}* for ` +
@@ -211,7 +212,7 @@ exports.choresClaimCallbackView = function (claim, choreName, totalPoints, month
 
   const blocks = [];
   blocks.push(common.blockSection(mainText));
-  blocks.push(common.blockSection(common.makeVoteText(2, choresPollLength)));
+  blocks.push(common.blockSection(common.makeVoteText(minVotes, choresPollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(claim.pollId, 1, 0)));
   return blocks;
 };
