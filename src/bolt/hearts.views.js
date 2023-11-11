@@ -3,6 +3,7 @@ const { heartsPollLength, heartsCriticalNum, heartsMinPctInitial, heartsMinPctCr
 const common = require('./common');
 
 const TITLE = common.blockPlaintext('Hearts');
+const DOCS_URL = 'https://github.com/zaratanDotWorld/mirror/wiki/Hearts';
 
 exports.heartEmoji = function (numHearts) {
   let emoji;
@@ -18,11 +19,37 @@ exports.heartEmoji = function (numHearts) {
   return emoji.repeat(Math.max(1, Math.floor(numHearts)));
 };
 
-exports.heartsHomeView = function (numHearts, exempt) {
-  const docsUrl = 'https://github.com/zaratanDotWorld/mirror/wiki/Hearts';
+// Home views
 
+exports.heartsIntroView = function () {
+  const header = ':wave::skin-tone-4: Thanks for installing Hearts!';
+
+  const instructions = `
+*Follow these steps* to get set up (must be a workspace admin).
+_Setup is easiest if everyone is in the same place, but it's not strictly necessary._
+
+*1.* *Invite* all housemates to the Slack, and wait for them to join.
+
+*2.* Set an events channel by calling \`/hearts-channel\`, which *unlocks the app*.
+
+That's it! Just sit back and watch the magic happen :sparkles:
+
+_For more details on *Hearts* functionality, read the <${DOCS_URL}|manual>._
+`;
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(instructions));
+
+  return {
+    type: 'home',
+    blocks,
+  };
+};
+
+exports.heartsHomeView = function (numHearts, exempt) {
   const header = 'Welcome to Hearts';
-  const textA = `We use *<${docsUrl}|Hearts>* to keep each other accountable.\n\n` +
+  const textA = `We use *<${DOCS_URL}|Hearts>* to keep each other accountable.\n\n` +
     'Everyone starts with *5 hearts*.\n\n' +
     'We lose hearts when we fail to uphold our commitments. ' +
     'We regain hearts over time *(½ per month)*, or by earning karma :sparkles:';

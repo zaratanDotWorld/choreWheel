@@ -82,7 +82,7 @@ app.event('app_home_opened', async ({ body, event }) => {
 
       view = views.heartsHomeView(hearts.sum || 0, exempt);
     } else {
-      view = common.introHomeView('Hearts');
+      view = views.heartsIntroView();
     }
 
     await common.publishHome(app, heartsOauth, residentId, view);
