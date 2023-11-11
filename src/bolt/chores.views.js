@@ -5,8 +5,46 @@ const common = require('./common');
 // Chores views
 
 const TITLE = common.blockPlaintext('Chores');
+const DOCS_URL = 'https://github.com/zaratanDotWorld/mirror/wiki/Chores';
 
-// Home view
+// Home views
+
+exports.choresIntroView = function () {
+  const header = ':wave::skin-tone-4: Thanks for installing Chores!';
+
+  const instructions = `
+*Follow these steps* to get set up (must be a workspace admin).
+_Setup is easiest if everyone is in the same place, but it's not strictly necessary._
+
+*1.* *Invite* all housemates to the Slack, and wait for them to join.
+
+*2.* Make a list of *3-5 starter chores*. Good chores:
+  • Take between *10-30 minutes* to do.
+  • Are things that folks *usually won't do* on their own.
+  • Can be done *anytime* (i.e. not on fixed schedule).
+
+*3.* Set an events channel by calling \`/chores-channel\`, which *unlocks the app*.
+
+*4.* Use *\`Edit chores list\`* to enter the chores you came up with.
+  • Adding a few bullet points as a description will help folks stay consistent.
+
+*5.* Have the housemates go to the events channel and *upvote the edits*.
+
+Once the chores have been fully upvoted, *you're ready to go!* :rocket:
+Just sit back and watch the magic happen...
+
+_For more details on *Chores* functionality, read the <${DOCS_URL}|manual>._
+`;
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(instructions));
+
+  return {
+    type: 'home',
+    blocks,
+  };
+};
 
 exports.choresHomeView = function (choreStats, numActive, exempt) {
   const { pointsEarned, pointsOwed } = choreStats;
@@ -14,9 +52,8 @@ exports.choresHomeView = function (choreStats, numActive, exempt) {
     ? ':white_check_mark:'
     : ':muscle::skin-tone-4:';
 
-  const docsUrl = 'https://github.com/zaratanDotWorld/mirror/wiki/Chores';
   const header = 'Welcome to Chores';
-  const textA = `We use *<${docsUrl}|Chores>* to keep the house a nice place to live.\n\n` +
+  const textA = `We use *<${DOCS_URL}|Chores>* to keep the house a nice place to live.\n\n` +
     'Instead of a chore wheel or schedule, everyone owes *100 points* per month (UTC time). ' +
     'You earn points by doing chores you want, on your terms.\n\n' +
     'The points for a chore go up *every hour* until someone claims them. ' +

@@ -83,7 +83,7 @@ app.event('app_home_opened', async ({ body, event }) => {
 
       view = views.choresHomeView(choreStats, workingResidentCount, exempt);
     } else {
-      view = common.introHomeView('Chores');
+      view = views.choresIntroView();
     }
 
     await common.publishHome(app, choresOauth, residentId, view);
