@@ -83,7 +83,7 @@ app.event('app_home_opened', async ({ body, event }) => {
 
       view = views.thingsHomeView(balance.sum || 0, exempt);
     } else {
-      view = common.introHomeView('Things');
+      view = views.thingsIntroView();
     }
 
     await common.publishHome(app, thingsOauth, residentId, view);
