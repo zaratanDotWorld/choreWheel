@@ -5,6 +5,7 @@ const common = require('./common');
 // Things Views
 
 const TITLE = common.blockPlaintext('Things');
+const DOCS_URL = 'https://github.com/zaratanDotWorld/mirror/wiki/Things';
 
 exports.formatThing = function (thing) {
   if (thing.metadata) {
@@ -37,13 +38,48 @@ exports.formatBuy = function (buy, url = true) {
   return text;
 };
 
-// Home view
+// Home views
+
+exports.thingsIntroView = function () {
+  const header = ':wave::skin-tone-4: Thanks for installing Things!';
+
+  const instructions = `
+*Follow these steps* to get set up (must be a workspace admin).
+_Setup is easiest if everyone is in the same place, but it's not strictly necessary._
+
+*1.* *Invite* all housemates to the Slack, and wait for them to join.
+
+*2.* Make a list of *5-10 starter things*. Good things:
+  • Are used by (almost) everybody.
+  • Are non-perishable and can be bought in bulk.
+  • Are easy to order (free shipping, etc).
+
+*3.* Set an events channel by calling \`/things-channel\`, which *unlocks the app*.
+
+*4.* Use *\`Edit things list\`* to enter the things you came up with.
+  • Make sure to include taxes, etc when inputting the total cost.
+
+*5.* Have the housemates go to the events channel and *upvote the edits*.
+
+Once the things have been fully upvoted, *you're ready to go!* :rocket:
+Encourage folks to make buys as they go, and use \`/things-load\` and \`/things-fulfill\` to manage accounts.
+
+_For more details on *Things* functionality, read the <${DOCS_URL}|manual>._
+`;
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(instructions));
+
+  return {
+    type: 'home',
+    blocks,
+  };
+};
 
 exports.thingsHomeView = function (balance, exempt) {
-  const docsUrl = 'https://github.com/zaratanDotWorld/mirror/wiki/Things';
-
   const header = 'Welcome to Things';
-  const textA = `We use *<${docsUrl}|Things>* to spend money together.\n\n` +
+  const textA = `We use *<${DOCS_URL}|Things>* to spend money together.\n\n` +
     'Anyone can propose a buy, which requires *1 upvote per $50*. ' +
     'Successful buys are fulfilled within *3-5 days*.';
   const textB = `The house has *$${balance}* left in the account :moneybag:`;
