@@ -7,7 +7,7 @@ if (process.env.NODE_ENV === 'production') {
 const { App, LogLevel } = require('@slack/bolt');
 
 const { Admin, Polls, Chores } = require('../core/index');
-const { pointsPerResident, displayThreshold, breakMinDays } = require('../config');
+const { pointsPerResident, displayThreshold, breakMinDays, achievementWindow } = require('../config');
 const { YAY, DAY } = require('../constants');
 const { getMonthStart, shiftDate, getPrevMonthEnd } = require('../utils');
 
@@ -250,9 +250,9 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
 
   // Get chore points over last six months
   const monthStart = getMonthStart(now);
-  const sixMonths = new Date(now.getTime() - 180 * DAY);
+  const achievementStart = new Date(now.getTime() - achievementWindow);
   let monthlyPoints = await Chores.getAllChorePoints(residentId, monthStart, now);
-  let recentPoints = await Chores.getChorePoints(residentId, chore.id, sixMonths, now);
+  let achivementPoints = await Chores.getChorePoints(residentId, chore.id, achievementStart, now);
 
   // Perform the claim
   const [ claim ] = await Chores.claimChore(houseId, chore.id, residentId, now);
@@ -260,11 +260,11 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const { minVotes } = await Polls.getPoll(claim.pollId);
 
   // Get latest point values
-  recentPoints = (recentPoints.sum || 0) + claim.value;
+  achivementPoints = (achivementPoints.sum || 0) + claim.value;
   monthlyPoints = (monthlyPoints.sum || 0) + claim.value;
 
   const text = 'Someone just completed a chore';
-  const blocks = views.choresClaimCallbackView(claim, chore.name, minVotes, recentPoints, monthlyPoints);
+  const blocks = views.choresClaimCallbackView(claim, chore.name, minVotes, achivementPoints, monthlyPoints);
   const { channel, ts } = await postMessage(houseId, text, blocks);
   await Polls.updateMetadata(claim.pollId, { channel, ts });
 });

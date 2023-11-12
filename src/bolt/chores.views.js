@@ -240,8 +240,8 @@ exports.getSparkles = function (monthlyPoints) {
   return ':sparkles:'.repeat(numSparkles);
 };
 
-exports.choresClaimCallbackView = function (claim, choreName, minVotes, recentPoints, monthlyPoints) {
-  const achievement = exports.getAchievement(recentPoints);
+exports.choresClaimCallbackView = function (claim, choreName, minVotes, achivementPoints, monthlyPoints) {
+  const achievement = exports.getAchievement(achivementPoints);
   const sparkles = exports.getSparkles(monthlyPoints);
 
   const mainText = `*<@${claim.claimedBy}>* did *${choreName}* for ` +
