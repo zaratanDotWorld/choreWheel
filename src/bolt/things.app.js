@@ -32,7 +32,7 @@ const app = new App({
   ],
   installationStore: {
     storeInstallation: async (installation) => {
-      await Admin.addHouse(installation.team.id);
+      await Admin.addHouse(installation.team.id, installation.team.name);
       await Admin.updateHouse(installation.team.id, { thingsOauth: installation });
       console.log(`things installed @ ${installation.team.id}`);
     },

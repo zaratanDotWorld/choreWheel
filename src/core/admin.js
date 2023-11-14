@@ -2,9 +2,9 @@ const { db } = require('./db');
 
 // Houses
 
-exports.addHouse = async function (slackId) {
+exports.addHouse = async function (slackId, name) {
   return db('House')
-    .insert({ slackId })
+    .insert({ slackId, name })
     .onConflict('slackId').ignore();
 };
 

@@ -65,7 +65,7 @@ describe('Admin', async () => {
     });
 
     it('can update house info', async () => {
-      await Admin.addHouse(HOUSE1);
+      await Admin.addHouse(HOUSE1, 'h1');
 
       const choresChannel = 'choresChannel';
       const thingsChannel = 'thingsChannel';
@@ -73,17 +73,18 @@ describe('Admin', async () => {
       await Admin.updateHouse(HOUSE1, { choresChannel });
       await Admin.updateHouse(HOUSE1, { thingsChannel });
 
-      let metadata;
+      let house;
 
-      ({ metadata } = await Admin.getHouse(HOUSE1));
-      expect(metadata.choresChannel).to.equal(choresChannel);
-      expect(metadata.thingsChannel).to.equal(thingsChannel);
+      house = await Admin.getHouse(HOUSE1);
+      expect(house.name).to.equal('h1');
+      expect(house.metadata.choresChannel).to.equal(choresChannel);
+      expect(house.metadata.thingsChannel).to.equal(thingsChannel);
 
       await Admin.updateHouse(HOUSE1, { thingsChannel: null });
 
-      ({ metadata } = await Admin.getHouse(HOUSE1));
-      expect(metadata.choresChannel).to.equal(choresChannel);
-      expect(metadata.thingsChannel).to.be.null;
+      house = await Admin.getHouse(HOUSE1);
+      expect(house.metadata.choresChannel).to.equal(choresChannel);
+      expect(house.metadata.thingsChannel).to.be.null;
     });
   });
 

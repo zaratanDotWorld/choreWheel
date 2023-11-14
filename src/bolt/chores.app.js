@@ -34,7 +34,7 @@ const app = new App({
   ],
   installationStore: {
     storeInstallation: async (installation) => {
-      await Admin.addHouse(installation.team.id);
+      await Admin.addHouse(installation.team.id, installation.team.name);
       await Admin.updateHouse(installation.team.id, { choresOauth: installation });
       console.log(`chores installed @ ${installation.team.id}`);
     },
