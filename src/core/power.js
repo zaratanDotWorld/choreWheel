@@ -1,20 +1,20 @@
 const linAlg = require('linear-algebra')();
 
 class PowerRanker {
-  items; // Set(int)
+  items; // Set(str)
   matrix; // linAlg.Matrix
   verbose; // bool
 
   /// @notice Construct an instance of a PowerRanker
-  /// @param items:Set(int) The items being voted on
-  /// @param preferences:Array[{alpha:int, beta:int, preference:float}] The preferences of the participants
-  /// @param numResidents:int The number of participants
+  /// @param items:Set(str) The items being voted on
+  /// @param preferences:Array[{alpha:str, beta:str, preference:float}] The preferences of the participants
+  /// @param numParticipants:int The number of participants
   /// @param implicitPref:float The implicif preference of a participant if not explicit
-  constructor (items, preferences, numResidents, implicitPref, verbose = false) {
+  constructor (items, preferences, numParticipants, implicitPref, verbose = false) {
     if (items.size < 2) { throw new Error('PowerRanker: Cannot rank less than two items'); }
 
     this.items = items;
-    this.matrix = this.toMatrix(this.items, preferences, numResidents, implicitPref);
+    this.matrix = this.toMatrix(this.items, preferences, numParticipants, implicitPref);
     this.verbose = verbose;
 
     this.log('Matrix initialized');
@@ -44,7 +44,7 @@ class PowerRanker {
   }
 
   // O(preferences)
-  toMatrix (items, preferences, numResidents, implicitPref) { // [{ alpha, beta, preference }]
+  toMatrix (items, preferences, numParticipants, implicitPref) { // [{ alpha, beta, preference }]
     const n = items.size;
     const itemMap = this.#toitemMap(items);
 
@@ -55,7 +55,7 @@ class PowerRanker {
     if (implicitPref > 0) {
       matrix = matrix
         .plusEach(1).minus(linAlg.Matrix.identity(n))
-        .mulEach(implicitPref).mulEach(numResidents);
+        .mulEach(implicitPref).mulEach(numParticipants);
     }
 
     // Add the preferences to the off-diagonals, removing the implicit neutral preference

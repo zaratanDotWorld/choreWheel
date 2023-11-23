@@ -186,21 +186,20 @@ exports.giveKarma = async function (houseId, giverId, receiverId, givenAt) {
 };
 
 exports.getKarmaRankings = async function (houseId, startTime, endTime) {
-  const residents = await Admin.getResidents(houseId, endTime);
   const karma = await exports.getKarma(houseId, startTime, endTime);
   if (karma.length === 0) { return []; }
 
-  const residentSet = new Set(residents.map(r => r.slackId));
+  const residentSet = new Set(karma.map(k => [ k.receiverId, k.giverId ]).flat());
   const formattedKarma = karma.map((k) => {
     return { alpha: k.receiverId, beta: k.giverId, preference: 1 };
   });
 
   // TODO: Update PowerRanker to handle 0 implicit pref
-  const powerRanker = new PowerRanker(residentSet, formattedKarma, residents.length, 0.01);
+  const powerRanker = new PowerRanker(residentSet, formattedKarma, residentSet.size, 0.01);
   const rankings = powerRanker.run();
 
-  return residents.map((resident) => {
-    return { id: resident.id, slackId: resident.slackId, ranking: rankings.get(resident.slackId) };
+  return Array.from(residentSet).map((id) => {
+    return { slackId: id, ranking: rankings.get(id) };
   }).sort((a, b) => b.ranking - a.ranking);
 };
 
