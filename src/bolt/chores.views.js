@@ -5,7 +5,7 @@ const common = require('./common');
 // Chores views
 
 const TITLE = common.blockPlaintext('Chores');
-const DOCS_URL = 'https://github.com/zaratanDotWorld/mirror/wiki/Chores';
+const DOCS_URL = 'https://mirror.readthedocs.io/en/latest/tools/chores.html';
 
 // Home views
 
