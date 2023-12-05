@@ -21,7 +21,6 @@ Contents
   :maxdepth: 2
   :caption: Tools
 
-  tools/introduction.rst
   tools/chores.rst
   tools/hearts.rst
   tools/things.rst
@@ -30,7 +29,6 @@ Contents
   :maxdepth: 2
   :caption: Practices
 
-  practices/introduction.rst
   practices/conflict-resolution.rst
   practices/monthly-circle.rst
 
@@ -38,5 +36,4 @@ Contents
   :maxdepth: 2
   :caption: Development
 
-  development/introduction.rst
   development/architecture.rst
