@@ -1,4 +1,4 @@
-.. _Chores:
+.. _chores:
 
 Chores
 ======
@@ -18,7 +18,7 @@ Chores is designed with two goals in mind: first, to ensure an even distribution
   It is tempting to shy away from structure, and rely on spontaneous generosity.
   But spontaneous generosity never lasts, and a few people, usually women, end up doing most of the work.
 
-  Alternatives, like chore wheels or schedules, have their own drawbacks.
+  Alternatives, like simple chore wheels or schedules, have their own drawbacks.
   Cameras and cleaners have their place, but are expensive and can create a weird vibe.
 
 Functionality

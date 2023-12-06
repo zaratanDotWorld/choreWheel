@@ -54,7 +54,7 @@ exports.choresHomeView = function (choreStats, numActive, exempt) {
 
   const header = 'Welcome to Chores';
   const textA = `We use *<${DOCS_URL}|Chores>* to keep the house a nice place to live.\n\n` +
-    'Instead of a chore wheel or schedule, everyone owes *100 points* per month (UTC time). ' +
+    'Instead of a simple chore wheel or schedule, everyone owes *100 points* per month (UTC time). ' +
     'You earn points by doing chores you want, on your terms.\n\n' +
     'The points for a chore go up *every hour* until someone claims them. ' +
     'If you feel a chore should be worth more (or less), you can change it\'s *priority*. ' +

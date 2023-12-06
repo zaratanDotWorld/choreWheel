@@ -64,6 +64,6 @@ Karma
 
 Much of Hearts is about handling conflict.
 But what about all the good things that happen, which are in all likelihood the majority of the interactions occurring among the residents? For that we have **karma**.
-Anyone can give karma to another resident by adding a "plus-plus" (:code:`++`) after their name.
+Anyone can give karma to another resident by adding a "plus-plus" (``++``) after their name.
 Every month, all the karma is added together, and the resident with the most karma gets a bonus heart, on top of the half-heart that everyone gets.
 Even more, you can get a karma heart even if you have a full five hearts, giving you an epic **six** or even **seven** hearts.

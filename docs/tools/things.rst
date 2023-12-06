@@ -1,4 +1,4 @@
-.. _Things:
+.. _things:
 
 Things
 ======
