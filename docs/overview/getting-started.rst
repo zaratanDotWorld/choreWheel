@@ -7,9 +7,8 @@ Getting started with Mirror is quick and easy, and you can be up-and-running in 
 
 .. note::
 
-  It is recommended that everyone be physically present during the set-up process.
-
-  Perhaps over brunch?
+  | It is recommended that everyone be physically present during the set-up process.
+  | Perhaps over brunch?
 
 Setting up the workspace
 ------------------------
@@ -47,3 +46,10 @@ By adding :ref:`things`, you get some simple tooling for managing shared funds, 
 The right mix of tools will depend on your specific needs. If you're just exploring, try getting started with :ref:`chores` and :ref:`hearts`.
 
 Once you install each tool, the app home page will give you specific instructions on getting up-and-running.
+
+.. warning::
+
+  **It is normal if initially things are not making sense or working as you expect.**
+  These tools use time-based mechanics, so the state of the tool evolves over time.
+  People also need some time to play with the systems and learn how to use them.
+  It usually takes a few days for things to settle into a steady rhythm.
