@@ -3,9 +3,6 @@
 Hearts
 ======
 
-Introduction
-------------
-
 Every community begins with the best of intentions.
 And every community, invariably, experiences conflict.
 Experiencing conflict is not a choice.
@@ -18,15 +15,23 @@ Or we could choose to face conflict head-on, engaging in the essential relationa
 Hearts is an accountability tool, used to help structure the experience and resolution of conflict.
 Hearts is designed with two goals in mind: first, to give members of a community meaningful tools for holding each other accountable; second, to emphasize communication and repair over judgment and punishment.
 
-Functionality
+Core Concepts
 -------------
 
-The core concept of Hearts is, unsurprisingly, **hearts**.
-Everyone starts with five hearts, and gains and loses them as the result of various processes.
-Having more hearts means that you are effectively upholding the commitments you've made.
-Having fewer hearts means you are not.
-The more hearts the better.
-Losing all your hearts is bad.
+Hearts:
+  The core concept of Hearts is, unsurprisingly, **hearts**.
+  Everyone starts with five hearts, and gains and loses them as the result of various processes.
+
+Karma:
+  If someone goes above-and-beyond, you can give them "karma".
+  Through earning karma, people can earn bonus hearts.
+
+Regeneration/Decay:
+  Hearts regenerate at a rate of 1/2 per month, if you have less than 5.
+  Hearts decay at the same rate, if you have more than 5.
+
+Basic Functionality
+-------------------
 
 Challenges
 ~~~~~~~~~~
@@ -67,3 +72,30 @@ But what about all the good things that happen, which are in all likelihood the 
 Anyone can give karma to another resident by adding a "plus-plus" (``++``) after their name.
 Every month, all the karma is added together, and the resident with the most karma gets a bonus heart, on top of the half-heart that everyone gets.
 Even more, you can get a karma heart even if you have a full five hearts, giving you an epic **six** or even **seven** hearts.
+
+Slash Commands
+--------------
+
+In addition to the home page, Hearts comes with a number of "slash commands" which provide some important management functions.
+Most people will not need to know about these commands to use Hearts.
+
+.. note::
+
+  Commands marked with an asterisk (*) are admin-only
+
+/hearts-channel*
+  The ``/hearts-channel`` command is used by workspace administrators to set the events channel for Hearts, which is where app activity is posted and where housemates go to upvote chore claims and proposals.
+  This command takes no arguments, and will set the events channel to the channel in which the command is invoked.
+
+.. warning::
+
+  A channel **must** be set for the app to work.
+
+/hearts-sync
+  The ``/hearts-sync`` command will update the app with the current active users in the workspace, adding any new users and removing any who have been deactivated.
+  The sync command will also add the Hearts app to all public channels, allowing people to give/earn karma in those channels.
+  Keeping the Hearts app synchronized with the workspace is important, as the number of active users determines the minimum number of upvotes needed for proposals to pass.
+
+.. warning::
+
+  Make sure to run ``/hearts-sync`` whenever someone joins or leaves the workspace.

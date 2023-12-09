@@ -3,9 +3,6 @@
 Chores
 ======
 
-Introduction
-------------
-
 A clean and organized house is a shared resource.
 We all consume that resource as a part of our day-to-day, and we all play a part in ensuring that resource is renewed.
 We all make messes, and we all help clean them up.
@@ -20,9 +17,6 @@ Chores is designed with two goals in mind: first, to ensure an even distribution
 
   Alternatives, like simple chore wheels or schedules, have their own drawbacks.
   Cameras and cleaners have their place, but are expensive and can create a weird vibe.
-
-Functionality
--------------
 
 The core concept of Chores is, unsurprisingly, chores.
 Every house creates a list of chores that they need done.
@@ -45,12 +39,47 @@ The result is a continuous process of domestic renewal.
 
   It all works.
 
-App Home
-~~~~~~~~
+Core Concepts
+-------------
+
+Chores:
+  The core concept of Chores is, unsurprisingly, chores.
+  A chore is any pre-defined task which people won't do u.
+  An ideal chore takes at between 5-20 minutes to do and can be done more-or-less at any time.
+
+Points:
+  Everyone owes **100 points** per month.
+  When someone does a chore, they earn points.
+  The amount of points a chore is worth is not fixed, but grows over time.
+  When someone claims a chore, the chore's value goes back to zero.
+
+.. note::
+
+  A key idea is that people can't "vote" to create points.
+  Rather, points are created at a fixed rate over time.
+  This keeps points roughly correlated to how messy something is, without frustrating politics.
+
+Priorities:
+  Chores can be assigned different *priorities*, since not all chores are created equal.
+  The higher a chore's priority, the faster it will gain points over time.
+  Priorities are zero-sum: for something to gain priority, something else must lose priority.
+  High-priority chores are usually more intense (bathrooms), or need to be done more often (dishes), or both.
+  Low-priority chores are usually simpler and less critical (sweeping, tidying up common space).
+
+Breaks:
+  If you go out of town, you can take a break from chores.
+  Taking a break means you'll owe less points that month.
+
+Gifts:
+  If someone does something helpful that isn't a "chore", but you still want to recognize it, you can gift them some of the points you've earned.
+  Gifting points is useful when people "split" a chore.
+
+Basic Functionality
+-------------------
 
 The Chores home page is your chores dashboard.
 On the home page, you can see your current and owed points for the month, as well as how many people are "working" that day (i.e. not exempt and not on break).
-The app home is also your entryway into the major Chores functionality, described below.
+The app home is also your entryway into the major functionality, described below.
 
 Edit chores list
 ~~~~~~~~~~~~~~~~
@@ -121,62 +150,57 @@ Slash Commands
 --------------
 
 In addition to the home page, Chores comes with a number of "slash commands" which provide some important management functions.
-Most people will not need to know about these commands to use Chores, and only workspace admins can call these functions.
+Most people will not need to know about these commands to use Chores.
 
-/chores-channel
-~~~~~~~~~~~~~~~
+.. note::
 
-The `/chores-channel` command is used by workspace administrators to set the events channel for Chores, which is where app activity is posted and where housemates go to upvote chore claims and proposals.
-This command takes no arguments, and will set the events channel to the channel in which the command is invoked.
+  Commands marked with an asterisk (*) are admin-only
+
+/chores-channel*
+  The ``/chores-channel`` command is used by workspace administrators to set the events channel for Chores, which is where app activity is posted and where housemates go to upvote chore claims and proposals.
+  This command takes no arguments, and will set the events channel to the channel in which the command is invoked.
 
 .. warning::
 
   A channel **must** be set for the app to work.
 
 /chores-sync
-~~~~~~~~~~~~
+  The ``/chores-sync`` command will update the app with the current active users in the workspace, adding any new users and removing any who have been deactivated.
+  Keeping the Chores app synchronized with the workspace is important, as the number of active users determines the total amounts of points issued as well as the minimum number of upvotes needed for proposals to pass.
 
-The `/chores-sync` command will update the app with the current active users in the workspace, adding any new users and removing any who have been deactivated.
-Keeping the Chores app synchronized with the workspace is important, as the number of active users determines the total amounts of points issued as well as the minimum number of upvotes needed for proposals to pass.
 
-/chores-exempt
-~~~~~~~~~~~~~~
+.. warning::
 
-The `/chores-exempt` command is used to mark certain users as "exempt" from chores, i.e. to indicate that someone in the workspace is not actively present in the house and should not be considered for the purposes of issuing points and voting.
-In the past this has been used to exempt someone who took a four-month leave of absence, and to exempt an admin account belonging to someone not living in the house.
+  Make sure to run ``/chores-sync`` whenever someone joins or leaves the workspace.
+
+/chores-exempt*
+  The ``/chores-exempt`` command is used to mark certain users as "exempt" from chores, i.e. to indicate that someone in the workspace is not actively present in the house and should not be considered for the purposes of issuing points and voting.
+  In the past this has been used to exempt someone who took a four-month leave of absence, and to exempt an admin account belonging to someone not living in the house.
 
 Case Studies
 ------------
 
 Dishes
-~~~~~~
-
-A house finds that the `Dishes` chore is under-valued relative to the frequency with which it needs to be done, so they increase the speed of `Dishes`, which routes more points to the chore.
-This helps, but people also become more comfortable leaving dishes in the sink.At a house circle, the house discusses a norm of "mostly" cleaning dishes -- not a hard rule, but an expectation that if time and space allows, people should clean dishes as they go.
-As a result, there are fewer dishes in the sink, and the dishes that do collect are cleaned quickly by residents who feel fairly compensated.
-A mix of an increase in points, plus a cultural norm, creates an optimal result.
+  A house finds that the `Dishes` chore is under-valued relative to the frequency with which it needs to be done, so they increase the speed of `Dishes`, which routes more points to the chore.
+  This helps, but people also become more comfortable leaving dishes in the sink.At a house circle, the house discusses a norm of "mostly" cleaning dishes -- not a hard rule, but an expectation that if time and space allows, people should clean dishes as they go.
+  As a result, there are fewer dishes in the sink, and the dishes that do collect are cleaned quickly by residents who feel fairly compensated.
+  A mix of an increase in points, plus a cultural norm, creates an optimal result.
 
 Trash
-~~~~~
-
-A house adds a `Curb Trash` chore to take the trash to the curb on Monday nights.
-The trash goes out, but as the chore can only be done once a week, it ends up consistently over-valued, creating conflict as residents compete for the opportunity.
-The house re-defines the chore as `Trash Takeout`, which consists of either taking the trash to the curb, **or** emptying the kitchen & bathroom trash bins.
-Now the chore can be done at any time, leading to a better flow of trash throughout the week, while avoiding an over-valuing.
+  A house adds a `Curb Trash` chore to take the trash to the curb on Monday nights.
+  The trash goes out, but as the chore can only be done once a week, it ends up consistently over-valued, creating conflict as residents compete for the opportunity.
+  The house re-defines the chore as `Trash Takeout`, which consists of either taking the trash to the curb, **or** emptying the kitchen & bathroom trash bins.
+  Now the chore can be done at any time, leading to a better flow of trash throughout the week, while avoiding an over-valuing.
 
 Flooding
-~~~~~~~~
-
-The basement floods during a heavy rain.
-Three housemates work together to help dredge the basement of water, and want recognition for their efforts.
-There is a chore, `Backyard Tidy`, which has accumulated 60 points, but in the opinion of the house, could easily be skipped.
-The three housemates claim `Backyard Tidy` and split the points amongst themselves.
-A temporary suspension of regular rules allows an extraordinary circumstance to be handled smoothly.
+  The basement floods during a heavy rain.
+  Three housemates work together to help dredge the basement of water, and want recognition for their efforts.
+  There is a chore, `Backyard Tidy`, which has accumulated 60 points, but in the opinion of the house, could easily be skipped.
+  The three housemates claim `Backyard Tidy` and split the points amongst themselves.
+  A temporary suspension of regular rules allows an extraordinary circumstance to be handled smoothly.
 
 Kitchen
-~~~~~~~
-
-The house finds that a current chore, `Kitchen (heavy)` is prohibitively difficult.
-As such, it goes undone for long stretches of time, even when worth many points.
-The house moves to split the chore in two: redefining the initial chore as `Kitchen Floor Clean`, which includes a sweep and mop of the floor, and `Oven & Fridge Clean`, which includes a disposal of old food and a cleaning of the oven and fridge interior.
-The two chores are now valued and completed on their own terms, at different intervals, and overall more frequently than the larger initial chore.
+  The house finds that a current chore, `Kitchen (heavy)` is prohibitively difficult.
+  As such, it goes undone for long stretches of time, even when worth many points.
+  The house moves to split the chore in two: redefining the initial chore as `Kitchen Floor Clean`, which includes a sweep and mop of the floor, and `Oven & Fridge Clean`, which includes a disposal of old food and a cleaning of the oven and fridge interior.
+  The two chores are now valued and completed on their own terms, at different intervals, and overall more frequently than the larger initial chore.

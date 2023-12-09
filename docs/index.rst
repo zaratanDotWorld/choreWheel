@@ -18,7 +18,7 @@ It contains the latest thinking in **ethical technology**, with four core princi
 - Humans decide, machines bookkeep
 - Always-on, asynchronous processes
 
-Check out the :ref:`introduction` for a more detailed overview of the project, or :ref:`getting-started` to get set up for yourself.
+Check out the :ref:`introduction <introduction>` for a more detailed overview of the project, or our :ref:`getting started <getting-started>` guide to get set up for yourself.
 
 .. note::
 
