@@ -15,13 +15,14 @@ Chores is designed with two goals in mind: first, to ensure an even distribution
   It is tempting to shy away from structure, and rely on spontaneous generosity.
   But spontaneous generosity never lasts, and a few people, usually women, end up doing most of the work.
 
-  Alternatives, like simple chore wheels or schedules, have their own drawbacks.
+  Alternatives, like physical chore wheels or schedules, have their own drawbacks.
   Cameras and cleaners have their place, but are expensive and can create a weird vibe.
 
 The core concept of Chores is, unsurprisingly, chores.
 Every house creates a list of chores that they need done.
 The key idea is that chores aren't done on a schedule, but rather "whenever necessary", as determined by the residents.
 Chores are worth points, and the amount of points a chore is worth goes up the longer the chore goes undone (in most cases, the longer it's been, the bigger the job gets).
+
 **Everyone in the house needs to earn a certain number of points, about 100 per month.**
 **Over the course of the month, all the chores (collectively) gain about 100 points per person.**
 So, everyone does the chores they think are worth their time.
@@ -32,10 +33,10 @@ The result is a continuous process of domestic renewal.
   Here is the key dynamic: everyone would rather do a chore for more points, but if they wait too long, they'll get scooped.
   So everyone independently make choices about what to do, and when, and how, based on the ever-changing situation on the ground.
 
-  | Doing chores bit-by-bit over several weeks? Have fun.
-  | Waiting until the last day? Good luck.
-  | Doing 3 hard chores for 30 points a pop? Go nuts.
-  | Doing 20 easy chores for 5 points each? Why not.
+  | Doing chores bit-by-bit over several weeks? *Have fun*.
+  | Waiting until the last day? *Good luck*.
+  | Doing 3 hard chores for 30 points a pop? *Go nuts*.
+  | Doing 20 easy chores for 5 points each? *Why not*.
 
   It all works.
 
@@ -81,7 +82,7 @@ The Chores home page is the chores dashboard.
 On the home page, folks can see their current and owed points for the month, as well as how many people are "working" that day (i.e. not exempt and not on break).
 The app home is also the entryway into the basic functionality, described below:
 
-``Claim a chore``
+:guilabel:`Claim a chore`
   When someone does a chore, they "claim" the points that chore is worth at that moment.
   The claim is then posted publicly, and other residents can verify that the claim was made honestly.
   A minimum of **two upvotes** are needed for the large claims (10+ points) to succeed, equivalent to having someone "sign off" on the chore.
@@ -93,12 +94,12 @@ The app home is also the entryway into the basic functionality, described below:
   In the unlikely scenario that someone lies about doing a chore (or does an extremely poor job), the rest of the residents may negate the claim.
   A failed claim returns the points to the chore, allowing someone else to do the job properly.
 
-``Take a break``
+:guilabel:`Take a break`
   The point of Chores is to help folks clean up their own messes, with more points (roughty) meaning more mess.
   When someone is out of town, they aren't making a mess, and so they shouldn't owe as many points.
   Anyone who goes out of town for at least **3 days** can take a break, and they'll owe less points for that month (also, there will be fewer points given to chores on the days that they're gone).
 
-``Gift your points``
+:guilabel:`Gift your points`
   Not every useful piece of work around the house can be expressed as a recurring chore.
   Things happen randomly, and spontaneously, and it's valuable to be able to recognize those things.
   As mentioned above, the total amount of points per month is fixed, but there's no reason folks can't give away points that *they themselves have earned*.
@@ -106,19 +107,19 @@ The app home is also the entryway into the basic functionality, described below:
   After someone has claimed a chore and gotten points, they can gift those points to someone else in recognition of a useful contribution that they've made.
   It's their choice who to gift and why and how much, since they're the one who earned those points in the first place.
 
-``Edit chores list``
+:guilabel:`Edit chores list`
   Before anyone can claim a chore, the chore needs to be defined.
   Chores can be added, edited, or deleted.
 
   Chore edits start as proposals and go to the house for a vote.
   If the vote passes, the chore is created and begins accumulating points.
 
-  .. note::
+  .. tip::
 
     If 100% of the workspace votes yes for a proposal, it passes immediately.
     This is useful if folks ever want to gather in-person for a chore setup session, helping you get up-and-running quickly.
 
-``Set chore priorities``
+:guilabel:`Set chore priorities`
   The **total amount** of points per month is fixed, at 100 points per resident.
   Those points are distributed continuously over the course of the month. In a 10-person house and a 30-day month, that works out to about **33 points per day** in total.
   That number can't be changed, as it ensures that chores are done over the entire course of the month.

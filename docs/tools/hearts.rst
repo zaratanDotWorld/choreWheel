@@ -46,7 +46,7 @@ The Hearts home page is the chores dashboard.
 On the home page, folks can see their current hearts.
 The app home is also the entryway into the basic functionality, described below:
 
-``Resolve a dispute``
+:guilabel:`Resolve a dispute`
   The most dramatic way to lose a heart is by having another resident call you out for bad behavior, by issuing a **challenge** (similar to getting a "strike").
   This, rightly, is an uncomfortable experience, but a necessary one, as the final step in the :ref:`conflict resolution <conflict-resolution>` process.
   If you couldn't be called out, or you couldn't call someone else out, then there would be no accountability: problematic behavior would continue until things reached a breaking point; not a situation anyone wants to be in.
@@ -63,7 +63,7 @@ The app home is also the entryway into the basic functionality, described below:
   Anyone who issues a challenge stands to lose hearts themselves, if other residents feel they are out of line.
   Instead, challenges should come as no surprise, and represent a final step in a respectful process of disagreement.
 
-``See current hearts``
+:guilabel:`See current hearts`
   Pull up a view showing everyone's hearts.
 
 Slash Commands

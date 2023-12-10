@@ -1,7 +1,7 @@
 Mirror
 ======
 
-**Mirror is pioneering software for co-living, running on Slack.**
+**Mirror is pioneering software for coliving, running on Slack.**
 
 Created by **economists** and **game designers**, Mirror is a family of tools helping people share space:
 
@@ -53,4 +53,4 @@ Contents
   :maxdepth: 2
   :caption: Development
 
-  development/architecture.rst
+  development/design-principles.rst

@@ -5,7 +5,7 @@ Getting Started
 
 Getting started with Mirror is quick and easy, and you can be up-and-running in twenty minutes.
 
-.. note::
+.. tip::
 
   | It is recommended that everyone be physically present during the set-up process.
   | Perhaps over brunch?
