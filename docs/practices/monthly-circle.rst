@@ -17,8 +17,10 @@ The circle is led by a different resident every month, and takes place over dinn
 
 3. Then, residents go around in a circle sharing **concerns about the house** -- negative patterns or problematic developments. The goal here is less to criticize individuals and more to build a consensus around shared expectations.
 
-  - During this go-around, there is usually more back-and-forth to get clarity around issues and to discuss possible resolutions.
-    It is recommended to solicit house thorns in advance, so that other housemates have time to prepare their thoughts and responses.
+  .. note::
+
+      During this go-around, there is usually more back-and-forth to get clarity around issues and to discuss possible resolutions.
+      It is recommended to solicit house thorns in advance, so that other housemates have time to prepare their thoughts and responses.
 
 4. Finally, residents go around in a circle sharing general **hopes and aspirations for the future** -- personal goals, visions for the house, hopes for the development of current events more broadly.
 

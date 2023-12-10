@@ -65,7 +65,7 @@ Most people will not need to know about these commands to use Things.
 
   Commands marked with an asterisk (*) are admin-only
 
-/things-channel*
+``/things-channel`` \*
   The ``/things-channel`` command is used by workspace administrators to set the events channel for Things, which is where app activity is posted and where housemates go to upvote chore claims and proposals.
   This command takes no arguments, and will set the events channel to the channel in which the command is invoked.
 
@@ -73,10 +73,10 @@ Most people will not need to know about these commands to use Things.
 
     A channel **must** be set for the app to work.
 
-/things-load [amount]*
+``/things-load [amount]`` \*
   The ``/things-load`` command allows admins to add funds to the account.
 
-/things-fulfill*
+``/things-fulfill`` \*
   The ``/things-channel`` command brings up a view for admins to mark buys as "fulfilled".
 
   .. note::
@@ -84,12 +84,12 @@ Most people will not need to know about these commands to use Things.
     There are many ways communities can handle actual fulfillment, from online delivery to pickup-truck farmers market runs.
     The system is intentionally flexible here, to accomodate diverse scenarios.
 
-/things-update*
+``/things-update`` \*
   The ``/things-update`` command brings up a veiw for admins to update thing information.
   Often, prices and links change.
   Rather than creating a regular proposal, admins have the latitude to update logistical information for existing things.
 
-/things-sync
+``/things-sync``
   The ``/things-sync`` command will update the app with the current active users in the workspace, adding any new users and removing any who have been deactivated.
   Keeping the Things app synchronized with the workspace is important, as the number of active users determines the minimum number of upvotes needed for proposals to pass.
 

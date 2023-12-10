@@ -76,7 +76,7 @@ Most people will not need to know about these commands to use Hearts.
 
   Commands marked with an asterisk (*) are admin-only
 
-/hearts-channel*
+``/hearts-channel`` \*
   The ``/hearts-channel`` command is used by workspace administrators to set the events channel for Hearts, which is where app activity is posted and where housemates go to upvote chore claims and proposals.
   This command takes no arguments, and will set the events channel to the channel in which the command is invoked.
 
@@ -84,7 +84,7 @@ Most people will not need to know about these commands to use Hearts.
 
     A channel **must** be set for the app to work.
 
-/hearts-sync
+``/hearts-sync``
   The ``/hearts-sync`` command will update the app with the current active users in the workspace, adding any new users and removing any who have been deactivated.
   The sync command will also add the Hearts app to all public channels, allowing people to give/earn karma in those channels.
   Keeping the Hearts app synchronized with the workspace is important, as the number of active users determines the minimum number of upvotes needed for proposals to pass.
