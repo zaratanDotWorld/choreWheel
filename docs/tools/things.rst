@@ -30,7 +30,7 @@ Buys
 Basic Functionality
 -------------------
 
-``Buy a thing``
+:guilabel:`Buy a thing`
   Whenever someone notices that a supply is running low, they can propose that the house buy more.
   The "buy" is then posted publicly, and other residents can endorse or reject the proposal.
   A minimum of **one endorsement per $50** is needed for the buy to succeed, to prevent one person from unilaterally spending a large proportion of the house's funds.
@@ -39,19 +39,19 @@ Basic Functionality
 
   Once a buy is resolved, it will be "fulfilled" (hand-wavy, to be sure) in some way, shape, or form.
 
-``Buy special thing``
+:guilabel:`Buy special thing`
   From time to time, folks want to buy something which isnt "on the list".
   In that case, they can propose a "special buy" and provide more details on what they're thinking.
   Special buys have a longer voting window and require a higher number of upvotes to pass.
 
-``Edit things list``
+:guilabel:`Edit things list`
   Before anyone can buy a thing, the thing needs to be defined.
   Things can be added, edited, or deleted.
 
   Thing edits start as proposals and go to the house for a vote.
   If the vote passes, the thing is created and can be bought.
 
-``See bought things``
+:guilabel:`See bought things`
   Pull up a view showing ongoing and historical buys.
   Historical buys are aggregated by thing, making it easy to see spending trends.
 
