@@ -1,4 +1,4 @@
-# Mirror 🪞
+# Chore Wheel 🔆
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/zaratanDotWorld/mirror/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/zaratanDotWorld/mirror/tree/master) [![Documentation Status](https://readthedocs.org/projects/mirror/badge/?version=latest)](https://mirror.readthedocs.io/en/latest/?badge=latest)
 
@@ -8,11 +8,11 @@
 
 ### Overview:
 
-Mirror is self-governance software for coliving, helping reshape the economics of housing.
+Chore Wheel is self-governance software for coliving, helping reshape the economics of housing.
 
-Developed in collaboration with social scientists and game designers, Mirror is a set of tools and processes which enable groups of individuals to easily and effectively share space, without reliance on expensive managers or tedious meetings. By lowering the cost of cooperation, Mirror helps to bring coliving into the mainstream, reducing both the price and environmental impact of housing.
+Developed in collaboration with social scientists and game designers, Chore Wheel is a set of tools and processes which enable groups of individuals to easily and effectively share space, without reliance on expensive managers or tedious meetings. By lowering the cost of cooperation, Chore Wheel helps to bring coliving into the mainstream, reducing both the price and environmental impact of housing.
 
-Mirror draws influence from the work of Elinor Ostrom, and is designed in reference to her [eight principles](https://en.wikipedia.org/wiki/Elinor_Ostrom#Design_principles_for_Common_Pool_Resource_(CPR)_institution):
+Chore Wheel draws influence from the work of Elinor Ostrom, and is designed in reference to her [eight principles](https://en.wikipedia.org/wiki/Elinor_Ostrom#Design_principles_for_Common_Pool_Resource_(CPR)_institution):
 
 1. Clearly defined the group boundaries (and effective exclusion of external un-entitled parties) and the contents of the common pool resource;
 2. The appropriation and provision of common resources that are adapted to local conditions;

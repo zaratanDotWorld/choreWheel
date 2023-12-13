@@ -11,7 +11,7 @@ exports.homeEndpoint = function (appName) {
     method: [ 'GET' ],
     handler: async (_, res) => {
       res.writeHead(200);
-      res.end(`Welcome to Mirror - ${appName}!`);
+      res.end(`Welcome to Chore Wheel - ${appName}!`);
     },
   };
 };

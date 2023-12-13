@@ -1,5 +1,5 @@
 [Unit]
-Description=Chores by Mirror
+Description=Chores by Chore Wheel
 Documentation=https://github.com/zaratanDotWorld/mirror
 After=network.target
 

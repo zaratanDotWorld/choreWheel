@@ -1,16 +1,16 @@
-Mirror
+Chore Wheel
 ======
 
-**Mirror is pioneering software for coliving, running on Slack.**
+**Chore Wheel is pioneering software for coliving, running on Slack.**
 
-Created by **economists** and **game designers**, Mirror is a family of tools helping people share space:
+Created by **economists** and **game designers**, Chore Wheel is a family of tools helping people share space:
 
 - :ref:`chores` for keeping it clean
 - :ref:`hearts` for mutual accountability
 - :ref:`things` for bulk purchasing
 - and more to come
 
-Mirror is **open-source** and **privacy-preserving**.
+Chore Wheel is **open-source** and **privacy-preserving**.
 It contains the latest thinking in **ethical technology**, with four core principles:
 
 - No managers or privileged roles
