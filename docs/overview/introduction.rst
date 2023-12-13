@@ -8,7 +8,7 @@ It is increasingly apparent that **coliving** - housing options where residents 
 
 .. note::
 
-  While initially designed for large coliving houses, Mirror works just as well helping groups of friends or even couples navigate shared space.
+  While initially designed for large coliving houses, Chore Wheel works just as well helping groups of friends or even couples navigate shared space.
 
 Perhaps the greatest benefit of coliving is the avoidance of redundant infrastructure (e.g. one large kitchen, rather than three small ones), which lowers costs.
 However, sharing common resources introduces new coordination challenges (e.g. “who does the dishes”).
@@ -17,7 +17,7 @@ Such solutions are unreliable, burdensome, and often too simplistic to meet the 
 
 As Oscar Wilde famously quipped, “the trouble with socialism is that it takes up too many evenings.” **We can do better.**
 
-Mirror is *poetic technology*: a family of tools meant to support the healthy functioning of a coliving environment, **by maximizing participation and minimizing potential abuses of power**.
+Chore Wheel is *poetic technology*: a family of tools meant to support the healthy functioning of a coliving environment, **by maximizing participation and minimizing potential abuses of power**.
 Drawing influences variously from cognitive science, computer science, electoral theory, economics, cybernetics, and game design, it functions with four top-level design goals:
 
 - No managers or privileged administrative roles
@@ -33,12 +33,12 @@ In a housing environment, on the other hand, much of the work is *cyclical* (i.e
 Further, unlike the distributed and anonymous settings of online communities, coliving environments, being real physical spaces, provide many more opportunities for the informal, casual interactions necessary for building strong relationships.
 As such, we can *assume* the existence of a coherent social sphere, with the software tools merely providing a structure for transparency and accountability.
 
-Note that Mirror does not claim to capture all ideation, decision making, and deliberation occuring in a coliving environment.
+Note that Chore Wheel does not claim to capture all ideation, decision making, and deliberation occuring in a coliving environment.
 Nor does its use reduce the need for ongoing investments in community-building.
 Rather, it takes its cue from the Pareto principle: a set of simple, general tools which handles the most common 80% of scenarios, leaving the remaining 20% to be handled by separate, specialized processes.
 
 
-By helping coliving communities handle their most common problems almost "by magic", Mirror lets communities channel their time and energy towards more long-term, meaningful projects.
+By helping coliving communities handle their most common problems almost "by magic", Chore Wheel lets communities channel their time and energy towards more long-term, meaningful projects.
 
 .. note::
 

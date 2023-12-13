@@ -3,7 +3,7 @@
 Getting Started
 ===============
 
-Getting started with Mirror is quick and easy, and you can be up-and-running in twenty minutes.
+Getting started with Chore Wheel is quick and easy, and you can be up-and-running in twenty minutes.
 
 .. tip::
 
@@ -19,7 +19,7 @@ If the house doesn't have a Slack workspace, they should `create one <https://sl
 
 .. note::
 
-  One of the design principles of Mirror is "no managers or privileged roles".
+  One of the design principles of Chore Wheel is "no managers or privileged roles".
   In practice, allowing a small number of privileged actions makes a few things much easier.
   These actions are available to any admin in the workspace.
 

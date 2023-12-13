@@ -2,8 +2,8 @@
 
 # -- Project information
 
-project = 'Mirror'
-copyright = '2023, Daniel Kronovet'
+project = 'Chore Wheel'
+copyright = '2023, Kronosapiens Labs'
 author = 'Daniel Kronovet'
 
 release = '0.3'
