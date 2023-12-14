@@ -10,15 +10,8 @@ Created by **economists** and **game designers**, Chore Wheel is a family of too
 - :ref:`things` for bulk purchasing
 - and more to come
 
-Chore Wheel is **open-source** and **privacy-preserving**.
-It contains the latest thinking in **ethical technology**, with four core principles:
-
-- No managers or privileged roles
-- Simple and intuitive inputs
-- Humans decide, machines bookkeep
-- Always-on, asynchronous processes
-
-Check out the :ref:`introduction <introduction>` for a more detailed overview of the project, or our :ref:`getting started <getting-started>` guide to get set up for yourself.
+Chore Wheel is **open-source** and **privacy-preserving**, and contains the latest thinking in **ethical technology**.
+Check out the :ref:`introduction <introduction>` for a more detailed overview of the project, or our :ref:`getting started guide <getting-started>` to get set up for yourself.
 
 .. note::
 

@@ -1,3 +1,5 @@
+.. _monthly-circle:
+
 Monthly Circle
 ==============
 

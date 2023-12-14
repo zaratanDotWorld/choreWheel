@@ -3,6 +3,8 @@
 Chores
 ======
 
+**`Install Chores <https://chores.mirror.zaratan.world/slack/install>`_**
+
 A clean and organized house is a shared resource.
 We all consume that resource as a part of our day-to-day, and we all play a part in ensuring that resource is renewed.
 We all make messes, and we all help clean them up.
@@ -46,7 +48,7 @@ Core Concepts
 Chores
   The core concept of Chores is, unsurprisingly, chores.
   A chore is any pre-defined task which people usually won't do on their own.
-  An ideal chore takes at between 5-20 minutes to do and can be done more-or-less at any time.
+  **An ideal chore takes at between 5-20 minutes to do, is largely self-contained, and can be done more-or-less at any time.**
 
 Points
   Everyone owes **100 points** per month.
@@ -56,8 +58,8 @@ Points
 
   .. note::
 
-    A key idea is that people can't "vote" to create points.
-    Rather, points are created at a fixed rate over time.
+    A key idea is that people can't vote to give points.
+    Rather, points are given slowly over time.
     This keeps points roughly correlated to how messy something is, without having meetings about it.
 
 Priorities
@@ -114,12 +116,25 @@ The app home is also the entryway into the basic functionality, described below:
   Chore edits start as proposals and go to the house for a vote.
   If the vote passes, the chore is created and begins accumulating points.
 
-  .. tip::
+  .. warning::
 
-    If 100% of the workspace votes yes for a proposal, it passes immediately.
-    This is useful if folks ever want to gather in-person for a chore setup session, helping you get up-and-running quickly.
+      When defining chores, it is easy to either go **too micro** (e.g. "Wipe off dinner table") or **too macro** (e.g. "Deep clean the whole kitchen").
+      If too micro, people will resent having to officially "claim" the chore.
+      If too macro, the chore will never get done, despite being worth a lot of points.
 
-:guilabel:`Set chore priorities`
+      Don't be afraid to experiment and add, remove, or edit chores in the first few weeks.
+
+  .. note::
+
+      Here is an example of a well-defined chore:
+
+      Dishes
+        - Put away all clean dishes from the drying rack or washing machine
+        - Put any dirty dishes in the washing machine
+        - Clean any large pots or pans by hand and put in the drying rack
+        - Run the washing machine if full
+
+:guilabel:`Set priorities`
   The **total amount** of points per month is fixed, at 100 points per resident.
   Those points are distributed continuously over the course of the month. In a 10-person house and a 30-day month, that works out to about **33 points per day** in total.
   That number can't be changed, as it ensures that chores are done over the entire course of the month.
@@ -131,15 +146,16 @@ The app home is also the entryway into the basic functionality, described below:
   So, the kitchen-related chores should be higher-priority than the yard chores, getting perhaps 5 points per day instead of 2.
   The only rule is that for one chore to gain priority, another one has to lose it -- priority is always relative.
 
-  Chore priorities are determined collectively.
-  Anyone in the house can unilaterally decide to increase the priority of one chore and decrease the priority of another, which is nice because there's no need to vote on whether a chore should be fast or slow: everyone decided for themselves.
-  Chore priorities are also interrelated: if you increase a chores priority over many chores, the effect will be bigger than if you increase a chore's priority over only one other chore.
-  Further, if you prioritize a chore over an already high-priority chore, the effect will be bigger than if you prioritize the chore over a low-priority chore.
+  Chore priorities are determined collectively, but independently, using an innovative valuing system.
+  Anyone in the house can, within bounds, unilaterally increase the priority of one chore and decrease the priority of another.
+  This is nice because there's no need to vote on a chore's priority -- people can make small adjustments independently if they notice something being over- or under-valued.
 
+  Chore priorities are also interrelated: if you increase a chores priority over many chores, the effect will be bigger than if you increase a chore's priority over only one other chore.
+  If you prioritize a chore over an already high-priority chore, the effect will be bigger than if you prioritize the chore over a low-priority chore.
 
   .. note::
 
-    There's more happening behind the scenes, but it's not important for your day-to-day.
+    There's more happening under the hood, but it's not important for your day-to-day.
     If you want to get into the nuts and bolts, go `here <https://colony.io/budgetbox.pdf>`_.
 
 Slash Commands

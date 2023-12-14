@@ -3,6 +3,8 @@
 Things
 ======
 
+**`Install Things <https://things.mirror.zaratan.world/slack/install>`_**
+
 There's an old line that "organizations are communities with resources".
 One of the economic benefits of living in community is the opportunity to buy supplies more cheaply, in bulk.
 Rather than 12 tiny bottles of olive oil, all crowding each other on the shelf, we can have one large (and less expensive) bottle.

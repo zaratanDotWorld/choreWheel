@@ -35,8 +35,9 @@ Setting up the tools
 - `Install Things <https://things.mirror.zaratan.world/slack/install>`_
 
 Once everyone has join the workspace, you can begin installing the tools.
-All tools function as stand-alone apps, but complement each other when used together.
+Each tool has a home page which will help you get set up.
 
+All tools function as stand-alone apps, but complement each other when used together.
 There is a rough progression of power/complexity from using :ref:`chores` by itself, to combining it with :ref:`hearts`, to combining both with :ref:`things`.
 
 When using :ref:`chores` as a stand-alone tool, you get all the power of the chore system, but without a long-term accountability structure.
@@ -46,6 +47,11 @@ By adding :ref:`things`, you get some simple tooling for managing shared funds, 
 The right mix of tools will depend on your specific needs. If you're just exploring, try getting started with :ref:`chores` and :ref:`hearts`.
 
 Once you install each tool, the app home page will give you specific instructions on getting up-and-running.
+
+.. tip::
+
+  If 100% of the workspace votes yes for a proposal, it passes immediately.
+  This is useful if folks are gathered in-person and want to get up-and-running quickly.
 
 .. warning::
 

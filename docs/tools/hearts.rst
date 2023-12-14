@@ -3,6 +3,8 @@
 Hearts
 ======
 
+**`Install Hearts <https://hearts.mirror.zaratan.world/slack/install>`_**
+
 Every community begins with the best of intentions.
 And every community, invariably, experiences conflict.
 Experiencing conflict is not a choice.
