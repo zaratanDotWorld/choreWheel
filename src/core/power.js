@@ -9,12 +9,11 @@ class PowerRanker {
   /// @param items:Set(str) The items being voted on
   /// @param preferences:Array[{alpha:str, beta:str, preference:float}] The preferences of the participants
   /// @param numParticipants:int The number of participants
-  /// @param implicitPref:float The implicif preference of a participant if not explicit
-  constructor (items, preferences, numParticipants, implicitPref, verbose = false) {
+  constructor (items, preferences, numParticipants, verbose = false) {
     if (items.size < 2) { throw new Error('PowerRanker: Cannot rank less than two items'); }
 
     this.items = items;
-    this.matrix = this.toMatrix(this.items, preferences, numParticipants, implicitPref);
+    this.matrix = this.toMatrix(this.items, preferences, numParticipants);
     this.verbose = verbose;
 
     this.log('Matrix initialized');
@@ -44,19 +43,18 @@ class PowerRanker {
   }
 
   // O(preferences)
-  toMatrix (items, preferences, numParticipants, implicitPref) { // [{ alpha, beta, preference }]
+  toMatrix (items, preferences, numParticipants) { // [{ alpha, beta, preference }]
     const n = items.size;
     const itemMap = this.#toitemMap(items);
 
     // Initialise the zero matrix;
     let matrix = linAlg.Matrix.zero(n, n);
 
-    // Add implicit neutral preferences, if any
-    if (implicitPref > 0) {
-      matrix = matrix
-        .plusEach(1).minus(linAlg.Matrix.identity(n))
-        .mulEach(implicitPref).mulEach(numParticipants);
-    }
+    // Add implicit neutral preferences
+    const implicitPref = (1 / numParticipants) / 2; // Halve the value since used twice
+    matrix = matrix
+      .plusEach(1).minus(linAlg.Matrix.identity(n))
+      .mulEach(implicitPref).mulEach(numParticipants);
 
     // Add the preferences to the off-diagonals, removing the implicit neutral preference
     // Recall that preference > 0.5 is flow towards, preference < 0.5 is flow away

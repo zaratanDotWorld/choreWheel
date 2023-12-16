@@ -12,7 +12,6 @@ exports.penaltyDelay = exports.choresPollLength + 6 * HOUR; // TODO: make robust
 exports.penaltyIncrement = 10; // Per half heart
 exports.achievementBase = 20;
 exports.achievementWindow = 6.5 * 30 * DAY;
-exports.implicitPref = 0.1 / 2; // Halve the value since it's used twice
 exports.dampingFactor = 0.99;
 exports.choresProposalPollLength = 2 * DAY;
 exports.choreProposalPct = 0.4;

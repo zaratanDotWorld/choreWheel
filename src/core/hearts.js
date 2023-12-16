@@ -195,7 +195,7 @@ exports.getKarmaRankings = async function (houseId, startTime, endTime) {
   });
 
   // TODO: Update PowerRanker to handle 0 implicit pref
-  const powerRanker = new PowerRanker(residentSet, formattedKarma, residentSet.size, 0.01);
+  const powerRanker = new PowerRanker(residentSet, formattedKarma, residentSet.size);
   const rankings = powerRanker.run();
 
   return Array.from(residentSet).map((id) => {

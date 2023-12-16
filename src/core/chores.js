@@ -12,7 +12,6 @@ const {
   penaltyIncrement,
   penaltyDelay,
   choresPollLength,
-  implicitPref,
   dampingFactor,
   choresProposalPollLength,
   choreProposalPct,
@@ -133,7 +132,7 @@ exports.getCurrentChoreRankings = async function (houseId, now) {
     return { alpha: p.alphaChoreId, beta: p.betaChoreId, preference: p.preference };
   });
 
-  const powerRanker = new PowerRanker(choresSet, formattedPreferences, residents.length, implicitPref);
+  const powerRanker = new PowerRanker(choresSet, formattedPreferences, residents.length);
   const rankings = powerRanker.run(d = dampingFactor); // eslint-disable-line no-undef
 
   return chores.map((chore) => {
