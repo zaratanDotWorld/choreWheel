@@ -302,11 +302,11 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   const houseId = body.team.id;
 
   const direction = body.view.private_metadata;
-  const targetChore = JSON.parse(common.getInputBlock(body, -2).chores.selected_option.value);
-  const sourceChores = common.getInputBlock(body, -1).chores.selected_options
+  const targetChore = JSON.parse(common.getInputBlock(body, -3).chores.selected_option.value);
+  const sourceChores = common.getInputBlock(body, -2).chores.selected_options
     .map(option => JSON.parse(option.value));
 
-  const strength = 100 / 200 + 0.5; // Scale (0, 100) -> (0.5, 1.0)
+  const { strength } = JSON.parse(common.getInputBlock(body, -1).strength.selected_option.value);
   const preference = (direction === 'faster') ? strength : 1 - strength;
 
   // Perform the update
@@ -324,15 +324,15 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   const changeText = (Math.abs(change) > bigChange) ? 'a lot' : 'a little';
 
   if (change > 0) {
-    const text = `Someone prioritized *${targetChore.name}* by *${changeText}*, to *${priority} ppt* :rocket:`;
+    const text = `Someone *prioritized ${targetChore.name}* by ${changeText}, to *${priority} ppt* :rocket:`;
     await postMessage(houseId, text);
   } else if (change < 0) {
-    const text = `Someone deprioritized *${targetChore.name}* by *${changeText}*, to *${priority} ppt* :snail:`;
+    const text = `Someone *deprioritized ${targetChore.name}* by ${changeText}, to *${priority} ppt* :snail:`;
     await postMessage(houseId, text);
   } else {
     const text = 'You\'ve already input those preferences.\n\n' +
-      'To have an additional effect, *choose more or different chores*. ' +
-      'Alternatively, *convince others* to support your priorities.';
+      'To have an additional effect, *choose more or different chores* or a *stronger preference*.\n' +
+      'Alternatively, try and *convince others* to support your priorities.';
     await postEphemeral(houseId, residentId, text);
   }
 });

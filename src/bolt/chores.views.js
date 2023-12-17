@@ -292,6 +292,11 @@ exports.choresRankView2 = function (direction, choreRankings) {
     };
   });
 
+  const preferenceOptions = [
+    { value: JSON.stringify({ strength: 0.7 }), text: common.blockPlaintext('Mild (70%)') },
+    { value: JSON.stringify({ strength: 1.0 }), text: common.blockPlaintext('Strong (100%)') },
+  ];
+
   const header = 'Set chore priorities';
   const mainText = 'Choose chores to update. ' +
     'Chore priorities are measured in *points-per-thousand* (ppt) and always add up to *1000*. ' +
@@ -301,7 +306,8 @@ exports.choresRankView2 = function (direction, choreRankings) {
     '*Some things to keep in mind:*\n\n' +
     '*1.* Taking from *more chores* has a bigger effect.\n' +
     '*2.* Taking from *high-priority chores* has a bigger effect.\n' +
-    '*3.* *More participants* have a bigger effect.';
+    '*3.* A *strong preference* has a bigger effect.\n' +
+    '*4.* *More participants* have a bigger effect.';
 
   const textA = direction === 'faster'
     ? 'Chore to prioritize'
@@ -337,6 +343,16 @@ exports.choresRankView2 = function (direction, choreRankings) {
       type: 'multi_static_select',
       placeholder: common.blockPlaintext(subTextB),
       options: mappedChoreRankings,
+    },
+  ));
+  blocks.push(common.blockInput(
+    'Preference strength',
+    {
+      action_id: 'strength',
+      type: 'static_select',
+      placeholder: common.blockPlaintext('Choose a preference strength'),
+      initial_option: preferenceOptions[0],
+      options: preferenceOptions,
     },
   ));
 
