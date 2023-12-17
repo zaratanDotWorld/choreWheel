@@ -13,8 +13,8 @@ Chore Wheel draws influences variously from cognitive science, computer science,
 - Continuously available, asynchronous processes
 
 Taken together, this principles describe a system which is "highly available," both technically and socially.
-The minimal role played by the computer allows participants to attach more legitimacy to the outputs.
-Participants have more opportunities to engagement, in a larger variety of ways, while avoiding information overload.
+Participants have more opportunities to engage, in a larger variety of ways, while avoiding information overload.
+Additionally, the minimal role played by the computer allows participants to attach more legitimacy to the outputs.
 
 Although these design principles can be desirable in many settings, we see the coliving setting as having the **greatest potential for benefit**.
 For example, and by contrast, a government workplace would likely also benefit from simple and intuitive inputs, making it easier for employees to meaningfully participate.
