@@ -5,7 +5,7 @@ Design Principles
 
   You can read the original project whitepaper `here <https://bit.ly/mirror-whitepaper>`_.
 
-Chore Wheel draws influences variously from cognitive science, computer science, electoral theory, economics, cybernetics, and game design, with four top-level design principles:
+Chore Wheel draws influences variously from **cognitive science, computer science, electoral theory, economics, cybernetics, and game design**, with four top-level design principles:
 
 - No managers or privileged administrative roles
 - Simple and intuitive inputs

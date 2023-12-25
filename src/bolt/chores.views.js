@@ -19,7 +19,7 @@ _Setup is easiest if everyone is in the same place, but it's not strictly necess
 *1.* *Invite* all housemates to the Slack, and wait for them to join.
 
 *2.* Make a list of *3-5 starter chores*. Good chores:
-  • Take between *10-30 minutes* to do.
+  • Take between *5-30 minutes* to do.
   • Are things that folks *usually won't do* on their own.
   • Can be done *anytime* (i.e. not on fixed schedule).
 

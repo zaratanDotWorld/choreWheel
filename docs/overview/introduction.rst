@@ -7,8 +7,6 @@ Introduction
 
   While initially designed for large coliving houses, Chore Wheel works just as well helping groups of friends or even couples navigate shared space.
 
-  With Chore Wheel, houses of all sizes find that they spend less time doing chores, less time talking about chores, and less time worrying about their house in general.
-
 As housing costs continue to climb, the development of quality, affordable housing remains a continual challenge.
 It is increasingly apparent that **coliving** - housing options where residents have private bedrooms but share common spaces like kitchens, bathrooms, and living rooms - is an important part of the solution.
 
@@ -26,5 +24,4 @@ By helping communities handle their most common problems almost "by magic," Chor
 
   Chore Wheel does not claim to capture all ideation, decision making, and deliberation occuring in a coliving environment.
   Nor does its use reduce the need for :ref:`ongoing investments <monthly-circle>` in community-building.
-
   Rather, it takes its cue from the Pareto principle: a set of simple, general tools which handles the most common 80% of scenarios, leaving the remaining 20% to be handled by people on their own.

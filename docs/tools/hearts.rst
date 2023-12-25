@@ -17,6 +17,13 @@ Or communities could choose to face conflict head-on, engaging in the essential 
 Hearts is an accountability tool, used to help **structure the experience and resolution of conflict**.
 Hearts is designed with two goals in mind: first, to give members of a community meaningful tools for holding each other accountable; second, to emphasize communication and repair over judgment and punishment.
 
+Quickstart
+----------
+
+1. Set an app events channel
+2. Encourage people to give karma (``@Kira ++``) if someone exceeds expectations
+3. That's it! Everything else is automatic.
+
 Core Concepts
 -------------
 
@@ -27,7 +34,7 @@ Hearts
 Karma
   Much of Hearts is about handling conflict.
   But what about all the good things that happen, which are in all likelihood the majority of the interactions occurring among the residents? For that we have **karma**.
-  Anyone can give karma to another resident by adding a "plus-plus" (``++``) after their name.
+  Anyone can give karma to another resident by adding a "plus-plus" (``@Kira ++``) after their name.
   Every month, all the karma is taken together, and the resident(s) with the most karma get a bonus heart.
   By earning karma, it is possible to have an epic **six** or even **seven** hearts.
 
@@ -44,6 +51,11 @@ Regeneration & Decay
 
 Basic Functionality
 -------------------
+
+.. image:: https://s3.amazonaws.com/zaratan.world/public/images/mirror/framed-mobile-hearts-home.jpg
+  :width: 400
+  :alt: Hearts app home
+  :align: center
 
 The Hearts home page is the hearts dashboard.
 On the home page, folks can see their current hearts.

@@ -1,7 +1,7 @@
 Chore Wheel
 ===========
 
-**Chore Wheel** is **pioneering software for coliving**, built by **Zaratan** and running on **Slack**.
+**Chore Wheel** is pioneering software for coliving, built by Zaratan and running on Slack.
 
 Created by **economists** and **game designers**, Chore Wheel is a family of tools helping people share space:
 
@@ -11,8 +11,13 @@ Created by **economists** and **game designers**, Chore Wheel is a family of too
 - and more to come
 
 Chore Wheel is **open-source** and **privacy-preserving**, and contains the latest thinking in **ethical technology**.
+Groups using Chore Wheel find that they spend less time doing chores, less time talking about chores, and less time worrying about their house in general.
 
 Check out the :ref:`introduction <introduction>` for a more detailed overview of the project, or our :ref:`getting started guide <getting-started>` to get set up for yourself.
+
+.. tip::
+
+  For extra help and support, join the `Chore Wheel Community <https://join.slack.com/t/chorewheel-community/shared_invite/zt-2986s4ec6-5YmCmZG3N3kgsAwN~d2PeA>`_ Slack workspace.
 
 .. note::
 

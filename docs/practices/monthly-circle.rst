@@ -12,19 +12,26 @@ Monthly Circle
 The **monthly circle** is a simple and accessible practice used to pro-actively cultivate shared understanding among the residents of a house, and to better equip the residents to navigate the conflicts and differences of opinion which inevitably arise.
 
 The circle is led by a different resident every month and ideally lasts about 90 minutes.
+Circles have the following simple structure, which can be easily modified to suit different needs:
 
-1. First, residents go around in a circle sharing personal **roses, thorns, and buds** for the month -- things which went well for them, things which did not, and things they are looking forward to in the future.
+\1. Sharing Personal Roses, Thorns, and Buds
+  First, residents go around in a circle sharing personal **roses, thorns, and buds** for the month -- things which went well for them, things which did not, and things they are looking forward to in the future.
 
-2. Then, residents go around in a circle sharing **house roses**: positive things which happened in the house and among the residents.
+\2. Sharing House Roses
+  Then, residents go around in a circle sharing **house roses**: positive things which happened in the house and among the residents.
 
-3. Then, residents go around in a circle sharing **house thorns**: concerns about the house, such as negative patterns or problematic developments.
-   The goal here is less to criticize individuals and more to build a consensus around shared expectations.
+\3. Sharing House Thorns
+  Then, residents go around in a circle sharing **house thorns**: concerns about the house, such as negative patterns or problematic developments.
+  The goal here is less to criticize individuals and more to build a consensus around shared expectations.
+  For groups using Chore Wheel, this is a good opportunity to discuss potential changes, such as editing the chore list or changing chore priorities.
 
   .. note::
 
       During this go-around, there is usually more back-and-forth discussion as people seek clarity around issues discuss possible resolutions.
       It is recommended to share house thorns in advance, so that others have time to prepare their thoughts and responses.
 
-4. Finally, residents go around in a circle sharing **house buds**: general hopes and aspirations for the future, such as personal goals, visions for the house, or hopes for the development of current events more broadly.
+\4. Sharing House Buds
+  Finally, residents go around in a circle sharing **house buds**: general hopes and aspirations for the future, such as personal goals, visions for the house, or hopes for the development of current events more broadly.
 
-5. At the close of the circle, a different housemate volunteers to lead the next month's circle and sets the date.
+\5. Closing the Circle
+  At the close of the circle, a different housemate volunteers to lead the next month's circle and sets the date.

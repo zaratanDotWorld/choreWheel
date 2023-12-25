@@ -42,13 +42,23 @@ Everyone does the chores they think are worth their time, and the result is a co
   It all works.
   There is no right or wrong way to participate.
 
+Quickstart
+----------
+
+1. Set an app events channel
+2. Make a list of 3-5 starter chores/descriptions
+3. Enter the chores using ``Edit Chores List``, and upvote them in the app  channel
+4. Wait 1-3 days for the chores to accumulate points
+5. Encourage people to check current chore values and to ``Claim a Chore`` which is well-valued
+6. Encourage people to ``Set Priorities`` if they feel that a chore is being over/under valued
+
 Core Concepts
 -------------
 
 Chores
   The core concept of Chores is, unsurprisingly, chores.
   A chore is any pre-defined task which people usually won't do on their own.
-  **An ideal chore takes at between 5-20 minutes to do, is largely self-contained, and can be done more-or-less at any time.**
+  **An ideal chore takes at between 5-30 minutes to do, is largely self-contained, and can be done more-or-less at any time.**
 
 Points
   Everyone owes **100 points** per month.
@@ -75,13 +85,15 @@ Breaks
 
 Gifts
   If someone does something helpful that isn't a "chore", but you still want to recognize it, you can gift them some of the points you've earned.
-
-  .. note::
-
-    Gifting points also makes it possible to "split" chores.
+  Gifting points also makes it possible to "split" chores.
 
 Basic Functionality
 -------------------
+
+.. image:: https://s3.amazonaws.com/zaratan.world/public/images/mirror/framed-mobile-chores-home.jpg
+  :width: 400
+  :alt: Chores app home
+  :align: center
 
 The Chores home page is the chores dashboard.
 On the home page, folks can see their current and owed points for the month, as well as how many people are around that day (i.e. not exempt and not on break).

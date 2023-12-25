@@ -18,6 +18,15 @@ Things is a spending tool, letting residents in a house spend out of a shared ac
   For communities with more advanced needs, consider a more full-featured tool like `Open Collective <https://opencollective.com/>`_.
   These tools can also be combined, allowing simple decisions when possible and more advanced decisions when necessary.
 
+Quickstart
+----------
+
+1. Set an app events channel
+2. Decide on a monthly budget, and use ``/things-load`` to add it to the account
+3. Make a list of 3-5 things that the group buys on a regular basis
+4. Enter the things using ``Edit Things List``, and upvote them in the app  channel
+5. Encourage people to ``Buy a Thing`` whenever they notice something running low
+
 Core Concepts
 -------------
 
@@ -36,6 +45,15 @@ Fulfillment
 
 Basic Functionality
 -------------------
+
+.. image:: https://s3.amazonaws.com/zaratan.world/public/images/mirror/framed-mobile-things-home.jpg
+  :width: 400
+  :alt: Things app home
+  :align: center
+
+The Things home page is the things dashboard.
+On the home page, folks can see the current account balance.
+The app home is also the entryway into the basic functionality, described below:
 
 :guilabel:`Buy a thing`
   Whenever someone notices that a supply is running low, they can propose that the house buy more.
