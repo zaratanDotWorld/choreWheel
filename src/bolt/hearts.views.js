@@ -3,7 +3,7 @@ const { heartsPollLength, heartsCriticalNum, heartsMinPctInitial, heartsMinPctCr
 const common = require('./common');
 
 const TITLE = common.blockPlaintext('Hearts');
-const DOCS_URL = 'https://mirror.readthedocs.io/en/latest/tools/hearts.html';
+const DOCS_URL = 'https://docs.chorewheel.zaratan.world/en/latest/tools/hearts.html';
 
 exports.heartEmoji = function (numHearts) {
   let emoji;
@@ -83,7 +83,7 @@ exports.heartsHomeView = function (numHearts, exempt) {
 exports.heartsChallengeView = function (numVotingResidents) {
   const initialQuorum = Math.ceil(numVotingResidents * heartsMinPctInitial);
   const criticalQuorum = Math.ceil(numVotingResidents * heartsMinPctCritical);
-  const resolutionUrl = 'https://mirror.readthedocs.io/en/latest/practices/conflict-resolution.html';
+  const resolutionUrl = 'https://docs.chorewheel.zaratan.world/en/latest/practices/conflict-resolution.html';
 
   const header = 'Resolve a dispute';
   const mainText = 'If prior attempts at mediating a conflict have failed, it may be time to raise a public dispute.\n\n' +

@@ -5,7 +5,7 @@ const common = require('./common');
 // Things Views
 
 const TITLE = common.blockPlaintext('Things');
-const DOCS_URL = 'https://mirror.readthedocs.io/en/latest/tools/things.html';
+const DOCS_URL = 'https://docs.chorewheel.zaratan.world/en/latest/tools/things.html';
 
 exports.formatThing = function (thing) {
   if (thing.metadata) {
