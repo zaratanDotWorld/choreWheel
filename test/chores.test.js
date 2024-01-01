@@ -808,6 +808,10 @@ describe('Chores', async () => {
       await Chores.addChoreBreak(HOUSE, RESIDENT1, feb22, mar8, '');
       workingPercentage = await Chores.getWorkingResidentPercentage(RESIDENT1, feb1);
       expect(workingPercentage).to.equal(0.0);
+
+      // Other residents are not affected
+      const otherWorkingPercentage = await Chores.getWorkingResidentPercentage(RESIDENT2, feb1);
+      expect(otherWorkingPercentage).to.equal(1);
     });
 
     it('can consider only the parts of breaks in the current month', async () => {
@@ -830,7 +834,7 @@ describe('Chores', async () => {
       expect(workingPercentage).to.equal(0.5);
     });
 
-    it.skip('can consider a break which starts before and ends after the current month', async () => {
+    it('can consider a break which starts before and ends after the current month', async () => {
       const feb1 = new Date(3000, 1, 1); // February, a 28 day month
       const mar8 = new Date(feb1.getTime() + 35 * DAY);
       const jan25 = new Date(feb1.getTime() - 7 * DAY);
@@ -839,9 +843,13 @@ describe('Chores', async () => {
       await Chores.addChoreBreak(HOUSE, RESIDENT1, jan25, mar8, '');
       const workingPercentage = await Chores.getWorkingResidentPercentage(RESIDENT1, feb1);
       expect(workingPercentage).to.equal(0);
+
+      // Other residents are not affected
+      const otherWorkingPercentage = await Chores.getWorkingResidentPercentage(RESIDENT2, feb1);
+      expect(otherWorkingPercentage).to.equal(1);
     });
 
-    it.skip('can consider complex break combinations', async () => {
+    it('can consider complex break combinations', async () => {
       const feb15 = new Date(3000, 1, 15);
       const mar1 = new Date(3000, 2, 1);
       const apr1 = new Date(3000, 3, 1); // April, a 30 day month

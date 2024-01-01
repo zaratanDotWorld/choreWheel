@@ -329,16 +329,21 @@ exports.getWorkingResidentPercentage = async function (residentId, now) {
   const monthStart = getMonthStart(now);
   const monthEnd = getMonthEnd(now);
 
+  // Want past, current, and future breaks for the month
   const choreBreaks = await db('ChoreBreak')
     .where({ residentId })
-    .where(function () { // Either startDate or endDate is betwen monthStart and monthEnd
-      this.whereBetween('startDate', [ monthStart, monthEnd ])
-        .orWhereBetween('endDate', [ monthStart, monthEnd ]);
+    .where(function () {
+      // Either startDate or endDate is betwen monthStart and monthEnd
+      this.where(function () {
+        this.whereBetween('startDate', [ monthStart, monthEnd ])
+          .orWhereBetween('endDate', [ monthStart, monthEnd ]);
+      })
+        // Or now falls between startDate & endDate
+        .orWhere(function () {
+          this.where('startDate', '<=', now)
+            .where('endDate', '>', now);
+        });
     })
-    // .orWhere(function () { // Now falls between startDate & endDate
-    //   this.where('startDate', '<=', now)
-    //     .where('endDate', '>', now);
-    // })
     .select('*');
 
   // Add an implicit break before activeAt
