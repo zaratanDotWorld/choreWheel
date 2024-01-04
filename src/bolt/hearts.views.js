@@ -158,15 +158,15 @@ exports.heartsBoardView = function (hearts) {
     '*One or two* hearts is :broken_heart:,\n' +
     '*three to five* is :heart:,\n' +
     'and *six or more* is :heart_on_fire:';
-  const heartsText = hearts.map((heart) => {
-    return `\n\n${exports.heartEmoji(heart.sum)} <@${heart.residentId}>`;
-  }).join('');
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
   blocks.push(common.blockDivider());
-  blocks.push(common.blockSection(heartsText));
+
+  hearts.forEach((heart) => {
+    blocks.push(common.blockSection(`${exports.heartEmoji(heart.sum)} <@${heart.residentId}>`));
+  });
 
   return {
     type: 'modal',
