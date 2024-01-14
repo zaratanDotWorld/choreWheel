@@ -1,3 +1,5 @@
+.. _design-principles:
+
 Design Principles
 =================
 
@@ -5,7 +7,7 @@ Design Principles
 
   You can read the original project whitepaper `here <https://bit.ly/mirror-whitepaper>`_.
 
-Chore Wheel draws influences variously from **cognitive science, computer science, electoral theory, economics, cybernetics, and game design**, with four top-level design principles:
+Chore Wheel draws influences variously from **cognitive science, computer science, electoral theory, economics, cybernetics, and game design**, with four primary design principles:
 
 - No managers or privileged administrative roles
 - Simple and intuitive inputs
@@ -23,6 +25,65 @@ In a housing environment, on the other hand, much of the work is *cyclical* (i.e
 
 Further, unlike the distributed and anonymous settings of online communities, coliving environments, being real physical spaces, provide many more opportunities for the informal, casual interactions necessary for building strong relationships.
 As such, we can *assume* the existence of a coherent social sphere, with the software tools merely providing a structure for transparency and accountability.
+
+.. note::
+
+  This project is under active development, and has been supported by the **Open-Source Software** (2x), **Governance Research**, and **Metacrisis** rounds of `Gitcoin Grants <https://grants.gitcoin.co/>`_.
+
+Primary Principles
+------------------
+
+No Managers or Privileged Administrative Roles
+  When thinking about governance, most people immediately think about putting someone in charge, and electing leaders is arguably the foundational process in democratic government.
+  Leadership has many benefits: strong leaders can inspire, organize, and guide groups towards successful outcomes.
+  However, leadership also has a cost: selfish leaders can subvert a organization to their own ends, weak leaders can delay and obstruct important processes, and vindictive leaders can use their position to play favorites.
+  Power inevitably corrupts, and when leadership is structurally protected via elected (or appointed) positions, it can be difficult to remove someone who is no longer right for the role.
+
+  Chore Wheel avoids this by replacing the "hard power" of specific leaders with the "soft power" of flexible leadership.
+  Anyone who is motivated to provide leadership is welcome to do so, to the extent that they can organize and motivate others.
+  Leadership can look like pioneering a pantry organization, building a vegetable garden, or painting a mural, and people can step into and out of leadership as their circumstances and desires permit.
+
+  Chore Wheel conceptualizes leadership as "icing on the cake:" leaders can bring tremendous value, but if no-one is called to leadership, the community still functions.
+
+Simple and Intuitive Inputs
+  For self-governance to be meaningful, participants must be qualified to engage with the issues and decisions they are presented.
+  Historically, this has been interpreted as a need for public education and the cultivation of an informed community.
+  As society-wide issues grow increasingly complex, however, it becomes increasingly hard for the average person to keep up, making governance a de-facto domain of the privileged.
+
+  Chore Wheel approaches this from a different direction: rather than equip the population to to handle complex decisions (worthwhile as that may be), decisions are kept fundamentally simple and accessible.
+  By framing decisions in the simplest possible terms, and ensuring that every decision "contains its own context," participants can **meaningfully** engage in running their communities, without imposing undue burdens and unrealistic expectations.
+  This avoids apathy and disengagement, and helps everyone to feel as though the decisions being made truly reflect the intention of the community.
+
+Humans for Sensing and Judgment, Machines for Bookkeeping
+  With the rise of machine learning and artificial intelligence, our lives are increasingly been shaped by the outputs of opaque algorithms, trained on questionable data, developed by unaccountable organizations.
+  This has led to a significant loss of public trust in technology and in democratic institutions more broadly.
+
+  Having engaged deeply with these critiques, Chore Wheel makes a basic and explicit distinction between the role of the human and the computer.
+  The computer's job is not to make decisions on behalf of a community; rather, its job is to guarantee **process** -- to ensure that votes are run fairly and that chores are tallied correctly.
+  All of the *subjective* decisions about good or bad, right or wrong, are made *exclusively* by human beings.
+
+  The result is a technical system which people can trust, instead of one which keeps people constantly on guard.
+
+Continuously Available, Asynchronous Processes
+  As Oscar Wilde famously quipped, "the trouble with socialism is that it takes up too many evenings".
+  Ultimately, the purpose of self-governance is not to sit in meetings, but rather to preserve the right of self-expression in the world.
+  When Robert's Rules of Order (the classic guide to running meetings) was written 200 years ago, people wrote with quills and mail traveled by horse.
+  While the in-person meeting as a format for decision-making has some benefits, the benefits are mostly due to gathering folks in the same place, and can be better achieved by organizing a dinner or games night.
+  As a vehicle for making decisions, apart from the most critical decisions, it is largely obsolete, and an over-reliance on meetings alienates people and concentrates power.
+
+  Chore Wheel recognizes that the majority of decisions *do not* require meetings and the imposition on people's time that meetings entail.
+  Instead, all decisions are made *asynchronously*, and people can engage in decision-making at their convenience throughout the day.
+  This significantly reduces the burdens of self-governance, making collective leadership accessible to a wider audience.
+
+  .. note::
+
+    While Chore Wheel does not *require* meetings, communities can certainly *have* meetings as needed, as they can be useful for getting alignment on complex issues.
+    In addition, major decisions would *probably* benefit from a meeting, but those choices of when and why are best left to the specific community.
+
+    See the section on the :ref:`monthly circle <monthly-circle>` for a possible meeting format.
+
+Secondary Principles
+--------------------
 
 These design principles can be developed further:
 
