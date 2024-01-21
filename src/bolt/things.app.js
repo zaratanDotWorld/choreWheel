@@ -7,12 +7,12 @@ if (process.env.NODE_ENV === 'production') {
 const { App, LogLevel } = require('@slack/bolt');
 
 const { Admin, Polls, Things } = require('../core/index');
-const { YAY, DAY } = require('../constants');
+const { YAY, DAY, THINGS_CONF } = require('../constants');
 
 const common = require('./common');
 const views = require('./things.views');
 
-let thingsOauth;
+let thingsConf;
 
 // Create the app
 
@@ -33,15 +33,15 @@ const app = new App({
   installationStore: {
     storeInstallation: async (installation) => {
       await Admin.addHouse(installation.team.id, installation.team.name);
-      await Admin.updateHouse(installation.team.id, { thingsOauth: installation });
+      await Admin.updateHouseConf(installation.team.id, THINGS_CONF, { oauth: installation });
       console.log(`things installed @ ${installation.team.id}`);
     },
     fetchInstallation: async (installQuery) => {
-      ({ thingsOauth } = (await Admin.getHouse(installQuery.teamId)).metadata);
-      return thingsOauth;
+      ({ thingsConf } = (await Admin.getHouse(installQuery.teamId)));
+      return thingsConf;
     },
     deleteInstallation: async (installQuery) => {
-      await Admin.updateHouse(installQuery.teamId, { thingsOauth: null });
+      await Admin.updateHouseConf(installQuery.teamId, THINGS_CONF, { oauth: null });
       console.log(`things uninstalled @ ${installQuery.teamId}`);
     },
   },
@@ -51,17 +51,15 @@ const app = new App({
 // Define publishing functions
 
 async function postMessage (houseId, text, blocks) {
-  const { metadata } = await Admin.getHouse(houseId);
-  return common.postMessage(app, thingsOauth, metadata.thingsChannel, text, blocks);
+  return common.postMessage(app, thingsConf.oauth, thingsConf.channel, text, blocks);
 }
 
 async function postEphemeral (houseId, residentId, text) {
-  const { metadata } = await Admin.getHouse(houseId);
-  return common.postEphemeral(app, thingsOauth, metadata.thingsChannel, residentId, text);
+  return common.postEphemeral(app, thingsConf.oauth, thingsConf.channel, residentId, text);
 }
 
 async function replyEphemeral (command, text) {
-  return common.replyEphemeral(app, thingsOauth, command, text);
+  return common.replyEphemeral(app, thingsConf.oauth, command, text);
 }
 
 // Publish the app home
@@ -77,7 +75,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     await Admin.activateResident(houseId, residentId, now);
 
     let view;
-    if ((await Admin.getHouse(houseId)).metadata.thingsChannel) {
+    if (thingsConf.channel) {
       const balance = await Things.getHouseBalance(houseId, now);
       const exempt = await Admin.isExempt(residentId, now);
 
@@ -86,20 +84,20 @@ app.event('app_home_opened', async ({ body, event }) => {
       view = views.thingsIntroView();
     }
 
-    await common.publishHome(app, thingsOauth, residentId, view);
+    await common.publishHome(app, thingsConf.oauth, residentId, view);
 
     // This bookkeeping is done after returning the view
 
     // Resolve any buys
     for (const resolvedBuy of (await Things.resolveThingBuys(houseId, now))) {
       console.log(`resolved thingBuy ${resolvedBuy.id}`);
-      await common.updateVoteResults(app, thingsOauth, resolvedBuy.pollId);
+      await common.updateVoteResults(app, thingsConf.oauth, resolvedBuy.pollId);
     }
 
     // Resolve any proposals
     for (const resolvedProposal of (await Things.resolveThingProposals(houseId, now))) {
       console.log(`resolved thingProposal ${resolvedProposal.id}`);
-      await common.updateVoteResults(app, thingsOauth, resolvedProposal.pollId);
+      await common.updateVoteResults(app, thingsConf.oauth, resolvedProposal.pollId);
     }
   }
 });
@@ -110,15 +108,15 @@ app.command('/things-channel', async ({ ack, command }) => {
   console.log('/things-channel');
   await ack();
 
-  await common.setChannel(app, thingsOauth, command, 'thingsChannel');
+  await common.setChannel(app, thingsConf.oauth, THINGS_CONF, command);
 });
 
 app.command('/things-load', async ({ ack, command }) => {
   console.log('/things-load');
   await ack();
 
-  if (!(await common.isAdmin(app, thingsOauth, command))) {
-    await common.replyAdminOnly(app, thingsOauth, command);
+  if (!(await common.isAdmin(app, thingsConf.oauth, command))) {
+    await common.replyAdminOnly(app, thingsConf.oauth, command);
     return;
   }
 
@@ -140,8 +138,8 @@ app.command('/things-fulfill', async ({ ack, command }) => {
   console.log('/things-fulfill');
   await ack();
 
-  if (!(await common.isAdmin(app, thingsOauth, command))) {
-    await common.replyAdminOnly(app, thingsOauth, command);
+  if (!(await common.isAdmin(app, thingsConf.oauth, command))) {
+    await common.replyAdminOnly(app, thingsConf.oauth, command);
     return;
   }
 
@@ -152,7 +150,7 @@ app.command('/things-fulfill', async ({ ack, command }) => {
 
   if (unfulfilledBuys.length) {
     const view = views.thingsFulfillView(unfulfilledBuys);
-    await common.openView(app, thingsOauth, command.trigger_id, view);
+    await common.openView(app, thingsConf.oauth, command.trigger_id, view);
   } else {
     await replyEphemeral(command, 'There are no buys to fulfill :relieved:');
   }
@@ -181,8 +179,8 @@ app.command('/things-update', async ({ ack, command }) => {
   console.log('/things-update');
   await ack();
 
-  if (!(await common.isAdmin(app, thingsOauth, command))) {
-    await common.replyAdminOnly(app, thingsOauth, command);
+  if (!(await common.isAdmin(app, thingsConf.oauth, command))) {
+    await common.replyAdminOnly(app, thingsConf.oauth, command);
     return;
   }
 
@@ -191,7 +189,7 @@ app.command('/things-update', async ({ ack, command }) => {
 
   // TODO: improve this (hacky) implementation
   const view = views.thingsProposeEditView(things, '-admin');
-  await common.openView(app, thingsOauth, command.trigger_id, view);
+  await common.openView(app, thingsConf.oauth, command.trigger_id, view);
 });
 
 app.action('things-propose-edit-admin', async ({ ack, body }) => {
@@ -202,7 +200,7 @@ app.action('things-propose-edit-admin', async ({ ack, body }) => {
   const thing = await Things.getThing(thingId);
 
   const blocks = views.thingsProposeAddView(thing, '-admin');
-  await common.pushView(app, thingsOauth, body.trigger_id, blocks);
+  await common.pushView(app, thingsConf.oauth, body.trigger_id, blocks);
 });
 
 app.view('things-propose-callback-admin', async ({ ack, body }) => {
@@ -232,7 +230,7 @@ app.action('things-buy', async ({ ack, body }) => {
   const things = await Things.getThings(body.team.id);
 
   const view = views.thingsBuyView(things);
-  await common.openView(app, thingsOauth, body.trigger_id, view);
+  await common.openView(app, thingsConf.oauth, body.trigger_id, view);
 });
 
 app.view('things-buy-callback', async ({ ack, body }) => {
@@ -270,7 +268,7 @@ app.action('things-special', async ({ ack, body }) => {
   const votingResidents = await Admin.getVotingResidents(houseId, now);
 
   const view = views.thingsSpecialBuyView(votingResidents.length);
-  await common.openView(app, thingsOauth, body.trigger_id, view);
+  await common.openView(app, thingsConf.oauth, body.trigger_id, view);
 });
 
 app.view('things-special-callback', async ({ ack, body }) => {
@@ -312,7 +310,7 @@ app.action('things-bought', async ({ ack, body }) => {
   const fulfilledBuys7 = await Things.getFulfilledThingBuys(houseId, oneWeekAgo, now);
   const fulfilledBuys90 = await Things.getFulfilledThingBuys(houseId, threeMonthsAgo, now);
   const view = views.thingsBoughtView(unfulfilledBuys, fulfilledBuys7, fulfilledBuys90);
-  await common.openView(app, thingsOauth, body.trigger_id, view);
+  await common.openView(app, thingsConf.oauth, body.trigger_id, view);
 });
 
 // Proposal flow
@@ -327,7 +325,7 @@ app.action('things-propose', async ({ ack, body }) => {
   const minVotes = await Things.getThingProposalMinVotes(houseId, now);
 
   const view = views.thingsProposeView(minVotes);
-  await common.openView(app, thingsOauth, body.trigger_id, view);
+  await common.openView(app, thingsConf.oauth, body.trigger_id, view);
 });
 
 app.action('things-propose-2', async ({ ack, body }) => {
@@ -355,7 +353,7 @@ app.action('things-propose-2', async ({ ack, body }) => {
       return;
   }
 
-  await common.pushView(app, thingsOauth, body.trigger_id, view);
+  await common.pushView(app, thingsConf.oauth, body.trigger_id, view);
 });
 
 app.action('things-propose-edit', async ({ ack, body }) => {
@@ -366,7 +364,7 @@ app.action('things-propose-edit', async ({ ack, body }) => {
   const thing = await Things.getThing(thingId);
 
   const blocks = views.thingsProposeAddView(thing);
-  await common.pushView(app, thingsOauth, body.trigger_id, blocks);
+  await common.pushView(app, thingsConf.oauth, body.trigger_id, blocks);
 });
 
 app.view('things-propose-callback', async ({ ack, body }) => {
@@ -418,7 +416,7 @@ app.action(/poll-vote/, async ({ ack, body, action }) => {
   console.log('things poll-vote');
   await ack();
 
-  await common.updateVoteCounts(app, thingsOauth, body, action);
+  await common.updateVoteCounts(app, thingsConf.oauth, body, action);
 });
 
 // Utils
