@@ -5,7 +5,7 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
 const { Admin } = require('../src/core/index');
-const { HOUR, DAY } = require('../src/constants');
+const { HOUR, DAY, CHORES_CONF, THINGS_CONF } = require('../src/constants');
 const { getMonthStart, getMonthEnd, getNextMonthStart, getPrevMonthEnd, getDateStart } = require('../src/utils');
 const testHelpers = require('./helpers');
 const { db } = require('../src/core/db');
@@ -67,24 +67,30 @@ describe('Admin', async () => {
     it('can update house info', async () => {
       await Admin.addHouse(HOUSE1, 'h1');
 
+      const choresOauth = 'choresOauth';
+      const thingsOauth = 'thingsOauth';
       const choresChannel = 'choresChannel';
       const thingsChannel = 'thingsChannel';
 
-      await Admin.updateHouse(HOUSE1, { choresChannel });
-      await Admin.updateHouse(HOUSE1, { thingsChannel });
+      await Admin.updateHouseConf(HOUSE1, CHORES_CONF, { channel: choresChannel, oauth: choresOauth });
+      await Admin.updateHouseConf(HOUSE1, THINGS_CONF, { channel: thingsChannel, oauth: thingsOauth });
 
       let house;
 
       house = await Admin.getHouse(HOUSE1);
       expect(house.name).to.equal('h1');
-      expect(house.metadata.choresChannel).to.equal(choresChannel);
-      expect(house.metadata.thingsChannel).to.equal(thingsChannel);
+      expect(house.choresConf.channel).to.equal(choresChannel);
+      expect(house.choresConf.oauth).to.equal(choresOauth);
+      expect(house.thingsConf.channel).to.equal(thingsChannel);
+      expect(house.thingsConf.oauth).to.equal(thingsOauth);
 
-      await Admin.updateHouse(HOUSE1, { thingsChannel: null });
+      await Admin.updateHouseConf(HOUSE1, THINGS_CONF, { channel: null });
 
       house = await Admin.getHouse(HOUSE1);
-      expect(house.metadata.choresChannel).to.equal(choresChannel);
-      expect(house.metadata.thingsChannel).to.be.null;
+      expect(house.choresConf.channel).to.equal(choresChannel);
+      expect(house.choresConf.oauth).to.equal(choresOauth);
+      expect(house.thingsConf.channel).to.be.null;
+      expect(house.thingsConf.oauth).to.equal(thingsOauth);
     });
   });
 
