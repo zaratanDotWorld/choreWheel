@@ -232,15 +232,8 @@ exports.updateVoteResults = async function (app, oauth, pollId) {
   const { metadata } = await Polls.getPoll(pollId);
   const valid = await Polls.isPollValid(pollId);
 
-  // TODO: Remove this try/catch once all workspaces are upgraded
-  let message;
-  try {
-    const body = await exports.getMessage(app, oauth, metadata.channel, metadata.ts);
-    message = body.messages[0];
-  } catch (err) {
-    console.log(err);
-    return;
-  }
+  const body = await exports.getMessage(app, oauth, metadata.channel, metadata.ts);
+  const message = body.messages[0];
 
   // Parse current vote counts;
   const voteBlock = message.blocks.length - 1;
