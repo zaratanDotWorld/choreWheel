@@ -7,12 +7,12 @@ if (process.env.NODE_ENV === 'production') {
 const { App, LogLevel } = require('@slack/bolt');
 
 const { Admin, Polls, Hearts } = require('../core/index');
-const { YAY } = require('../constants');
+const { YAY, HEARTS_CONF } = require('../constants');
 
 const common = require('./common');
 const views = require('./hearts.views');
 
-let heartsOauth;
+let heartsConf;
 
 // Create the app
 
@@ -35,15 +35,15 @@ const app = new App({
   installationStore: {
     storeInstallation: async (installation) => {
       await Admin.addHouse(installation.team.id, installation.team.name);
-      await Admin.updateHouse(installation.team.id, { heartsOauth: installation });
+      await Admin.updateHouseConf(installation.team.id, HEARTS_CONF, { oauth: installation });
       console.log(`hearts installed @ ${installation.team.id}`);
     },
     fetchInstallation: async (installQuery) => {
-      ({ heartsOauth } = (await Admin.getHouse(installQuery.teamId)).metadata);
-      return heartsOauth;
+      ({ heartsConf } = (await Admin.getHouse(installQuery.teamId)));
+      return heartsConf.oauth;
     },
     deleteInstallation: async (installQuery) => {
-      await Admin.updateHouse(installQuery.teamId, { heartsOauth: null });
+      await Admin.updateHouseConf(installQuery.teamId, HEARTS_CONF, { oauth: null });
       console.log(`hearts uninstalled @ ${installQuery.teamId}`);
     },
   },
@@ -53,13 +53,11 @@ const app = new App({
 // Define publishing functions
 
 async function postMessage (houseId, text, blocks) {
-  const { metadata } = await Admin.getHouse(houseId);
-  return common.postMessage(app, heartsOauth, metadata.heartsChannel, text, blocks);
+  return common.postMessage(app, heartsConf.oauth, heartsConf.channel, text, blocks);
 }
 
 async function postEphemeral (houseId, residentId, text) {
-  const { metadata } = await Admin.getHouse(houseId);
-  return common.postEphemeral(app, heartsOauth, metadata.heartsChannel, residentId, text);
+  return common.postEphemeral(app, heartsConf.oauth, heartsConf.channel, residentId, text);
 }
 
 // Publish the app home
@@ -76,7 +74,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     await Hearts.initialiseResident(houseId, residentId, now);
 
     let view;
-    if ((await Admin.getHouse(houseId)).metadata.heartsChannel) {
+    if (heartsConf.channel) {
       const hearts = await Hearts.getHearts(residentId, now);
       const exempt = await Admin.isExempt(residentId, now);
 
@@ -85,14 +83,14 @@ app.event('app_home_opened', async ({ body, event }) => {
       view = views.heartsIntroView();
     }
 
-    await common.publishHome(app, heartsOauth, residentId, view);
+    await common.publishHome(app, heartsConf.oauth, residentId, view);
 
     // This bookkeeping is done after returning the view
 
     // Resolve any challanges
     for (const resolvedChallenge of (await Hearts.resolveChallenges(houseId, now))) {
       console.log(`resolved heartChallenge ${resolvedChallenge.id}`);
-      await common.updateVoteResults(app, heartsOauth, resolvedChallenge.pollId);
+      await common.updateVoteResults(app, heartsConf.oauth, resolvedChallenge.pollId);
     }
 
     for (const challengeHeart of (await Hearts.getAgnosticHearts(houseId, now))) {
@@ -128,17 +126,17 @@ app.command('/hearts-sync', async ({ ack, command }) => {
   console.log('/hearts-sync');
   await ack();
 
-  await common.syncWorkspace(app, heartsOauth, command, true, true);
+  await common.syncWorkspace(app, heartsConf.oauth, command, true, true);
 });
 
 app.command('/hearts-channel', async ({ ack, command }) => {
   console.log('/hearts-channel');
   await ack();
 
-  await common.setChannel(app, heartsOauth, command, 'heartsChannel');
+  await common.setChannel(app, heartsConf.oauth, HEARTS_CONF, command);
 
   if (command.text !== 'help') {
-    await common.syncWorkspace(app, heartsOauth, command, true, true);
+    await common.syncWorkspace(app, heartsConf.oauth, command, true, true);
   }
 });
 
@@ -153,7 +151,7 @@ app.action('hearts-challenge', async ({ ack, body }) => {
 
   const votingResidents = await Admin.getVotingResidents(houseId, now);
   const view = views.heartsChallengeView(votingResidents.length);
-  await common.openView(app, heartsOauth, body.trigger_id, view);
+  await common.openView(app, heartsConf.oauth, body.trigger_id, view);
 });
 
 app.view('hearts-challenge-callback', async ({ ack, body }) => {
@@ -202,7 +200,7 @@ app.action('hearts-board', async ({ ack, body }) => {
   const hearts = await Hearts.getHouseHearts(houseId, now);
 
   const view = views.heartsBoardView(hearts);
-  await common.openView(app, heartsOauth, body.trigger_id, view);
+  await common.openView(app, heartsConf.oauth, body.trigger_id, view);
 });
 
 // Voting flow
@@ -211,7 +209,7 @@ app.action(/poll-vote/, async ({ ack, body, action }) => {
   console.log('hearts poll-vote');
   await ack();
 
-  await common.updateVoteCounts(app, heartsOauth, body, action);
+  await common.updateVoteCounts(app, heartsConf.oauth, body, action);
 });
 
 // Karma flow
@@ -230,13 +228,13 @@ app.event('message', async ({ payload }) => {
       await Hearts.giveKarma(houseId, giverId, receiverId, now);
     }
 
-    await common.addReaction(app, heartsOauth, payload, 'sparkles');
+    await common.addReaction(app, heartsConf.oauth, payload, 'sparkles');
   }
 
   if (karmaRecipients.length > 1 && karmaRecipients.length < 10) {
     const numbers = [ 'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine' ];
 
-    await common.addReaction(app, heartsOauth, payload, numbers[karmaRecipients.length]);
+    await common.addReaction(app, heartsConf.oauth, payload, numbers[karmaRecipients.length]);
   }
 });
 

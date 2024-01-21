@@ -115,7 +115,7 @@ exports.getMessage = async function (app, oauth, channelId, ts) {
 
 // Internal tools
 
-exports.setChannel = async function (app, oauth, command, channelType) {
+exports.setChannel = async function (app, oauth, confName, command) {
   if (!(await exports.isAdmin(app, oauth, command))) {
     await exports.replyAdminOnly(app, oauth, command);
     return;
@@ -128,7 +128,8 @@ exports.setChannel = async function (app, oauth, command, channelType) {
     'The app will use this channel to post polls and share public activity.';
   } else {
     const [ houseId, channelId ] = [ command.team_id, command.channel_id ];
-    await Admin.updateHouse(houseId, { [channelType]: channelId });
+    await Admin.updateHouseConf(houseId, confName, { channel: channelId });
+
     await app.client.conversations.join({ token: oauth.bot.token, channel: channelId });
     text = `App events channel set to *<#${channelId}>* :fire:`;
   }
