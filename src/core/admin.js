@@ -15,14 +15,14 @@ exports.getHouse = async function (slackId) {
     .first();
 };
 
-exports.updateHouse = async function (slackId, metadata) {
+exports.updateHouseConf = async function (slackId, confName, conf) {
   // NOTE: May be possible as a single operation using a jsonb datatype
   const house = await exports.getHouse(slackId);
-  metadata = { ...house.metadata, ...metadata };
+  conf = { ...house[confName], ...conf };
 
   return db('House')
     .where({ slackId })
-    .update({ metadata })
+    .update(confName, conf)
     .returning('*');
 };
 
