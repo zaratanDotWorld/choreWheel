@@ -5,6 +5,9 @@ exports.up = function(knex, Promise) {
         t.string('name').unique();
         t.string('slackId').unique().notNull(); // Slack Team Id
         t.jsonb('metadata').notNull().defaultTo({});
+        t.jsonb('choresConf').notNull().defaultTo({});
+        t.jsonb('heartsConf').notNull().defaultTo({});
+        t.jsonb('thingsConf').notNull().defaultTo({});
     });
 };
 
