@@ -1,8 +1,8 @@
 {
-  "name": "@kronosapiens/mirror",
-  "version": "0.2.0",
+  "name": "chorewheel",
+  "version": "0.4.0",
   "description": "Chore wheel x1000",
-  "repository": "git@github.com:zaratanDotWorld/mirror.git",
+  "repository": "git@github.com:zaratanDotWorld/choreWheel.git",
   "author": "Daniel Kronovet <krono@zaratan.world>",
   "license": "AGPL-3.0-or-later",
   "scripts": {

@@ -1,6 +1,6 @@
 # Chore Wheel 🔆
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/zaratanDotWorld/mirror/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/zaratanDotWorld/mirror/tree/master) [![Documentation Status](https://readthedocs.org/projects/mirror/badge/?version=latest)](https://docs.chorewheel.zaratan.world/en/latest/?badge=latest)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/zaratanDotWorld/choreWheel/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/zaratanDotWorld/choreWheel/tree/master) [![Documentation Status](https://readthedocs.org/projects/mirror/badge/?version=latest)](https://docs.chorewheel.zaratan.world/en/latest/?badge=latest)
 
 ### Talks:
 - [Slack-Bot Boarding House](https://docs.google.com/presentation/d/1qnnFlv15heegRqlcoAHb6svTdcjtRcC_vIw5qtlqAfw/edit?usp=sharing) (Metagov Seminar, March 2023)

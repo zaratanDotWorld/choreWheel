@@ -1,6 +1,6 @@
 [Unit]
 Description=Chores by Chore Wheel
-Documentation=https://github.com/zaratanDotWorld/mirror
+Documentation=https://github.com/zaratanDotWorld/choreWheel
 After=network.target
 
 [Service]
