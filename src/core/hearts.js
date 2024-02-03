@@ -11,7 +11,9 @@ const {
   heartsPollLength,
   karmaDelay,
   karmaProportion,
-  karmaMaxHearts,
+  heartsMaxBase,
+  heartsMaxLimit,
+  heartsKarmaGrowthRate,
   heartsCriticalNum,
 } = require('../config');
 
@@ -32,10 +34,10 @@ exports.getAgnosticHearts = async function (houseId, generatedAt) {
     .where({ houseId, generatedAt });
 };
 
-exports.getHearts = async function (residentId, currentTime) {
+exports.getHearts = async function (residentId, now) {
   return db('Heart')
     .where({ residentId })
-    .where('generatedAt', '<=', currentTime)
+    .where('generatedAt', '<=', now)
     .sum('value')
     .first();
 };
@@ -59,10 +61,10 @@ exports.generateHearts = async function (houseId, residentId, type, generatedAt,
     .returning('*');
 };
 
-exports.initialiseResident = async function (houseId, residentId, currentTime) {
-  const hearts = await exports.getHearts(residentId, currentTime);
+exports.initialiseResident = async function (houseId, residentId, now) {
+  const hearts = await exports.getHearts(residentId, now);
   if (hearts.sum === null) {
-    return exports.generateHearts(houseId, residentId, HEART_REGEN, currentTime, heartsBaselineAmount);
+    return exports.generateHearts(houseId, residentId, HEART_REGEN, now, heartsBaselineAmount);
   } else { return []; }
 };
 
@@ -213,12 +215,12 @@ exports.getNumKarmaWinners = async function (houseId, startTime, endTime) {
   return Math.min(maxWinners, uniqueReceivers);
 };
 
-exports.generateKarmaHearts = async function (houseId, currentTime) {
-  const monthStart = getMonthStart(currentTime);
+exports.generateKarmaHearts = async function (houseId, now) {
+  const monthStart = getMonthStart(now);
   const generatedAt = new Date(monthStart.getTime() + karmaDelay);
-  if (currentTime < generatedAt) { return []; }
+  if (now < generatedAt) { return []; }
 
-  const prevMonthEnd = getPrevMonthEnd(currentTime);
+  const prevMonthEnd = getPrevMonthEnd(now);
   const prevMonthStart = getMonthStart(prevMonthEnd);
   const numWinners = await exports.getNumKarmaWinners(houseId, prevMonthStart, prevMonthEnd);
   if (numWinners <= 0) { return []; }
@@ -230,14 +232,36 @@ exports.generateKarmaHearts = async function (houseId, currentTime) {
     for (const winner of karmaRankings.slice(0, numWinners)) {
       const residentId = winner.slackId;
       const type = HEART_KARMA;
-      const residentHearts = await exports.getHearts(residentId, generatedAt);
-      const value = Math.min(1, Math.max(0, karmaMaxHearts - residentHearts.sum)); // Bring to maximum
       const metadata = { ranking: winner.ranking };
+
+      const maxHearts = await exports.getResidentMaxHearts(residentId, generatedAt);
+      const residentHearts = await exports.getHearts(residentId, generatedAt);
+      const value = Math.min(1, Math.max(0, maxHearts - residentHearts.sum)); // Bring to maximum
+
       karmaHearts.push({ houseId, residentId, type, generatedAt, value, metadata });
     }
 
-    return db('Heart')
-      .insert(karmaHearts)
-      .returning('*');
+    return exports.insertKarmaHearts(karmaHearts);
   } else { return []; }
+};
+
+exports.insertKarmaHearts = async function (karmaHearts) {
+  return db('Heart')
+    .insert(karmaHearts)
+    .returning('*');
+};
+
+exports.getKarmaHearts = async function (residentId, now) {
+  return db('Heart')
+    .where({ residentId, type: HEART_KARMA })
+    .where('generatedAt', '<=', now)
+    .returning('*');
+};
+
+exports.getResidentMaxHearts = async function (residentId, now) {
+  const karmaHearts = await exports.getKarmaHearts(residentId, now);
+  return Math.min(
+    heartsMaxBase + Math.floor(karmaHearts.length / heartsKarmaGrowthRate),
+    heartsMaxLimit,
+  );
 };

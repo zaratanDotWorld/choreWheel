@@ -76,9 +76,10 @@ app.event('app_home_opened', async ({ body, event }) => {
     let view;
     if (heartsConf.channel) {
       const hearts = await Hearts.getHearts(residentId, now);
+      const maxHearts = await Hearts.getResidentMaxHearts(residentId, now);
       const exempt = await Admin.isExempt(residentId, now);
 
-      view = views.heartsHomeView(hearts.sum || 0, exempt);
+      view = views.heartsHomeView(hearts.sum || 0, maxHearts, exempt);
     } else {
       view = views.heartsIntroView();
     }
