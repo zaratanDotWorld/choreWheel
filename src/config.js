@@ -26,7 +26,9 @@ exports.heartsMinPctCritical = 0.7; // For removing the final two hearts
 exports.heartsCriticalNum = 2;
 exports.karmaDelay = 3 * HOUR;
 exports.karmaProportion = 3;
-exports.karmaMaxHearts = 7;
+exports.heartsMaxBase = 7;
+exports.heartsMaxLimit = 10;
+exports.heartsKarmaGrowthRate = 4;
 
 // Things
 exports.thingsPollLength = 6 * HOUR;

@@ -54,8 +54,10 @@ exports.heartsHomeView = function (numHearts, exempt) {
   const header = 'Welcome to Hearts';
   const textA = `We use *<${DOCS_URL}|Hearts>* to keep each other accountable.\n\n` +
     'Everyone starts with *5 hearts*.\n\n' +
-    'We lose hearts when we fail to uphold our commitments. ' +
-    'We regain hearts over time *(½ per month)*, or by earning karma :sparkles:';
+    'We lose hearts when we fail to uphold our commitments, ' +
+    'and we regain hearts over time *(½ per month)* or by earning *karma* :sparkles:\n\n' +
+    'You can also increase your *maximum hearts*. ' +
+    'Every *4 karma hearts* increases your max, starting from *7* to a limit of *10*.';
   const textB = (exempt)
     ? '*You are exempt from hearts!* :balloon:'
     : `You have *${numHearts}* hearts: ${exports.heartEmoji(numHearts)}`;
