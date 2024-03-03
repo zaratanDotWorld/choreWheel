@@ -100,11 +100,12 @@ app.event('app_home_opened', async ({ body, event }) => {
       await postMessage(houseId, text);
     }
 
-    // Regenerate lost hearts // decay karma hearts
+    // Regenerate lost hearts // fade karma hearts
     for (const regenHeart of (await Hearts.regenerateHouseHearts(houseId, now))) {
-      // Notify for regeneration only
-      if (regenHeart.value > 0) {
-        const text = `You regenerated *${regenHeart.value.toFixed(1)}* heart(s)!`;
+      if (regenHeart.value !== 0) {
+        const text = (regenHeart.value > 0)
+          ? `You regenerated *${regenHeart.value.toFixed(1)}* heart(s)!`
+          : `Your karma faded by *${(-regenHeart.value).toFixed(1)}* heart(s)!`;
         await postEphemeral(houseId, regenHeart.residentId, text);
       }
     }

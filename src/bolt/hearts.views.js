@@ -57,7 +57,7 @@ exports.heartsHomeView = function (numHearts, maxHearts, exempt) {
     'We lose hearts when we fail to uphold our commitments, ' +
     'and we regain hearts over time *(½ per month)* or by earning *karma* :sparkles:\n\n' +
     'You can also increase your *maximum hearts*. ' +
-    'Every *4 karma hearts* increases your max, starting from *7* to a limit of *10*.';
+    'Every *4 karma hearts* increases your max, from *7* up to *10*.';
   const textB = (exempt)
     ? '*You are exempt from hearts!* :balloon:'
     : `You have *${numHearts} / ${maxHearts}* hearts: ${exports.heartEmoji(numHearts)}`;

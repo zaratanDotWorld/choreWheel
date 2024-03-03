@@ -38,7 +38,7 @@ Karma
   Every month, all the karma is taken together, and the resident(s) with the most karma get a bonus heart.
   By earning karma, it is possible to have an epic **six** or even **seven** hearts.
 
-Regeneration & Decay
+Regeneration & Fading
   It is said that time heals all wounds.
   Whether or not that is true is a question for psychologists and philosophers.
   What we can say with confidence is that **time restores lost hearts**.
@@ -46,8 +46,8 @@ Regeneration & Decay
   This is how we center **rehabilitation over punishment.**
   If you lose a heart for whatever reason, integrate the lesson, and soon enough it will be forgotten.
   Hearts regeneration will only take you back to the five-heart baseline.
-  If you already have five hearts, you don't get more.
-  If you have more than five (due to earning karma), you'll slowly go back to five.
+  If you already have five, you don't get more.
+  If you have bonus hearts (from earning karma), you'll fade back to five at the same rate.
 
 Basic Functionality
 -------------------
