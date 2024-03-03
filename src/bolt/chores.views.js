@@ -47,7 +47,8 @@ _For more details on *Chores* functionality, read the <${DOCS_URL}|manual>._
 };
 
 exports.choresHomeView = function (choreStats, numActive, exempt) {
-  const { pointsEarned, pointsOwed } = choreStats;
+  const pointsEarned = choreStats.pointsEarned.toFixed(0);
+  const pointsOwed = choreStats.pointsOwed.toFixed(0);
   const progressEmoji = (pointsOwed - pointsEarned < penaltyIncrement)
     ? ':white_check_mark:'
     : ':muscle::skin-tone-4:';
@@ -61,7 +62,7 @@ exports.choresHomeView = function (choreStats, numActive, exempt) {
     'If you think a chore should be *added, changed, or removed*, you can propose that as well.';
   const textB = (exempt)
     ? '*You are exempt from chores!* :tada:'
-    : `You've earned *${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} points* this month ${progressEmoji}`;
+    : `You've earned *${pointsEarned} / ${pointsOwed} points* this month ${progressEmoji}`;
   const textC = `There are *${numActive} people* around today :sunny:`;
 
   const actions = [];
