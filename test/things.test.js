@@ -16,6 +16,9 @@ describe('Things', async () => {
   const RESIDENT3 = testHelpers.generateSlackId();
   const RESIDENT4 = testHelpers.generateSlackId();
 
+  const GENERAL = 'General';
+  const SPECIAL = 'Special';
+
   const PANTRY = 'pantry';
   const SOAP = 'soap';
   const RICE = 'rice';
@@ -81,36 +84,65 @@ describe('Things', async () => {
       [ rice ] = await Things.addThing(HOUSE, PANTRY, RICE, 60, { unit: '25 lbs' });
     });
 
-    it('can buy a thing from the list', async () => {
-      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
+    it('can load funds into different accounts', async () => {
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 100);
+      await Things.loadAccount(HOUSE, SPECIAL, RESIDENT1, now, 250);
 
       let balance;
-      balance = await Things.getHouseBalance(HOUSE, now);
+      balance = await Things.getAccountBalance(HOUSE, GENERAL, now);
       expect(balance.sum).to.equal(100);
 
+      balance = await Things.getAccountBalance(HOUSE, SPECIAL, now);
+      expect(balance.sum).to.equal(250);
+    });
+
+    it('can return active accounts', async () => {
+      let accounts;
+
+      accounts = await Things.getActiveAccounts(HOUSE, now);
+      expect(accounts.length).to.equal(0);
+
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 100);
+
+      accounts = await Things.getActiveAccounts(HOUSE, now);
+      expect(accounts.length).to.equal(1);
+      expect(accounts[0].account).to.equal(GENERAL);
+      expect(accounts[0].sum).to.equal(100);
+
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, -100);
+
+      accounts = await Things.getActiveAccounts(HOUSE, now);
+      expect(accounts.length).to.equal(0);
+    });
+
+    it('can buy things from the list', async () => {
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 100);
+      await Things.loadAccount(HOUSE, SPECIAL, RESIDENT1, now, 250);
+
       let buy;
-      [ buy ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, 60, 1);
+      [ buy ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, GENERAL, 60, 1);
       expect(buy.value).to.equal(-60);
       expect(buy.metadata.quantity).to.equal(1);
 
-      balance = await Things.getHouseBalance(HOUSE, now);
+      let balance;
+      balance = await Things.getAccountBalance(HOUSE, GENERAL, now);
       expect(balance.sum).to.equal(40);
 
-      [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10, 3);
-      expect(buy.value).to.equal(-30);
-      expect(buy.metadata.quantity).to.equal(3);
+      [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, SPECIAL, 10, 12);
+      expect(buy.value).to.equal(-120);
+      expect(buy.metadata.quantity).to.equal(12);
 
-      balance = await Things.getHouseBalance(HOUSE, now);
-      expect(balance.sum).to.equal(10);
+      balance = await Things.getAccountBalance(HOUSE, SPECIAL, now);
+      expect(balance.sum).to.equal(130);
     });
 
     it('cannot buy a thing with insufficient funds', async () => {
-      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 20);
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 20);
 
-      await expect(Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10, 3))
+      await expect(Things.buyThing(HOUSE, soap.id, RESIDENT1, now, GENERAL, 10, 3))
         .to.be.rejectedWith('Insufficient funds!');
 
-      await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10, 2);
+      await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, GENERAL, 10, 2);
     });
 
     it('can get the minimum votes for a buy', async () => {
@@ -133,15 +165,15 @@ describe('Things', async () => {
     });
 
     it('can affirm a buy', async () => {
-      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 100);
 
-      let [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10, 1);
+      let [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, GENERAL, 10, 1);
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
 
       await Things.resolveThingBuy(buy.id, challengeEnd);
 
-      const balance = await Things.getHouseBalance(HOUSE, challengeEnd);
+      const balance = await Things.getAccountBalance(HOUSE, GENERAL, challengeEnd);
       expect(balance.sum).to.equal(90);
 
       buy = await Things.getThingBuy(buy.id);
@@ -150,16 +182,16 @@ describe('Things', async () => {
     });
 
     it('can reject a buy', async () => {
-      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 100);
 
-      let [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10, 1);
+      let [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, GENERAL, 10, 1);
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(buy.pollId, RESIDENT2, now, NAY);
 
       await Things.resolveThingBuy(buy.id, challengeEnd);
 
-      const balance = await Things.getHouseBalance(HOUSE, challengeEnd);
+      const balance = await Things.getAccountBalance(HOUSE, GENERAL, challengeEnd);
       expect(balance.sum).to.equal(100);
 
       buy = await Things.getThingBuy(buy.id);
@@ -168,10 +200,10 @@ describe('Things', async () => {
     });
 
     it('can negate a buy if quorum is not reached', async () => {
-      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 100);
 
       // Need 1 affirmative vote per $50
-      let [ buy ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, 60, 1);
+      let [ buy ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, GENERAL, 60, 1);
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
 
@@ -182,18 +214,18 @@ describe('Things', async () => {
     });
 
     it('cannot resolve a buy before the poll is closed', async () => {
-      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 100);
 
-      const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10, 1);
+      const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, GENERAL, 10, 1);
 
       await expect(Things.resolveThingBuy(buy.id, soon))
         .to.be.rejectedWith('Poll not closed!');
     });
 
     it('cannot resolve a buy twice', async () => {
-      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 100);
 
-      let [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10, 1);
+      let [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, GENERAL, 10, 1);
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
 
@@ -204,11 +236,11 @@ describe('Things', async () => {
     });
 
     it('can resolve buys in bulk', async () => {
-      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 100);
 
-      const [ thingBuy1 ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, 10, 1);
-      const [ thingBuy2 ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10, 1);
-      const [ thingBuy3 ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, soon, 10, 1);
+      const [ thingBuy1 ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, GENERAL, 10, 1);
+      const [ thingBuy2 ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, GENERAL, 10, 1);
+      const [ thingBuy3 ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, soon, GENERAL, 10, 1);
 
       await Polls.submitVote(thingBuy1.pollId, RESIDENT1, now, YAY);
 
@@ -229,9 +261,9 @@ describe('Things', async () => {
     });
 
     it('can get a list of unfulfilled buys', async () => {
-      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 100);
 
-      const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10, 1);
+      const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, GENERAL, 10, 1);
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, NAY);
 
@@ -248,9 +280,9 @@ describe('Things', async () => {
     });
 
     it('can fulfill a buy', async () => {
-      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 100);
 
-      const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, 10, 1);
+      const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, GENERAL, 10, 1);
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
       await Things.resolveThingBuy(buy.id, challengeEnd);
@@ -261,14 +293,14 @@ describe('Things', async () => {
     });
 
     it('can get a list of fulfilled buys within a time range', async () => {
-      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 100);
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 100);
 
       const nextWeek = new Date(now.getTime() + 7 * DAY);
       const nextMonth = new Date(now.getTime() + 28 * DAY);
 
-      const [ thingBuy1 ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, 10, 1);
-      const [ thingBuy2 ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, nextWeek, 15, 1);
-      const [ thingBuy3 ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, nextMonth, 20, 1);
+      const [ thingBuy1 ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, GENERAL, 10, 1);
+      const [ thingBuy2 ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, nextWeek, GENERAL, 15, 1);
+      const [ thingBuy3 ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, nextMonth, GENERAL, 20, 1);
 
       await Polls.submitVote(thingBuy1.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(thingBuy2.pollId, RESIDENT1, nextWeek, YAY);
@@ -311,24 +343,24 @@ describe('Things', async () => {
 
   describe('buying special things', async () => {
     it('can buy a special thing', async () => {
-      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 250);
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 250);
 
       const title = '2x4 IKEA KALLAX bookshelf';
       const details = 'Ordered from ikea.com, shipping included';
-      const [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 200, title, details);
+      const [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, GENERAL, 200, title, details);
       expect(buy.value).to.equal(-200);
       expect(buy.metadata.title).to.equal(title);
       expect(buy.metadata.details).to.equal(details);
       expect(buy.metadata.special).to.be.true;
 
-      const balance = await Things.getHouseBalance(HOUSE, now);
+      const balance = await Things.getAccountBalance(HOUSE, GENERAL, now);
       expect(balance.sum).to.equal(50);
     });
 
     it('can affirm a special buy', async () => {
-      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 250);
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 250);
 
-      let [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 200, 'special', 'details');
+      let [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, GENERAL, 200, 'special', 'details');
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(buy.pollId, RESIDENT2, now, YAY);
@@ -340,7 +372,7 @@ describe('Things', async () => {
 
       await Things.resolveThingBuy(buy.id, challengeEndSpecial);
 
-      const balance = await Things.getHouseBalance(HOUSE, challengeEndSpecial);
+      const balance = await Things.getAccountBalance(HOUSE, GENERAL, challengeEndSpecial);
       expect(balance.sum).to.equal(50);
 
       buy = await Things.getThingBuy(buy.id);
@@ -349,16 +381,16 @@ describe('Things', async () => {
     });
 
     it('can reject a special buy', async () => {
-      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 250);
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 250);
 
-      let [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, 200, 'special', 'details');
+      let [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, GENERAL, 200, 'special', 'details');
 
       await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(buy.pollId, RESIDENT2, now, YAY);
 
       await Things.resolveThingBuy(buy.id, challengeEndSpecial);
 
-      const balance = await Things.getHouseBalance(HOUSE, challengeEndSpecial);
+      const balance = await Things.getAccountBalance(HOUSE, GENERAL, challengeEndSpecial);
       expect(balance.sum).to.equal(250);
 
       buy = await Things.getThingBuy(buy.id);
@@ -387,10 +419,10 @@ describe('Things', async () => {
     });
 
     it('can get a list of unfulfilled special buys', async () => {
-      await Things.loadHouseAccount(HOUSE, RESIDENT1, now, 500);
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 500);
 
-      await Things.buySpecialThing(HOUSE, RESIDENT1, now, 100, 'special1', 'details');
-      await Things.buySpecialThing(HOUSE, RESIDENT1, now, 100, 'special2', 'details');
+      await Things.buySpecialThing(HOUSE, RESIDENT1, now, GENERAL, 100, 'special1', 'details');
+      await Things.buySpecialThing(HOUSE, RESIDENT1, now, GENERAL, 100, 'special2', 'details');
 
       const unfulfilledBuys = await Things.getUnfulfilledThingBuys(HOUSE, now);
       expect(unfulfilledBuys.length).to.equal(2);
