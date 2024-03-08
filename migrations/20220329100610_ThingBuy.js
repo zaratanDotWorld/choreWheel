@@ -6,6 +6,7 @@ exports.up = function(knex, Promise) {
         t.integer('thingId').references('Thing.id');
         t.string('boughtBy').references('Resident.slackId').notNull();
         t.timestamp('boughtAt').notNull();
+        t.string('account').notNull();
         t.float('value').notNull();
         t.integer('pollId').references('Poll.id');
         t.timestamp('resolvedAt');
