@@ -19,7 +19,6 @@ features:
       url: https://things.mirror.zaratan.world/slack/events
       description: Load money into the house account
       should_escape: false
-      usage_hint: "[amount]"
     - command: /things-fulfill
       url: https://things.mirror.zaratan.world/slack/events
       description: Mark buys as fulfilled

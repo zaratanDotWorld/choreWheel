@@ -76,10 +76,10 @@ app.event('app_home_opened', async ({ body, event }) => {
 
     let view;
     if (thingsConf.channel) {
-      const balance = await Things.getHouseBalance(houseId, now);
+      const activeAccounts = await Things.getActiveAccounts(houseId, now);
       const exempt = await Admin.isExempt(residentId, now);
 
-      view = views.thingsHomeView(balance.sum || 0, exempt);
+      view = views.thingsHomeView(activeAccounts, exempt);
     } else {
       view = views.thingsIntroView();
     }
@@ -120,18 +120,25 @@ app.command('/things-load', async ({ ack, command }) => {
     return;
   }
 
-  if (command.text === 'help' || command.text.length === 0) {
-    await replyEphemeral(command, 'Enter an amount of money to add to the account.');
-  } else {
-    const now = new Date();
-    const houseId = command.team_id;
-    const residentId = command.user_id;
+  const view = views.thingsLoadView();
+  await common.openView(app, thingsConf.oauth, command.trigger_id, view);
+});
 
-    const [ thing ] = await Things.loadHouseAccount(houseId, residentId, now, command.text);
+app.view('things-load-callback', async ({ ack, body }) => {
+  console.log('things-load-callback');
+  await ack();
 
-    const text = `*<@${thing.boughtBy}>* just loaded *$${thing.value}* into the house account :chart_with_upwards_trend:`;
-    await postMessage(houseId, text);
-  }
+  const now = new Date();
+  const houseId = body.team.id;
+  const residentId = body.user.id;
+
+  const account = common.parseTitlecase(common.getInputBlock(body, -2).account.value);
+  const amount = common.getInputBlock(body, -1).amount.value;
+
+  const [ thing ] = await Things.loadAccount(houseId, account, residentId, now, amount);
+
+  const text = `<@${thing.boughtBy}> just loaded *$${thing.value}* into the *${thing.account}* account :chart_with_upwards_trend:`;
+  await postMessage(houseId, text);
 });
 
 app.command('/things-fulfill', async ({ ack, command }) => {
@@ -227,9 +234,13 @@ app.action('things-buy', async ({ ack, body }) => {
   console.log('things-buy');
   await ack();
 
-  const things = await Things.getThings(body.team.id);
+  const now = new Date();
+  const houseId = body.team.id;
 
-  const view = views.thingsBuyView(things);
+  const things = await Things.getThings(houseId);
+  const accounts = await Things.getActiveAccounts(houseId, now);
+
+  const view = views.thingsBuyView(things, accounts);
   await common.openView(app, thingsConf.oauth, body.trigger_id, view);
 });
 
@@ -241,16 +252,17 @@ app.view('things-buy-callback', async ({ ack, body }) => {
   const houseId = body.team.id;
   const residentId = body.user.id;
 
-  const { id: thingId } = JSON.parse(common.getInputBlock(body, -2).things.selected_option.value);
-  const quantity = common.getInputBlock(body, -1).quantity.value;
+  const { id: thingId } = JSON.parse(common.getInputBlock(body, -3).things.selected_option.value);
+  const quantity = common.getInputBlock(body, -2).quantity.value;
+  const { account } = JSON.parse(common.getInputBlock(body, -1).account.selected_option.value);
 
   // Perform the buy
   const thing = await Things.getThing(thingId);
-  const [ buy ] = await Things.buyThing(houseId, thing.id, residentId, now, thing.value, quantity);
+  const [ buy ] = await Things.buyThing(houseId, thing.id, residentId, now, account, thing.value, quantity);
   await Polls.submitVote(buy.pollId, residentId, now, YAY);
 
   const { minVotes } = await Polls.getPoll(buy.pollId);
-  const balance = await Things.getHouseBalance(houseId, now);
+  const balance = await Things.getAccountBalance(houseId, account, now);
 
   const text = 'Someone just bought a thing';
   const blocks = views.thingsBuyCallbackView(buy, thing, balance.sum, minVotes);
@@ -266,8 +278,9 @@ app.action('things-special', async ({ ack, body }) => {
   const houseId = body.team.id;
 
   const votingResidents = await Admin.getVotingResidents(houseId, now);
+  const accounts = await Things.getActiveAccounts(houseId, now);
 
-  const view = views.thingsSpecialBuyView(votingResidents.length);
+  const view = views.thingsSpecialBuyView(votingResidents.length, accounts);
   await common.openView(app, thingsConf.oauth, body.trigger_id, view);
 });
 
@@ -279,16 +292,17 @@ app.view('things-special-callback', async ({ ack, body }) => {
   const houseId = body.team.id;
   const residentId = body.user.id;
 
-  const title = common.getInputBlock(body, -3).title.value.trim();
-  const details = common.getInputBlock(body, -2).details.value.trim();
-  const cost = common.getInputBlock(body, -1).cost.value;
+  const title = common.getInputBlock(body, -4).title.value.trim();
+  const details = common.getInputBlock(body, -3).details.value.trim();
+  const cost = common.getInputBlock(body, -2).cost.value;
+  const { account } = JSON.parse(common.getInputBlock(body, -1).account.selected_option.value);
 
   // Perform the buy
-  const [ buy ] = await Things.buySpecialThing(houseId, residentId, now, cost, title, details);
+  const [ buy ] = await Things.buySpecialThing(houseId, residentId, now, account, cost, title, details);
   await Polls.submitVote(buy.pollId, residentId, now, YAY);
 
   const { minVotes } = await Polls.getPoll(buy.pollId);
-  const balance = await Things.getHouseBalance(houseId, now);
+  const balance = await Things.getAccountBalance(houseId, account, now);
 
   const text = 'Someone just bought a thing';
   const blocks = views.thingsSpecialBuyCallbackView(buy, balance.sum, minVotes);

@@ -77,12 +77,13 @@ _For more details on *Things* functionality, read the <${DOCS_URL}|manual>._
   };
 };
 
-exports.thingsHomeView = function (balance, exempt) {
+exports.thingsHomeView = function (accounts, exempt) {
   const header = 'Welcome to Things';
   const textA = `We use *<${DOCS_URL}|Things>* to spend money together.\n\n` +
     'Anyone can propose a buy, which requires *1 upvote per $50*. ' +
     'Successful buys are fulfilled within *3-5 days*.';
-  const textB = `The house has *$${balance}* left in the account :moneybag:`;
+  const textB = 'The house has the *following balances* in the accounts:\n' +
+    accounts.map(account => `\n*${account.account}* account: *$${account.sum}*`);
 
   const actions = [];
   if (!exempt) {
@@ -107,6 +108,39 @@ exports.thingsHomeView = function (balance, exempt) {
 };
 
 // Slash commands
+
+exports.thingsLoadView = function () {
+  const header = 'Load an account';
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockInput(
+    'Account to load',
+    {
+      action_id: 'account',
+      type: 'plain_text_input',
+      placeholder: common.blockPlaintext('Account to load (i.e. General, Major Purchases, etc)'),
+    },
+  ));
+  blocks.push(common.blockInput(
+    'Amount to load',
+    {
+      action_id: 'amount',
+      type: 'number_input',
+      is_decimal_allowed: false,
+      placeholder: common.blockPlaintext('Enter amount to load'),
+    },
+  ));
+
+  return {
+    type: 'modal',
+    callback_id: 'things-load-callback',
+    title: TITLE,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
+    blocks,
+  };
+};
 
 exports.thingsFulfillView = function (unfulfilledBuys) {
   const header = 'Fulfill some buys';
@@ -145,7 +179,7 @@ exports.thingsFulfillView = function (unfulfilledBuys) {
 
 // Core actions
 
-exports.thingsBuyView = function (things) {
+exports.thingsBuyView = function (things, accounts) {
   const header = 'Buy a thing';
   const mainText = 'Choose something to buy. Make sure you have support for large buys!';
 
@@ -186,6 +220,20 @@ exports.thingsBuyView = function (things) {
       placeholder: common.blockPlaintext('Choose number of units'),
     },
   ));
+  blocks.push(common.blockInput(
+    'Account to buy from',
+    {
+      action_id: 'account',
+      type: 'static_select',
+      placeholder: common.blockPlaintext('Choose an account'),
+      options: accounts.map((account) => {
+        return {
+          value: JSON.stringify({ account: account.account }),
+          text: common.blockPlaintext(`${account.account}: $${account.sum}`),
+        };
+      }),
+    },
+  ));
 
   return {
     type: 'modal',
@@ -205,7 +253,7 @@ exports.thingsBuyCallbackView = function (buy, thing, balance, minVotes) {
   const formattedBuy = exports.formatBuy(buy);
 
   const mainText = `*<@${buy.boughtBy}>* bought *${formattedBuy}*. ` +
-    `There's *$${balance}* left in the account :money_with_wings:`;
+    `There's *$${balance}* left in the *${buy.account}* account :money_with_wings:`;
 
   const blocks = [];
   blocks.push(common.blockSection(mainText));
@@ -214,7 +262,7 @@ exports.thingsBuyCallbackView = function (buy, thing, balance, minVotes) {
   return blocks;
 };
 
-exports.thingsSpecialBuyView = function (numResidents) {
+exports.thingsSpecialBuyView = function (numResidents, accounts) {
   const minVotes = Math.ceil(thingsMinPctSpecial * numResidents);
   const maxVotes = Math.ceil(thingsMaxPct * numResidents);
 
@@ -250,10 +298,23 @@ exports.thingsSpecialBuyView = function (numResidents) {
     {
       action_id: 'cost',
       type: 'number_input',
-      initial_value: '1',
-      min_value: '0',
+      min_value: '1',
       is_decimal_allowed: false,
       placeholder: common.blockPlaintext('Provide the total cost (including tax and shipping)'),
+    },
+  ));
+  blocks.push(common.blockInput(
+    'Account to buy from',
+    {
+      action_id: 'account',
+      type: 'static_select',
+      placeholder: common.blockPlaintext('Choose an account'),
+      options: accounts.map((account) => {
+        return {
+          value: JSON.stringify({ account: account.account }),
+          text: common.blockPlaintext(`${account.account}: $${account.sum}`),
+        };
+      }),
     },
   ));
 
@@ -269,7 +330,7 @@ exports.thingsSpecialBuyView = function (numResidents) {
 
 exports.thingsSpecialBuyCallbackView = function (buy, balance, minVotes) {
   const textA = `*<@${buy.boughtBy}>* bought the following for *$${-buy.value}*:`;
-  const textB = `There's *$${balance}* left in the account :money_with_wings:`;
+  const textB = `There's *$${balance}* left in the *${buy.account}* account :money_with_wings:`;
 
   const blocks = [];
   blocks.push(common.blockSection(textA));

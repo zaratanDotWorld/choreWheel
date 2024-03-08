@@ -20,7 +20,6 @@ features:
       url: https://zaratan.ngrok.io/slack/events
       description: Load money into the house account
       should_escape: false
-      usage_hint: "[amount]"
     - command: /things-fulfill
       url: https://zaratan.ngrok.io/slack/events
       description: Mark buys as fulfilled
