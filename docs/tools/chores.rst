@@ -40,7 +40,7 @@ Everyone does the chores they think are worth their time, and the result is a co
   | Doing 20 easy chores for 5 points each? *Go nuts*.
 
   It all works.
-  There is no right or wrong way to participate.
+  There is no right or wrong way to participate, although waiting until the last day is *probably* the worst strategy.
 
 Quickstart
 ----------
@@ -60,6 +60,24 @@ Chores
   A chore is any pre-defined task which people usually won't do on their own.
   **An ideal chore takes at between 5-30 minutes to do, is largely self-contained, and can be done more-or-less at any time.**
 
+  .. note::
+
+    Here is an example of a well-defined chore:
+
+    Dishes
+      - Put away all clean dishes from the drying rack or washing machine
+      - Put any dirty dishes in the washing machine
+      - Clean any large pots or pans by hand and put in the drying rack
+      - Run the washing machine if full
+
+  .. tip::
+
+    Chores don't *have* to be limited to literal chores like doing dishes or sweeping floors.
+    Rather, they can include any type of task which folks want to be encouraged to do.
+
+    Groups have used Chores to encourage things like food prep and house dinners, as well as movement classes and studio time.
+    It all comes down to what your group wants to collectively prioritize, and the trade-offs it wants to make.
+
 Points
   Everyone owes **100 points** per month.
   When someone does a chore, they earn points.
@@ -70,7 +88,7 @@ Points
 
     A key idea is that people can't "vote" to give points.
     Rather, points accumulate slowly and automatically over time.
-    This keeps points roughly correlated to how messy something is, without having meetings about it.
+    This keeps points roughly correlated to how messy something is, while avoiding meetings and politics.
 
 Priorities
   Chores can be assigned different *priorities*, since not all chores are created equal.
@@ -138,16 +156,6 @@ The app home is also the entryway into the basic functionality, described below:
       If too macro, the chore will never get done, despite being worth a lot of points.
 
       Don't be afraid to experiment and add, remove, or edit chores in the first few weeks.
-
-  .. note::
-
-      Here is an example of a well-defined chore:
-
-      Dishes
-        - Put away all clean dishes from the drying rack or washing machine
-        - Put any dirty dishes in the washing machine
-        - Clean any large pots or pans by hand and put in the drying rack
-        - Run the washing machine if full
 
 :guilabel:`Set priorities`
   The **total amount** of points distributed per month is fixed, at 100 points per resident.

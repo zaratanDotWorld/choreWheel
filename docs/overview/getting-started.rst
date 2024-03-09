@@ -33,9 +33,9 @@ Setting up the tools
 Once everyone has join the workspace, you can begin installing the tools.
 Once you install each tool, the `app home <https://api.slack.com/surfaces/app-home>`_ page will give you specific instructions on getting up-and-running.
 
-- `Install Chores <https://chores.mirror.zaratan.world/slack/install>`_
-- `Install Hearts <https://hearts.mirror.zaratan.world/slack/install>`_
-- `Install Things <https://things.mirror.zaratan.world/slack/install>`_
+- `Install Chores ↗ <https://chores.mirror.zaratan.world/slack/install>`_
+- `Install Hearts ↗ <https://hearts.mirror.zaratan.world/slack/install>`_
+- `Install Things ↗ <https://things.mirror.zaratan.world/slack/install>`_
 
 All tools function as stand-alone apps, but complement each other when used together.
 There is a rough progression of power/complexity from using :ref:`chores` by itself, to combining it with :ref:`hearts`, to combining both with :ref:`things`.

@@ -81,9 +81,10 @@ exports.thingsHomeView = function (accounts, exempt) {
   const header = 'Welcome to Things';
   const textA = `We use *<${DOCS_URL}|Things>* to spend money together.\n\n` +
     'Anyone can propose a buy, which requires *1 upvote per $50*. ' +
+    'Special buys require at least *30%* whole-house approval.\n\n' +
     'Successful buys are fulfilled within *3-5 days*.';
-  const textB = 'The house has the *following balances* in the accounts:\n' +
-    accounts.map(account => `\n*${account.account}* account: *$${account.sum}*`);
+  const textB = 'The house has the *following balances*:\n' +
+    accounts.map(account => `\n:moneybag:*${account.account}* account: *$${account.sum}*`);
 
   const actions = [];
   if (!exempt) {
