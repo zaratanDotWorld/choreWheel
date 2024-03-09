@@ -123,14 +123,21 @@ exports.getCurrentChoreValues = async function (houseId, currentTime) {
 };
 
 exports.getCurrentChoreRankings = async function (houseId, now) {
-  const chores = await exports.getChores(houseId);
-  const residents = await Admin.getResidents(houseId, now);
-  const preferences = await exports.getActiveChorePreferences(houseId, now);
+  const formattedPreferences = await exports.getCurrentChorePreferences(houseId, now);
+  return exports.calculateChoreRankings(houseId, formattedPreferences, now);
+};
 
-  const choresSet = new Set(chores.map(c => c.id));
-  const formattedPreferences = preferences.map((p) => {
+exports.getCurrentChorePreferences = async function (houseId, now) {
+  const preferences = await exports.getActiveChorePreferences(houseId, now);
+  return (preferences).map((p) => {
     return { alpha: p.alphaChoreId, beta: p.betaChoreId, preference: p.preference };
   });
+};
+
+exports.calculateChoreRankings = async function (houseId, formattedPreferences, now) {
+  const residents = await Admin.getResidents(houseId, now);
+  const chores = await exports.getChores(houseId);
+  const choresSet = new Set(chores.map(c => c.id));
 
   const powerRanker = new PowerRanker(choresSet, formattedPreferences, residents.length);
   const rankings = powerRanker.run(d = dampingFactor); // eslint-disable-line no-undef
