@@ -8,6 +8,7 @@ const {
   heartsMinPctCritical,
   heartsBaselineAmount,
   heartsRegenAmount,
+  heartsFadeAmount,
   heartsPollLength,
   karmaDelay,
   karmaProportion,
@@ -90,11 +91,12 @@ exports.regenerateHearts = async function (houseId, residentId, now) {
 };
 
 exports.getRegenAmount = function (currentHearts) {
-  // Want to move `heartsRegenAmount` towards `heartsBaselineAmount`
+  // Want to move `heartsRegenAmount` up towards `heartsBaselineAmount`
+  //   and `heartsFadeAmount` down towards `heartsBaselineAmount`
   const baselineGap = heartsBaselineAmount - currentHearts;
   return (baselineGap >= 0)
     ? Math.min(heartsRegenAmount, baselineGap)
-    : Math.max(-heartsRegenAmount, baselineGap);
+    : Math.max(-heartsFadeAmount, baselineGap);
 };
 
 // Challenges
