@@ -322,10 +322,10 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   const changeText = (Math.abs(change) > bigChange) ? 'a lot' : 'a little';
 
   if (change > 0) {
-    const text = `Someone *prioritized ${targetChore.name}* by ${changeText}, to *${priority} ppt* :rocket:`;
+    const text = `Someone *prioritized ${targetChore.name}* by ${changeText}, from *${priority - change}* to *${priority} ppt* :rocket:`;
     await postMessage(houseId, text);
   } else if (change < 0) {
-    const text = `Someone *deprioritized ${targetChore.name}* by ${changeText}, to *${priority} ppt* :snail:`;
+    const text = `Someone *deprioritized ${targetChore.name}* by ${changeText}, from *${priority - change}* to *${priority} ppt* :snail:`;
     await postMessage(houseId, text);
   } else {
     const text = 'You\'ve already input those preferences.\n\n' +
