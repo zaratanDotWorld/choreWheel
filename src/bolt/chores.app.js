@@ -147,14 +147,9 @@ app.command('/chores-stats', async ({ ack, command }) => {
 
   const choreClaims = await Chores.getChoreClaims(residentId, monthStart, now);
   const choreBreaks = await Chores.getChoreBreaks(houseId, now);
+  const choreStats = await Chores.getHouseChoreStats(houseId, prevMonthStart, prevMonthEnd);
 
-  const chorePoints = [];
-  for (const resident of (await Admin.getVotingResidents(houseId, now))) {
-    const choreStats = await Chores.getChoreStats(resident.slackId, prevMonthStart, prevMonthEnd);
-    chorePoints.push({ residentId: resident.slackId, ...choreStats });
-  }
-
-  const view = views.choresStatsView(choreClaims, choreBreaks, chorePoints);
+  const view = views.choresStatsView(choreClaims, choreBreaks, choreStats);
   await common.openView(app, choresConf.oauth, command.trigger_id, view);
 });
 
@@ -211,6 +206,23 @@ app.view('chores-exempt-callback', async ({ ack, body }) => {
   await postEphemeral(residentId, text);
 });
 
+app.command('/chores-reset', async ({ ack, command }) => {
+  console.log('/chores-reset');
+  await ack();
+
+  if (!(await common.isAdmin(app, choresConf.oauth, command))) {
+    await common.replyAdminOnly(app, choresConf.oauth, command);
+    return;
+  }
+
+  const now = new Date();
+  const houseId = command.team_id;
+  const residentId = command.user_id;
+
+  await Chores.resetChorePoints(houseId, now);
+  await postMessage(`<@${residentId}> just reset all chore points :volcano:`);
+});
+
 // Claim flow
 
 app.action('chores-claim', async ({ ack, body }) => {
@@ -218,11 +230,19 @@ app.action('chores-claim', async ({ ack, body }) => {
   await ack();
 
   const now = new Date();
-  const choreValues = await Chores.getUpdatedChoreValues(body.team.id, now);
+  const houseId = body.team.id;
+  const residentId = body.user.id;
+
+  const choreValues = await Chores.getUpdatedChoreValues(houseId, now);
   const filteredChoreValues = choreValues.filter(choreValue => choreValue.value >= displayThreshold);
 
-  const view = views.choresClaimView(filteredChoreValues);
-  await common.openView(app, choresConf.oauth, body.trigger_id, view);
+  if (!filteredChoreValues.length) {
+    const text = 'No chores are available to claim. Try again later :sweat_smile:';
+    await postEphemeral(residentId, text);
+  } else {
+    const view = views.choresClaimView(filteredChoreValues);
+    await common.openView(app, choresConf.oauth, body.trigger_id, view);
+  }
 });
 
 app.action('chores-claim-2', async ({ ack, body }) => {

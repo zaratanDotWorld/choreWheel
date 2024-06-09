@@ -104,8 +104,8 @@ exports.getChoreValue = async function (choreId, startTime, endTime) {
     .first();
 };
 
-exports.getCurrentChoreValue = async function (choreId, currentTime) {
-  const latestClaim = await exports.getLatestChoreClaim(choreId, currentTime);
+exports.getCurrentChoreValue = async function (choreId, currentTime, excludedClaimId = null) {
+  const latestClaim = await exports.getLatestChoreClaim(choreId, currentTime, excludedClaimId);
   const latestClaimedAt = (latestClaim === undefined) ? new Date(0) : latestClaim.claimedAt;
   return exports.getChoreValue(choreId, latestClaimedAt, currentTime);
 };
@@ -194,11 +194,8 @@ exports.getUpdatedChoreValues = async function (houseId, updateTime) {
   const choreValues = await exports.getCurrentChoreValues(houseId, updateTime);
   const choreValueUpdates = await exports.updateChoreValues(houseId, updateTime);
 
-  // O(n**2), too bad
-  choreValues.forEach((choreValue) => {
-    const choreValueUpdate = choreValueUpdates.find(update => update.choreId === choreValue.id);
-    choreValue.value += (choreValueUpdate) ? choreValueUpdate.value : 0;
-  });
+  const updateMap = new Map(choreValueUpdates.map(update => [ update.choreId, update.value ]));
+  choreValues.forEach((choreValue) => { choreValue.value += updateMap.get(choreValue.id) || 0; });
 
   return choreValues.sort((a, b) => b.value - a.value);
 };
@@ -221,11 +218,12 @@ exports.getChoreClaims = async function (claimedBy, startTime, endTime) {
     .select('*');
 };
 
-exports.getLatestChoreClaim = async function (choreId, currentTime) {
+exports.getLatestChoreClaim = async function (choreId, currentTime, excludedClaimId = null) {
   return db('ChoreClaim')
     .select('*')
     .where({ choreId, valid: true })
-    .where('claimedAt', '<', currentTime) // TODO: should this be <= ??
+    .where('claimedAt', '<=', currentTime)
+    .whereNot({ id: excludedClaimId }) // Exclude the current claim, if any
     .orderBy('claimedAt', 'desc')
     .first();
 };
@@ -246,7 +244,7 @@ exports.claimChore = async function (houseId, choreId, claimedBy, claimedAt) {
 exports.resolveChoreClaim = async function (claimId, resolvedAt) {
   const choreClaim = await exports.getChoreClaim(claimId);
   const valid = await Polls.isPollValid(choreClaim.pollId, resolvedAt);
-  const value = (await exports.getCurrentChoreValue(choreClaim.choreId, choreClaim.claimedAt)).sum;
+  const value = (await exports.getCurrentChoreValue(choreClaim.choreId, choreClaim.claimedAt, claimId)).sum;
 
   return db('ChoreClaim')
     .where({ id: claimId, resolvedAt: null }) // Cannot resolve twice
@@ -399,12 +397,22 @@ exports.addChorePenalty = async function (houseId, residentId, currentTime) {
   }
 };
 
+// Chore Stats
+
 exports.getChoreStats = async function (residentId, startTime, endTime) {
   const pointsEarned = (await exports.getAllChorePoints(residentId, startTime, endTime)).sum || 0;
   const workingPercentage = await exports.getWorkingResidentPercentage(residentId, endTime);
   const pointsOwed = pointsPerResident * workingPercentage;
 
   return { pointsEarned, pointsOwed };
+};
+
+exports.getHouseChoreStats = async function (houseId, startTime, endTime) {
+  const residents = await Admin.getVotingResidents(houseId, endTime);
+  return Promise.all(residents.map(async (r) => {
+    const choreStats = await exports.getChoreStats(r.slackId, startTime, endTime);
+    return { residentId: r.slackId, ...choreStats };
+  }));
 };
 
 exports.calculatePenalty = async function (residentId, penaltyTime) {
@@ -494,4 +502,29 @@ exports.resolveChoreProposals = async function (houseId, now) {
     .map(proposal => exports.resolveChoreProposal(proposal.id, now));
 
   return (await Promise.all(resolvedProposals)).flat();
+};
+
+// Reset chore points
+
+exports.resetChorePoints = async function (houseId, now) {
+  const residents = await Admin.getVotingResidents(houseId, now);
+  const resetResidents = residents.map((r) => {
+    return { houseId, slackId: r.slackId, activeAt: now, exemptAt: null }; // activeAt = now
+  });
+
+  const monthStart = getMonthStart(now);
+  const resetResidentClaims = await Promise.all(residents.map(async (r) => {
+    const userPoints = await exports.getAllChorePoints(r.slackId, monthStart, now);
+    return { houseId, claimedBy: r.slackId, value: -(userPoints.sum || 0), claimedAt: now }; // choreId = null
+  }));
+
+  const choreValues = await exports.getUpdatedChoreValues(houseId, now);
+  const resetChoreClaims = choreValues.map((cv) => {
+    return { houseId, choreId: cv.id, value: cv.value, claimedAt: now }; // claimedBy = null
+  });
+
+  await db.transaction(async (tx) => {
+    await tx('Resident').insert(resetResidents).onConflict('slackId').merge(); // HACK: write Resident table directly
+    await tx('ChoreClaim').insert([ ...resetResidentClaims, ...resetChoreClaims ]);
+  });
 };
