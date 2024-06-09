@@ -6,11 +6,18 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAlmost());
 chai.use(chaiAsPromised);
 
+const { db } = require('../src/core/db');
 const { Chores, Hearts, Polls, Admin } = require('../src/core/index');
 const { YAY, NAY, DAY, HOUR, MINUTE } = require('../src/constants');
-const { pointsPerResident, inflationFactor, penaltyDelay, choresPollLength, choresProposalPollLength } = require('../src/config');
+const {
+  pointsPerResident,
+  inflationFactor,
+  bootstrapDuration,
+  penaltyDelay,
+  choresPollLength,
+  choresProposalPollLength,
+} = require('../src/config');
 const { getMonthStart, getNextMonthStart, getPrevMonthEnd } = require('../src/utils');
-const { db } = require('../src/core/db');
 const testHelpers = require('./helpers');
 
 describe('Chores', async () => {
@@ -341,6 +348,23 @@ describe('Chores', async () => {
       expect(choreClaims[0].value).to.equal(15);
     });
 
+    it('can get the latest chore claim', async () => {
+      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10 } ]);
+
+      let latestChoreClaim;
+      latestChoreClaim = await Chores.getLatestChoreClaim(dishes.id, now);
+      expect(latestChoreClaim).to.be.undefined;
+
+      await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
+
+      latestChoreClaim = await Chores.getLatestChoreClaim(dishes.id, now);
+      expect(latestChoreClaim.claimedBy).to.equal(RESIDENT1);
+
+      // Can exclude individual claims from the query
+      latestChoreClaim = await Chores.getLatestChoreClaim(dishes.id, now, latestChoreClaim.id);
+      expect(latestChoreClaim).to.be.undefined;
+    });
+
     it('cannot claim a chore with a zero value', async () => {
       await expect(Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now))
         .to.be.rejectedWith('Cannot claim a zero-value chore!');
@@ -649,6 +673,70 @@ describe('Chores', async () => {
 
       [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
       expect(penaltyHeart.value).to.equal(-2.5);
+    });
+
+    it('can reset all chore points', async () => {
+      const feb1 = new Date(3000, 1, 1); // February, a 28 day month
+      const feb8 = new Date(feb1.getTime() + 7 * DAY);
+      const feb15 = new Date(feb1.getTime() + 14 * DAY);
+      const feb22 = new Date(feb1.getTime() + 21 * DAY);
+      const choresStart = new Date(feb1.getTime() + bootstrapDuration);
+      const ppc = pointsPerResident * 4 / 3; // Monthly points per chore
+
+      let choreValues;
+      let choreStats;
+
+      // Initialise chores
+      await Chores.updateChoreValues(HOUSE, choresStart);
+
+      // Claim some chores
+      await Chores.updateChoreValues(HOUSE, feb8);
+      await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, feb8);
+
+      await Chores.updateChoreValues(HOUSE, feb15);
+      await Chores.claimChore(HOUSE, sweeping.id, RESIDENT2, feb15);
+
+      // Check values
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, feb15);
+      expect(choreValues.find(cv => cv.id === dishes.id).value).to.be.almost(ppc * 0.25, 1e-5);
+      expect(choreValues.find(cv => cv.id === sweeping.id).value).to.be.almost(ppc * 0, 1e-5);
+      expect(choreValues.find(cv => cv.id === restock.id).value).to.be.almost(ppc * 0.5, 1e-5);
+
+      choreStats = await Chores.getHouseChoreStats(HOUSE, feb1, feb15);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT1).pointsEarned).to.be.almost(ppc * 0.25, 1e-5);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT2).pointsEarned).to.be.almost(ppc * 0.5, 1e-5);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT3).pointsEarned).to.be.almost(ppc * 0, 1e-5);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT1).pointsOwed).to.equal(pointsPerResident);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT2).pointsOwed).to.equal(pointsPerResident);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT3).pointsOwed).to.equal(pointsPerResident);
+
+      // Reset chore points
+      await Chores.resetChorePoints(HOUSE, feb15);
+
+      // Check values
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, feb15);
+      expect(choreValues.find(cv => cv.id === dishes.id).value).to.equal(0);
+      expect(choreValues.find(cv => cv.id === sweeping.id).value).to.equal(0);
+      expect(choreValues.find(cv => cv.id === restock.id).value).to.equal(0);
+
+      choreStats = await Chores.getHouseChoreStats(HOUSE, feb1, feb15);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT1).pointsEarned).to.equal(0);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT2).pointsEarned).to.equal(0);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT3).pointsEarned).to.equal(0);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT1).pointsOwed).to.equal(pointsPerResident * 0.5);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT2).pointsOwed).to.equal(pointsPerResident * 0.5);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT3).pointsOwed).to.equal(pointsPerResident * 0.5);
+
+      await Chores.updateChoreValues(HOUSE, feb22);
+      await Chores.claimChore(HOUSE, restock.id, RESIDENT3, feb22);
+
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, feb22);
+      expect(choreValues.find(cv => cv.id === dishes.id).value).to.be.almost(ppc * 0.25, 1e-5);
+      expect(choreValues.find(cv => cv.id === sweeping.id).value).to.be.almost(ppc * 0.25, 1e-5);
+      expect(choreValues.find(cv => cv.id === restock.id).value).to.be.almost(ppc * 0, 1e-5);
+
+      choreStats = await Chores.getHouseChoreStats(HOUSE, feb1, feb22);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT3).pointsEarned).to.be.almost(ppc * 0.25, 1e-5);
     });
   });
 

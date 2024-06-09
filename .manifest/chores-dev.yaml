@@ -26,6 +26,10 @@ features:
       url: https://zaratan.ngrok.io/slack/events
       description: Exempt residents from chores
       should_escape: false
+    - command: /chores-reset
+      url: https://zaratan.ngrok.io/slack/events
+      description: Reset chore points
+      should_escape: false
 oauth_config:
   redirect_urls:
     - https://zaratan.ngrok.io/slack/oauth_redirect

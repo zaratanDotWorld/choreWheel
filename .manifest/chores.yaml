@@ -1,5 +1,5 @@
 display_information:
-  name: Chores
+  name: "Chore Wheel: Chores"
   description: Chore wheel x1000
   background_color: "#7a7a7a"
 features:
@@ -25,6 +25,10 @@ features:
     - command: /chores-exempt
       url: https://chores.mirror.zaratan.world/slack/events
       description: Exempt residents from chores
+      should_escape: false
+    - command: /chores-reset
+      url: https://chores.mirror.zaratan.world/slack/events
+      description: Reset chore points
       should_escape: false
 oauth_config:
   redirect_urls:

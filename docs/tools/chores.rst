@@ -204,6 +204,11 @@ Most people will not need to know about these commands to use Chores.
   The ``/chores-exempt`` command is used to mark certain users as "exempt" from chores, i.e. to indicate that someone in the workspace is not actively present in the house and should not be considered for the purposes of issuing points and voting.
   In the past this has been used to exempt someone who took a four-month leave of absence, and to exempt an admin account belonging to someone not living in the house.
 
+``/chores-reset`` \*
+  The ``/chores-reset`` command is used to reset chore points.
+  All chores will be worth 0 points, all users will have 0 points, and all users will owe points as if they had just joined the workspace.
+  The chore list and chore priorities will not be affected.
+
 ``/chores-sync``
   The ``/chores-sync`` command will update the app with the current active users in the workspace, adding any new users and removing any who have been deactivated.
   Keeping the Chores app synchronized with the workspace is important, as the number of active users determines the total amounts of points issued as well as the minimum number of upvotes needed for proposals to pass.

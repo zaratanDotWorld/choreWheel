@@ -4,7 +4,7 @@ exports.up = function(knex, Promise) {
         t.timestamps(useTimestamps = true, defaultToNow = true, useCamelCase = true);
         t.string('houseId').references('House.slackId');
         t.integer('choreId').references('Chore.id');
-        t.string('claimedBy').references('Resident.slackId').notNull();
+        t.string('claimedBy').references('Resident.slackId');
         t.timestamp('claimedAt');
         t.float('value');
         t.integer('pollId').references('Poll.id');
