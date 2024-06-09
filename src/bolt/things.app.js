@@ -50,11 +50,11 @@ const app = new App({
 
 // Define publishing functions
 
-async function postMessage (houseId, text, blocks) {
+async function postMessage (text, blocks) {
   return common.postMessage(app, thingsConf.oauth, thingsConf.channel, text, blocks);
 }
 
-async function postEphemeral (houseId, residentId, text) {
+async function postEphemeral (residentId, text) {
   return common.postEphemeral(app, thingsConf.oauth, thingsConf.channel, residentId, text);
 }
 
@@ -138,7 +138,7 @@ app.view('things-load-callback', async ({ ack, body }) => {
   const [ thing ] = await Things.loadAccount(houseId, account, residentId, now, amount);
 
   const text = `<@${thing.boughtBy}> just loaded *$${thing.value}* into the *${thing.account}* account :chart_with_upwards_trend:`;
-  await postMessage(houseId, text);
+  await postMessage(text);
 });
 
 app.command('/things-fulfill', async ({ ack, command }) => {
@@ -168,7 +168,6 @@ app.view('things-fulfill-callback', async ({ ack, body }) => {
   await ack();
 
   const now = new Date();
-  const houseId = body.team.id;
   const residentId = body.user.id;
 
   const buys = common.getInputBlock(body, -1).buys.selected_options
@@ -179,7 +178,7 @@ app.view('things-fulfill-callback', async ({ ack, body }) => {
   }
 
   const text = 'Fulfillment succeeded :shopping_bags:';
-  await postEphemeral(houseId, residentId, text);
+  await postEphemeral(residentId, text);
 });
 
 app.command('/things-update', async ({ ack, command }) => {
@@ -214,7 +213,6 @@ app.view('things-propose-callback-admin', async ({ ack, body }) => {
   console.log('things-update-callback');
   await ack({ response_action: 'clear' });
 
-  const houseId = body.team.id;
   const residentId = body.user.id;
 
   const { thing } = JSON.parse(body.view.private_metadata);
@@ -225,7 +223,7 @@ app.view('things-propose-callback-admin', async ({ ack, body }) => {
   await Things.editThing(thing.id, type, name, value, metadata, true);
 
   const text = 'Update succeeded :floppy_disk:';
-  await postEphemeral(houseId, residentId, text);
+  await postEphemeral(residentId, text);
 });
 
 // Buy flow
@@ -266,7 +264,7 @@ app.view('things-buy-callback', async ({ ack, body }) => {
 
   const text = 'Someone just bought a thing';
   const blocks = views.thingsBuyCallbackView(buy, thing, balance.sum, minVotes);
-  const { channel, ts } = await postMessage(houseId, text, blocks);
+  const { channel, ts } = await postMessage(text, blocks);
   await Polls.updateMetadata(buy.pollId, { channel, ts });
 });
 
@@ -306,7 +304,7 @@ app.view('things-special-callback', async ({ ack, body }) => {
 
   const text = 'Someone just bought a thing';
   const blocks = views.thingsSpecialBuyCallbackView(buy, balance.sum, minVotes);
-  const { channel, ts } = await postMessage(houseId, text, blocks);
+  const { channel, ts } = await postMessage(text, blocks);
   await Polls.updateMetadata(buy.pollId, { channel, ts });
 });
 
@@ -420,7 +418,7 @@ app.view('things-propose-callback', async ({ ack, body }) => {
 
   const text = 'Someone just proposed a thing edit';
   const blocks = views.thingsProposeCallbackView(privateMetadata, proposal, minVotes);
-  const { channel, ts } = await postMessage(houseId, text, blocks);
+  const { channel, ts } = await postMessage(text, blocks);
   await Polls.updateMetadata(proposal.pollId, { channel, ts });
 });
 

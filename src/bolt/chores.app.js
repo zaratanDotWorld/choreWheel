@@ -7,7 +7,7 @@ if (process.env.NODE_ENV === 'production') {
 const { App, LogLevel } = require('@slack/bolt');
 
 const { Admin, Polls, Chores } = require('../core/index');
-const { pointsPerResident, displayThreshold, breakMinDays, achievementWindow } = require('../config');
+const { displayThreshold, breakMinDays, achievementWindow } = require('../config');
 const { YAY, DAY, CHORES_CONF } = require('../constants');
 const { getMonthStart, shiftDate, getPrevMonthEnd } = require('../utils');
 
@@ -52,11 +52,11 @@ const app = new App({
 
 // Define publishing functions
 
-async function postMessage (houseId, text, blocks) {
+async function postMessage (text, blocks) {
   return common.postMessage(app, choresConf.oauth, choresConf.channel, text, blocks);
 }
 
-async function postEphemeral (houseId, residentId, text) {
+async function postEphemeral (residentId, text) {
   return common.postEphemeral(app, choresConf.oauth, choresConf.channel, residentId, text);
 }
 
@@ -105,7 +105,7 @@ app.event('app_home_opened', async ({ body, event }) => {
       if (penaltyHeart.value < 0) {
         const text = 'You missed too many chores last month, ' +
           `and lost *${penaltyHeart.value.toFixed(1)}* hearts...`;
-        await postEphemeral(houseId, penaltyHeart.residentId, text);
+        await postEphemeral(penaltyHeart.residentId, text);
       }
     }
   }
@@ -208,7 +208,7 @@ app.view('chores-exempt-callback', async ({ ack, body }) => {
       return;
   }
 
-  await postEphemeral(houseId, residentId, text);
+  await postEphemeral(residentId, text);
 });
 
 // Claim flow
@@ -218,7 +218,7 @@ app.action('chores-claim', async ({ ack, body }) => {
   await ack();
 
   const now = new Date();
-  const choreValues = await Chores.getUpdatedChoreValues(body.team.id, now, pointsPerResident);
+  const choreValues = await Chores.getUpdatedChoreValues(body.team.id, now);
   const filteredChoreValues = choreValues.filter(choreValue => choreValue.value >= displayThreshold);
 
   const view = views.choresClaimView(filteredChoreValues);
@@ -263,7 +263,7 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
 
   const text = 'Someone just completed a chore';
   const blocks = views.choresClaimCallbackView(claim, chore.name, minVotes, achivementPoints, monthlyPoints);
-  const { channel, ts } = await postMessage(houseId, text, blocks);
+  const { channel, ts } = await postMessage(text, blocks);
   await Polls.updateMetadata(claim.pollId, { channel, ts });
 });
 
@@ -323,15 +323,15 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
 
   if (change > 0) {
     const text = `Someone *prioritized ${targetChore.name}* by ${changeText}, from *${priority - change}* to *${priority} ppt* :rocket:`;
-    await postMessage(houseId, text);
+    await postMessage(text);
   } else if (change < 0) {
     const text = `Someone *deprioritized ${targetChore.name}* by ${changeText}, from *${priority - change}* to *${priority} ppt* :snail:`;
-    await postMessage(houseId, text);
+    await postMessage(text);
   } else {
     const text = 'You\'ve already input those preferences.\n\n' +
       'To have an additional effect, *choose more or different chores* or a *stronger preference*.\n' +
       'Alternatively, try and *convince others* to support your priorities.';
-    await postEphemeral(houseId, residentId, text);
+    await postEphemeral(residentId, text);
   }
 });
 
@@ -367,14 +367,14 @@ app.view('chores-break-callback', async ({ ack, body }) => {
 
   if (breakStart < todayStart || breakDays < breakMinDays) {
     const text = 'Not a valid chore break :slightly_frowning_face:';
-    await postEphemeral(houseId, residentId, text);
+    await postEphemeral(residentId, text);
   } else {
     // Record the break
     await Chores.addChoreBreak(houseId, residentId, breakStart, breakEnd, circumstance);
     const text = `<@${residentId}> is taking a *${breakDays}-day* break ` +
         `starting ${breakStart.toDateString()} :beach_with_umbrella:\n` +
         `_${circumstance}_`;
-    await postMessage(houseId, text);
+    await postMessage(text);
   }
 });
 
@@ -409,17 +409,17 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
 
   if (await Admin.isExempt(recipientId, now)) {
     const text = `<@${recipientId}> is exempt and cannot earn points :confused:`;
-    await postEphemeral(houseId, residentId, text);
+    await postEphemeral(residentId, text);
   } else if (points > currentBalance) {
     const text = 'You can\'t gift more points than you have! :face_with_monocle:';
-    await postEphemeral(houseId, residentId, text);
+    await postEphemeral(residentId, text);
   } else {
     // Make the gift
     await Chores.giftChorePoints(houseId, residentId, recipientId, now, points);
 
     const text = `<@${residentId}> just gifted <@${recipientId}> *${points} points* :gift:\n` +
       `_${circumstance}_`;
-    await postMessage(houseId, text);
+    await postMessage(text);
   }
 });
 
@@ -521,7 +521,7 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
 
   const text = 'Someone just proposed a chore edit';
   const blocks = views.choresProposeCallbackView(privateMetadata, proposal, minVotes);
-  const { channel, ts } = await postMessage(houseId, text, blocks);
+  const { channel, ts } = await postMessage(text, blocks);
   await Polls.updateMetadata(proposal.pollId, { channel, ts });
 });
 

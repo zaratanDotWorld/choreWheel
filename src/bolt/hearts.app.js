@@ -52,11 +52,11 @@ const app = new App({
 
 // Define publishing functions
 
-async function postMessage (houseId, text, blocks) {
+async function postMessage (text, blocks) {
   return common.postMessage(app, heartsConf.oauth, heartsConf.channel, text, blocks);
 }
 
-async function postEphemeral (houseId, residentId, text) {
+async function postEphemeral (residentId, text) {
   return common.postEphemeral(app, heartsConf.oauth, heartsConf.channel, residentId, text);
 }
 
@@ -97,7 +97,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     for (const challengeHeart of (await Hearts.getAgnosticHearts(houseId, now))) {
       const text = `<@${challengeHeart.residentId}> lost a challenge, ` +
         `and *${(-challengeHeart.value).toFixed(0)}* heart(s)...`;
-      await postMessage(houseId, text);
+      await postMessage(text);
     }
 
     // Regenerate lost hearts // fade karma hearts
@@ -106,7 +106,7 @@ app.event('app_home_opened', async ({ body, event }) => {
         const text = (regenHeart.value > 0)
           ? `You regenerated *${regenHeart.value.toFixed(1)}* heart(s)!`
           : `Your karma faded by *${(-regenHeart.value).toFixed(1)}* heart(s)!`;
-        await postEphemeral(houseId, regenHeart.residentId, text);
+        await postEphemeral(regenHeart.residentId, text);
       }
     }
 
@@ -117,7 +117,7 @@ app.event('app_home_opened', async ({ body, event }) => {
       const text = (karmaHearts.length > 1)
         ? `${karmaWinners} get last month's karma hearts :heart_on_fire:`
         : `${karmaWinners} gets last month's karma heart :heart_on_fire:`;
-      await postMessage(houseId, text);
+      await postMessage(text);
     }
   }
 });
@@ -172,10 +172,10 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
 
   if (await Admin.isExempt(challengeeId, now)) {
     const text = `<@${challengeeId}> is exempt and cannot be challenged :weary:`;
-    await postEphemeral(houseId, residentId, text);
+    await postEphemeral(residentId, text);
   } else if (unresolvedChallenges.length) {
     const text = `<@${challengeeId}> is already being challenged!`;
-    await postEphemeral(houseId, residentId, text);
+    await postEphemeral(residentId, text);
   } else {
     // Initiate the challenge
     const [ challenge ] = await Hearts.issueChallenge(houseId, residentId, challengeeId, numHearts, now, circumstance);
@@ -185,7 +185,7 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
 
     const text = 'Someone just issued a hearts challenge';
     const blocks = views.heartsChallengeCallbackView(challenge, minVotes, circumstance);
-    const { channel, ts } = await postMessage(houseId, text, blocks);
+    const { channel, ts } = await postMessage(text, blocks);
     await Polls.updateMetadata(challenge.pollId, { channel, ts });
   }
 });
