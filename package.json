@@ -5,6 +5,10 @@
   "repository": "git@github.com:zaratanDotWorld/choreWheel.git",
   "author": "Daniel Kronovet <krono@zaratan.world>",
   "license": "AGPL-3.0-or-later",
+  "engines": {
+    "node": "^20.11.0",
+    "npm": "^10.8.1"
+  },
   "scripts": {
     "app:chores": "node src/bolt/chores.app.js",
     "app:things": "node src/bolt/things.app.js",

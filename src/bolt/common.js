@@ -235,6 +235,8 @@ exports.updateVoteResults = async function (app, oauth, pollId) {
   const body = await exports.getMessage(app, oauth, metadata.channel, metadata.ts);
   const message = body.messages[0];
 
+  if (message === undefined) { throw new Error(`No message found for pollId ${pollId}`); }
+
   // Parse current vote counts;
   const voteBlock = message.blocks.length - 1;
   const voteButtons = message.blocks[voteBlock].elements;
