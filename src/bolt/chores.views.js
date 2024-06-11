@@ -7,6 +7,19 @@ const common = require('./common');
 const TITLE = common.blockPlaintext('Chores');
 const DOCS_URL = 'https://docs.chorewheel.zaratan.world/en/latest/tools/chores.html';
 
+exports.formatStats = function (stats) {
+  const { residentId, pointsEarned, pointsOwed, completionPct } = stats;
+
+  let emoji = '';
+  if (pointsEarned >= pointsOwed) {
+    emoji = ':star:';
+  } else if (pointsOwed - pointsEarned >= penaltyIncrement) {
+    emoji = ':crying_cat_face:';
+  }
+
+  return `<@${residentId}> - ${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} (${(completionPct * 100).toFixed(0)}%) ${emoji}`;
+};
+
 // Home views
 
 exports.choresIntroView = function () {
@@ -93,7 +106,7 @@ exports.choresHomeView = function (choreStats, numActive, exempt) {
 
 // Slash commands
 
-exports.choresStatsView = function (choreClaims, choreBreaks, chorePoints) {
+exports.choresStatsView = function (choreClaims, choreBreaks, choreStats) {
   const header = 'See chore stats';
   const mainText = 'Extra information about monthly chores.';
 
@@ -106,7 +119,7 @@ exports.choresStatsView = function (choreClaims, choreBreaks, chorePoints) {
       .join('');
 
   const pointsText = '*Last month\'s chore points:*\n' +
-    chorePoints.map(cp => `\n<@${cp.residentId}> - ${cp.pointsEarned.toFixed(0)} / ${cp.pointsOwed.toFixed(0)}`)
+    choreStats.map(cs => `\n${exports.formatStats(cs)}`)
       .join('');
 
   const blocks = [];

@@ -100,12 +100,27 @@ app.event('app_home_opened', async ({ body, event }) => {
       await common.updateVoteResults(app, choresConf.oauth, resolvedProposal.pollId);
     }
 
-    // Give monthly penalties, if any
-    for (const penaltyHeart of (await Chores.addChorePenalties(houseId, now))) {
-      if (penaltyHeart.value < 0) {
-        const text = 'You missed too many chores last month, ' +
-          `and lost *${penaltyHeart.value.toFixed(1)}* hearts...`;
-        await postEphemeral(penaltyHeart.residentId, text);
+    // Handle monthly bookkeeping
+    const chorePenalties = await Chores.addChorePenalties(houseId, now);
+    if (chorePenalties.length) {
+      // Post penalties, if any
+      for (const penaltyHeart of chorePenalties) {
+        if (penaltyHeart.value < 0) {
+          const text = 'You missed too many chores last month, ' +
+            `and lost *${penaltyHeart.value.toFixed(1)}* hearts...`;
+          await postEphemeral(penaltyHeart.residentId, text);
+        }
+      }
+
+      // Post house stats
+      const prevMonthEnd = getPrevMonthEnd(now);
+      const prevMonthStart = getMonthStart(prevMonthEnd);
+      const choreStats = await Chores.getHouseChoreStats(houseId, prevMonthStart, prevMonthEnd);
+      if (choreStats.length) {
+        const text = ':scroll: *Last month\'s chore points* :scroll: \n' +
+          choreStats.map(cs => `\n${views.formatStats(cs)}`)
+            .join('');
+        await postMessage(text);
       }
     }
   }

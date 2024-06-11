@@ -403,7 +403,7 @@ exports.getChoreStats = async function (residentId, startTime, endTime) {
   const pointsEarned = (await exports.getAllChorePoints(residentId, startTime, endTime)).sum || 0;
   const workingPercentage = await exports.getWorkingResidentPercentage(residentId, endTime);
   const pointsOwed = pointsPerResident * workingPercentage;
-  const completionPct = pointsEarned / pointsOwed;
+  const completionPct = (pointsOwed) ? pointsEarned / pointsOwed : 1;
 
   return { pointsEarned, pointsOwed, completionPct };
 };
