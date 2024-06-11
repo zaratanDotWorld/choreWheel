@@ -215,9 +215,17 @@ app.command('/chores-reset', async ({ ack, command }) => {
     return;
   }
 
+  const view = views.choresResetView();
+  await common.openView(app, choresConf.oauth, command.trigger_id, view);
+});
+
+app.view('chores-reset-callback', async ({ ack, body }) => {
+  console.log('chores-reset-callback');
+  await ack();
+
   const now = new Date();
-  const houseId = command.team_id;
-  const residentId = command.user_id;
+  const houseId = body.team.id;
+  const residentId = body.user.id;
 
   await Chores.resetChorePoints(houseId, now);
   await postMessage(`<@${residentId}> just reset all chore points :volcano:`);

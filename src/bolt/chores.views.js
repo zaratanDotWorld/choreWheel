@@ -170,6 +170,27 @@ exports.choresExemptView = function (exemptResidents) {
   };
 };
 
+exports.choresResetView = function () {
+  const header = 'Reset chore points';
+  const mainText = 'Reset chore points for the workspace. ' +
+  'All chores will be worth 0 points and all residents will have 0 points. ' +
+  'Residents will only owe points for the rest of the month.\n\n' +
+  ':warning: *This action cannot be undone!* :warning:';
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-reset-callback',
+    title: TITLE,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
+    blocks,
+  };
+};
+
 // Main actions
 
 exports.choresClaimView = function (chores) {
