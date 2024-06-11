@@ -403,16 +403,18 @@ exports.getChoreStats = async function (residentId, startTime, endTime) {
   const pointsEarned = (await exports.getAllChorePoints(residentId, startTime, endTime)).sum || 0;
   const workingPercentage = await exports.getWorkingResidentPercentage(residentId, endTime);
   const pointsOwed = pointsPerResident * workingPercentage;
+  const completionPct = pointsEarned / pointsOwed;
 
-  return { pointsEarned, pointsOwed };
+  return { pointsEarned, pointsOwed, completionPct };
 };
 
 exports.getHouseChoreStats = async function (houseId, startTime, endTime) {
   const residents = await Admin.getVotingResidents(houseId, endTime);
-  return Promise.all(residents.map(async (r) => {
+  const choreStats = await Promise.all(residents.map(async (r) => {
     const choreStats = await exports.getChoreStats(r.slackId, startTime, endTime);
     return { residentId: r.slackId, ...choreStats };
   }));
+  return choreStats.sort((a, b) => b.completionPct - a.completionPct); // Descending order
 };
 
 exports.calculatePenalty = async function (residentId, penaltyTime) {

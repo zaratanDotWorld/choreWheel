@@ -675,6 +675,19 @@ describe('Chores', async () => {
       expect(penaltyHeart.value).to.equal(-2.5);
     });
 
+    it('can get house chore stats', async () => {
+      await Chores.updateChoreValues(HOUSE, now);
+      await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
+
+      await Chores.updateChoreValues(HOUSE, tomorrow);
+      await Chores.claimChore(HOUSE, sweeping.id, RESIDENT2, tomorrow);
+
+      const choreStats = await Chores.getHouseChoreStats(HOUSE, now, tomorrow);
+      expect(choreStats.length).to.equal(4);
+      expect(choreStats[0].residentId).to.equal(RESIDENT2);
+      expect(choreStats[1].residentId).to.equal(RESIDENT1);
+    });
+
     it('can reset all chore points', async () => {
       const feb1 = new Date(3000, 1, 1); // February, a 28 day month
       const feb8 = new Date(feb1.getTime() + 7 * DAY);
