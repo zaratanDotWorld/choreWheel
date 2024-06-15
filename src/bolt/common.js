@@ -138,6 +138,8 @@ exports.setChannel = async function (app, oauth, confName, command) {
 };
 
 exports.syncWorkspace = async function (app, oauth, command, syncMembers, syncChannels) {
+  const now = new Date();
+
   let text;
 
   if (command.text === 'help') {
@@ -147,7 +149,7 @@ exports.syncWorkspace = async function (app, oauth, command, syncMembers, syncCh
     text = 'Synced workspace with ';
 
     if (syncMembers) {
-      const numResidents = await exports.syncWorkspaceMembers(app, oauth, command.team_id);
+      const numResidents = await exports.syncWorkspaceMembers(app, oauth, command.team_id, now);
       text += `${numResidents} active residents`;
     }
 
@@ -164,23 +166,26 @@ exports.syncWorkspace = async function (app, oauth, command, syncMembers, syncCh
   await exports.replyEphemeral(app, oauth, command, text);
 };
 
-exports.syncWorkspaceMembers = async function (app, oauth, houseId) {
-  const now = new Date();
+exports.syncWorkspaceMembers = async function (app, oauth, houseId, now) {
   const { members } = await app.client.users.list({ token: oauth.bot.token });
 
   for (const member of members) {
     if (!member.is_bot && member.id !== SLACKBOT) {
-      if (member.deleted) {
-        await Admin.deactivateResident(houseId, member.id);
-      } else {
-        await Admin.activateResident(houseId, member.id, now);
-        await Hearts.initialiseResident(houseId, member.id, now);
-      }
+      await exports.syncWorkspaceMember(houseId, member, now);
     }
   }
 
   const residents = await Admin.getResidents(houseId, now);
   return residents.length;
+};
+
+exports.syncWorkspaceMember = async function (houseId, member, now) {
+  if (member.deleted) {
+    await Admin.deactivateResident(houseId, member.id);
+  } else {
+    await Admin.activateResident(houseId, member.id, now);
+    await Hearts.initialiseResident(houseId, member.id, now);
+  }
 };
 
 exports.syncWorkspaceChannels = async function (app, oauth) {
@@ -192,11 +197,15 @@ exports.syncWorkspaceChannels = async function (app, oauth) {
 
   for (const channelId of workspaceChannelIds) {
     if (!botChannelIds.includes(channelId)) {
-      await app.client.conversations.join({ token: oauth.bot.token, channel: channelId });
+      await exports.joinChannel(app, oauth, channelId);
     }
   }
 
   return workspaceChannels.length;
+};
+
+exports.joinChannel = async function (app, oauth, channelId) {
+  return app.client.conversations.join({ token: oauth.bot.token, channel: channelId });
 };
 
 exports.replyAdminOnly = function (app, oauth, command) {

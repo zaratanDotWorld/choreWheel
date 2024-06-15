@@ -60,6 +60,15 @@ async function postEphemeral (residentId, text) {
   return common.postEphemeral(app, choresConf.oauth, choresConf.channel, residentId, text);
 }
 
+// Event listeners
+
+app.event('user_change', async ({ payload }) => {
+  console.log('chores user_change');
+
+  const { user } = payload;
+  await common.syncWorkspaceMember(user.team_id, user, new Date());
+});
+
 // Publish the app home
 
 app.event('app_home_opened', async ({ body, event }) => {
@@ -240,6 +249,7 @@ app.view('chores-reset-callback', async ({ ack, body }) => {
   const residentId = body.user.id;
 
   await Chores.resetChorePoints(houseId, now);
+
   await postMessage(`<@${residentId}> just reset all chore points :volcano:`);
 });
 
@@ -471,6 +481,7 @@ app.action('chores-propose', async ({ ack, body }) => {
 
   const now = new Date();
   const houseId = body.team.id;
+
   const minVotes = await Chores.getChoreProposalMinVotes(houseId, now);
 
   const view = views.choresProposeView(minVotes);

@@ -35,6 +35,8 @@ settings:
     bot_events:
       - app_home_opened
       - message.channels
+      - user_change
+      - channel_created
   interactivity:
     is_enabled: true
     request_url: https://hearts.mirror.zaratan.world/slack/events
