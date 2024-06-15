@@ -136,10 +136,7 @@ app.command('/hearts-channel', async ({ ack, command }) => {
   await ack();
 
   await common.setChannel(app, heartsConf.oauth, HEARTS_CONF, command);
-
-  if (command.text !== 'help') {
-    await common.syncWorkspace(app, heartsConf.oauth, command, true, true);
-  }
+  await common.syncWorkspace(app, heartsConf.oauth, command, true, true);
 });
 
 // Challenge flow
