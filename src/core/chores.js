@@ -140,14 +140,14 @@ exports.getCurrentChoreRankings = async function (houseId, now) {
   }).sort((a, b) => b.ranking - a.ranking);
 };
 
-exports.getChoreValueIntervalScalar = async function (houseId, currentTime) {
+exports.getChoreValueIntervalScalar = async function (houseId, updateTime) {
   const lastChoreValue = await exports.getLastChoreValueUpdate(houseId);
-  const lastUpdate = (lastChoreValue !== undefined)
+  const lastUpdateTime = (lastChoreValue)
     ? lastChoreValue.valuedAt
-    : new Date(currentTime.getTime() - bootstrapDuration); // First update assigns a fixed amount of value
+    : new Date(updateTime.getTime() - bootstrapDuration); // First update seeds a fixed amount of value
 
-  const hoursSinceUpdate = Math.floor((currentTime - lastUpdate) / HOUR);
-  const hoursInMonth = 24 * getMonthEnd(currentTime).getDate();
+  const hoursSinceUpdate = Math.max(Math.floor((updateTime - lastUpdateTime) / HOUR), 0);
+  const hoursInMonth = 24 * getMonthEnd(updateTime).getDate();
 
   // TODO: handle scenario where interval spans 2 months
 
@@ -163,16 +163,18 @@ exports.getLastChoreValueUpdate = async function (houseId) {
     .first();
 };
 
-exports.updateChoreValues = async function (houseId, updateTime) {
+exports.updateChoreValues = async function (houseId, now) {
+  const updateTime = truncateHour(now);
   // TODO: lock tables during this function call
   const intervalScalar = await exports.getChoreValueIntervalScalar(houseId, updateTime);
 
   // If we've updated in the last interval, short-circuit execution
   if (intervalScalar === 0) { return Promise.resolve([]); }
 
-  const workingResidentCount = await exports.getWorkingResidentCount(houseId, updateTime);
+  const workingResidentCount = await exports.getWorkingResidentCount(houseId, now);
   const updateScalar = (workingResidentCount * pointsPerResident) * intervalScalar * inflationFactor;
-  const choreRankings = await exports.getCurrentChoreRankings(houseId, updateTime);
+  const choreRankings = await exports.getCurrentChoreRankings(houseId, now);
+  const metadata = { intervalScalar, residents: workingResidentCount };
 
   const choreValues = choreRankings.map((chore) => {
     return {
@@ -180,7 +182,7 @@ exports.updateChoreValues = async function (houseId, updateTime) {
       choreId: chore.id,
       valuedAt: updateTime,
       value: chore.ranking * updateScalar,
-      metadata: { ranking: chore.ranking, residents: workingResidentCount },
+      metadata: { ...metadata, ranking: chore.ranking },
     };
   });
 
@@ -188,6 +190,11 @@ exports.updateChoreValues = async function (houseId, updateTime) {
     .insert(choreValues)
     .returning('*');
 };
+
+// Round down to the nearest hour
+function truncateHour (date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours());
+}
 
 exports.getUpdatedChoreValues = async function (houseId, updateTime) {
   // By doing it this way, we avoid race conditions

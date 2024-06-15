@@ -257,25 +257,61 @@ describe('Chores', async () => {
     });
 
     it('can calculate the interval on an hourly basis', async () => {
-      const t0 = new Date(3000, 0, 1);
+      const t0 = new Date(3000, 0, 1); // January 1
+      const t1 = new Date(t0.getTime() + 30 * MINUTE);
+      const t2 = new Date(t0.getTime() + 60 * MINUTE);
+      const t3 = new Date(t0.getTime() + 90 * MINUTE);
+      const t4 = new Date(t0.getTime() + 120 * MINUTE);
 
+      // Update on the hour
       await db('ChoreValue').insert([
         { choreId: dishes.id, valuedAt: t0, value: 10 },
       ]);
 
-      const t1 = new Date(t0.getTime() + (HOUR + 10 * MINUTE));
-      const t2 = new Date(t0.getTime() + (HOUR + 45 * MINUTE));
-      const t3 = new Date(t0.getTime() + (HOUR + 60 * MINUTE));
-
       let intervalScalar;
+      intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, t0);
+      expect(intervalScalar).to.equal(0);
+
       intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, t1);
-      expect(intervalScalar).to.almost.equal(0.0013440860215053765);
+      expect(intervalScalar).to.equal(0);
 
       intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, t2);
       expect(intervalScalar).to.almost.equal(0.0013440860215053765);
 
       intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, t3);
+      expect(intervalScalar).to.almost.equal(0.0013440860215053765);
+
+      intervalScalar = await Chores.getChoreValueIntervalScalar(HOUSE, t4);
       expect(intervalScalar).to.almost.equal(0.002688172043010753);
+    });
+
+    it('can update chore values on an hourly basis', async () => {
+      const t0 = new Date(3000, 0, 1); // January 1
+      const t1 = new Date(t0.getTime() + 30 * MINUTE);
+      // Skip t2 in this test
+      const t3 = new Date(t0.getTime() + 90 * MINUTE);
+      const t4 = new Date(t0.getTime() + 120 * MINUTE);
+
+      await db('ChoreValue').insert([
+        { choreId: dishes.id, valuedAt: t0, value: 10 },
+      ]);
+
+      let choreValues;
+      choreValues = await Chores.updateChoreValues(HOUSE, t0);
+      expect(choreValues.length).to.equal(0);
+
+      choreValues = await Chores.updateChoreValues(HOUSE, t1);
+      expect(choreValues.length).to.equal(0);
+
+      // Skip t2, do the update at 30 minutes past the hour
+      choreValues = await Chores.updateChoreValues(HOUSE, t3);
+      expect(choreValues.length).to.equal(3);
+      expect(choreValues[0].metadata.intervalScalar).to.almost.equal(0.0013440860215053765);
+
+      // This update succeeds since the previous update was truncated
+      choreValues = await Chores.updateChoreValues(HOUSE, t4);
+      expect(choreValues.length).to.equal(3);
+      expect(choreValues[0].metadata.intervalScalar).to.almost.equal(0.0013440860215053765);
     });
 
     it('can update chore values, storing useful metadata', async () => {
