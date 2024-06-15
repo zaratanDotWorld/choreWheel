@@ -45,6 +45,7 @@ settings:
     request_url: https://chores.mirror.zaratan.world/slack/events
     bot_events:
       - app_home_opened
+      - user_change
   interactivity:
     is_enabled: true
     request_url: https://chores.mirror.zaratan.world/slack/events

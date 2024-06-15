@@ -62,6 +62,15 @@ async function replyEphemeral (command, text) {
   return common.replyEphemeral(app, thingsConf.oauth, command, text);
 }
 
+// Event listeners
+
+app.event('user_change', async ({ payload }) => {
+  console.log('things user_change');
+
+  const { user } = payload;
+  await common.syncWorkspaceMember(user.team_id, user, new Date());
+});
+
 // Publish the app home
 
 app.event('app_home_opened', async ({ body, event }) => {

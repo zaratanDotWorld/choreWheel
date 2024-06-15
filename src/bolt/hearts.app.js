@@ -60,6 +60,22 @@ async function postEphemeral (residentId, text) {
   return common.postEphemeral(app, heartsConf.oauth, heartsConf.channel, residentId, text);
 }
 
+// Event listeners
+
+app.event('user_change', async ({ payload }) => {
+  console.log('hearts user_change');
+
+  const { user } = payload;
+  await common.syncWorkspaceMember(user.team_id, user, new Date());
+});
+
+app.event('channel_created', async ({ payload }) => {
+  console.log('hearts channel_created');
+
+  const { channel } = payload;
+  await common.joinChannel(app, heartsConf.oauth, channel.id);
+});
+
 // Publish the app home
 
 app.event('app_home_opened', async ({ body, event }) => {
@@ -117,6 +133,7 @@ app.event('app_home_opened', async ({ body, event }) => {
       const text = (karmaHearts.length > 1)
         ? `${karmaWinners} get last month's karma hearts :heart_on_fire:`
         : `${karmaWinners} gets last month's karma heart :heart_on_fire:`;
+
       await postMessage(text);
     }
   }
@@ -149,6 +166,7 @@ app.action('hearts-challenge', async ({ ack, body }) => {
   const houseId = body.team.id;
 
   const votingResidents = await Admin.getVotingResidents(houseId, now);
+
   const view = views.heartsChallengeView(votingResidents.length);
   await common.openView(app, heartsConf.oauth, body.trigger_id, view);
 });
