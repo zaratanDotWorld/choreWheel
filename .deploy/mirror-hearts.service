@@ -7,7 +7,7 @@ After=network.target
 Type=simple
 User=ubuntu
 WorkingDirectory=/home/ubuntu/mirror
-ExecStart=/home/ubuntu/.nvm/versions/node/v16.15.0/bin/node --experimental-loader=newrelic/esm-loader.mjs src/bolt/hearts.app.js
+ExecStart=/home/ubuntu/.nvm/versions/node/v20.11.0/bin/node --experimental-loader=newrelic/esm-loader.mjs src/bolt/hearts.app.js
 Environment="NEW_RELIC_APP_NAME=Hearts"
 StandardOutput=append:/home/ubuntu/mirror/logs/hearts.log
 Restart=on-failure

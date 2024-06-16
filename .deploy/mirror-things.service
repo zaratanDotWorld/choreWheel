@@ -7,7 +7,7 @@ After=network.target
 Type=simple
 User=ubuntu
 WorkingDirectory=/home/ubuntu/mirror
-ExecStart=/home/ubuntu/.nvm/versions/node/v16.15.0/bin/node --experimental-loader=newrelic/esm-loader.mjs src/bolt/things.app.js
+ExecStart=/home/ubuntu/.nvm/versions/node/v20.11.0/bin/node --experimental-loader=newrelic/esm-loader.mjs src/bolt/things.app.js
 Environment="NEW_RELIC_APP_NAME=Things"
 StandardOutput=append:/home/ubuntu/mirror/logs/things.log
 Restart=on-failure
