@@ -211,11 +211,7 @@ Most people will not need to know about these commands to use Chores.
 
 ``/chores-sync``
   The ``/chores-sync`` command will update the app with the current active users in the workspace, adding any new users and removing any who have been deactivated.
-  Keeping the Chores app synchronized with the workspace is important, as the number of active users determines the total amounts of points issued as well as the minimum number of upvotes needed for proposals to pass.
-
-  .. warning::
-
-    Make sure to run ``/chores-sync`` whenever someone joins or leaves the workspace.
+  The app will normally keep itself synchronized in the background, but this command can be used to force a sync if necessary.
 
 Case Studies
 ------------

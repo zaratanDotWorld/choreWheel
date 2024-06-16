@@ -56,10 +56,8 @@ exports.heartsHomeView = function (numHearts, maxHearts, exempt) {
     'Everyone starts with *5 hearts*.\n\n' +
     'We lose hearts when we fail to uphold our commitments, ' +
     'and we regain hearts over time *(½ per month)* or by earning *karma* :sparkles:\n\n' +
-    'You can give someone *karma* by adding a ++ after their name, like this: *@Someone ++*. ' +
-    'Every month the people with the most karma get *bonus hearts* :open_mouth:\n\n' +
-    'You can also increase your *maximum hearts*. ' +
-    'Earning *4 karma hearts* increases your max by *1*, up to *10*.';
+    'You give *karma* by adding ++ after someone\'s name, like this: *@Name ++*. ' +
+    'Every month people with the most karma get *bonus hearts* :open_mouth:';
   const textB = (exempt)
     ? '*You are exempt from hearts!* :balloon:'
     : `You have *${numHearts} / ${maxHearts}* hearts: ${exports.heartEmoji(numHearts)}`;
@@ -159,8 +157,9 @@ exports.heartsChallengeCallbackView = function (challenge, minVotes, circumstanc
 exports.heartsBoardView = function (hearts) {
   const header = 'Current hearts';
   const mainText = 'Everyone has a baseline of *five hearts*. ' +
-    'Anyone with *less* will regenerate at a rate of *½ per month* until they reach five. ' +
-    'Anyone with *more* will fade away at *¼ per month* until they reach five.';
+    'Anyone with *less* will regenerate at a rate of *½ per month*, ' +
+    'and anyone with *more* will fade away at *¼ per month*, ' +
+    'until they reach five.';
 
   const blocks = [];
   blocks.push(common.blockHeader(header));

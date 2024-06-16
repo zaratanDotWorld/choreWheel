@@ -81,8 +81,7 @@ exports.thingsHomeView = function (accounts, exempt) {
   const header = 'Welcome to Things';
   const textA = `We use *<${DOCS_URL}|Things>* to spend money together.\n\n` +
     'Anyone can propose a buy, which requires *1 upvote per $50*. ' +
-    'Special buys require at least *30%* whole-house approval.\n\n' +
-    'Successful buys are fulfilled within *3-5 days*.';
+    'Special buys require at least *30%* whole-house approval.';
   const textB = 'The house has the *following balances*:\n' +
     accounts.map(account => `\n:moneybag:*${account.account}* account: *$${account.sum}*`);
 
@@ -269,7 +268,7 @@ exports.thingsSpecialBuyView = function (numResidents, accounts) {
 
   const header = 'Buy special thing';
   const mainText = 'Propose a special buy. ' +
-    `Special buys are more flexible, but need a minimum of *${minVotes}* (max *${maxVotes}*) *upvote(s).*\n\n` +
+    `Special buys are more flexible, but need a minimum of *${minVotes} - ${maxVotes} upvote(s),* depending on price.\n\n` +
     'Add relevant information about the buy, including any delivery information. ' +
     'Special buys are fulfilled by the person who proposes them, and then reimbursed. ' +
     'Reimbursements are capped at the amount requested.';

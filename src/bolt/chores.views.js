@@ -71,7 +71,7 @@ exports.choresHomeView = function (choreStats, numActive, exempt) {
     'Instead of a simple chore wheel or schedule, everyone owes *100 points* per month (UTC time). ' +
     'You earn points by doing chores you want, on your terms.\n\n' +
     'The points for a chore go up *every hour* until someone claims them. ' +
-    'If you feel a chore should be worth more (or less), you can change it\'s *priority*. ' +
+    'If you feel a chore should be worth more (or less), you can change it\'s *priority*.\n\n' +
     'If you think a chore should be *added, changed, or removed*, you can propose that as well.';
   const textB = (exempt)
     ? '*You are exempt from chores!* :tada:'
@@ -337,7 +337,8 @@ exports.choresRankView2 = function (direction, choreRankings) {
     'Chore priorities are measured in *points-per-thousand* (ppt) and always add up to *1000*. ' +
     'A ppt of *0* means a chore gets no points, while a ppt of *1000* means a chore gets _all_ the points.\n\n' +
     'You can think of updating as "taking" priority from some chores and giving it to others, ' +
-    'since something must lose priority for something to gain priority (and vice versa).\n\n' +
+    'since something must lose priority for something to gain priority (and vice versa). ' +
+    'Example: "I want to _prioritize_ dishes and _deprioritize_ yardwork."\n\n' +
     '*Some things to keep in mind:*\n\n' +
     '*1.* Taking from *more chores* has a bigger effect.\n' +
     '*2.* Taking from *high-priority chores* has a bigger effect.\n' +
