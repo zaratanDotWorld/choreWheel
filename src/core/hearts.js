@@ -73,7 +73,9 @@ exports.regenerateHouseHearts = async function (houseId, now) {
   const houseHearts = (await Admin.getVotingResidents(houseId, now))
     .map(resident => exports.regenerateHearts(houseId, resident.slackId, now));
 
-  return (await Promise.all(houseHearts)).flat();
+  return (await Promise.all(houseHearts))
+    .flat()
+    .sort((a, b) => a.residentId - b.residentId);
 };
 
 exports.regenerateHearts = async function (houseId, residentId, now) {

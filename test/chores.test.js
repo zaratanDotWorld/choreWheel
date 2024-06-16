@@ -69,9 +69,9 @@ describe('Chores', async () => {
 
     it('can set and query for chore values in a time range', async () => {
       await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: now, value: 10 },
-        { choreId: dishes.id, valuedAt: now, value: 5 },
-        { choreId: sweeping.id, valuedAt: now, value: 20 },
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 },
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 5 },
+        { houseId: HOUSE, choreId: sweeping.id, valuedAt: now, value: 20 },
       ]);
 
       const endTime = new Date(now.getTime() + MINUTE);
@@ -86,9 +86,9 @@ describe('Chores', async () => {
 
     it('can set and query for all current chore values', async () => {
       await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: now, value: 10 },
-        { choreId: dishes.id, valuedAt: now, value: 5 },
-        { choreId: sweeping.id, valuedAt: now, value: 20 },
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 },
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 5 },
+        { houseId: HOUSE, choreId: sweeping.id, valuedAt: now, value: 20 },
       ]);
 
       const soon = new Date(now.getTime() + HOUR);
@@ -247,8 +247,8 @@ describe('Chores', async () => {
       const t1 = new Date(3000, 0, 2); // January 2
 
       await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: t0, value: 10 },
-        { choreId: dishes.id, valuedAt: t1, value: 10 },
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: t0, value: 10 },
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: t1, value: 10 },
       ]);
 
       const t2 = new Date(t1.getTime() + HOUR); // 1 hour
@@ -265,7 +265,7 @@ describe('Chores', async () => {
 
       // Update on the hour
       await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: t0, value: 10 },
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: t0, value: 10 },
       ]);
 
       let intervalScalar;
@@ -293,7 +293,7 @@ describe('Chores', async () => {
       const t4 = new Date(t0.getTime() + 120 * MINUTE);
 
       await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: t0, value: 10 },
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: t0, value: 10 },
       ]);
 
       let choreValues;
@@ -373,8 +373,8 @@ describe('Chores', async () => {
 
     it('can claim a chore', async () => {
       await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: now, value: 10 },
-        { choreId: dishes.id, valuedAt: now, value: 5 },
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 },
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 5 },
       ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
 
@@ -385,7 +385,7 @@ describe('Chores', async () => {
     });
 
     it('can get the latest chore claim', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 } ]);
 
       let latestChoreClaim;
       latestChoreClaim = await Chores.getLatestChoreClaim(dishes.id, now);
@@ -408,11 +408,11 @@ describe('Chores', async () => {
 
     it('can claim a chore incrementally', async () => {
       // Two separate events
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10 } ]);
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 5 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 5 } ]);
       const [ choreClaim1 ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
 
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: soon, value: 20 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: soon, value: 20 } ]);
       const [ choreClaim2 ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT2, soon);
 
       expect(choreClaim1.claimedBy).to.equal(RESIDENT1);
@@ -422,7 +422,7 @@ describe('Chores', async () => {
     });
 
     it('can successfully resolve a claim', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 } ]);
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
 
       await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
@@ -436,9 +436,9 @@ describe('Chores', async () => {
 
     it('can successfully resolve many claims at once', async () => {
       await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: now, value: 10 },
-        { choreId: sweeping.id, valuedAt: now, value: 10 },
-        { choreId: restock.id, valuedAt: soon, value: 10 },
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 },
+        { houseId: HOUSE, choreId: sweeping.id, valuedAt: now, value: 10 },
+        { houseId: HOUSE, choreId: restock.id, valuedAt: soon, value: 10 },
       ]);
       const [ choreClaim1 ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
       const [ choreClaim2 ] = await Chores.claimChore(HOUSE, sweeping.id, RESIDENT1, now);
@@ -467,7 +467,7 @@ describe('Chores', async () => {
     });
 
     it('cannot resolve a claim before the poll closes ', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 } ]);
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
 
       await expect(Chores.resolveChoreClaim(choreClaim.id, soon))
@@ -475,7 +475,7 @@ describe('Chores', async () => {
     });
 
     it('cannot resolve a claim twice', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 } ]);
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
 
       await Chores.resolveChoreClaim(choreClaim.id, challengeEnd);
@@ -485,7 +485,7 @@ describe('Chores', async () => {
     });
 
     it('can successfully resolve a small claim with only one upvote', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 9 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 9 } ]);
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
 
       await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
@@ -495,7 +495,7 @@ describe('Chores', async () => {
     });
 
     it('cannot successfully resolve a large claim without at least two upvotes', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 } ]);
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
 
       await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
@@ -505,7 +505,7 @@ describe('Chores', async () => {
     });
 
     it('cannot successfully resolve a claim without a passing vote', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 } ]);
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
 
       await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
@@ -524,10 +524,10 @@ describe('Chores', async () => {
       const t3 = new Date(t0.getTime() + choresPollLength);
       const t4 = new Date(t1.getTime() + choresPollLength);
 
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: t0, value: 10 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: t0, value: 10 } ]);
       const [ choreClaim1 ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, t0);
 
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: t1, value: 5 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: t1, value: 5 } ]);
       const [ choreClaim2 ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT2, t1);
 
       // Both claims pass
@@ -552,10 +552,10 @@ describe('Chores', async () => {
       const t3 = new Date(t0.getTime() + choresPollLength);
       const t4 = new Date(t1.getTime() + choresPollLength);
 
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: t0, value: 10 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: t0, value: 10 } ]);
       const [ choreClaim1 ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, t0);
 
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: t1, value: 5 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: t1, value: 5 } ]);
       const [ choreClaim2 ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT2, t1);
 
       // First claim is rejected
@@ -580,8 +580,8 @@ describe('Chores', async () => {
       const y2k = new Date(3000, 1, 1);
 
       await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: now, value: 10 },
-        { choreId: sweeping.id, valuedAt: now, value: 20 },
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 },
+        { houseId: HOUSE, choreId: sweeping.id, valuedAt: now, value: 20 },
       ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
       await Chores.claimChore(HOUSE, sweeping.id, RESIDENT1, now);
@@ -602,9 +602,9 @@ describe('Chores', async () => {
 
     it('can calculate chore penalties', async () => {
       await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: now, value: 91 },
-        { choreId: sweeping.id, valuedAt: now, value: 80 },
-        { choreId: restock.id, valuedAt: now, value: 69 },
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 91 },
+        { houseId: HOUSE, choreId: sweeping.id, valuedAt: now, value: 80 },
+        { houseId: HOUSE, choreId: restock.id, valuedAt: now, value: 69 },
       ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
       await Chores.claimChore(HOUSE, sweeping.id, RESIDENT2, now);
@@ -625,9 +625,9 @@ describe('Chores', async () => {
       const feb15 = new Date(feb1.getTime() + 14 * DAY);
 
       await db('ChoreValue').insert([
-        { choreId: dishes.id, valuedAt: feb1, value: 60 },
-        { choreId: sweeping.id, valuedAt: feb1, value: 50 },
-        { choreId: restock.id, valuedAt: feb1, value: 40 },
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: feb1, value: 60 },
+        { houseId: HOUSE, choreId: sweeping.id, valuedAt: feb1, value: 50 },
+        { houseId: HOUSE, choreId: restock.id, valuedAt: feb1, value: 40 },
       ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, feb1);
       await Chores.claimChore(HOUSE, sweeping.id, RESIDENT2, feb1);
@@ -651,7 +651,7 @@ describe('Chores', async () => {
     it('can add a penalty at the right time', async () => {
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
 
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 50 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 50 } ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
 
       let penaltyHeart;
@@ -673,8 +673,8 @@ describe('Chores', async () => {
       await Hearts.initialiseResident(HOUSE, RESIDENT2, now);
       await Hearts.initialiseResident(HOUSE, RESIDENT3, now);
 
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 100 } ]);
-      await db('ChoreValue').insert([ { choreId: restock.id, valuedAt: now, value: 50 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 100 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: restock.id, valuedAt: now, value: 50 } ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
       await Chores.claimChore(HOUSE, restock.id, RESIDENT2, now);
 
@@ -695,7 +695,7 @@ describe('Chores', async () => {
     });
 
     it('cannot penalize before initialized', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 50 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 50 } ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
 
       let penaltyHeart;
@@ -1106,7 +1106,7 @@ describe('Chores', async () => {
     });
 
     it('can gift chore points', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 } ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
 
       await Chores.giftChorePoints(HOUSE, RESIDENT1, RESIDENT2, now, 6);
@@ -1124,7 +1124,7 @@ describe('Chores', async () => {
     });
 
     it('can have a negative balance if a claim is denied after gifting', async () => {
-      await db('ChoreValue').insert([ { choreId: dishes.id, valuedAt: now, value: 10 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 } ]);
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
       await Chores.giftChorePoints(HOUSE, RESIDENT1, RESIDENT2, now, 6);
 
