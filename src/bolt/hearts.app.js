@@ -64,7 +64,7 @@ async function postEphemeral (residentId, text) {
 // Event listeners
 
 app.event('user_change', async ({ payload }) => {
-  console.log('hearts user_change');
+  console.log(`hearts user_change - ${payload.team_id}`);
 
   await sleep(1 * 1000);
 
@@ -73,7 +73,7 @@ app.event('user_change', async ({ payload }) => {
 });
 
 app.event('channel_created', async ({ payload }) => {
-  console.log('hearts channel_created');
+  console.log(`hearts channel_created - ${payload.team_id}`);
 
   const { channel } = payload;
   await common.joinChannel(app, heartsConf.oauth, channel.id);
@@ -83,7 +83,7 @@ app.event('channel_created', async ({ payload }) => {
 
 app.event('app_home_opened', async ({ body, event }) => {
   if (event.tab === 'home') {
-    console.log('hearts home');
+    console.log(`hearts home - ${body.team_id} x ${event.user}`);
 
     const now = new Date();
     const houseId = body.team_id;
@@ -145,14 +145,14 @@ app.event('app_home_opened', async ({ body, event }) => {
 // Slash commands
 
 app.command('/hearts-sync', async ({ ack, command }) => {
-  console.log('/hearts-sync');
+  console.log(`/hearts-sync - ${command.team_id} x ${command.user_id}`);
   await ack();
 
   await common.syncWorkspace(app, heartsConf.oauth, command, true, true);
 });
 
 app.command('/hearts-channel', async ({ ack, command }) => {
-  console.log('/hearts-channel');
+  console.log(`/hearts-channel - ${command.team_id} x ${command.user_id}`);
   await ack();
 
   await common.setChannel(app, heartsConf.oauth, HEARTS_CONF, command);
@@ -162,7 +162,7 @@ app.command('/hearts-channel', async ({ ack, command }) => {
 // Challenge flow
 
 app.action('hearts-challenge', async ({ ack, body }) => {
-  console.log('hearts-challenge');
+  console.log(`hearts-challenge - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -175,7 +175,7 @@ app.action('hearts-challenge', async ({ ack, body }) => {
 });
 
 app.view('hearts-challenge-callback', async ({ ack, body }) => {
-  console.log('hearts-challenge-callback');
+  console.log(`hearts-challenge-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -211,7 +211,7 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
 // Board flow
 
 app.action('hearts-board', async ({ ack, body }) => {
-  console.log('hearts-board');
+  console.log(`hearts-board - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -226,7 +226,7 @@ app.action('hearts-board', async ({ ack, body }) => {
 // Voting flow
 
 app.action(/poll-vote/, async ({ ack, body, action }) => {
-  console.log('hearts poll-vote');
+  console.log(`hearts poll-vote - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   await common.updateVoteCounts(app, heartsConf.oauth, body, action);
@@ -238,7 +238,7 @@ app.event('message', async ({ payload }) => {
   const karmaRecipients = Hearts.getKarmaRecipients(payload.text);
 
   if (karmaRecipients.length > 0) {
-    console.log('karma message');
+    console.log(`hearts karma-message - ${payload.team}`);
 
     const now = new Date();
     const houseId = payload.team;

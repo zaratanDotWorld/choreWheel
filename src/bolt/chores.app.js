@@ -63,7 +63,7 @@ async function postEphemeral (residentId, text) {
 // Event listeners
 
 app.event('user_change', async ({ payload }) => {
-  console.log('chores user_change');
+  console.log(`chores user_change - ${payload.team_id}`);
 
   await sleep(0 * 1000);
 
@@ -75,7 +75,7 @@ app.event('user_change', async ({ payload }) => {
 
 app.event('app_home_opened', async ({ body, event }) => {
   if (event.tab === 'home') {
-    console.log('chores home');
+    console.log(`chores home - ${body.team_id} x ${event.user}`);
 
     const now = new Date();
     const houseId = body.team_id;
@@ -140,14 +140,14 @@ app.event('app_home_opened', async ({ body, event }) => {
 // Slash commands
 
 app.command('/chores-sync', async ({ ack, command }) => {
-  console.log('/chores-sync');
+  console.log(`/chores-sync - ${command.team_id} x ${command.user_id}`);
   await ack();
 
   await common.syncWorkspace(app, choresConf.oauth, command, true, false);
 });
 
 app.command('/chores-channel', async ({ ack, command }) => {
-  console.log('/chores-channel');
+  console.log(`/chores-channel - ${command.team_id} x ${command.user_id}`);
   await ack();
 
   await common.setChannel(app, choresConf.oauth, CHORES_CONF, command);
@@ -155,7 +155,7 @@ app.command('/chores-channel', async ({ ack, command }) => {
 });
 
 app.command('/chores-stats', async ({ ack, command }) => {
-  console.log('/chores-stats');
+  console.log(`/chores-stats - ${command.team_id} x ${command.user_id}`);
   await ack();
 
   const now = new Date();
@@ -177,7 +177,7 @@ app.command('/chores-stats', async ({ ack, command }) => {
 });
 
 app.command('/chores-exempt', async ({ ack, command }) => {
-  console.log('/chores-exempt');
+  console.log(`/chores-exempt - ${command.team_id} x ${command.user_id}`);
   await ack();
 
   if (!(await common.isAdmin(app, choresConf.oauth, command))) {
@@ -196,7 +196,7 @@ app.command('/chores-exempt', async ({ ack, command }) => {
 });
 
 app.view('chores-exempt-callback', async ({ ack, body }) => {
-  console.log('chores-exempt-callback');
+  console.log(`chores-exempt-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -230,7 +230,7 @@ app.view('chores-exempt-callback', async ({ ack, body }) => {
 });
 
 app.command('/chores-reset', async ({ ack, command }) => {
-  console.log('/chores-reset');
+  console.log(`/chores-reset - ${command.team_id} x ${command.user_id}`);
   await ack();
 
   if (!(await common.isAdmin(app, choresConf.oauth, command))) {
@@ -243,7 +243,7 @@ app.command('/chores-reset', async ({ ack, command }) => {
 });
 
 app.view('chores-reset-callback', async ({ ack, body }) => {
-  console.log('chores-reset-callback');
+  console.log(`chores-reset-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -258,7 +258,7 @@ app.view('chores-reset-callback', async ({ ack, body }) => {
 // Claim flow
 
 app.action('chores-claim', async ({ ack, body }) => {
-  console.log('chores-claim');
+  console.log(`chores-claim - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -278,7 +278,7 @@ app.action('chores-claim', async ({ ack, body }) => {
 });
 
 app.action('chores-claim-2', async ({ ack, body }) => {
-  console.log('chores-claim-2');
+  console.log(`chores-claim-2 - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const { id: choreId } = JSON.parse(body.actions[0].selected_option.value);
@@ -289,7 +289,7 @@ app.action('chores-claim-2', async ({ ack, body }) => {
 });
 
 app.view('chores-claim-callback', async ({ ack, body }) => {
-  console.log('chores-claim-callback');
+  console.log(`chores-claim-callback - ${body.team.id} x ${body.user.id}`);
   await ack({ response_action: 'clear' });
 
   const now = new Date();
@@ -322,7 +322,7 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
 // Ranking flow
 
 app.action('chores-rank', async ({ ack, body }) => {
-  console.log('chores-rank');
+  console.log(`chores-rank - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const view = views.choresRankView();
@@ -330,7 +330,7 @@ app.action('chores-rank', async ({ ack, body }) => {
 });
 
 app.action('chores-rank-2', async ({ ack, body }) => {
-  console.log('chores-rank-2');
+  console.log(`chores-rank-2 - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -344,7 +344,7 @@ app.action('chores-rank-2', async ({ ack, body }) => {
 });
 
 app.view('chores-rank-callback', async ({ ack, body }) => {
-  console.log('chores-rank-callback');
+  console.log(`chores-rank-callback - ${body.team.id} x ${body.user.id}`);
   await ack({ response_action: 'clear' });
 
   const now = new Date();
@@ -390,7 +390,7 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
 // Break flow
 
 app.action('chores-break', async ({ ack, body }) => {
-  console.log('chores-break');
+  console.log(`chores-break - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const view = views.choresBreakView(new Date());
@@ -398,7 +398,7 @@ app.action('chores-break', async ({ ack, body }) => {
 });
 
 app.view('chores-break-callback', async ({ ack, body }) => {
-  console.log('chores-break-callback');
+  console.log(`chores-break-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -433,7 +433,7 @@ app.view('chores-break-callback', async ({ ack, body }) => {
 // Gift flow
 
 app.action('chores-gift', async ({ ack, body }) => {
-  console.log('chores-gift');
+  console.log(`chores-gift - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -447,7 +447,7 @@ app.action('chores-gift', async ({ ack, body }) => {
 });
 
 app.view('chores-gift-callback', async ({ ack, body }) => {
-  console.log('chores-gift-callback');
+  console.log(`chores-gift-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -478,7 +478,7 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
 // Edit flow
 
 app.action('chores-propose', async ({ ack, body }) => {
-  console.log('chores-propose');
+  console.log(`chores-propose - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -491,7 +491,7 @@ app.action('chores-propose', async ({ ack, body }) => {
 });
 
 app.action('chores-propose-2', async ({ ack, body }) => {
-  console.log('chores-propose-2');
+  console.log(`chores-propose-2 - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const houseId = body.team.id;
@@ -519,7 +519,7 @@ app.action('chores-propose-2', async ({ ack, body }) => {
 });
 
 app.action('chores-propose-edit', async ({ ack, body }) => {
-  console.log('chores-propose-edit');
+  console.log(`chores-propose-edit - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const { id: choreId } = JSON.parse(body.actions[0].selected_option.value);
@@ -530,7 +530,7 @@ app.action('chores-propose-edit', async ({ ack, body }) => {
 });
 
 app.view('chores-propose-callback', async ({ ack, body }) => {
-  console.log('chores-propose-callback');
+  console.log(`chores-propose-callback - ${body.team.id} x ${body.user.id}`);
   await ack({ response_action: 'clear' });
 
   const now = new Date();
@@ -581,7 +581,7 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
 // Voting flow
 
 app.action(/poll-vote/, async ({ ack, body, action }) => {
-  console.log('chores poll-vote');
+  console.log(`chores poll-vote - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   await common.updateVoteCounts(app, choresConf.oauth, body, action);

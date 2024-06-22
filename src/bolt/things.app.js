@@ -66,7 +66,7 @@ async function replyEphemeral (command, text) {
 // Event listeners
 
 app.event('user_change', async ({ payload }) => {
-  console.log('things user_change');
+  console.log(`things user_change - ${payload.team_id}`);
 
   await sleep(3 * 1000);
 
@@ -78,7 +78,7 @@ app.event('user_change', async ({ payload }) => {
 
 app.event('app_home_opened', async ({ body, event }) => {
   if (event.tab === 'home') {
-    console.log('things home');
+    console.log(`things home - ${body.team_id} x ${event.user}`);
 
     const now = new Date();
     const houseId = body.team_id;
@@ -117,14 +117,14 @@ app.event('app_home_opened', async ({ body, event }) => {
 // Slash commands
 
 app.command('/things-channel', async ({ ack, command }) => {
-  console.log('/things-channel');
+  console.log(`/things-channel - ${command.team_id} x ${command.user_id}`);
   await ack();
 
   await common.setChannel(app, thingsConf.oauth, THINGS_CONF, command);
 });
 
 app.command('/things-load', async ({ ack, command }) => {
-  console.log('/things-load');
+  console.log(`/things-load - ${command.team_id} x ${command.user_id}`);
   await ack();
 
   if (!(await common.isAdmin(app, thingsConf.oauth, command))) {
@@ -137,7 +137,7 @@ app.command('/things-load', async ({ ack, command }) => {
 });
 
 app.view('things-load-callback', async ({ ack, body }) => {
-  console.log('things-load-callback');
+  console.log(`things-load-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -154,7 +154,7 @@ app.view('things-load-callback', async ({ ack, body }) => {
 });
 
 app.command('/things-fulfill', async ({ ack, command }) => {
-  console.log('/things-fulfill');
+  console.log(`/things-fulfill - ${command.team_id} x ${command.user_id}`);
   await ack();
 
   if (!(await common.isAdmin(app, thingsConf.oauth, command))) {
@@ -176,7 +176,7 @@ app.command('/things-fulfill', async ({ ack, command }) => {
 });
 
 app.view('things-fulfill-callback', async ({ ack, body }) => {
-  console.log('things-fulfill-callback');
+  console.log(`things-fulfill-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -194,7 +194,7 @@ app.view('things-fulfill-callback', async ({ ack, body }) => {
 });
 
 app.command('/things-update', async ({ ack, command }) => {
-  console.log('/things-update');
+  console.log(`/things-update - ${command.team_id} x ${command.user_id}`);
   await ack();
 
   if (!(await common.isAdmin(app, thingsConf.oauth, command))) {
@@ -211,7 +211,7 @@ app.command('/things-update', async ({ ack, command }) => {
 });
 
 app.action('things-propose-edit-admin', async ({ ack, body }) => {
-  console.log('things-update-2');
+  console.log(`things-update-2 - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const { id: thingId } = JSON.parse(body.actions[0].selected_option.value);
@@ -222,7 +222,7 @@ app.action('things-propose-edit-admin', async ({ ack, body }) => {
 });
 
 app.view('things-propose-callback-admin', async ({ ack, body }) => {
-  console.log('things-update-callback');
+  console.log(`things-update-callback - ${body.team.id} x ${body.user.id}`);
   await ack({ response_action: 'clear' });
 
   const residentId = body.user.id;
@@ -241,7 +241,7 @@ app.view('things-propose-callback-admin', async ({ ack, body }) => {
 // Buy flow
 
 app.action('things-buy', async ({ ack, body }) => {
-  console.log('things-buy');
+  console.log(`things-buy - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -255,7 +255,7 @@ app.action('things-buy', async ({ ack, body }) => {
 });
 
 app.view('things-buy-callback', async ({ ack, body }) => {
-  console.log('things-buy-callback');
+  console.log(`things-buy-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -281,7 +281,7 @@ app.view('things-buy-callback', async ({ ack, body }) => {
 });
 
 app.action('things-special', async ({ ack, body }) => {
-  console.log('things-special');
+  console.log(`things-special - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -295,7 +295,7 @@ app.action('things-special', async ({ ack, body }) => {
 });
 
 app.view('things-special-callback', async ({ ack, body }) => {
-  console.log('things-special-callback');
+  console.log(`things-special-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -321,7 +321,7 @@ app.view('things-special-callback', async ({ ack, body }) => {
 });
 
 app.action('things-bought', async ({ ack, body }) => {
-  console.log('things-bought');
+  console.log(`things-bought - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -340,7 +340,7 @@ app.action('things-bought', async ({ ack, body }) => {
 // Proposal flow
 
 app.action('things-propose', async ({ ack, body }) => {
-  console.log('things-propose');
+  console.log(`things-propose - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const now = new Date();
@@ -353,7 +353,7 @@ app.action('things-propose', async ({ ack, body }) => {
 });
 
 app.action('things-propose-2', async ({ ack, body }) => {
-  console.log('things-propose-2');
+  console.log(`things-propose-2 - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const houseId = body.team.id;
@@ -381,7 +381,7 @@ app.action('things-propose-2', async ({ ack, body }) => {
 });
 
 app.action('things-propose-edit', async ({ ack, body }) => {
-  console.log('things-propose-edit');
+  console.log(`things-propose-edit - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   const { id: thingId } = JSON.parse(body.actions[0].selected_option.value);
@@ -392,7 +392,7 @@ app.action('things-propose-edit', async ({ ack, body }) => {
 });
 
 app.view('things-propose-callback', async ({ ack, body }) => {
-  console.log('things-propose-callback');
+  console.log(`things-propose-callback - ${body.team.id} x ${body.user.id}`);
   await ack({ response_action: 'clear' });
 
   const now = new Date();
@@ -437,7 +437,7 @@ app.view('things-propose-callback', async ({ ack, body }) => {
 // Voting flow
 
 app.action(/poll-vote/, async ({ ack, body, action }) => {
-  console.log('things poll-vote');
+  console.log(`things poll-vote - ${body.team.id} x ${body.user.id}`);
   await ack();
 
   await common.updateVoteCounts(app, thingsConf.oauth, body, action);
