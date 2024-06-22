@@ -30,6 +30,7 @@ const app = new App({
     'channels:read',
     'chat:write',
     'commands',
+    'groups:history',
     'users:read',
     'reactions:write',
   ],

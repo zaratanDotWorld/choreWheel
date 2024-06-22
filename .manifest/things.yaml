@@ -36,6 +36,7 @@ oauth_config:
       - channels:join
       - chat:write
       - commands
+      - groups:history
       - users:read
 settings:
   event_subscriptions:

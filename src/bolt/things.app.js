@@ -29,6 +29,7 @@ const app = new App({
     'channels:join',
     'chat:write',
     'commands',
+    'groups:history',
     'users:read',
   ],
   installationStore: {
