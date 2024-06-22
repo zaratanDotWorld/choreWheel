@@ -36,6 +36,7 @@ settings:
     bot_events:
       - app_home_opened
       - message.channels
+      - message.groups
       - user_change
       - channel_created
   interactivity:
