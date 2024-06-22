@@ -8,6 +8,7 @@ const { App, LogLevel } = require('@slack/bolt');
 
 const { Admin, Polls, Hearts } = require('../core/index');
 const { YAY, HEARTS_CONF } = require('../constants');
+const { sleep } = require('../utils');
 
 const common = require('./common');
 const views = require('./hearts.views');
@@ -64,6 +65,8 @@ async function postEphemeral (residentId, text) {
 
 app.event('user_change', async ({ payload }) => {
   console.log('hearts user_change');
+
+  await sleep(1 * 1000);
 
   const { user } = payload;
   await common.syncWorkspaceMember(user.team_id, user, new Date());

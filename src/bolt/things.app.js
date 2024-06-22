@@ -8,6 +8,7 @@ const { App, LogLevel } = require('@slack/bolt');
 
 const { Admin, Polls, Things } = require('../core/index');
 const { YAY, DAY, THINGS_CONF } = require('../constants');
+const { sleep } = require('../utils');
 
 const common = require('./common');
 const views = require('./things.views');
@@ -66,6 +67,8 @@ async function replyEphemeral (command, text) {
 
 app.event('user_change', async ({ payload }) => {
   console.log('things user_change');
+
+  await sleep(3 * 1000);
 
   const { user } = payload;
   await common.syncWorkspaceMember(user.team_id, user, new Date());

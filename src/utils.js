@@ -23,3 +23,9 @@ exports.getNextMonthStart = function (date) {
 exports.shiftDate = function (date, minutes) {
   return new Date(date.getTime() + minutes * MINUTE);
 };
+
+exports.sleep = async function (ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+};

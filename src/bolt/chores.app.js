@@ -9,7 +9,7 @@ const { App, LogLevel } = require('@slack/bolt');
 const { Admin, Polls, Chores } = require('../core/index');
 const { displayThreshold, breakMinDays, achievementWindow } = require('../config');
 const { YAY, DAY, CHORES_CONF } = require('../constants');
-const { getMonthStart, shiftDate, getPrevMonthEnd } = require('../utils');
+const { getMonthStart, shiftDate, getPrevMonthEnd, sleep } = require('../utils');
 
 const common = require('./common');
 const views = require('./chores.views');
@@ -64,6 +64,8 @@ async function postEphemeral (residentId, text) {
 
 app.event('user_change', async ({ payload }) => {
   console.log('chores user_change');
+
+  await sleep(0 * 1000);
 
   const { user } = payload;
   await common.syncWorkspaceMember(user.team_id, user, new Date());
