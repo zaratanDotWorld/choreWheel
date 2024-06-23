@@ -192,9 +192,7 @@ exports.syncWorkspaceMembers = async function (app, oauth, houseId, now) {
   const { members } = await app.client.users.list({ token: oauth.bot.token });
 
   for (const member of members) {
-    if (!member.is_bot && member.id !== SLACKBOT) {
-      await exports.syncWorkspaceMember(houseId, member, now);
-    }
+    await exports.syncWorkspaceMember(houseId, member, now);
   }
 
   const residents = await Admin.getResidents(houseId, now);
@@ -202,11 +200,13 @@ exports.syncWorkspaceMembers = async function (app, oauth, houseId, now) {
 };
 
 exports.syncWorkspaceMember = async function (houseId, member, now) {
-  if (member.deleted) {
-    await Admin.deactivateResident(houseId, member.id);
-  } else {
-    await Admin.activateResident(houseId, member.id, now);
-    await Hearts.initialiseResident(houseId, member.id, now);
+  if (!member.is_bot && member.id !== SLACKBOT) {
+    if (member.deleted) {
+      await Admin.deactivateResident(houseId, member.id);
+    } else {
+      await Admin.activateResident(houseId, member.id, now);
+      await Hearts.initialiseResident(houseId, member.id, now);
+    }
   }
 };
 
