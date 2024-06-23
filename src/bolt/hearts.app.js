@@ -145,15 +145,19 @@ app.event('app_home_opened', async ({ body, event }) => {
 // Slash commands
 
 app.command('/hearts-sync', async ({ ack, command }) => {
-  console.log(`/hearts-sync - ${command.team_id} x ${command.user_id}`);
   await ack();
+
+  const commandName = '/hearts-sync';
+  common.beginCommand(commandName, command);
 
   await common.syncWorkspace(app, heartsConf.oauth, command, true, true);
 });
 
 app.command('/hearts-channel', async ({ ack, command }) => {
-  console.log(`/hearts-channel - ${command.team_id} x ${command.user_id}`);
   await ack();
+
+  const commandName = '/hearts-channel';
+  common.beginCommand(commandName, command);
 
   await common.setChannel(app, heartsConf.oauth, HEARTS_CONF, command);
   await common.syncWorkspace(app, heartsConf.oauth, command, true, true);
@@ -162,11 +166,10 @@ app.command('/hearts-channel', async ({ ack, command }) => {
 // Challenge flow
 
 app.action('hearts-challenge', async ({ ack, body }) => {
-  console.log(`hearts-challenge - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = body.team.id;
+  const actionName = 'hearts-challenge';
+  const { now, houseId } = common.beginAction(actionName, body);
 
   const votingResidents = await Admin.getVotingResidents(houseId, now);
 
@@ -175,12 +178,10 @@ app.action('hearts-challenge', async ({ ack, body }) => {
 });
 
 app.view('hearts-challenge-callback', async ({ ack, body }) => {
-  console.log(`hearts-challenge-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = body.team.id;
-  const residentId = body.user.id;
+  const actionName = 'hearts-challenge-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   const challengeeId = common.getInputBlock(body, 2).challengee.selected_user;
   const numHearts = common.getInputBlock(body, 3).hearts.selected_option.value;
@@ -211,11 +212,10 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
 // Board flow
 
 app.action('hearts-board', async ({ ack, body }) => {
-  console.log(`hearts-board - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = body.team.id;
+  const actionName = 'hearts-board';
+  const { now, houseId } = common.beginAction(actionName, body);
 
   const hearts = await Hearts.getHouseHearts(houseId, now);
 
@@ -226,8 +226,10 @@ app.action('hearts-board', async ({ ack, body }) => {
 // Voting flow
 
 app.action(/poll-vote/, async ({ ack, body, action }) => {
-  console.log(`hearts poll-vote - ${body.team.id} x ${body.user.id}`);
   await ack();
+
+  const actionName = 'hearts poll-vote';
+  common.beginAction(actionName, body);
 
   await common.updateVoteCounts(app, heartsConf.oauth, body, action);
 });
@@ -238,7 +240,7 @@ app.event('message', async ({ payload }) => {
   const karmaRecipients = Hearts.getKarmaRecipients(payload.text);
 
   if (karmaRecipients.length > 0) {
-    console.log(`hearts karma-message - ${payload.team}`);
+    console.log(`hearts karma-message - ${payload.team} x ${payload.user}`);
 
     const now = new Date();
     const houseId = payload.team;

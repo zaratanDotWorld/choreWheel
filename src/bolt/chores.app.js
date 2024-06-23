@@ -140,27 +140,29 @@ app.event('app_home_opened', async ({ body, event }) => {
 // Slash commands
 
 app.command('/chores-sync', async ({ ack, command }) => {
-  console.log(`/chores-sync - ${command.team_id} x ${command.user_id}`);
   await ack();
+
+  const commandName = '/chores-sync';
+  common.beginCommand(commandName, command);
 
   await common.syncWorkspace(app, choresConf.oauth, command, true, false);
 });
 
 app.command('/chores-channel', async ({ ack, command }) => {
-  console.log(`/chores-channel - ${command.team_id} x ${command.user_id}`);
   await ack();
+
+  const commandName = '/chores-channel';
+  common.beginCommand(commandName, command);
 
   await common.setChannel(app, choresConf.oauth, CHORES_CONF, command);
   await common.syncWorkspace(app, choresConf.oauth, command, true, false);
 });
 
 app.command('/chores-stats', async ({ ack, command }) => {
-  console.log(`/chores-stats - ${command.team_id} x ${command.user_id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = command.team_id;
-  const residentId = command.user_id;
+  const commandName = '/chores-stats';
+  const { now, houseId, residentId } = common.beginCommand(commandName, command);
 
   const monthStart = getMonthStart(now);
   const prevMonthEnd = getPrevMonthEnd(now);
@@ -177,16 +179,15 @@ app.command('/chores-stats', async ({ ack, command }) => {
 });
 
 app.command('/chores-exempt', async ({ ack, command }) => {
-  console.log(`/chores-exempt - ${command.team_id} x ${command.user_id}`);
   await ack();
+
+  const commandName = '/chores-exempt';
+  const { now, houseId } = common.beginCommand(commandName, command);
 
   if (!(await common.isAdmin(app, choresConf.oauth, command))) {
     await common.replyAdminOnly(app, choresConf.oauth, command);
     return;
   }
-
-  const now = new Date();
-  const houseId = command.team_id;
 
   const exemptResidents = (await Admin.getResidents(houseId, now))
     .filter(r => r.exemptAt && r.exemptAt <= now);
@@ -196,12 +197,10 @@ app.command('/chores-exempt', async ({ ack, command }) => {
 });
 
 app.view('chores-exempt-callback', async ({ ack, body }) => {
-  console.log(`chores-exempt-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = body.team.id;
-  const residentId = body.user.id;
+  const actionName = 'chores-exempt-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   const action = common.getInputBlock(body, -2).action.selected_option.value;
   const residentIds = common.getInputBlock(body, -1).residents.selected_users;
@@ -230,8 +229,10 @@ app.view('chores-exempt-callback', async ({ ack, body }) => {
 });
 
 app.command('/chores-reset', async ({ ack, command }) => {
-  console.log(`/chores-reset - ${command.team_id} x ${command.user_id}`);
   await ack();
+
+  const commandName = '/chores-reset';
+  common.beginCommand(commandName, command);
 
   if (!(await common.isAdmin(app, choresConf.oauth, command))) {
     await common.replyAdminOnly(app, choresConf.oauth, command);
@@ -243,12 +244,10 @@ app.command('/chores-reset', async ({ ack, command }) => {
 });
 
 app.view('chores-reset-callback', async ({ ack, body }) => {
-  console.log(`chores-reset-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = body.team.id;
-  const residentId = body.user.id;
+  const actionName = 'chores-reset-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   await Chores.resetChorePoints(houseId, now);
 
@@ -258,12 +257,10 @@ app.view('chores-reset-callback', async ({ ack, body }) => {
 // Claim flow
 
 app.action('chores-claim', async ({ ack, body }) => {
-  console.log(`chores-claim - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = body.team.id;
-  const residentId = body.user.id;
+  const actionName = 'chores-claim';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   const choreValues = await Chores.getUpdatedChoreValues(houseId, now);
   const filteredChoreValues = choreValues.filter(choreValue => choreValue.value >= displayThreshold);
@@ -278,8 +275,10 @@ app.action('chores-claim', async ({ ack, body }) => {
 });
 
 app.action('chores-claim-2', async ({ ack, body }) => {
-  console.log(`chores-claim-2 - ${body.team.id} x ${body.user.id}`);
   await ack();
+
+  const actionName = 'chores-claim-2';
+  common.beginAction(actionName, body);
 
   const { id: choreId } = JSON.parse(body.actions[0].selected_option.value);
   const chore = await Chores.getChore(choreId);
@@ -289,12 +288,10 @@ app.action('chores-claim-2', async ({ ack, body }) => {
 });
 
 app.view('chores-claim-callback', async ({ ack, body }) => {
-  console.log(`chores-claim-callback - ${body.team.id} x ${body.user.id}`);
   await ack({ response_action: 'clear' });
 
-  const now = new Date();
-  const houseId = body.team.id;
-  const residentId = body.user.id;
+  const actionName = 'chores-claim-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   const chore = JSON.parse(body.view.private_metadata);
 
@@ -322,19 +319,20 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
 // Ranking flow
 
 app.action('chores-rank', async ({ ack, body }) => {
-  console.log(`chores-rank - ${body.team.id} x ${body.user.id}`);
   await ack();
+
+  const actionName = 'chores-rank';
+  common.beginAction(actionName, body);
 
   const view = views.choresRankView();
   await common.openView(app, choresConf.oauth, body.trigger_id, view);
 });
 
 app.action('chores-rank-2', async ({ ack, body }) => {
-  console.log(`chores-rank-2 - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = body.team.id;
+  const actionName = 'chores-rank-2';
+  const { now, houseId } = common.beginAction(actionName, body);
 
   const direction = body.actions[0].selected_option.value;
   const choreRankings = await Chores.getCurrentChoreRankings(houseId, now);
@@ -344,12 +342,10 @@ app.action('chores-rank-2', async ({ ack, body }) => {
 });
 
 app.view('chores-rank-callback', async ({ ack, body }) => {
-  console.log(`chores-rank-callback - ${body.team.id} x ${body.user.id}`);
   await ack({ response_action: 'clear' });
 
-  const now = new Date();
-  const residentId = body.user.id;
-  const houseId = body.team.id;
+  const actionName = 'chores-rank-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   const direction = body.view.private_metadata;
   const targetChore = JSON.parse(common.getInputBlock(body, -3).chores.selected_option.value);
@@ -390,20 +386,20 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
 // Break flow
 
 app.action('chores-break', async ({ ack, body }) => {
-  console.log(`chores-break - ${body.team.id} x ${body.user.id}`);
   await ack();
+
+  const actionName = 'chores-break';
+  common.beginAction(actionName, body);
 
   const view = views.choresBreakView(new Date());
   await common.openView(app, choresConf.oauth, body.trigger_id, view);
 });
 
 app.view('chores-break-callback', async ({ ack, body }) => {
-  console.log(`chores-break-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = body.team.id;
-  const residentId = body.user.id;
+  const actionName = 'chores-break-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   // Dates come in yyyy-mm-dd format
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -433,11 +429,10 @@ app.view('chores-break-callback', async ({ ack, body }) => {
 // Gift flow
 
 app.action('chores-gift', async ({ ack, body }) => {
-  console.log(`chores-gift - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const residentId = body.user.id;
+  const actionName = 'chores-gift';
+  const { now, residentId } = common.beginAction(actionName, body);
 
   const monthStart = getMonthStart(now);
   const chorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
@@ -447,12 +442,10 @@ app.action('chores-gift', async ({ ack, body }) => {
 });
 
 app.view('chores-gift-callback', async ({ ack, body }) => {
-  console.log(`chores-gift-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = body.team.id;
-  const residentId = body.user.id;
+  const actionName = 'chores-gift-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   const currentBalance = Number(body.view.private_metadata);
   const recipientId = common.getInputBlock(body, 2).recipient.selected_user;
@@ -478,11 +471,10 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
 // Edit flow
 
 app.action('chores-propose', async ({ ack, body }) => {
-  console.log(`chores-propose - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = body.team.id;
+  const actionName = 'chores-propose';
+  const { now, houseId } = common.beginAction(actionName, body);
 
   const minVotes = await Chores.getChoreProposalMinVotes(houseId, now);
 
@@ -491,10 +483,11 @@ app.action('chores-propose', async ({ ack, body }) => {
 });
 
 app.action('chores-propose-2', async ({ ack, body }) => {
-  console.log(`chores-propose-2 - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const houseId = body.team.id;
+  const actionName = 'chores-propose-2';
+  const { houseId } = common.beginAction(actionName, body);
+
   const change = body.actions[0].selected_option.value;
 
   let chores, view;
@@ -519,8 +512,10 @@ app.action('chores-propose-2', async ({ ack, body }) => {
 });
 
 app.action('chores-propose-edit', async ({ ack, body }) => {
-  console.log(`chores-propose-edit - ${body.team.id} x ${body.user.id}`);
   await ack();
+
+  const actionName = 'chores-propose-edit';
+  common.beginAction(actionName, body);
 
   const { id: choreId } = JSON.parse(body.actions[0].selected_option.value);
   const chore = await Chores.getChore(choreId);
@@ -530,12 +525,10 @@ app.action('chores-propose-edit', async ({ ack, body }) => {
 });
 
 app.view('chores-propose-callback', async ({ ack, body }) => {
-  console.log(`chores-propose-callback - ${body.team.id} x ${body.user.id}`);
   await ack({ response_action: 'clear' });
 
-  const now = new Date();
-  const houseId = body.team.id;
-  const residentId = body.user.id;
+  const actionName = 'chores-propose-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   function parseSubmission (body) {
     name = common.parseTitlecase(common.getInputBlock(body, -2).name.value);
@@ -581,8 +574,10 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
 // Voting flow
 
 app.action(/poll-vote/, async ({ ack, body, action }) => {
-  console.log(`chores poll-vote - ${body.team.id} x ${body.user.id}`);
   await ack();
+
+  const actionName = 'chores poll-vote';
+  common.beginAction(actionName, body);
 
   await common.updateVoteCounts(app, choresConf.oauth, body, action);
 });

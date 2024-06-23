@@ -117,15 +117,19 @@ app.event('app_home_opened', async ({ body, event }) => {
 // Slash commands
 
 app.command('/things-channel', async ({ ack, command }) => {
-  console.log(`/things-channel - ${command.team_id} x ${command.user_id}`);
   await ack();
+
+  const commandName = '/things-channel';
+  common.beginCommand(commandName, command);
 
   await common.setChannel(app, thingsConf.oauth, THINGS_CONF, command);
 });
 
 app.command('/things-load', async ({ ack, command }) => {
-  console.log(`/things-load - ${command.team_id} x ${command.user_id}`);
   await ack();
+
+  const commandName = '/things-load';
+  common.beginCommand(commandName, command);
 
   if (!(await common.isAdmin(app, thingsConf.oauth, command))) {
     await common.replyAdminOnly(app, thingsConf.oauth, command);
@@ -137,12 +141,10 @@ app.command('/things-load', async ({ ack, command }) => {
 });
 
 app.view('things-load-callback', async ({ ack, body }) => {
-  console.log(`things-load-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = body.team.id;
-  const residentId = body.user.id;
+  const actionName = 'things-load-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   const account = common.parseTitlecase(common.getInputBlock(body, -2).account.value);
   const amount = common.getInputBlock(body, -1).amount.value;
@@ -154,16 +156,15 @@ app.view('things-load-callback', async ({ ack, body }) => {
 });
 
 app.command('/things-fulfill', async ({ ack, command }) => {
-  console.log(`/things-fulfill - ${command.team_id} x ${command.user_id}`);
   await ack();
+
+  const commandName = '/things-fulfill';
+  const { now, houseId } = common.beginCommand(commandName, command);
 
   if (!(await common.isAdmin(app, thingsConf.oauth, command))) {
     await common.replyAdminOnly(app, thingsConf.oauth, command);
     return;
   }
-
-  const now = new Date();
-  const houseId = command.team_id;
 
   const unfulfilledBuys = await Things.getUnfulfilledThingBuys(houseId, now);
 
@@ -176,11 +177,10 @@ app.command('/things-fulfill', async ({ ack, command }) => {
 });
 
 app.view('things-fulfill-callback', async ({ ack, body }) => {
-  console.log(`things-fulfill-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const residentId = body.user.id;
+  const actionName = 'things-fulfill-callback';
+  const { now, residentId } = common.beginAction(actionName, body);
 
   const buys = common.getInputBlock(body, -1).buys.selected_options
     .map(buy => JSON.parse(buy.value));
@@ -194,15 +194,16 @@ app.view('things-fulfill-callback', async ({ ack, body }) => {
 });
 
 app.command('/things-update', async ({ ack, command }) => {
-  console.log(`/things-update - ${command.team_id} x ${command.user_id}`);
   await ack();
+
+  const commandName = '/things-update';
+  const { houseId } = common.beginCommand(commandName, command);
 
   if (!(await common.isAdmin(app, thingsConf.oauth, command))) {
     await common.replyAdminOnly(app, thingsConf.oauth, command);
     return;
   }
 
-  const houseId = command.team_id;
   const things = await Things.getThings(houseId);
 
   // TODO: improve this (hacky) implementation
@@ -211,8 +212,10 @@ app.command('/things-update', async ({ ack, command }) => {
 });
 
 app.action('things-propose-edit-admin', async ({ ack, body }) => {
-  console.log(`things-update-2 - ${body.team.id} x ${body.user.id}`);
   await ack();
+
+  const actionName = 'things-update-2';
+  common.beginAction(actionName, body);
 
   const { id: thingId } = JSON.parse(body.actions[0].selected_option.value);
   const thing = await Things.getThing(thingId);
@@ -222,10 +225,10 @@ app.action('things-propose-edit-admin', async ({ ack, body }) => {
 });
 
 app.view('things-propose-callback-admin', async ({ ack, body }) => {
-  console.log(`things-update-callback - ${body.team.id} x ${body.user.id}`);
   await ack({ response_action: 'clear' });
 
-  const residentId = body.user.id;
+  const actionName = 'things-update-callback';
+  const { residentId } = common.beginAction(actionName, body);
 
   const { thing } = JSON.parse(body.view.private_metadata);
   const { type, name, unit, value, url } = parseThingsEditSubmission(body);
@@ -241,11 +244,10 @@ app.view('things-propose-callback-admin', async ({ ack, body }) => {
 // Buy flow
 
 app.action('things-buy', async ({ ack, body }) => {
-  console.log(`things-buy - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = body.team.id;
+  const actionName = 'things-buy';
+  const { now, houseId } = common.beginAction(actionName, body);
 
   const things = await Things.getThings(houseId);
   const accounts = await Things.getActiveAccounts(houseId, now);
@@ -255,12 +257,10 @@ app.action('things-buy', async ({ ack, body }) => {
 });
 
 app.view('things-buy-callback', async ({ ack, body }) => {
-  console.log(`things-buy-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = body.team.id;
-  const residentId = body.user.id;
+  const actionName = 'things-buy-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   const { id: thingId } = JSON.parse(common.getInputBlock(body, -3).things.selected_option.value);
   const quantity = common.getInputBlock(body, -2).quantity.value;
@@ -281,11 +281,10 @@ app.view('things-buy-callback', async ({ ack, body }) => {
 });
 
 app.action('things-special', async ({ ack, body }) => {
-  console.log(`things-special - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = body.team.id;
+  const actionName = 'things-special';
+  const { now, houseId } = common.beginAction(actionName, body);
 
   const votingResidents = await Admin.getVotingResidents(houseId, now);
   const accounts = await Things.getActiveAccounts(houseId, now);
@@ -295,12 +294,10 @@ app.action('things-special', async ({ ack, body }) => {
 });
 
 app.view('things-special-callback', async ({ ack, body }) => {
-  console.log(`things-special-callback - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = body.team.id;
-  const residentId = body.user.id;
+  const actionName = 'things-special-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   const title = common.getInputBlock(body, -4).title.value.trim();
   const details = common.getInputBlock(body, -3).details.value.trim();
@@ -321,11 +318,10 @@ app.view('things-special-callback', async ({ ack, body }) => {
 });
 
 app.action('things-bought', async ({ ack, body }) => {
-  console.log(`things-bought - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = body.team.id;
+  const actionName = 'things-bought';
+  const { now, houseId } = common.beginAction(actionName, body);
 
   const oneWeekAgo = new Date(now.getTime() - 7 * DAY);
   const threeMonthsAgo = new Date(now.getTime() - 90 * DAY);
@@ -340,11 +336,10 @@ app.action('things-bought', async ({ ack, body }) => {
 // Proposal flow
 
 app.action('things-propose', async ({ ack, body }) => {
-  console.log(`things-propose - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const now = new Date();
-  const houseId = body.team.id;
+  const actionName = 'things-propose';
+  const { now, houseId } = common.beginAction(actionName, body);
 
   const minVotes = await Things.getThingProposalMinVotes(houseId, now);
 
@@ -353,10 +348,11 @@ app.action('things-propose', async ({ ack, body }) => {
 });
 
 app.action('things-propose-2', async ({ ack, body }) => {
-  console.log(`things-propose-2 - ${body.team.id} x ${body.user.id}`);
   await ack();
 
-  const houseId = body.team.id;
+  const actionName = 'things-propose-2';
+  const { houseId } = common.beginAction(actionName, body);
+
   const change = body.actions[0].selected_option.value;
 
   let things, view;
@@ -381,8 +377,10 @@ app.action('things-propose-2', async ({ ack, body }) => {
 });
 
 app.action('things-propose-edit', async ({ ack, body }) => {
-  console.log(`things-propose-edit - ${body.team.id} x ${body.user.id}`);
   await ack();
+
+  const actionName = 'things-propose-edit';
+  common.beginAction(actionName, body);
 
   const { id: thingId } = JSON.parse(body.actions[0].selected_option.value);
   const thing = await Things.getThing(thingId);
@@ -392,12 +390,10 @@ app.action('things-propose-edit', async ({ ack, body }) => {
 });
 
 app.view('things-propose-callback', async ({ ack, body }) => {
-  console.log(`things-propose-callback - ${body.team.id} x ${body.user.id}`);
   await ack({ response_action: 'clear' });
 
-  const now = new Date();
-  const houseId = body.team.id;
-  const residentId = body.user.id;
+  const actionName = 'things-propose-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   let thingId, type, name, value, unit, url, active;
   const privateMetadata = JSON.parse(body.view.private_metadata);
@@ -437,8 +433,10 @@ app.view('things-propose-callback', async ({ ack, body }) => {
 // Voting flow
 
 app.action(/poll-vote/, async ({ ack, body, action }) => {
-  console.log(`things poll-vote - ${body.team.id} x ${body.user.id}`);
   await ack();
+
+  const actionName = 'things poll-vote';
+  common.beginAction(actionName, body);
 
   await common.updateVoteCounts(app, thingsConf.oauth, body, action);
 });

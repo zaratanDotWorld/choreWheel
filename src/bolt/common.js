@@ -35,6 +35,28 @@ exports.parseUrl = function (url) {
   } catch {}
 };
 
+// Entry points
+
+exports.beginAction = function (actionName, body) {
+  const now = new Date();
+  const houseId = body.team.id;
+  const residentId = body.user.id;
+
+  console.log(`${actionName} - ${houseId} x ${residentId}`);
+
+  return { now, houseId, residentId };
+};
+
+exports.beginCommand = function (commandName, command) {
+  const now = new Date();
+  const houseId = command.team_id;
+  const residentId = command.user_id;
+
+  console.log(`${commandName} - ${houseId} x ${residentId}`);
+
+  return { now, houseId, residentId };
+};
+
 // Publishing
 
 exports.replyEphemeral = async function (app, oauth, command, text) {
