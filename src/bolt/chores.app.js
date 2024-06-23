@@ -64,11 +64,10 @@ async function postEphemeral (residentId, text) {
 // Event listeners
 
 app.event('user_change', async ({ payload }) => {
-  console.log(`chores user_change - ${payload.team_id}`);
+  const { user } = payload;
+  console.log(`chores user_change - ${user.team_id} x ${user.id}`);
 
   await sleep(0 * 1000);
-
-  const { user } = payload;
   await common.syncWorkspaceMember(user.team_id, user, new Date());
 });
 

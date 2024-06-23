@@ -65,18 +65,17 @@ async function postEphemeral (residentId, text) {
 // Event listeners
 
 app.event('user_change', async ({ payload }) => {
-  console.log(`hearts user_change - ${payload.team_id}`);
+  const { user } = payload;
+  console.log(`hearts user_change - ${user.team_id} x ${user.id}`);
 
   await sleep(1 * 1000);
-
-  const { user } = payload;
   await common.syncWorkspaceMember(user.team_id, user, new Date());
 });
 
 app.event('channel_created', async ({ payload }) => {
-  console.log(`hearts channel_created - ${payload.team_id}`);
-
   const { channel } = payload;
+  console.log(`hearts channel_created - ${channel.context_team_id} x ${channel.creator}`);
+
   await common.joinChannel(app, heartsConf.oauth, channel.id);
 });
 
