@@ -201,8 +201,8 @@ describe('Hearts', async () => {
       let hearts;
       hearts = await Hearts.regenerateHouseHearts(HOUSE, nextMonth);
       expect(hearts.length).to.equal(2);
-      expect(hearts[0].value).to.equal(0.5);
-      expect(hearts[1].value).to.equal(-0.25);
+      expect(hearts.find(x => x.residentId === RESIDENT1).value).to.equal(0.5);
+      expect(hearts.find(x => x.residentId === RESIDENT2).value).to.equal(-0.25);
 
       // Bulk regeneration is robust to network failures
       await Hearts.generateHearts(HOUSE, RESIDENT3, HEART_UNKNOWN, now, 3);
