@@ -152,21 +152,29 @@ describe('Admin', async () => {
       await Admin.activateResident(HOUSE1, RESIDENT1, now);
 
       let resident;
+      let isExempt;
+
       resident = await Admin.getResident(RESIDENT1);
+      isExempt = await Admin.isExempt(RESIDENT1, now);
       expect(resident.activeAt.getTime()).to.equal(now.getTime());
       expect(resident.exemptAt).to.equal(null);
+      expect(isExempt).to.be.false;
 
       await Admin.exemptResident(HOUSE1, RESIDENT1, soon);
 
       resident = await Admin.getResident(RESIDENT1);
+      isExempt = await Admin.isExempt(RESIDENT1, soon);
       expect(resident.activeAt.getTime()).to.equal(now.getTime());
       expect(resident.exemptAt.getTime()).to.equal(soon.getTime());
+      expect(isExempt).to.be.true;
 
       await Admin.unexemptResident(HOUSE1, RESIDENT1, soon);
 
       resident = await Admin.getResident(RESIDENT1);
+      isExempt = await Admin.isExempt(RESIDENT1, soon);
       expect(resident.activeAt.getTime()).to.equal(soon.getTime());
       expect(resident.exemptAt).to.equal(null);
+      expect(isExempt).to.be.false;
     });
 
     it('cannot activate a resident if exempt', async () => {

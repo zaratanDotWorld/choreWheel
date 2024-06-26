@@ -85,7 +85,7 @@ exports.getResident = async function (residentId) {
 
 exports.isExempt = async function (residentId, now) {
   const resident = await exports.getResident(residentId);
-  return resident.exemptAt && resident.exemptAt <= now;
+  return Boolean(resident.exemptAt && resident.exemptAt <= now);
 };
 
 // Subqueries
