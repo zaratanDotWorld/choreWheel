@@ -37,6 +37,11 @@ describe('Chores', async () => {
   let challengeEnd;
   let proposalEnd;
 
+  async function setChorePreference (houseId, residentId, targetChoreId, sourceChoreId, preference) {
+    const normalizedPref = Chores.normalizeChorePreference({ targetChoreId, sourceChoreId, preference });
+    return Chores.setChorePreferences(houseId, [ { residentId, ...normalizedPref } ]);
+  }
+
   beforeEach(async () => {
     await Admin.addHouse(HOUSE);
 
@@ -51,7 +56,7 @@ describe('Chores', async () => {
     await testHelpers.resetDb();
   });
 
-  describe('managing chore preferences', async () => {
+  describe('managing chores and preferences', async () => {
     beforeEach(async () => {
       await Admin.activateResident(HOUSE, RESIDENT1, now);
       await Admin.activateResident(HOUSE, RESIDENT2, now);
@@ -61,10 +66,171 @@ describe('Chores', async () => {
       [ restock ] = await Chores.addChore(HOUSE, 'restock');
     });
 
-    it('can list the existing chores', async () => {
-      const chores = await Chores.getChores(HOUSE);
+    it('can get existing chores', async () => {
+      let chores;
 
+      chores = await Chores.getChore(dishes.id);
+      expect(chores.houseId).to.equal(HOUSE);
+
+      chores = await Chores.getChores(HOUSE);
       expect(chores.length).to.equal(3);
+    });
+
+    it('can set a chore preference', async () => {
+      await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
+
+      let preferences;
+      preferences = await Chores.getChorePreferences(HOUSE, now);
+      expect(preferences[0].preference).to.equal(1);
+      expect(preferences[0].alphaChoreId).to.equal(dishes.id);
+      expect(preferences[0].betaChoreId).to.equal(sweeping.id);
+
+      await setChorePreference(HOUSE, RESIDENT2, dishes.id, sweeping.id, 1);
+
+      preferences = await Chores.getChorePreferences(HOUSE, now);
+      expect(preferences.length).to.equal(2);
+
+      preferences = await Chores.getResidentChorePreferences(HOUSE, RESIDENT1, now);
+      expect(preferences.length).to.equal(1);
+    });
+
+    it('can set multiple chore preferences', async () => {
+      const prefs = [
+        { residentId: RESIDENT1, alphaChoreId: dishes.id, betaChoreId: sweeping.id, preference: 0.9 },
+        { residentId: RESIDENT1, alphaChoreId: sweeping.id, betaChoreId: restock.id, preference: 0.8 },
+      ];
+      await Chores.setChorePreferences(HOUSE, prefs);
+
+      const preferences = await Chores.getChorePreferences(HOUSE, now);
+      expect(preferences.length).to.equal(2);
+      expect(preferences.find(x => x.alphaChoreId === dishes.id).preference).to.equal(0.9);
+      expect(preferences.find(x => x.alphaChoreId === sweeping.id).preference).to.equal(0.8);
+    });
+
+    it('can update a chore preference', async () => {
+      await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
+      await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0);
+
+      const preferences = await Chores.getChorePreferences(HOUSE, now);
+      expect(preferences.length).to.equal(1);
+      expect(preferences[0].preference).to.equal(0);
+    });
+
+    it('can query for active chore preferences', async () => {
+      await Admin.activateResident(HOUSE, RESIDENT3, now);
+
+      await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.0);
+      await setChorePreference(HOUSE, RESIDENT2, dishes.id, restock.id, 0.5);
+      await setChorePreference(HOUSE, RESIDENT3, sweeping.id, restock.id, 1.0);
+
+      let preferences;
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
+      expect(preferences.length).to.equal(3);
+
+      // Remove the third preference
+      await Admin.deactivateResident(HOUSE, RESIDENT3);
+
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
+      expect(preferences.length).to.equal(2);
+
+      // Restore the third preference
+      await Admin.activateResident(HOUSE, RESIDENT3, now);
+
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
+      expect(preferences.length).to.equal(3);
+
+      // Remove the last two preferences
+      await Chores.editChore(restock.id, restock.name, {}, false);
+
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
+      expect(preferences.length).to.equal(1);
+
+      // Restore the last two preferences
+      await Chores.addChore(HOUSE, restock.name);
+
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
+      expect(preferences.length).to.equal(3);
+    });
+  });
+
+  describe('processing chore preferences', async () => {
+    beforeEach(async () => {
+      await Admin.activateResident(HOUSE, RESIDENT1, now);
+      await Admin.activateResident(HOUSE, RESIDENT2, now);
+
+      [ dishes ] = await Chores.addChore(HOUSE, 'dishes');
+      [ sweeping ] = await Chores.addChore(HOUSE, 'sweeping');
+      [ restock ] = await Chores.addChore(HOUSE, 'restock');
+    });
+
+    it('can normalize a chore preference', async () => {
+      let pref;
+
+      pref = Chores.normalizeChorePreference({ targetChoreId: dishes.id, sourceChoreId: sweeping.id, preference: 0.7 });
+      expect(pref.alphaChoreId).to.equal(dishes.id);
+      expect(pref.betaChoreId).to.equal(sweeping.id);
+      expect(pref.preference).to.almost.equal(0.7);
+
+      expect(dishes.id).to.be.lt(sweeping.id);
+
+      pref = Chores.normalizeChorePreference({ targetChoreId: sweeping.id, sourceChoreId: dishes.id, preference: 0.7 });
+      expect(pref.alphaChoreId).to.equal(dishes.id);
+      expect(pref.betaChoreId).to.equal(sweeping.id);
+      expect(pref.preference).to.almost.equal(0.3);
+
+      expect(() => Chores.normalizeChorePreference({ alphaChoreId: sweeping.id, betaChoreId: dishes.id }))
+        .to.throw('Invalid chore preference!');
+
+      // If already normalized, no-op
+      pref = Chores.normalizeChorePreference({ alphaChoreId: dishes.id, betaChoreId: sweeping.id, preference: 0.7 });
+      expect(pref.alphaChoreId).to.equal(dishes.id);
+      expect(pref.betaChoreId).to.equal(sweeping.id);
+      expect(pref.preference).to.almost.equal(0.7);
+    });
+
+    it('can merge two sets of chore preferences', async () => {
+      const currentPrefs = [
+        { residentId: RESIDENT1, alphaChoreId: dishes.id, betaChoreId: sweeping.id, preference: 1 },
+        { residentId: RESIDENT1, alphaChoreId: sweeping.id, betaChoreId: restock.id, preference: 1 },
+        { residentId: RESIDENT2, alphaChoreId: dishes.id, betaChoreId: sweeping.id, preference: 1 },
+        { residentId: RESIDENT2, alphaChoreId: dishes.id, betaChoreId: restock.id, preference: 1 },
+      ];
+
+      const newPrefs = [
+        // Same resident & preference, new chore
+        { residentId: RESIDENT1, alphaChoreId: dishes.id, betaChoreId: restock.id, preference: 0 },
+        // Same resident & chore, new preference
+        { residentId: RESIDENT1, alphaChoreId: sweeping.id, betaChoreId: restock.id, preference: 0 },
+        // Same resident & chore, new preference
+        { residentId: RESIDENT2, alphaChoreId: dishes.id, betaChoreId: sweeping.id, preference: 0 },
+        // Same chore, preference, & resident
+        { residentId: RESIDENT2, alphaChoreId: dishes.id, betaChoreId: restock.id, preference: 1 },
+      ];
+
+      const mergedPrefs = Chores.mergeChorePreferences(currentPrefs, newPrefs);
+      const mergedPrefsMap = Chores.toPreferenceMap(mergedPrefs);
+
+      expect(mergedPrefs.length).to.equal(5);
+      expect(mergedPrefsMap.get(Chores.toPrefKey(currentPrefs[0])).preference).to.equal(1);
+      expect(mergedPrefsMap.get(Chores.toPrefKey(currentPrefs[1])).preference).to.equal(0);
+      expect(mergedPrefsMap.get(Chores.toPrefKey(currentPrefs[2])).preference).to.equal(0);
+      expect(mergedPrefsMap.get(Chores.toPrefKey(currentPrefs[3])).preference).to.equal(1);
+      expect(mergedPrefsMap.get(Chores.toPrefKey(newPrefs[0])).preference).to.equal(0);
+      expect(mergedPrefsMap.get(Chores.toPrefKey(newPrefs[1])).preference).to.equal(0);
+      expect(mergedPrefsMap.get(Chores.toPrefKey(newPrefs[2])).preference).to.equal(0);
+      expect(mergedPrefsMap.get(Chores.toPrefKey(newPrefs[3])).preference).to.equal(1);
+    });
+  });
+
+  describe('managing chore values and rankings', async () => {
+    beforeEach(async () => {
+      await Admin.activateResident(HOUSE, RESIDENT1, now);
+      await Admin.activateResident(HOUSE, RESIDENT2, now);
+      await Admin.activateResident(HOUSE, RESIDENT3, now);
+
+      [ dishes ] = await Chores.addChore(HOUSE, 'dishes');
+      [ sweeping ] = await Chores.addChore(HOUSE, 'sweeping');
+      [ restock ] = await Chores.addChore(HOUSE, 'restock');
     });
 
     it('can set and query for chore values in a time range', async () => {
@@ -99,92 +265,6 @@ describe('Chores', async () => {
       expect(choreValues.find(x => x.id === restock.id).value).to.equal(0);
     });
 
-    it('can set a chore preference', async () => {
-      await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.85);
-
-      const preferences = await Chores.getChorePreferences(HOUSE, now);
-      expect(preferences[0].preference).to.equal(0.85);
-      expect(preferences[0].alphaChoreId).to.equal(dishes.id);
-      expect(preferences[0].betaChoreId).to.equal(sweeping.id);
-    });
-
-    it('can update a chore preference', async () => {
-      await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
-      await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0);
-
-      const preferences = await Chores.getChorePreferences(HOUSE, now);
-      expect(preferences.length).to.equal(1);
-      expect(preferences[0].preference).to.equal(0);
-    });
-
-    it('can automatically sort a chore preference', async () => {
-      let preference;
-
-      // Dishes is sorted before sweeping
-      expect(dishes.id).to.be.lt(sweeping.id);
-
-      await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.7);
-      [ preference ] = await Chores.getChorePreferences(HOUSE, now);
-      expect(preference.preference).to.equal(0.7);
-
-      // Flip the order of arguments flips the preference
-      await Chores.setChorePreference(HOUSE, RESIDENT1, sweeping.id, dishes.id, 0.7);
-      [ preference ] = await Chores.getChorePreferences(HOUSE, now);
-      expect(preference.preference).to.equal(0.3);
-    });
-
-    it('can return a no-op if source and target are the same', async () => {
-      await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, dishes.id, 1);
-    });
-
-    it('can query for active chore preferences', async () => {
-      await Admin.activateResident(HOUSE, RESIDENT3, now);
-
-      await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.0);
-      await Chores.setChorePreference(HOUSE, RESIDENT2, dishes.id, restock.id, 0.5);
-      await Chores.setChorePreference(HOUSE, RESIDENT3, sweeping.id, restock.id, 1.0);
-
-      let preferences;
-      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
-      expect(preferences.length).to.equal(3);
-
-      // Remove the third preference
-      await Admin.deactivateResident(HOUSE, RESIDENT3);
-
-      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
-      expect(preferences.length).to.equal(2);
-
-      // Restore the third preference
-      await Admin.activateResident(HOUSE, RESIDENT3, now);
-
-      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
-      expect(preferences.length).to.equal(3);
-
-      // Remove the last two preferences
-      await Chores.editChore(restock.id, restock.name, {}, false);
-
-      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
-      expect(preferences.length).to.equal(1);
-
-      // Restore the last two preferences
-      await Chores.addChore(HOUSE, restock.name);
-
-      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
-      expect(preferences.length).to.equal(3);
-    });
-  });
-
-  describe('managing chore values', async () => {
-    beforeEach(async () => {
-      await Admin.activateResident(HOUSE, RESIDENT1, now);
-      await Admin.activateResident(HOUSE, RESIDENT2, now);
-      await Admin.activateResident(HOUSE, RESIDENT3, now);
-
-      [ dishes ] = await Chores.addChore(HOUSE, 'dishes');
-      [ sweeping ] = await Chores.addChore(HOUSE, 'sweeping');
-      [ restock ] = await Chores.addChore(HOUSE, 'restock');
-    });
-
     it('can return uniform preferences implicitly', async () => {
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
@@ -195,8 +275,8 @@ describe('Chores', async () => {
 
     it('can use preferences to determine chore values', async () => {
       // Prefer dishes to sweeping, and sweeping to restock
-      await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
-      await Chores.setChorePreference(HOUSE, RESIDENT2, sweeping.id, restock.id, 1);
+      await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
+      await setChorePreference(HOUSE, RESIDENT2, sweeping.id, restock.id, 1);
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
@@ -207,8 +287,8 @@ describe('Chores', async () => {
 
     it('can use preferences to determine mild chore values', async () => {
       // Slightly prefer dishes to sweeping, and sweeping to restock
-      await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.7);
-      await Chores.setChorePreference(HOUSE, RESIDENT2, sweeping.id, restock.id, 0.7);
+      await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.7);
+      await setChorePreference(HOUSE, RESIDENT2, sweeping.id, restock.id, 0.7);
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
@@ -219,8 +299,8 @@ describe('Chores', async () => {
 
     it('can use preferences to determine complex chore values', async () => {
       // Prefer both dishes and restock to sweeping
-      await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
-      await Chores.setChorePreference(HOUSE, RESIDENT2, restock.id, sweeping.id, 1);
+      await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
+      await setChorePreference(HOUSE, RESIDENT2, restock.id, sweeping.id, 1);
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
@@ -231,9 +311,9 @@ describe('Chores', async () => {
 
     it('can handle circular chore values', async () => {
       // A cycle of preferences
-      await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
-      await Chores.setChorePreference(HOUSE, RESIDENT1, sweeping.id, restock.id, 1);
-      await Chores.setChorePreference(HOUSE, RESIDENT1, restock.id, dishes.id, 1);
+      await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
+      await setChorePreference(HOUSE, RESIDENT1, sweeping.id, restock.id, 1);
+      await setChorePreference(HOUSE, RESIDENT1, restock.id, dishes.id, 1);
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
@@ -323,8 +403,8 @@ describe('Chores', async () => {
 
     it('can do an end-to-end update of chore values', async () => {
       // Prefer dishes to sweeping, and sweeping to restock
-      await Chores.setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
-      await Chores.setChorePreference(HOUSE, RESIDENT2, sweeping.id, restock.id, 1);
+      await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
+      await setChorePreference(HOUSE, RESIDENT2, sweeping.id, restock.id, 1);
 
       const t0 = new Date(3000, 3, 10); // April 10 (30 day month), first update gives 72 hours of value
       const t1 = new Date(t0.getTime() + 48 * HOUR); // 48 hours later
@@ -356,6 +436,37 @@ describe('Chores', async () => {
       const choreValues = await Chores.getUpdatedChoreValues(HOUSE, t1);
       const sumPoints = choreValues.map(cv => cv.value).reduce((sum, val) => sum + val, 0);
       expect(sumPoints).to.almost.equal(pointsPerResident * 3 / 6 * inflationFactor);
+    });
+
+    it('can get proposed chore values', async () => {
+      // Dishes <- Sweeping <- Restock
+      await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
+      await setChorePreference(HOUSE, RESIDENT2, sweeping.id, restock.id, 1);
+
+      let choreRankings;
+
+      const newPrefs = [];
+      choreRankings = await Chores.getProposedChoreRankings(HOUSE, newPrefs, now);
+
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.5038945471248252);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.31132043857597014);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.18478501429920438);
+
+      // Shift priority from dishes to sweeping
+      newPrefs.push({ residentId: RESIDENT1, alphaChoreId: dishes.id, betaChoreId: sweeping.id, preference: 0.7 });
+      choreRankings = await Chores.getProposedChoreRankings(HOUSE, newPrefs, now);
+
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.3921602623439877);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.43526893223314683);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.17257080542286504);
+
+      // Shift priority from sweeping to restock
+      newPrefs.push({ residentId: RESIDENT2, alphaChoreId: sweeping.id, betaChoreId: restock.id, preference: 0.7 });
+      choreRankings = await Chores.getProposedChoreRankings(HOUSE, newPrefs, now);
+
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.37949915168275505);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.3721885654420433);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.24831228287520143);
     });
   });
 
@@ -709,6 +820,29 @@ describe('Chores', async () => {
 
       [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
       expect(penaltyHeart.value).to.equal(-2.5);
+    });
+
+    it('can get resident chore stats', async () => {
+      const feb1 = new Date(3000, 1, 1); // February, a 28 day month
+      const feb15 = new Date(feb1.getTime() + 14 * DAY);
+      const mar1 = new Date(feb1.getTime() + 28 * DAY);
+
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: feb1, value: 10 } ]);
+      await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, feb1);
+
+      let choreStats;
+
+      choreStats = await Chores.getChoreStats(RESIDENT1, feb1, feb15);
+      expect(choreStats.pointsEarned).to.equal(10);
+      expect(choreStats.pointsOwed).to.equal(100);
+      expect(choreStats.completionPct).to.equal(0.1);
+
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, feb1, mar1, '');
+
+      choreStats = await Chores.getChoreStats(RESIDENT1, feb1, feb15);
+      expect(choreStats.pointsEarned).to.equal(10);
+      expect(choreStats.pointsOwed).to.equal(0);
+      expect(choreStats.completionPct).to.equal(1);
     });
 
     it('can get house chore stats', async () => {
