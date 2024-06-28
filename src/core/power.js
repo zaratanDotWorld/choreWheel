@@ -1,3 +1,4 @@
+const assert = require('assert');
 const linAlg = require('linear-algebra')();
 
 class PowerRanker {
@@ -10,7 +11,7 @@ class PowerRanker {
   /// @param preferences:Array[{alpha:str, beta:str, preference:float}] The preferences of the participants
   /// @param numParticipants:int The number of participants
   constructor (items, preferences, numParticipants, verbose = false) {
-    if (items.size < 2) { throw new Error('PowerRanker: Cannot rank less than two items'); }
+    assert(items.size >= 2, 'PowerRanker: Cannot rank less than two items');
 
     this.items = items;
     this.matrix = this.toMatrix(this.items, preferences, numParticipants);
@@ -37,7 +38,7 @@ class PowerRanker {
   // O(items)
   applyLabels (items, eigenvector) {
     const itemMap = this.#toitemMap(items);
-    if (itemMap.size !== eigenvector.length) { throw new Error('Mismatched arguments!'); }
+    assert(itemMap.size === eigenvector.length, 'Mismatched arguments!');
     itemMap.forEach((ix, item) => itemMap.set(item, eigenvector[ix]));
     return itemMap;
   }
@@ -72,7 +73,7 @@ class PowerRanker {
 
   // O(n^3)-ish
   powerMethod (matrix, d = 1, epsilon = 0.001, nIter = 1000) {
-    if (matrix.rows !== matrix.cols) { throw new Error('Matrix must be square!'); }
+    assert(matrix.rows === matrix.cols, 'Matrix must be square!');
     const n = matrix.rows;
 
     // Normalize matrix

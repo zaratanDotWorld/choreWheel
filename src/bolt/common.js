@@ -1,3 +1,4 @@
+const assert = require('assert');
 const voca = require('voca');
 
 const { Admin, Hearts, Polls } = require('../core/index');
@@ -262,7 +263,7 @@ exports.updateVoteCounts = async function (app, oauth, body, action) {
 exports.updateVoteResults = async function (app, oauth, pollId) {
   const { metadata } = await Polls.getPoll(pollId);
 
-  if (!metadata.channel || !metadata.ts) { throw new Error(`No message found for pollId ${pollId}`); }
+  assert(metadata.channel && metadata.ts, `No message found for pollId ${pollId}`);
 
   const body = await exports.getMessage(app, oauth, metadata.channel, metadata.ts);
   const message = body.messages[0];

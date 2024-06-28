@@ -1,3 +1,4 @@
+const assert = require('assert');
 const sha256 = require('js-sha256');
 
 const { db } = require('./db');
@@ -18,27 +19,26 @@ exports.getPoll = async function (pollId) {
     .first();
 };
 
-exports.submitVote = async function (pollId, residentId, submittedAt, vote) {
+exports.submitVote = async function (pollId, residentId, now, vote) {
   const poll = await exports.getPoll(pollId);
   const resident = await Admin.getResident(residentId);
   const encryptedResidentId = sha256(process.env.SALT + residentId);
 
-  // TODO: remove first clause post-migration
-  if (poll.houseId && poll.houseId !== resident.houseId) { throw new Error('Invalid user for poll!'); }
-  if (poll.endTime <= submittedAt) { throw new Error('Poll has closed!'); }
+  assert(poll.houseId === resident.houseId, 'Invalid user for poll!');
+  assert(now < poll.endTime, 'Poll has closed!');
 
   await db('PollVote')
-    .insert({ pollId, encryptedResidentId, submittedAt, vote })
+    .insert({ pollId, encryptedResidentId, submittedAt: now, vote })
     .onConflict([ 'pollId', 'encryptedResidentId' ]).merge();
 
   const pollResults = await exports.getPollResults(pollId);
-  const votingResidents = await Admin.getVotingResidents(poll.houseId, submittedAt);
+  const votingResidents = await Admin.getVotingResidents(poll.houseId, now);
 
   // If everyone has voted, close the poll
   if (pollResults.length >= votingResidents.length) {
     await db('Poll')
       .where({ id: pollId })
-      .update({ endTime: submittedAt });
+      .update({ endTime: now });
   }
 };
 
@@ -61,7 +61,7 @@ exports.getPollResultCounts = async function (pollId) {
 exports.isPollValid = async function (pollId, now) {
   const poll = await exports.getPoll(pollId);
 
-  if (now < poll.endTime) { throw new Error('Poll not closed!'); }
+  assert(poll.endTime <= now, 'Poll not closed!');
 
   const { yays, nays } = await exports.getPollResultCounts(pollId);
   return (yays >= poll.minVotes && yays > nays);

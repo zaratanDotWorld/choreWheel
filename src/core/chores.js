@@ -1,3 +1,5 @@
+const assert = require('assert');
+
 const { db } = require('./db');
 
 const { HOUR, DAY, HEART_CHORE } = require('../constants');
@@ -238,7 +240,7 @@ exports.getLatestChoreClaim = async function (choreId, currentTime, excludedClai
 exports.claimChore = async function (houseId, choreId, claimedBy, claimedAt) {
   const choreValue = (await exports.getCurrentChoreValue(choreId, claimedAt)).sum;
 
-  if (choreValue === null) { throw new Error('Cannot claim a zero-value chore!'); }
+  assert(choreValue, 'Cannot claim a zero-value chore!');
 
   const minVotes = (choreValue >= choreMinVotesThreshold) ? choresMinVotes : 1;
   const [ poll ] = await Polls.createPoll(houseId, claimedAt, choresPollLength, minVotes);
@@ -440,7 +442,7 @@ exports.giftChorePoints = async function (houseId, gifterId, recipientId, gifted
   const monthStart = getMonthStart(giftedAt);
   const gifterChorePoints = await exports.getAllChorePoints(gifterId, monthStart, giftedAt);
 
-  if (gifterChorePoints.sum < value) { throw new Error('Cannot gift more than the points balance!'); }
+  assert(gifterChorePoints.sum >= value, 'Cannot gift more than the points balance!');
 
   await db('ChoreClaim')
     .insert([
@@ -454,7 +456,7 @@ exports.giftChorePoints = async function (houseId, gifterId, recipientId, gifted
 
 exports.createChoreProposal = async function (houseId, proposedBy, choreId, name, metadata, active, now) {
   // TODO: Can this be done as a table constraint?
-  if (!(choreId || name)) { throw new Error('Proposal must include either choreId or name!'); }
+  assert(choreId || name, 'Proposal must include either choreId or name!');
 
   const minVotes = await exports.getChoreProposalMinVotes(houseId, now);
   const [ poll ] = await Polls.createPoll(houseId, now, choresProposalPollLength, minVotes);
@@ -479,7 +481,7 @@ exports.getChoreProposalMinVotes = async function (houseId, now) {
 exports.resolveChoreProposal = async function (proposalId, now) {
   const proposal = await exports.getChoreProposal(proposalId);
 
-  if (proposal.resolvedAt !== null) { throw new Error('Proposal already resolved!'); }
+  assert(!proposal.resolvedAt, 'Proposal already resolved!');
 
   const valid = await Polls.isPollValid(proposal.pollId, now);
 

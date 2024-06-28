@@ -1,3 +1,5 @@
+const assert = require('assert');
+
 const { db } = require('./db');
 
 const { getMonthStart, getPrevMonthEnd } = require('../utils');
@@ -104,7 +106,7 @@ exports.getRegenAmount = function (currentHearts) {
 exports.issueChallenge = async function (houseId, challengerId, challengeeId, value, challengedAt, circumstance) {
   const unresolvedChallenges = await exports.getUnresolvedChallenges(houseId, challengeeId);
 
-  if (unresolvedChallenges.length) { throw new Error('Active challenge exists!'); }
+  assert(!unresolvedChallenges.length, 'Active challenge exists!');
 
   const minVotes = await exports.getChallengeMinVotes(houseId, challengeeId, value, challengedAt);
   const [ poll ] = await Polls.createPoll(houseId, challengedAt, heartsPollLength, minVotes);
@@ -139,7 +141,7 @@ exports.resolveChallenge = async function (challengeId, resolvedAt) {
   const challenge = await exports.getChallenge(challengeId);
   const { houseId, challengerId, challengeeId, value } = challenge;
 
-  if (challenge.heartId !== null) { throw new Error('Challenge already resolved!'); }
+  assert(!challenge.heartId, 'Challenge already resolved!');
 
   const valid = await Polls.isPollValid(challenge.pollId, resolvedAt);
   const loser = (valid) ? challengeeId : challengerId;

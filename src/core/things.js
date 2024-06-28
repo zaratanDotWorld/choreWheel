@@ -1,3 +1,5 @@
+const assert = require('assert');
+
 const { db } = require('./db');
 
 const {
@@ -76,7 +78,7 @@ exports.buyThing = async function (houseId, thingId, boughtBy, boughtAt, account
   const accountBalance = await exports.getAccountBalance(houseId, account, boughtAt);
   const totalCost = price * quantity;
 
-  if (accountBalance.sum < totalCost) { throw new Error('Insufficient funds!'); }
+  assert(accountBalance.sum >= totalCost, 'Insufficient funds!');
 
   const minVotes = await exports.getThingBuyMinVotes(houseId, thingId, totalCost, boughtAt);
   const [ poll ] = await Polls.createPoll(houseId, boughtAt, thingsPollLength, minVotes);
@@ -98,7 +100,7 @@ exports.buyThing = async function (houseId, thingId, boughtBy, boughtAt, account
 exports.buySpecialThing = async function (houseId, boughtBy, boughtAt, account, price, title, details) {
   const accountBalance = await exports.getAccountBalance(houseId, account, boughtAt);
 
-  if (accountBalance.sum < price) { throw new Error('Insufficient funds!'); }
+  assert(accountBalance.sum >= price, 'Insufficient funds!');
 
   const minVotes = await exports.getThingBuyMinVotes(houseId, null, price, boughtAt);
   const [ poll ] = await Polls.createPoll(houseId, boughtAt, thingsSpecialPollLength, minVotes);
@@ -194,7 +196,7 @@ exports.getFulfilledThingBuys = async function (houseId, startTime, endTime) {
 
 exports.createThingProposal = async function (houseId, proposedBy, thingId, type, name, value, metadata, active, now) {
   // TODO: Can this be done as a table constraint?
-  if (!(thingId || (type && name))) { throw new Error('Proposal must include either thingId or type and name!'); }
+  assert(thingId || (type && name), 'Proposal must include either thingId or type and name!');
 
   const minVotes = await exports.getThingProposalMinVotes(houseId, now);
   const [ poll ] = await Polls.createPoll(houseId, now, thingsProposalPollLength, minVotes);
@@ -214,7 +216,7 @@ exports.getThingProposal = async function (proposalId) {
 exports.resolveThingProposal = async function (proposalId, now) {
   const proposal = await exports.getThingProposal(proposalId);
 
-  if (proposal.resolvedAt !== null) { throw new Error('Proposal already resolved!'); }
+  assert(!proposal.resolvedAt, 'Proposal already resolved!');
 
   const valid = await Polls.isPollValid(proposal.pollId, now);
 
