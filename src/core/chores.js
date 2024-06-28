@@ -61,7 +61,13 @@ exports.getChore = async function (choreId) {
 exports.getChorePreferences = async function (houseId) {
   return db('ChorePref')
     .where({ houseId })
-    .select('alphaChoreId', 'betaChoreId', 'preference');
+    .select('residentId', 'alphaChoreId', 'betaChoreId', 'preference');
+};
+
+exports.getResidentChorePreferences = async function (houseId, residentId) {
+  return db('ChorePref')
+    .where({ houseId, residentId })
+    .select('residentId', 'alphaChoreId', 'betaChoreId', 'preference');
 };
 
 exports.getActiveChorePreferences = async function (houseId, now) {
@@ -73,26 +79,65 @@ exports.getActiveChorePreferences = async function (houseId, now) {
     .where('Resident.activeAt', '<=', now)
     .where('AlphaChore.active', true)
     .where('BetaChore.active', true)
-    .select('alphaChoreId', 'betaChoreId', 'preference');
+    .select('residentId', 'alphaChoreId', 'betaChoreId', 'preference');
 };
 
-exports.setChorePreference = async function (houseId, residentId, targetChoreId, sourceChoreId, preference) {
-  if (targetChoreId === sourceChoreId) { return; }
+exports.setChorePreferences = async function (houseId, prefs) {
+  return db('ChorePref')
+    .insert(prefs.map((p) => { return { houseId, ...p }; }))
+    .onConflict([ 'houseId', 'residentId', 'alphaChoreId', 'betaChoreId' ]).merge();
+};
 
-  // Value flows from source to target, and from beta to alpha
-  let alphaChoreId, betaChoreId;
-  if (targetChoreId < sourceChoreId) {
-    alphaChoreId = targetChoreId;
-    betaChoreId = sourceChoreId;
-  } else {
-    alphaChoreId = sourceChoreId;
-    betaChoreId = targetChoreId;
-    preference = 1 - preference;
+// Chore Preference Processing
+
+exports.mergeChorePreferences = function (currentPrefs, newPrefs) {
+  const currentPrefsMap = exports.toPreferenceMap(currentPrefs);
+
+  newPrefs.forEach((p) => {
+    const prefKey = exports.toPrefKey(p);
+    currentPrefsMap.set(prefKey, p);
+  });
+
+  return Array.from(currentPrefsMap.values());
+};
+
+exports.normalizeChorePreference = function (pref) {
+  // If already normalized, no-op
+  // NOTE: Typescript would be useful here
+  if (pref.alphaChoreId || pref.betaChoreId) {
+    assert(pref.alphaChoreId < pref.betaChoreId, 'Invalid chore preference!');
+    return pref;
   }
 
-  return db('ChorePref')
-    .insert({ houseId, residentId, alphaChoreId, betaChoreId, preference })
-    .onConflict([ 'houseId', 'residentId', 'alphaChoreId', 'betaChoreId' ]).merge();
+  let alphaChoreId, betaChoreId, preference;
+
+  // Value flows from source to target, and from beta to alpha
+  if (pref.targetChoreId < pref.sourceChoreId) {
+    alphaChoreId = pref.targetChoreId;
+    betaChoreId = pref.sourceChoreId;
+    preference = pref.preference;
+  } else {
+    alphaChoreId = pref.sourceChoreId;
+    betaChoreId = pref.targetChoreId;
+    preference = 1 - pref.preference;
+  }
+
+  return { alphaChoreId, betaChoreId, preference };
+};
+
+exports.filterChorePreferences = async function (houseId, residentId, prefs) {
+  return prefs
+    .filter(p => p.targetChoreId !== p.sourceChoreId)
+    .map((p) => { return { residentId, ...exports.normalizeChorePreference(p) }; });
+};
+
+exports.toPreferenceMap = function (prefs) {
+  return new Map(prefs.map(p => [ exports.toPrefKey(p), p ]));
+};
+
+exports.toPrefKey = function (pref) {
+  assert(pref.residentId && pref.alphaChoreId && pref.betaChoreId, 'Invalid chore preference!');
+  return `${pref.residentId}-${pref.alphaChoreId}-${pref.betaChoreId}`;
 };
 
 // Chore Values
@@ -125,9 +170,19 @@ exports.getCurrentChoreValues = async function (houseId, currentTime) {
 };
 
 exports.getCurrentChoreRankings = async function (houseId, now) {
+  const preferences = await exports.getActiveChorePreferences(houseId, now);
+  return exports.getChoreRankings(houseId, now, preferences);
+};
+
+exports.getProposedChoreRankings = async function (houseId, newPrefs, now) {
+  const currentPrefs = await exports.getActiveChorePreferences(houseId, now);
+  const proposedPrefs = exports.mergeChorePreferences(currentPrefs, newPrefs);
+  return exports.getChoreRankings(houseId, now, proposedPrefs);
+};
+
+exports.getChoreRankings = async function (houseId, now, preferences) {
   const chores = await exports.getChores(houseId);
   const residents = await Admin.getResidents(houseId, now);
-  const preferences = await exports.getActiveChorePreferences(houseId, now);
 
   const choresSet = new Set(chores.map(c => c.id));
   const formattedPreferences = preferences.map((p) => {
@@ -331,6 +386,7 @@ exports.getWorkingResidentCount = async function (houseId, now) {
   return workingResidents.length;
 };
 
+// TODO: Allow caller to supply startTime and endTime
 exports.getWorkingResidentPercentage = async function (residentId, now) {
   const resident = await Admin.getResident(residentId);
   const monthStart = getMonthStart(now);
