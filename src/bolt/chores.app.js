@@ -102,13 +102,13 @@ app.event('app_home_opened', async ({ body, event }) => {
     // Resolve any claims
     for (const resolvedClaim of (await Chores.resolveChoreClaims(houseId, now))) {
       console.log(`resolved choreClaim ${resolvedClaim.id}`);
-      await common.updateVoteResults(app, choresConf.oauth, resolvedClaim.pollId);
+      await common.updateVoteResults(app, choresConf.oauth, resolvedClaim.pollId, now);
     }
 
     // Resolve any proposals
     for (const resolvedProposal of (await Chores.resolveChoreProposals(houseId, now))) {
       console.log(`resolved choreProposal ${resolvedProposal.id}`);
-      await common.updateVoteResults(app, choresConf.oauth, resolvedProposal.pollId);
+      await common.updateVoteResults(app, choresConf.oauth, resolvedProposal.pollId, now);
     }
 
     // Handle monthly bookkeeping

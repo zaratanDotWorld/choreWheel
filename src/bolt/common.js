@@ -260,7 +260,7 @@ exports.updateVoteCounts = async function (app, oauth, body, action) {
   await app.client.chat.update(body.message);
 };
 
-exports.updateVoteResults = async function (app, oauth, pollId) {
+exports.updateVoteResults = async function (app, oauth, pollId, now) {
   const { metadata } = await Polls.getPoll(pollId);
 
   assert(metadata.channel && metadata.ts, `No message found for pollId ${pollId}`);
@@ -274,7 +274,7 @@ exports.updateVoteResults = async function (app, oauth, pollId) {
   const { yays } = JSON.parse(voteButtons[0].value);
   const { nays } = JSON.parse(voteButtons[1].value);
 
-  const valid = await Polls.isPollValid(pollId);
+  const valid = await Polls.isPollValid(pollId, now);
   const result = valid ? 'passed' : 'failed';
   const emoji = valid ? ' :white_check_mark: ' : ' :x: '; // Extra spacing
   const resultText = `Vote *${result}*, *${yays}* to *${nays}* ${emoji}`;
