@@ -341,10 +341,10 @@ app.action('chores-rank-2', async ({ ack, body }) => {
   await common.pushView(app, choresConf.oauth, body.trigger_id, view);
 });
 
-app.view('chores-rank-callback', async ({ ack, body }) => {
-  await ack({ response_action: 'clear' });
+app.view('chores-rank-3', async ({ ack, body }) => {
+  // await ack();
 
-  const actionName = 'chores-rank-callback';
+  const actionName = 'chores-rank-3';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   const direction = body.view.private_metadata;
@@ -355,31 +355,51 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   const { strength } = JSON.parse(common.getInputBlock(body, -1).strength.selected_option.value);
   const preference = (direction === 'faster') ? strength : 1 - strength;
 
-  // Perform the update
-  for (const sourceChore of sourceChores) {
-    await Chores.setChorePreference(houseId, residentId, targetChore.id, sourceChore.id, preference);
-    console.log(`Chore preference set: ${targetChore.name} <- ${sourceChore.name} @ ${preference}`);
-  }
+  const sourceChoreIds = sourceChores.map(sc => sc.id);
+  const packedPrefs = JSON.stringify({ targetChore, sourceChoreIds, preference });
 
+  const newPrefs = sourceChoreIds.map((scId) => {
+    return { targetChoreId: targetChore.id, sourceChoreId: scId, preference };
+  });
+
+  // Get the new ranking
+  const filteredPrefs = await Chores.filterChorePreferences(houseId, residentId, newPrefs);
+  const proposedRankings = await Chores.getProposedChoreRankings(houseId, filteredPrefs, now);
+  const targetChoreRanking = proposedRankings.find(chore => chore.id === targetChore.id);
+
+  const view = views.choresRankView3(targetChore, targetChoreRanking, packedPrefs);
+
+  await ack({ response_action: 'push', view });
+});
+
+app.view('chores-rank-callback', async ({ ack, body }) => {
+  await ack({ response_action: 'clear' });
+
+  const actionName = 'chores-rank-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
+
+  // Unpack the prefs here
+  const { targetChore, sourceChoreIds, preference } = JSON.parse(body.view.private_metadata);
+
+  const newPrefs = sourceChoreIds.map((scId) => {
+    return { targetChoreId: targetChore.id, sourceChoreId: scId, preference };
+  });
+
+  // Get the new ranking
+  const filteredPrefs = await Chores.filterChorePreferences(houseId, residentId, newPrefs);
+  await Chores.setChorePreferences(houseId, filteredPrefs); // Actually set the chores
   const choreRankings = await Chores.getCurrentChoreRankings(houseId, now);
   const targetChoreRanking = choreRankings.find(chore => chore.id === targetChore.id);
-  const priority = Math.round(targetChoreRanking.ranking * 1000);
 
-  const bigChange = (1000 / choreRankings.length) / 5; // 20% of the average priority
-  const change = priority - targetChore.priority;
-  const changeText = (Math.abs(change) > bigChange) ? 'a lot' : 'a little';
+  const newPriority = Math.round(targetChoreRanking.ranking * 1000);
+  const change = newPriority - targetChore.priority;
 
   if (change > 0) {
-    const text = `Someone *prioritized ${targetChore.name}* by ${changeText}, from *${priority - change}* to *${priority} ppt* :rocket:`;
+    const text = `Someone *prioritized ${targetChore.name}* by *${change}*, to *${newPriority} ppt* :rocket:`;
     await postMessage(text);
   } else if (change < 0) {
-    const text = `Someone *deprioritized ${targetChore.name}* by ${changeText}, from *${priority - change}* to *${priority} ppt* :snail:`;
+    const text = `Someone *deprioritized ${targetChore.name}* by *${Math.abs(change)}*, to *${newPriority} ppt* :snail:`;
     await postMessage(text);
-  } else {
-    const text = 'You\'ve already input those preferences.\n\n' +
-      'To have an additional effect, *choose more or different chores* or a *stronger preference*.\n' +
-      'Alternatively, try and *convince others* to support your priorities.';
-    await postEphemeral(residentId, text);
   }
 });
 
