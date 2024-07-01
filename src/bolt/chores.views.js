@@ -334,16 +334,16 @@ exports.choresRankView2 = function (direction, choreRankings) {
 
   const header = 'Set chore priorities';
   const mainText = 'Choose chores to update. ' +
-    'Chore priorities are measured in *points-per-thousand* (ppt) and always add up to *1000*. ' +
+    'Chore priorities are measured in *points-per-thousand* (ppt), which always add up to *1000*. ' +
     'A ppt of *0* means a chore gets no points, while a ppt of *1000* means a chore gets _all_ the points.\n\n' +
-    'You can think of updating as "taking" priority from some chores and giving it to others, ' +
-    'since something must lose priority for something to gain priority (and vice versa). ' +
-    'Example: "I want to _prioritize_ dishes and _deprioritize_ yardwork."\n\n' +
+    'You can think of updating as "taking" priority from some chores and giving it to others. ' +
+    '*Example:* "I want to _prioritize_ dishes and _deprioritize_ yardwork."\n\n' +
     '*Some things to keep in mind:*\n\n' +
     '*1.* Taking from *more chores* has a bigger effect.\n' +
     '*2.* Taking from *high-priority chores* has a bigger effect.\n' +
     '*3.* A *strong preference* has a bigger effect.\n' +
-    '*4.* *More participants* have a bigger effect.';
+    '*4.* *More participants* have a bigger effect.\n\n' +
+    'It\'s more involved than just "subtracting" ppt, but not by much.';
 
   const textA = direction === 'faster'
     ? 'Chore to prioritize'
@@ -394,10 +394,39 @@ exports.choresRankView2 = function (direction, choreRankings) {
 
   return {
     type: 'modal',
-    callback_id: 'chores-rank-callback',
+    callback_id: 'chores-rank-3',
     private_metadata: direction,
     title: TITLE,
-    close: common.CLOSE,
+    close: common.BACK,
+    submit: common.NEXT,
+    blocks,
+  };
+};
+
+exports.choresRankView3 = function (targetChore, targetChoreRanking, packedPrefs) {
+  const newPriority = Math.round(targetChoreRanking.ranking * 1000);
+  const change = newPriority - targetChore.priority;
+
+  const header = 'Set chore priorities';
+  const mainText = (change !== 0)
+    ? 'After submitting your update, ' +
+      `*${targetChore.name}* will have a priority of *${newPriority} ppt*, ` +
+      `${change >= 0 ? 'an increase' : 'a decrease'} of *${Math.abs(change)}*.\n\n` +
+      '*Submit* to confirm, or go *back* to change your update.'
+    : 'These are your current preferences, so this update will have *no effect*.\n\n' +
+      'For additional effect, *choose more or different chores* or a *stronger preference*. ' +
+      'Alternatively, try and *convince others* to support your priorities.';
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-rank-callback',
+    private_metadata: packedPrefs,
+    title: TITLE,
+    close: common.BACK,
     submit: common.SUBMIT,
     blocks,
   };

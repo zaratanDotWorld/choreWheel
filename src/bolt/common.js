@@ -365,4 +365,6 @@ exports.blockOptionGroup = function (label, options) {
 };
 
 exports.CLOSE = exports.blockPlaintext('Cancel');
+exports.BACK = exports.blockPlaintext('Back');
+exports.NEXT = exports.blockPlaintext('Next');
 exports.SUBMIT = exports.blockPlaintext('Submit');
