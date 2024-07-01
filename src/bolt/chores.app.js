@@ -319,31 +319,27 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
 // Ranking flow
 
 app.action('chores-rank', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'chores-rank';
   common.beginAction(actionName, body);
 
   const view = views.choresRankView();
   await common.openView(app, choresConf.oauth, body.trigger_id, view);
+
+  await ack();
 });
 
-app.action('chores-rank-2', async ({ ack, body }) => {
-  await ack();
-
+app.view('chores-rank-2', async ({ ack, body }) => {
   const actionName = 'chores-rank-2';
   const { now, houseId } = common.beginAction(actionName, body);
 
-  const direction = body.actions[0].selected_option.value;
+  const direction = common.getInputBlock(body, -1).direction.selected_option.value;
   const choreRankings = await Chores.getCurrentChoreRankings(houseId, now);
 
   const view = views.choresRankView2(direction, choreRankings);
-  await common.pushView(app, choresConf.oauth, body.trigger_id, view);
+  await ack({ response_action: 'push', view });
 });
 
 app.view('chores-rank-3', async ({ ack, body }) => {
-  // await ack();
-
   const actionName = 'chores-rank-3';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -368,13 +364,10 @@ app.view('chores-rank-3', async ({ ack, body }) => {
   const targetChoreRanking = proposedRankings.find(chore => chore.id === targetChore.id);
 
   const view = views.choresRankView3(targetChore, targetChoreRanking, packedPrefs);
-
   await ack({ response_action: 'push', view });
 });
 
 app.view('chores-rank-callback', async ({ ack, body }) => {
-  await ack({ response_action: 'clear' });
-
   const actionName = 'chores-rank-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -401,6 +394,8 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
     const text = `Someone *deprioritized ${targetChore.name}* by *${Math.abs(change)}*, to *${newPriority} ppt* :snail:`;
     await postMessage(text);
   }
+
+  await ack({ response_action: 'clear' });
 });
 
 // Break flow

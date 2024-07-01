@@ -296,24 +296,31 @@ exports.choresRankView = function () {
     'Priority-setting is a *cumulative, collaborative, and ongoing* process, ' +
     'where every input makes a difference, and anyone can make small (or large) changes at any time.';
 
+  const directions = [
+    { value: 'faster', text: common.blockPlaintext('Prioritize a chore (more points over time)') },
+    { value: 'slower', text: common.blockPlaintext('Deprioritize a chore (less points over time)') },
+  ];
+
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
-  blocks.push(common.blockActions([
+  blocks.push(common.blockDivider());
+  blocks.push(common.blockInput(
+    'Choose an action',
     {
-      type: 'radio_buttons',
-      action_id: 'chores-rank-2',
-      options: [
-        { value: 'faster', text: common.blockMarkdown('*Prioritize a chore* (more points over time)') },
-        { value: 'slower', text: common.blockMarkdown('*Deprioritize a chore* (less points over time)') },
-      ],
+      action_id: 'direction',
+      type: 'static_select',
+      initial_option: directions[0],
+      options: directions,
     },
-  ]));
+  ));
 
   return {
     type: 'modal',
+    callback_id: 'chores-rank-2',
     title: TITLE,
     close: common.CLOSE,
+    submit: common.NEXT,
     blocks,
   };
 };
@@ -386,7 +393,6 @@ exports.choresRankView2 = function (direction, choreRankings) {
     {
       action_id: 'strength',
       type: 'static_select',
-      placeholder: common.blockPlaintext('Choose a preference strength'),
       initial_option: preferenceOptions[0],
       options: preferenceOptions,
     },
