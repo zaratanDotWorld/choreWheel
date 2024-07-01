@@ -63,10 +63,10 @@ exports.heartsHomeView = function (numHearts, maxHearts, exempt) {
     : `You have *${numHearts} / ${maxHearts}* hearts: ${exports.heartEmoji(numHearts)}`;
 
   const actions = [];
+  actions.push(common.blockButton('hearts-board', 'See current hearts'));
   if (!exempt) {
     actions.push(common.blockButton('hearts-challenge', 'Resolve a dispute'));
   }
-  actions.push(common.blockButton('hearts-board', 'See current hearts'));
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
