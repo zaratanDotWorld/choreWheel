@@ -38,6 +38,16 @@ exports.parseUrl = function (url) {
 
 // Entry points
 
+exports.beginHome = function (appName, body, event) {
+  const now = new Date();
+  const houseId = body.team_id;
+  const residentId = event.user;
+
+  console.log(`${appName} home - ${houseId} x ${residentId}`);
+
+  return { now, houseId, residentId };
+};
+
 exports.beginAction = function (actionName, body) {
   const now = new Date();
   const houseId = body.team.id;

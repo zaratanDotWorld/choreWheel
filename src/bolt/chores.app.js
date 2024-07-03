@@ -74,65 +74,60 @@ app.event('user_change', async ({ payload }) => {
 // Publish the app home
 
 app.event('app_home_opened', async ({ body, event }) => {
-  if (event.tab === 'home') {
-    console.log(`chores home - ${body.team_id} x ${event.user}`);
+  if (event.tab !== 'home') { return; }
 
-    const now = new Date();
-    const houseId = body.team_id;
-    const residentId = event.user;
+  const { now, houseId, residentId } = common.beginHome('chores', body, event);
+  await Admin.activateResident(houseId, residentId, now);
 
-    await Admin.activateResident(houseId, residentId, now);
+  let view;
+  if (choresConf.channel) {
+    const monthStart = getMonthStart(now);
+    const choreStats = await Chores.getChoreStats(residentId, monthStart, now);
+    const workingResidentCount = await Chores.getWorkingResidentCount(houseId, now);
+    const exempt = await Admin.isExempt(residentId, now);
 
-    let view;
-    if (choresConf.channel) {
-      const monthStart = getMonthStart(now);
-      const choreStats = await Chores.getChoreStats(residentId, monthStart, now);
-      const workingResidentCount = await Chores.getWorkingResidentCount(houseId, now);
-      const exempt = await Admin.isExempt(residentId, now);
+    view = views.choresHomeView(choreStats, workingResidentCount, exempt);
+  } else {
+    view = views.choresIntroView();
+  }
 
-      view = views.choresHomeView(choreStats, workingResidentCount, exempt);
-    } else {
-      view = views.choresIntroView();
-    }
+  await common.publishHome(app, choresConf.oauth, residentId, view);
 
-    await common.publishHome(app, choresConf.oauth, residentId, view);
+  // This bookkeeping is done after returning the view
 
-    // This bookkeeping is done after returning the view
+  // Resolve any claims
+  for (const resolvedClaim of (await Chores.resolveChoreClaims(houseId, now))) {
+    console.log(`resolved choreClaim ${resolvedClaim.id}`);
+    await common.updateVoteResults(app, choresConf.oauth, resolvedClaim.pollId, now);
+  }
 
-    // Resolve any claims
-    for (const resolvedClaim of (await Chores.resolveChoreClaims(houseId, now))) {
-      console.log(`resolved choreClaim ${resolvedClaim.id}`);
-      await common.updateVoteResults(app, choresConf.oauth, resolvedClaim.pollId, now);
-    }
+  // Resolve any proposals
+  for (const resolvedProposal of (await Chores.resolveChoreProposals(houseId, now))) {
+    console.log(`resolved choreProposal ${resolvedProposal.id}`);
+    await common.updateVoteResults(app, choresConf.oauth, resolvedProposal.pollId, now);
+  }
 
-    // Resolve any proposals
-    for (const resolvedProposal of (await Chores.resolveChoreProposals(houseId, now))) {
-      console.log(`resolved choreProposal ${resolvedProposal.id}`);
-      await common.updateVoteResults(app, choresConf.oauth, resolvedProposal.pollId, now);
-    }
-
-    // Handle monthly bookkeeping
-    const chorePenalties = await Chores.addChorePenalties(houseId, now);
-    if (chorePenalties.length) {
-      // Post penalties, if any
-      for (const penaltyHeart of chorePenalties) {
-        if (penaltyHeart.value < 0) {
-          const text = 'You missed too many chores last month, ' +
-            `and lost *${penaltyHeart.value.toFixed(1)}* hearts...`;
-          await postEphemeral(penaltyHeart.residentId, text);
-        }
+  // Handle monthly bookkeeping
+  const chorePenalties = await Chores.addChorePenalties(houseId, now);
+  if (chorePenalties.length) {
+    // Post penalties, if any
+    for (const penaltyHeart of chorePenalties) {
+      if (penaltyHeart.value < 0) {
+        const text = 'You missed too many chores last month, ' +
+          `and lost *${penaltyHeart.value.toFixed(1)}* hearts...`;
+        await postEphemeral(penaltyHeart.residentId, text);
       }
+    }
 
-      // Post house stats
-      const prevMonthEnd = getPrevMonthEnd(now);
-      const prevMonthStart = getMonthStart(prevMonthEnd);
-      const choreStats = await Chores.getHouseChoreStats(houseId, prevMonthStart, prevMonthEnd);
-      if (choreStats.length) {
-        const text = ':scroll: *Last month\'s chore points* :scroll: \n' +
-          choreStats.map(cs => `\n${views.formatStats(cs)}`)
-            .join('');
-        await postMessage(text);
-      }
+    // Post house stats
+    const prevMonthEnd = getPrevMonthEnd(now);
+    const prevMonthStart = getMonthStart(prevMonthEnd);
+    const choreStats = await Chores.getHouseChoreStats(houseId, prevMonthStart, prevMonthEnd);
+    if (choreStats.length) {
+      const text = ':scroll: *Last month\'s chore points* :scroll: \n' +
+        choreStats.map(cs => `\n${views.formatStats(cs)}`)
+          .join('');
+      await postMessage(text);
     }
   }
 });
@@ -140,27 +135,25 @@ app.event('app_home_opened', async ({ body, event }) => {
 // Slash commands
 
 app.command('/chores-sync', async ({ ack, command }) => {
-  await ack();
-
   const commandName = '/chores-sync';
   common.beginCommand(commandName, command);
 
   await common.syncWorkspace(app, choresConf.oauth, command, true, false);
+
+  await ack();
 });
 
 app.command('/chores-channel', async ({ ack, command }) => {
-  await ack();
-
   const commandName = '/chores-channel';
   common.beginCommand(commandName, command);
 
   await common.setChannel(app, choresConf.oauth, CHORES_CONF, command);
   await common.syncWorkspace(app, choresConf.oauth, command, true, false);
+
+  await ack();
 });
 
 app.command('/chores-stats', async ({ ack, command }) => {
-  await ack();
-
   const commandName = '/chores-stats';
   const { now, houseId, residentId } = common.beginCommand(commandName, command);
 
@@ -176,11 +169,11 @@ app.command('/chores-stats', async ({ ack, command }) => {
 
   const view = views.choresStatsView(choreClaims, choreBreaks, choreStats);
   await common.openView(app, choresConf.oauth, command.trigger_id, view);
+
+  await ack();
 });
 
 app.command('/chores-exempt', async ({ ack, command }) => {
-  await ack();
-
   const commandName = '/chores-exempt';
   const { now, houseId } = common.beginCommand(commandName, command);
 
@@ -194,11 +187,11 @@ app.command('/chores-exempt', async ({ ack, command }) => {
 
   const view = views.choresExemptView(exemptResidents);
   await common.openView(app, choresConf.oauth, command.trigger_id, view);
+
+  await ack();
 });
 
 app.view('chores-exempt-callback', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'chores-exempt-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -226,11 +219,11 @@ app.view('chores-exempt-callback', async ({ ack, body }) => {
   }
 
   await postEphemeral(residentId, text);
+
+  await ack();
 });
 
 app.command('/chores-reset', async ({ ack, command }) => {
-  await ack();
-
   const commandName = '/chores-reset';
   common.beginCommand(commandName, command);
 
@@ -241,24 +234,24 @@ app.command('/chores-reset', async ({ ack, command }) => {
 
   const view = views.choresResetView();
   await common.openView(app, choresConf.oauth, command.trigger_id, view);
+
+  await ack();
 });
 
 app.view('chores-reset-callback', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'chores-reset-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   await Chores.resetChorePoints(houseId, now);
 
   await postMessage(`<@${residentId}> just reset all chore points :volcano:`);
+
+  await ack();
 });
 
 // Claim flow
 
 app.action('chores-claim', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'chores-claim';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -272,11 +265,11 @@ app.action('chores-claim', async ({ ack, body }) => {
     const view = views.choresClaimView(filteredChoreValues);
     await common.openView(app, choresConf.oauth, body.trigger_id, view);
   }
+
+  await ack();
 });
 
 app.action('chores-claim-2', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'chores-claim-2';
   common.beginAction(actionName, body);
 
@@ -285,11 +278,11 @@ app.action('chores-claim-2', async ({ ack, body }) => {
 
   const view = views.choresClaimView2(chore);
   await common.pushView(app, choresConf.oauth, body.trigger_id, view);
+
+  await ack();
 });
 
 app.view('chores-claim-callback', async ({ ack, body }) => {
-  await ack({ response_action: 'clear' });
-
   const actionName = 'chores-claim-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -314,6 +307,8 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const blocks = views.choresClaimCallbackView(claim, chore.name, minVotes, achivementPoints, monthlyPoints);
   const { channel, ts } = await postMessage(text, blocks);
   await Polls.updateMetadata(claim.pollId, { channel, ts });
+
+  await ack({ response_action: 'clear' });
 });
 
 // Ranking flow
@@ -401,18 +396,16 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
 // Break flow
 
 app.action('chores-break', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'chores-break';
   common.beginAction(actionName, body);
 
   const view = views.choresBreakView(new Date());
   await common.openView(app, choresConf.oauth, body.trigger_id, view);
+
+  await ack();
 });
 
 app.view('chores-break-callback', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'chores-break-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -439,13 +432,13 @@ app.view('chores-break-callback', async ({ ack, body }) => {
         `_${circumstance}_`;
     await postMessage(text);
   }
+
+  await ack();
 });
 
 // Gift flow
 
 app.action('chores-gift', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'chores-gift';
   const { now, residentId } = common.beginAction(actionName, body);
 
@@ -454,11 +447,11 @@ app.action('chores-gift', async ({ ack, body }) => {
 
   const view = views.choresGiftView(chorePoints.sum || 0);
   await common.openView(app, choresConf.oauth, body.trigger_id, view);
+
+  await ack();
 });
 
 app.view('chores-gift-callback', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'chores-gift-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -481,13 +474,13 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
       `_${circumstance}_`;
     await postMessage(text);
   }
+
+  await ack();
 });
 
 // Edit flow
 
 app.action('chores-propose', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'chores-propose';
   const { now, houseId } = common.beginAction(actionName, body);
 
@@ -495,11 +488,11 @@ app.action('chores-propose', async ({ ack, body }) => {
 
   const view = views.choresProposeView(minVotes);
   await common.openView(app, choresConf.oauth, body.trigger_id, view);
+
+  await ack();
 });
 
 app.action('chores-propose-2', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'chores-propose-2';
   const { houseId } = common.beginAction(actionName, body);
 
@@ -524,11 +517,11 @@ app.action('chores-propose-2', async ({ ack, body }) => {
   }
 
   await common.pushView(app, choresConf.oauth, body.trigger_id, view);
+
+  await ack();
 });
 
 app.action('chores-propose-edit', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'chores-propose-edit';
   common.beginAction(actionName, body);
 
@@ -537,11 +530,11 @@ app.action('chores-propose-edit', async ({ ack, body }) => {
 
   const blocks = views.choresProposeAddView(chore);
   await common.pushView(app, choresConf.oauth, body.trigger_id, blocks);
+
+  await ack();
 });
 
 app.view('chores-propose-callback', async ({ ack, body }) => {
-  await ack({ response_action: 'clear' });
-
   const actionName = 'chores-propose-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -584,17 +577,19 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
   const blocks = views.choresProposeCallbackView(privateMetadata, proposal, minVotes);
   const { channel, ts } = await postMessage(text, blocks);
   await Polls.updateMetadata(proposal.pollId, { channel, ts });
+
+  await ack({ response_action: 'clear' });
 });
 
 // Voting flow
 
 app.action(/poll-vote/, async ({ ack, body, action }) => {
-  await ack();
-
   const actionName = 'chores poll-vote';
   common.beginAction(actionName, body);
 
   await common.updateVoteCounts(app, choresConf.oauth, body, action);
+
+  await ack();
 });
 
 // Launch the app
