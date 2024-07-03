@@ -79,95 +79,109 @@ app.event('channel_created', async ({ payload }) => {
   await common.joinChannel(app, heartsConf.oauth, channel.id);
 });
 
+app.event('message', async ({ payload }) => {
+  const karmaRecipients = Hearts.getKarmaRecipients(payload.text);
+
+  if (karmaRecipients.length > 0) {
+    console.log(`hearts karma-message - ${payload.team} x ${payload.user}`);
+    const [ now, houseId, giverId ] = [ new Date(), payload.team, payload.user ];
+
+    for (const receiverId of karmaRecipients) {
+      await Hearts.giveKarma(houseId, giverId, receiverId, now);
+    }
+
+    await common.addReaction(app, heartsConf.oauth, payload, 'sparkles');
+  }
+
+  if (karmaRecipients.length > 1 && karmaRecipients.length < 10) {
+    const numbers = [ 'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine' ];
+
+    await common.addReaction(app, heartsConf.oauth, payload, numbers[karmaRecipients.length]);
+  }
+});
+
 // Publish the app home
 
 app.event('app_home_opened', async ({ body, event }) => {
-  if (event.tab === 'home') {
-    console.log(`hearts home - ${body.team_id} x ${event.user}`);
+  if (event.tab !== 'home') { return; }
 
-    const now = new Date();
-    const houseId = body.team_id;
-    const residentId = event.user;
+  const { now, houseId, residentId } = common.beginHome('hearts', body, event);
+  await Admin.activateResident(houseId, residentId, now);
+  await Hearts.initialiseResident(houseId, residentId, now);
 
-    await Admin.activateResident(houseId, residentId, now);
-    await Hearts.initialiseResident(houseId, residentId, now);
+  let view;
+  if (heartsConf.channel) {
+    const hearts = await Hearts.getHearts(residentId, now);
+    const maxHearts = await Hearts.getResidentMaxHearts(residentId, now);
+    const exempt = await Admin.isExempt(residentId, now);
 
-    let view;
-    if (heartsConf.channel) {
-      const hearts = await Hearts.getHearts(residentId, now);
-      const maxHearts = await Hearts.getResidentMaxHearts(residentId, now);
-      const exempt = await Admin.isExempt(residentId, now);
+    view = views.heartsHomeView(hearts.sum || 0, maxHearts, exempt);
+  } else {
+    view = views.heartsIntroView();
+  }
 
-      view = views.heartsHomeView(hearts.sum || 0, maxHearts, exempt);
-    } else {
-      view = views.heartsIntroView();
+  await common.publishHome(app, heartsConf.oauth, residentId, view);
+
+  // This bookkeeping is done after returning the view
+
+  // Resolve any challanges
+  for (const resolvedChallenge of (await Hearts.resolveChallenges(houseId, now))) {
+    console.log(`resolved heartChallenge ${resolvedChallenge.id}`);
+    await common.updateVoteResults(app, heartsConf.oauth, resolvedChallenge.pollId, now);
+  }
+
+  for (const challengeHeart of (await Hearts.getAgnosticHearts(houseId, now))) {
+    const text = `<@${challengeHeart.residentId}> lost a challenge, ` +
+      `and *${(-challengeHeart.value).toFixed(0)}* heart(s)...`;
+    await postMessage(text);
+  }
+
+  // Regenerate lost hearts // fade karma hearts
+  for (const regenHeart of (await Hearts.regenerateHouseHearts(houseId, now))) {
+    if (regenHeart.value !== 0) {
+      const text = (regenHeart.value > 0)
+        ? `You regenerated *${regenHeart.value.toFixed(1)}* heart(s)!`
+        : `Your karma faded by *${(-regenHeart.value).toFixed(1)}* heart(s)!`;
+      await postEphemeral(regenHeart.residentId, text);
     }
+  }
 
-    await common.publishHome(app, heartsConf.oauth, residentId, view);
+  // Issue karma hearts
+  const karmaHearts = await Hearts.generateKarmaHearts(houseId, now);
+  if (karmaHearts.length) {
+    const karmaWinners = karmaHearts.map(heart => `<@${heart.residentId}>`).join(' and ');
+    const text = (karmaHearts.length > 1)
+      ? `${karmaWinners} get last month's karma hearts :heart_on_fire:`
+      : `${karmaWinners} gets last month's karma heart :heart_on_fire:`;
 
-    // This bookkeeping is done after returning the view
-
-    // Resolve any challanges
-    for (const resolvedChallenge of (await Hearts.resolveChallenges(houseId, now))) {
-      console.log(`resolved heartChallenge ${resolvedChallenge.id}`);
-      await common.updateVoteResults(app, heartsConf.oauth, resolvedChallenge.pollId, now);
-    }
-
-    for (const challengeHeart of (await Hearts.getAgnosticHearts(houseId, now))) {
-      const text = `<@${challengeHeart.residentId}> lost a challenge, ` +
-        `and *${(-challengeHeart.value).toFixed(0)}* heart(s)...`;
-      await postMessage(text);
-    }
-
-    // Regenerate lost hearts // fade karma hearts
-    for (const regenHeart of (await Hearts.regenerateHouseHearts(houseId, now))) {
-      if (regenHeart.value !== 0) {
-        const text = (regenHeart.value > 0)
-          ? `You regenerated *${regenHeart.value.toFixed(1)}* heart(s)!`
-          : `Your karma faded by *${(-regenHeart.value).toFixed(1)}* heart(s)!`;
-        await postEphemeral(regenHeart.residentId, text);
-      }
-    }
-
-    // Issue karma hearts
-    const karmaHearts = await Hearts.generateKarmaHearts(houseId, now);
-    if (karmaHearts.length) {
-      const karmaWinners = karmaHearts.map(heart => `<@${heart.residentId}>`).join(' and ');
-      const text = (karmaHearts.length > 1)
-        ? `${karmaWinners} get last month's karma hearts :heart_on_fire:`
-        : `${karmaWinners} gets last month's karma heart :heart_on_fire:`;
-
-      await postMessage(text);
-    }
+    await postMessage(text);
   }
 });
 
 // Slash commands
 
 app.command('/hearts-sync', async ({ ack, command }) => {
-  await ack();
-
   const commandName = '/hearts-sync';
   common.beginCommand(commandName, command);
 
   await common.syncWorkspace(app, heartsConf.oauth, command, true, true);
+
+  await ack();
 });
 
 app.command('/hearts-channel', async ({ ack, command }) => {
-  await ack();
-
   const commandName = '/hearts-channel';
   common.beginCommand(commandName, command);
 
   await common.setChannel(app, heartsConf.oauth, HEARTS_CONF, command);
   await common.syncWorkspace(app, heartsConf.oauth, command, true, true);
+
+  await ack();
 });
 
 // Challenge flow
 
 app.action('hearts-challenge', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'hearts-challenge';
   const { now, houseId } = common.beginAction(actionName, body);
 
@@ -175,11 +189,11 @@ app.action('hearts-challenge', async ({ ack, body }) => {
 
   const view = views.heartsChallengeView(votingResidents.length);
   await common.openView(app, heartsConf.oauth, body.trigger_id, view);
+
+  await ack();
 });
 
 app.view('hearts-challenge-callback', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'hearts-challenge-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -207,13 +221,13 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
     const { channel, ts } = await postMessage(text, blocks);
     await Polls.updateMetadata(challenge.pollId, { channel, ts });
   }
+
+  await ack();
 });
 
 // Board flow
 
 app.action('hearts-board', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'hearts-board';
   const { now, houseId } = common.beginAction(actionName, body);
 
@@ -221,43 +235,19 @@ app.action('hearts-board', async ({ ack, body }) => {
 
   const view = views.heartsBoardView(hearts);
   await common.openView(app, heartsConf.oauth, body.trigger_id, view);
+
+  await ack();
 });
 
 // Voting flow
 
 app.action(/poll-vote/, async ({ ack, body, action }) => {
-  await ack();
-
   const actionName = 'hearts poll-vote';
   common.beginAction(actionName, body);
 
   await common.updateVoteCounts(app, heartsConf.oauth, body, action);
-});
 
-// Karma flow
-
-app.event('message', async ({ payload }) => {
-  const karmaRecipients = Hearts.getKarmaRecipients(payload.text);
-
-  if (karmaRecipients.length > 0) {
-    console.log(`hearts karma-message - ${payload.team} x ${payload.user}`);
-
-    const now = new Date();
-    const houseId = payload.team;
-    const giverId = payload.user;
-
-    for (const receiverId of karmaRecipients) {
-      await Hearts.giveKarma(houseId, giverId, receiverId, now);
-    }
-
-    await common.addReaction(app, heartsConf.oauth, payload, 'sparkles');
-  }
-
-  if (karmaRecipients.length > 1 && karmaRecipients.length < 10) {
-    const numbers = [ 'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine' ];
-
-    await common.addReaction(app, heartsConf.oauth, payload, numbers[karmaRecipients.length]);
-  }
+  await ack();
 });
 
 // Launch the app

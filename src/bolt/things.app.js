@@ -77,57 +77,50 @@ app.event('user_change', async ({ payload }) => {
 // Publish the app home
 
 app.event('app_home_opened', async ({ body, event }) => {
-  if (event.tab === 'home') {
-    console.log(`things home - ${body.team_id} x ${event.user}`);
+  if (event.tab !== 'home') { return; }
 
-    const now = new Date();
-    const houseId = body.team_id;
-    const residentId = event.user;
+  const { now, houseId, residentId } = common.beginHome('things', body, event);
+  await Admin.activateResident(houseId, residentId, now);
 
-    await Admin.activateResident(houseId, residentId, now);
+  let view;
+  if (thingsConf.channel) {
+    const activeAccounts = await Things.getActiveAccounts(houseId, now);
+    const exempt = await Admin.isExempt(residentId, now);
 
-    let view;
-    if (thingsConf.channel) {
-      const activeAccounts = await Things.getActiveAccounts(houseId, now);
-      const exempt = await Admin.isExempt(residentId, now);
+    view = views.thingsHomeView(activeAccounts, exempt);
+  } else {
+    view = views.thingsIntroView();
+  }
 
-      view = views.thingsHomeView(activeAccounts, exempt);
-    } else {
-      view = views.thingsIntroView();
-    }
+  await common.publishHome(app, thingsConf.oauth, residentId, view);
 
-    await common.publishHome(app, thingsConf.oauth, residentId, view);
+  // This bookkeeping is done after returning the view
 
-    // This bookkeeping is done after returning the view
+  // Resolve any buys
+  for (const resolvedBuy of (await Things.resolveThingBuys(houseId, now))) {
+    console.log(`resolved thingBuy ${resolvedBuy.id}`);
+    await common.updateVoteResults(app, thingsConf.oauth, resolvedBuy.pollId, now);
+  }
 
-    // Resolve any buys
-    for (const resolvedBuy of (await Things.resolveThingBuys(houseId, now))) {
-      console.log(`resolved thingBuy ${resolvedBuy.id}`);
-      await common.updateVoteResults(app, thingsConf.oauth, resolvedBuy.pollId, now);
-    }
-
-    // Resolve any proposals
-    for (const resolvedProposal of (await Things.resolveThingProposals(houseId, now))) {
-      console.log(`resolved thingProposal ${resolvedProposal.id}`);
-      await common.updateVoteResults(app, thingsConf.oauth, resolvedProposal.pollId, now);
-    }
+  // Resolve any proposals
+  for (const resolvedProposal of (await Things.resolveThingProposals(houseId, now))) {
+    console.log(`resolved thingProposal ${resolvedProposal.id}`);
+    await common.updateVoteResults(app, thingsConf.oauth, resolvedProposal.pollId, now);
   }
 });
 
 // Slash commands
 
 app.command('/things-channel', async ({ ack, command }) => {
-  await ack();
-
   const commandName = '/things-channel';
   common.beginCommand(commandName, command);
 
   await common.setChannel(app, thingsConf.oauth, THINGS_CONF, command);
+
+  await ack();
 });
 
 app.command('/things-load', async ({ ack, command }) => {
-  await ack();
-
   const commandName = '/things-load';
   common.beginCommand(commandName, command);
 
@@ -138,11 +131,11 @@ app.command('/things-load', async ({ ack, command }) => {
 
   const view = views.thingsLoadView();
   await common.openView(app, thingsConf.oauth, command.trigger_id, view);
+
+  await ack();
 });
 
 app.view('things-load-callback', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'things-load-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -153,11 +146,11 @@ app.view('things-load-callback', async ({ ack, body }) => {
 
   const text = `<@${thing.boughtBy}> just loaded *$${thing.value}* into the *${thing.account}* account :chart_with_upwards_trend:`;
   await postMessage(text);
+
+  await ack();
 });
 
 app.command('/things-fulfill', async ({ ack, command }) => {
-  await ack();
-
   const commandName = '/things-fulfill';
   const { now, houseId } = common.beginCommand(commandName, command);
 
@@ -174,11 +167,11 @@ app.command('/things-fulfill', async ({ ack, command }) => {
   } else {
     await replyEphemeral(command, 'There are no buys to fulfill :relieved:');
   }
+
+  await ack();
 });
 
 app.view('things-fulfill-callback', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'things-fulfill-callback';
   const { now, residentId } = common.beginAction(actionName, body);
 
@@ -191,11 +184,11 @@ app.view('things-fulfill-callback', async ({ ack, body }) => {
 
   const text = 'Fulfillment succeeded :shopping_bags:';
   await postEphemeral(residentId, text);
+
+  await ack();
 });
 
 app.command('/things-update', async ({ ack, command }) => {
-  await ack();
-
   const commandName = '/things-update';
   const { houseId } = common.beginCommand(commandName, command);
 
@@ -209,11 +202,11 @@ app.command('/things-update', async ({ ack, command }) => {
   // TODO: improve this (hacky) implementation
   const view = views.thingsProposeEditView(things, '-admin');
   await common.openView(app, thingsConf.oauth, command.trigger_id, view);
+
+  await ack();
 });
 
 app.action('things-propose-edit-admin', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'things-update-2';
   common.beginAction(actionName, body);
 
@@ -222,11 +215,11 @@ app.action('things-propose-edit-admin', async ({ ack, body }) => {
 
   const blocks = views.thingsProposeAddView(thing, '-admin');
   await common.pushView(app, thingsConf.oauth, body.trigger_id, blocks);
+
+  await ack();
 });
 
 app.view('things-propose-callback-admin', async ({ ack, body }) => {
-  await ack({ response_action: 'clear' });
-
   const actionName = 'things-update-callback';
   const { residentId } = common.beginAction(actionName, body);
 
@@ -239,13 +232,13 @@ app.view('things-propose-callback-admin', async ({ ack, body }) => {
 
   const text = 'Update succeeded :floppy_disk:';
   await postEphemeral(residentId, text);
+
+  await ack({ response_action: 'clear' });
 });
 
 // Buy flow
 
 app.action('things-buy', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'things-buy';
   const { now, houseId } = common.beginAction(actionName, body);
 
@@ -254,11 +247,11 @@ app.action('things-buy', async ({ ack, body }) => {
 
   const view = views.thingsBuyView(things, accounts);
   await common.openView(app, thingsConf.oauth, body.trigger_id, view);
+
+  await ack();
 });
 
 app.view('things-buy-callback', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'things-buy-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -278,11 +271,11 @@ app.view('things-buy-callback', async ({ ack, body }) => {
   const blocks = views.thingsBuyCallbackView(buy, thing, balance.sum, minVotes);
   const { channel, ts } = await postMessage(text, blocks);
   await Polls.updateMetadata(buy.pollId, { channel, ts });
+
+  await ack();
 });
 
 app.action('things-special', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'things-special';
   const { now, houseId } = common.beginAction(actionName, body);
 
@@ -291,11 +284,11 @@ app.action('things-special', async ({ ack, body }) => {
 
   const view = views.thingsSpecialBuyView(votingResidents.length, accounts);
   await common.openView(app, thingsConf.oauth, body.trigger_id, view);
+
+  await ack();
 });
 
 app.view('things-special-callback', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'things-special-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -315,11 +308,11 @@ app.view('things-special-callback', async ({ ack, body }) => {
   const blocks = views.thingsSpecialBuyCallbackView(buy, balance.sum, minVotes);
   const { channel, ts } = await postMessage(text, blocks);
   await Polls.updateMetadata(buy.pollId, { channel, ts });
+
+  await ack();
 });
 
 app.action('things-bought', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'things-bought';
   const { now, houseId } = common.beginAction(actionName, body);
 
@@ -331,13 +324,13 @@ app.action('things-bought', async ({ ack, body }) => {
   const fulfilledBuys90 = await Things.getFulfilledThingBuys(houseId, threeMonthsAgo, now);
   const view = views.thingsBoughtView(unfulfilledBuys, fulfilledBuys7, fulfilledBuys90);
   await common.openView(app, thingsConf.oauth, body.trigger_id, view);
+
+  await ack();
 });
 
 // Proposal flow
 
 app.action('things-propose', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'things-propose';
   const { now, houseId } = common.beginAction(actionName, body);
 
@@ -345,11 +338,11 @@ app.action('things-propose', async ({ ack, body }) => {
 
   const view = views.thingsProposeView(minVotes);
   await common.openView(app, thingsConf.oauth, body.trigger_id, view);
+
+  await ack();
 });
 
 app.action('things-propose-2', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'things-propose-2';
   const { houseId } = common.beginAction(actionName, body);
 
@@ -374,11 +367,11 @@ app.action('things-propose-2', async ({ ack, body }) => {
   }
 
   await common.pushView(app, thingsConf.oauth, body.trigger_id, view);
+
+  await ack();
 });
 
 app.action('things-propose-edit', async ({ ack, body }) => {
-  await ack();
-
   const actionName = 'things-propose-edit';
   common.beginAction(actionName, body);
 
@@ -387,11 +380,11 @@ app.action('things-propose-edit', async ({ ack, body }) => {
 
   const blocks = views.thingsProposeAddView(thing);
   await common.pushView(app, thingsConf.oauth, body.trigger_id, blocks);
+
+  await ack();
 });
 
 app.view('things-propose-callback', async ({ ack, body }) => {
-  await ack({ response_action: 'clear' });
-
   const actionName = 'things-propose-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -428,17 +421,19 @@ app.view('things-propose-callback', async ({ ack, body }) => {
   const blocks = views.thingsProposeCallbackView(privateMetadata, proposal, minVotes);
   const { channel, ts } = await postMessage(text, blocks);
   await Polls.updateMetadata(proposal.pollId, { channel, ts });
+
+  await ack({ response_action: 'clear' });
 });
 
 // Voting flow
 
 app.action(/poll-vote/, async ({ ack, body, action }) => {
-  await ack();
-
   const actionName = 'things poll-vote';
   common.beginAction(actionName, body);
 
   await common.updateVoteCounts(app, thingsConf.oauth, body, action);
+
+  await ack();
 });
 
 // Utils
