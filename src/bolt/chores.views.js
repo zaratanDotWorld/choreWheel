@@ -391,11 +391,14 @@ exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetada
   const newPriority = Math.round(targetChoreRanking.ranking * 1000);
   const change = newPriority - targetChore.priority;
 
+  const effect = change >= 0 ? 'an *increase*' : 'a *decrease*';
+  const emoji = change >= 0 ? ':rocket:' : ':snail:';
+
   const header = 'Set chore priorities';
   const mainText = (change !== 0)
     ? 'After your update, ' +
       `*${targetChore.name}* will have a priority of *${newPriority} ppt*, ` +
-      `${change >= 0 ? 'an *increase*' : 'a *decrease*'} of *${Math.abs(change)} ppt*.\n\n` +
+      `${effect} of *${Math.abs(change)} ppt* ${emoji}\n\n` +
       '*Submit* to confirm, or go *back* to change your update.'
     : 'These are your current preferences, so this update will have *no effect*.\n\n' +
       'For additional effect, *choose more or different chores* or a *stronger preference*. ' +
