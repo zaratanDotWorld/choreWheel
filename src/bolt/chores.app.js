@@ -320,9 +320,11 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
 
 app.action('chores-rank', async ({ ack, body }) => {
   const actionName = 'chores-rank';
-  common.beginAction(actionName, body);
+  const { now, houseId } = common.beginAction(actionName, body);
 
-  const view = views.choresRankView();
+  const choreRankings = await Chores.getCurrentChoreRankings(houseId, now);
+
+  const view = views.choresRankView(choreRankings);
   await common.openView(app, choresConf.oauth, body.trigger_id, view);
 
   await ack();
@@ -332,10 +334,11 @@ app.view('chores-rank-2', async ({ ack, body }) => {
   const actionName = 'chores-rank-2';
   const { now, houseId } = common.beginAction(actionName, body);
 
-  const direction = common.getInputBlock(body, -1).direction.selected_option.value;
+  const action = common.getInputBlock(body, -2).action.selected_option.value;
+  const targetChore = JSON.parse(common.getInputBlock(body, -1).chore.selected_option.value);
   const choreRankings = await Chores.getCurrentChoreRankings(houseId, now);
 
-  const view = views.choresRankView2(direction, choreRankings);
+  const view = views.choresRankView2(action, targetChore, choreRankings);
   await ack({ response_action: 'push', view });
 });
 
@@ -343,19 +346,13 @@ app.view('chores-rank-3', async ({ ack, body }) => {
   const actionName = 'chores-rank-3';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
-  const direction = body.view.private_metadata;
-  const targetChore = JSON.parse(common.getInputBlock(body, -3).chores.selected_option.value);
-  const sourceChores = common.getInputBlock(body, -2).chores.selected_options
+  const { targetChore } = JSON.parse(body.view.private_metadata);
+  const preference = Number(common.getInputBlock(body, -2).preference.selected_option.value);
+  const sourceChores = common.getInputBlock(body, -1).chores.selected_options
     .map(option => JSON.parse(option.value));
 
-  const { strength } = JSON.parse(common.getInputBlock(body, -1).strength.selected_option.value);
-  const preference = (direction === 'faster') ? strength : 1 - strength;
-
-  const sourceChoreIds = sourceChores.map(sc => sc.id);
-  const packedPrefs = JSON.stringify({ targetChore, sourceChoreIds, preference });
-
-  const newPrefs = sourceChoreIds.map((scId) => {
-    return { targetChoreId: targetChore.id, sourceChoreId: scId, preference };
+  const newPrefs = sourceChores.map((sc) => {
+    return { targetChoreId: targetChore.id, sourceChoreId: sc.id, preference };
   });
 
   // Get the new ranking
@@ -363,7 +360,11 @@ app.view('chores-rank-3', async ({ ack, body }) => {
   const proposedRankings = await Chores.getProposedChoreRankings(houseId, filteredPrefs, now);
   const targetChoreRanking = proposedRankings.find(chore => chore.id === targetChore.id);
 
-  const view = views.choresRankView3(targetChore, targetChoreRanking, packedPrefs);
+  // Forward the preferences through metadata
+  const sourceChoreIds = sourceChores.map(sc => sc.id);
+  const prefsMetadata = JSON.stringify({ targetChore, sourceChoreIds, preference });
+
+  const view = views.choresRankView3(targetChore, targetChoreRanking, prefsMetadata);
   await ack({ response_action: 'push', view });
 });
 
@@ -371,7 +372,6 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   const actionName = 'chores-rank-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
-  // Unpack the prefs here
   const { targetChore, sourceChoreIds, preference } = JSON.parse(body.view.private_metadata);
 
   const newPrefs = sourceChoreIds.map((scId) => {

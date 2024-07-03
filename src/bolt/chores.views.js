@@ -289,16 +289,16 @@ exports.choresClaimCallbackView = function (claim, choreName, minVotes, achiveme
   return blocks;
 };
 
-exports.choresRankView = function () {
+exports.choresRankView = function (choreRankings) {
   const header = 'Set chore priorities';
   const mainText = 'If you feel a chore should be worth more (or less), you can change it\'s *priority*. ' +
     'The higher priority a chore is, the more points it will be worth over time.\n\n' +
     'Priority-setting is a *cumulative, collaborative, and ongoing* process, ' +
     'where every input makes a difference, and anyone can make small (or large) changes at any time.';
 
-  const directions = [
-    { value: 'faster', text: common.blockPlaintext('Prioritize a chore (more points over time)') },
-    { value: 'slower', text: common.blockPlaintext('Deprioritize a chore (less points over time)') },
+  const actions = [
+    { value: 'prioritize', text: common.blockPlaintext('prioritize (more points over time)') },
+    { value: 'deprioritize', text: common.blockPlaintext('deprioritize (less points over time)') },
   ];
 
   const blocks = [];
@@ -306,15 +306,23 @@ exports.choresRankView = function () {
   blocks.push(common.blockSection(mainText));
   blocks.push(common.blockDivider());
   blocks.push(common.blockInput(
-    'Choose an action',
+    'I want to',
     {
-      action_id: 'direction',
+      action_id: 'action',
       type: 'static_select',
-      initial_option: directions[0],
-      options: directions,
+      initial_option: actions[0],
+      options: actions,
     },
   ));
-
+  blocks.push(common.blockInput(
+    'the following chore:',
+    {
+      action_id: 'chore',
+      type: 'static_select',
+      placeholder: common.blockPlaintext('Choose a chore'),
+      options: mapChoreRankings(choreRankings),
+    },
+  ));
   return {
     type: 'modal',
     callback_id: 'chores-rank-2',
@@ -325,18 +333,11 @@ exports.choresRankView = function () {
   };
 };
 
-exports.choresRankView2 = function (direction, choreRankings) {
-  const mappedChoreRankings = choreRankings.map((chore) => {
-    const priority = Math.round(chore.ranking * 1000);
-    return {
-      value: JSON.stringify({ id: chore.id, name: chore.name, priority }),
-      text: common.blockPlaintext(`${chore.name} - ${priority} ppt`),
-    };
-  });
-
+exports.choresRankView2 = function (action, targetChore, choreRankings) {
+  const prioritize = action === 'prioritize';
   const preferenceOptions = [
-    { value: JSON.stringify({ strength: 0.7 }), text: common.blockPlaintext('Mild (70%)') },
-    { value: JSON.stringify({ strength: 1.0 }), text: common.blockPlaintext('Strong (100%)') },
+    { value: String((prioritize) ? 0.7 : 1 - 0.7), text: common.blockPlaintext('a little') },
+    { value: String((prioritize) ? 1.0 : 1 - 1.0), text: common.blockPlaintext('a lot') },
   ];
 
   const header = 'Set chore priorities';
@@ -346,62 +347,39 @@ exports.choresRankView2 = function (direction, choreRankings) {
     'You can think of updating as "taking" priority from some chores and giving it to others. ' +
     '*Example:* "I want to _prioritize_ dishes and _deprioritize_ yardwork."\n\n' +
     '*Some things to keep in mind:*\n\n' +
-    '*1.* Taking from *more chores* has a bigger effect.\n' +
+    '*1.* A *strong preference* has a bigger effect.\n' +
     '*2.* Taking from *high-priority chores* has a bigger effect.\n' +
-    '*3.* A *strong preference* has a bigger effect.\n' +
+    '*3.* Taking from *more chores* has a bigger effect.\n' +
     '*4.* *More participants* have a bigger effect.\n\n' +
     'It\'s more involved than just "subtracting" ppt, but not by much.';
-
-  const textA = direction === 'faster'
-    ? 'Chore to prioritize'
-    : 'Chore to deprioritize';
-  const textB = direction === 'faster'
-    ? 'Chores to deprioritize'
-    : 'Chores to prioritize';
-
-  const subTextA = direction === 'faster'
-    ? 'Choose a chore to be worth more over time'
-    : 'Choose a chore to be worth less over time';
-  const subTextB = direction === 'faster'
-    ? 'Choose some chores to be worth less over time'
-    : 'Choose some chores to be worth more over time';
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
   blocks.push(common.blockDivider());
   blocks.push(common.blockInput(
-    textA,
+    `I want to ${action} ${targetChore.name}`,
     {
-      action_id: 'chores',
-      type: 'static_select',
-      placeholder: common.blockPlaintext(subTextA),
-      options: mappedChoreRankings,
-    },
-  ));
-  blocks.push(common.blockInput(
-    textB,
-    {
-      action_id: 'chores',
-      type: 'multi_static_select',
-      placeholder: common.blockPlaintext(subTextB),
-      options: mappedChoreRankings,
-    },
-  ));
-  blocks.push(common.blockInput(
-    'Preference strength',
-    {
-      action_id: 'strength',
+      action_id: 'preference',
       type: 'static_select',
       initial_option: preferenceOptions[0],
       options: preferenceOptions,
+    },
+  ));
+  blocks.push(common.blockInput(
+    `by ${(prioritize) ? 'deprioritizing' : 'prioritizing'}`,
+    {
+      action_id: 'chores',
+      type: 'multi_static_select',
+      placeholder: common.blockPlaintext('Choose some chores'),
+      options: mapChoreRankings(choreRankings),
     },
   ));
 
   return {
     type: 'modal',
     callback_id: 'chores-rank-3',
-    private_metadata: direction,
+    private_metadata: JSON.stringify({ targetChore }),
     title: TITLE,
     close: common.BACK,
     submit: common.NEXT,
@@ -409,15 +387,15 @@ exports.choresRankView2 = function (direction, choreRankings) {
   };
 };
 
-exports.choresRankView3 = function (targetChore, targetChoreRanking, packedPrefs) {
+exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetadata) {
   const newPriority = Math.round(targetChoreRanking.ranking * 1000);
   const change = newPriority - targetChore.priority;
 
   const header = 'Set chore priorities';
   const mainText = (change !== 0)
-    ? 'After submitting your update, ' +
+    ? 'After your update, ' +
       `*${targetChore.name}* will have a priority of *${newPriority} ppt*, ` +
-      `${change >= 0 ? 'an increase' : 'a decrease'} of *${Math.abs(change)}*.\n\n` +
+      `${change >= 0 ? 'an *increase*' : 'a *decrease*'} of *${Math.abs(change)} ppt*.\n\n` +
       '*Submit* to confirm, or go *back* to change your update.'
     : 'These are your current preferences, so this update will have *no effect*.\n\n' +
       'For additional effect, *choose more or different chores* or a *stronger preference*. ' +
@@ -430,7 +408,7 @@ exports.choresRankView3 = function (targetChore, targetChoreRanking, packedPrefs
   return {
     type: 'modal',
     callback_id: 'chores-rank-callback',
-    private_metadata: packedPrefs,
+    private_metadata: prefsMetadata,
     title: TITLE,
     close: common.BACK,
     submit: common.SUBMIT,
@@ -703,3 +681,15 @@ exports.choresProposeCallbackView = function (metadata, proposal, minVotes) {
   blocks.push(common.blockActions(common.makeVoteButtons(proposal.pollId, 1, 0)));
   return blocks;
 };
+
+// Internal
+
+function mapChoreRankings (choreRankings) {
+  return choreRankings.map((chore) => {
+    const priority = Math.round(chore.ranking * 1000);
+    return {
+      value: JSON.stringify({ id: chore.id, name: chore.name, priority }),
+      text: common.blockPlaintext(`${chore.name} - ${priority} ppt`),
+    };
+  });
+}
