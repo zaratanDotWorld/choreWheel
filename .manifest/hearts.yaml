@@ -35,6 +35,7 @@ settings:
     request_url: https://hearts.mirror.zaratan.world/slack/events
     bot_events:
       - app_home_opened
+      - app_uninstalled
       - message.channels
       - message.groups
       - user_change

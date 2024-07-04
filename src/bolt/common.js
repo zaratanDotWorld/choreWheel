@@ -148,6 +148,13 @@ exports.getMessage = async function (app, oauth, channelId, ts) {
 
 // Internal tools
 
+exports.uninstallApp = async function (app, appName, context) {
+  console.log(`${appName} app_uninstalled - ${context.teamId}`);
+
+  const { installationStore } = app.receiver.installer;
+  await installationStore.deleteInstallation(context);
+};
+
 exports.setChannel = async function (app, oauth, confName, command) {
   if (!(await exports.isAdmin(app, oauth, command))) {
     await exports.replyAdminOnly(app, oauth, command);

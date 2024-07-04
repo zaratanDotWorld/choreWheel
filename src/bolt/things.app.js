@@ -43,7 +43,7 @@ const app = new App({
       return thingsConf;
     },
     deleteInstallation: async (installQuery) => {
-      await Admin.updateHouseConf(installQuery.teamId, THINGS_CONF, { oauth: null });
+      await Admin.updateHouseConf(installQuery.teamId, THINGS_CONF, { oauth: null, channel: null });
       console.log(`things uninstalled @ ${installQuery.teamId}`);
     },
   },
@@ -65,6 +65,10 @@ async function replyEphemeral (command, text) {
 }
 
 // Event listeners
+
+app.event('app_uninstalled', async ({ context }) => {
+  await common.uninstallApp(app, 'things', context);
+});
 
 app.event('user_change', async ({ payload }) => {
   const { user } = payload;

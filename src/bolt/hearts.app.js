@@ -45,7 +45,7 @@ const app = new App({
       return heartsConf.oauth;
     },
     deleteInstallation: async (installQuery) => {
-      await Admin.updateHouseConf(installQuery.teamId, HEARTS_CONF, { oauth: null });
+      await Admin.updateHouseConf(installQuery.teamId, HEARTS_CONF, { oauth: null, channel: null });
       console.log(`hearts uninstalled @ ${installQuery.teamId}`);
     },
   },
@@ -63,6 +63,10 @@ async function postEphemeral (residentId, text) {
 }
 
 // Event listeners
+
+app.event('app_uninstalled', async ({ context }) => {
+  await common.uninstallApp(app, 'hearts', context);
+});
 
 app.event('user_change', async ({ payload }) => {
   const { user } = payload;
@@ -161,27 +165,29 @@ app.event('app_home_opened', async ({ body, event }) => {
 // Slash commands
 
 app.command('/hearts-sync', async ({ ack, command }) => {
+  await ack();
+
   const commandName = '/hearts-sync';
   common.beginCommand(commandName, command);
 
   await common.syncWorkspace(app, heartsConf.oauth, command, true, true);
-
-  await ack();
 });
 
 app.command('/hearts-channel', async ({ ack, command }) => {
+  await ack();
+
   const commandName = '/hearts-channel';
   common.beginCommand(commandName, command);
 
   await common.setChannel(app, heartsConf.oauth, HEARTS_CONF, command);
   await common.syncWorkspace(app, heartsConf.oauth, command, true, true);
-
-  await ack();
 });
 
 // Challenge flow
 
 app.action('hearts-challenge', async ({ ack, body }) => {
+  await ack();
+
   const actionName = 'hearts-challenge';
   const { now, houseId } = common.beginAction(actionName, body);
 
@@ -189,11 +195,11 @@ app.action('hearts-challenge', async ({ ack, body }) => {
 
   const view = views.heartsChallengeView(votingResidents.length);
   await common.openView(app, heartsConf.oauth, body.trigger_id, view);
-
-  await ack();
 });
 
 app.view('hearts-challenge-callback', async ({ ack, body }) => {
+  await ack();
+
   const actionName = 'hearts-challenge-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -221,13 +227,13 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
     const { channel, ts } = await postMessage(text, blocks);
     await Polls.updateMetadata(challenge.pollId, { channel, ts });
   }
-
-  await ack();
 });
 
 // Board flow
 
 app.action('hearts-board', async ({ ack, body }) => {
+  await ack();
+
   const actionName = 'hearts-board';
   const { now, houseId } = common.beginAction(actionName, body);
 
@@ -235,19 +241,17 @@ app.action('hearts-board', async ({ ack, body }) => {
 
   const view = views.heartsBoardView(hearts);
   await common.openView(app, heartsConf.oauth, body.trigger_id, view);
-
-  await ack();
 });
 
 // Voting flow
 
 app.action(/poll-vote/, async ({ ack, body, action }) => {
+  await ack();
+
   const actionName = 'hearts poll-vote';
   common.beginAction(actionName, body);
 
   await common.updateVoteCounts(app, heartsConf.oauth, body, action);
-
-  await ack();
 });
 
 // Launch the app

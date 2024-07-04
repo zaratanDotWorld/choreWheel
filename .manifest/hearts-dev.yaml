@@ -35,6 +35,7 @@ settings:
     request_url: https://zaratan.ngrok.io/slack/events
     bot_events:
       - app_home_opened
+      - app_uninstalled
       - message.channels
       - message.groups
       - user_change

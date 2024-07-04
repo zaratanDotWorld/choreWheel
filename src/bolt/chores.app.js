@@ -44,7 +44,7 @@ const app = new App({
       return choresConf.oauth;
     },
     deleteInstallation: async (installQuery) => {
-      await Admin.updateHouseConf(installQuery.teamId, CHORES_CONF, { oauth: null });
+      await Admin.updateHouseConf(installQuery.teamId, CHORES_CONF, { oauth: null, channel: null });
       console.log(`chores uninstalled @ ${installQuery.teamId}`);
     },
   },
@@ -62,6 +62,10 @@ async function postEphemeral (residentId, text) {
 }
 
 // Event listeners
+
+app.event('app_uninstalled', async ({ context }) => {
+  await common.uninstallApp(app, 'chores', context);
+});
 
 app.event('user_change', async ({ payload }) => {
   const { user } = payload;
