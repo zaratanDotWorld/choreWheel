@@ -207,13 +207,6 @@ exports.choresResetView = function () {
 // Main actions
 
 exports.choresClaimView = function (chores) {
-  const mappedChores = chores.map((c) => {
-    return {
-      value: JSON.stringify({ choreId: c.id }),
-      text: common.blockPlaintext(`${c.name} - ${c.value.toFixed(0)} points`),
-    };
-  });
-
   const header = 'Claim a chore';
   const mainText = 'Claims are verified by the house. ' +
     'Large claims (*10+ points*) require at least *2 upvotes*, including yours. ' +
@@ -229,7 +222,7 @@ exports.choresClaimView = function (chores) {
       action_id: 'chore',
       type: 'static_select',
       placeholder: common.blockPlaintext('Choose a chore'),
-      options: mappedChores,
+      options: mapChoresValues(chores),
     },
   ));
 
@@ -532,22 +525,26 @@ exports.choresProposeView = function (minVotes) {
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
-  blocks.push(common.blockActions([
+  blocks.push(common.blockDivider());
+  blocks.push(common.blockInput(
+    'What change would you like to make?',
     {
       type: 'radio_buttons',
-      action_id: 'chores-propose-2',
+      action_id: 'change',
       options: [
         { value: 'add', text: common.blockMarkdown('*Add* a new chore') },
         { value: 'edit', text: common.blockMarkdown('*Change* an existing chore') },
         { value: 'delete', text: common.blockMarkdown('*Remove* an existing chore') },
       ],
     },
-  ]));
+  ));
 
   return {
     type: 'modal',
+    callback_id: 'chores-propose-2',
     title: TITLE,
     close: common.CLOSE,
+    submit: common.NEXT,
     blocks,
   };
 };
@@ -559,24 +556,23 @@ exports.choresProposeEditView = function (chores) {
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
-  blocks.push(common.blockActions([
+  blocks.push(common.blockDivider());
+  blocks.push(common.blockInput(
+    'Choose a chore to edit',
     {
       type: 'static_select',
-      action_id: 'chores-propose-edit',
+      action_id: 'chore',
       placeholder: common.blockPlaintext('Choose a chore'),
-      options: chores.map((chore) => {
-        return {
-          value: JSON.stringify({ id: chore.id }),
-          text: common.blockPlaintext(chore.name),
-        };
-      }),
+      options: mapChores(chores),
     },
-  ]));
+  ));
 
   return {
     type: 'modal',
+    callback_id: 'chores-propose-edit',
     title: TITLE,
-    close: common.CLOSE,
+    close: common.BACK,
+    submit: common.NEXT,
     blocks,
   };
 };
@@ -597,6 +593,7 @@ exports.choresProposeAddView = function (chore) {
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockDivider());
   blocks.push(common.blockInput(
     'Name',
     {
@@ -622,20 +619,20 @@ exports.choresProposeAddView = function (chore) {
     callback_id: 'chores-propose-callback',
     private_metadata: metadata,
     title: TITLE,
-    close: common.CLOSE,
+    close: common.BACK,
     submit: common.SUBMIT,
     blocks,
   };
 };
 
 exports.choresProposeDeleteView = function (chores) {
-  const metadata = JSON.stringify({ change: 'delete' });
   const header = 'Edit chores list';
   const mainText = 'Remove an existing chore.';
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockDivider());
   blocks.push(common.blockInput(
     'Chore to remove',
     {
@@ -654,9 +651,9 @@ exports.choresProposeDeleteView = function (chores) {
   return {
     type: 'modal',
     callback_id: 'chores-propose-callback',
-    private_metadata: metadata,
+    private_metadata: JSON.stringify({ change: 'delete' }),
     title: TITLE,
-    close: common.CLOSE,
+    close: common.BACK,
     submit: common.SUBMIT,
     blocks,
   };
@@ -690,6 +687,24 @@ exports.choresProposeCallbackView = function (metadata, proposal, minVotes) {
 };
 
 // Internal
+
+function mapChores (chores) {
+  return chores.map((chore) => {
+    return {
+      value: JSON.stringify({ id: chore.id }),
+      text: common.blockPlaintext(chore.name),
+    };
+  });
+}
+
+function mapChoresValues (chores) {
+  return chores.map((chore) => {
+    return {
+      value: JSON.stringify({ id: chore.id }),
+      text: common.blockPlaintext(`${chore.name} - ${chore.value.toFixed(0)} points`),
+    };
+  });
+}
 
 function mapChoreRankings (choreRankings) {
   return choreRankings.map((chore) => {

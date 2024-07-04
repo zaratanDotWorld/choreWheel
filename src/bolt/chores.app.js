@@ -273,7 +273,7 @@ app.view('chores-claim-2', async ({ ack, body }) => {
   const actionName = 'chores-claim-2';
   common.beginAction(actionName, body);
 
-  const { choreId } = JSON.parse(common.getInputBlock(body, -1).chore.selected_option.value);
+  const { id: choreId } = JSON.parse(common.getInputBlock(body, -1).chore.selected_option.value);
   const chore = await Chores.getChore(choreId);
 
   const view = views.choresClaimView2(chore);
@@ -490,11 +490,11 @@ app.action('chores-propose', async ({ ack, body }) => {
   await ack();
 });
 
-app.action('chores-propose-2', async ({ ack, body }) => {
+app.view('chores-propose-2', async ({ ack, body }) => {
   const actionName = 'chores-propose-2';
   const { houseId } = common.beginAction(actionName, body);
 
-  const change = body.actions[0].selected_option.value;
+  const change = common.getInputBlock(body, -1).change.selected_option.value;
 
   let chores, view;
   switch (change) {
@@ -514,22 +514,18 @@ app.action('chores-propose-2', async ({ ack, body }) => {
       return;
   }
 
-  await common.pushView(app, choresConf.oauth, body.trigger_id, view);
-
-  await ack();
+  await ack({ response_action: 'push', view });
 });
 
-app.action('chores-propose-edit', async ({ ack, body }) => {
+app.view('chores-propose-edit', async ({ ack, body }) => {
   const actionName = 'chores-propose-edit';
   common.beginAction(actionName, body);
 
-  const { id: choreId } = JSON.parse(body.actions[0].selected_option.value);
+  const { id: choreId } = JSON.parse(common.getInputBlock(body, -1).chore.selected_option.value);
   const chore = await Chores.getChore(choreId);
 
-  const blocks = views.choresProposeAddView(chore);
-  await common.pushView(app, choresConf.oauth, body.trigger_id, blocks);
-
-  await ack();
+  const view = views.choresProposeAddView(chore);
+  await ack({ response_action: 'push', view });
 });
 
 app.view('chores-propose-callback', async ({ ack, body }) => {
