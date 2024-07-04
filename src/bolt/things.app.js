@@ -206,17 +206,15 @@ app.command('/things-update', async ({ ack, command }) => {
   await ack();
 });
 
-app.action('things-propose-edit-admin', async ({ ack, body }) => {
+app.view('things-propose-edit-admin', async ({ ack, body }) => {
   const actionName = 'things-update-2';
   common.beginAction(actionName, body);
 
-  const { id: thingId } = JSON.parse(body.actions[0].selected_option.value);
+  const { id: thingId } = JSON.parse(common.getInputBlock(body, -1).thing.selected_option.value);
   const thing = await Things.getThing(thingId);
 
-  const blocks = views.thingsProposeAddView(thing, '-admin');
-  await common.pushView(app, thingsConf.oauth, body.trigger_id, blocks);
-
-  await ack();
+  const view = views.thingsProposeAddView(thing, '-admin');
+  await ack({ response_action: 'push', view });
 });
 
 app.view('things-propose-callback-admin', async ({ ack, body }) => {
@@ -342,11 +340,11 @@ app.action('things-propose', async ({ ack, body }) => {
   await ack();
 });
 
-app.action('things-propose-2', async ({ ack, body }) => {
+app.view('things-propose-2', async ({ ack, body }) => {
   const actionName = 'things-propose-2';
   const { houseId } = common.beginAction(actionName, body);
 
-  const change = body.actions[0].selected_option.value;
+  const change = common.getInputBlock(body, -1).change.selected_option.value;
 
   let things, view;
   switch (change) {
@@ -366,22 +364,18 @@ app.action('things-propose-2', async ({ ack, body }) => {
       return;
   }
 
-  await common.pushView(app, thingsConf.oauth, body.trigger_id, view);
-
-  await ack();
+  await ack({ response_action: 'push', view });
 });
 
-app.action('things-propose-edit', async ({ ack, body }) => {
+app.view('things-propose-edit', async ({ ack, body }) => {
   const actionName = 'things-propose-edit';
   common.beginAction(actionName, body);
 
-  const { id: thingId } = JSON.parse(body.actions[0].selected_option.value);
+  const { id: thingId } = JSON.parse(common.getInputBlock(body, -1).thing.selected_option.value);
   const thing = await Things.getThing(thingId);
 
-  const blocks = views.thingsProposeAddView(thing);
-  await common.pushView(app, thingsConf.oauth, body.trigger_id, blocks);
-
-  await ack();
+  const view = views.thingsProposeAddView(thing);
+  await ack({ response_action: 'push', view });
 });
 
 app.view('things-propose-callback', async ({ ack, body }) => {

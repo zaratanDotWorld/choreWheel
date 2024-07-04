@@ -397,22 +397,26 @@ exports.thingsProposeView = function (minVotes) {
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
-  blocks.push(common.blockActions([
+  blocks.push(common.blockDivider());
+  blocks.push(common.blockInput(
+    'What change would you like to make?',
     {
       type: 'radio_buttons',
-      action_id: 'things-propose-2',
+      action_id: 'change',
       options: [
         { value: 'add', text: common.blockMarkdown('*Add* a new thing') },
         { value: 'edit', text: common.blockMarkdown('*Change* an existing thing') },
         { value: 'delete', text: common.blockMarkdown('*Remove* an existing thing') },
       ],
     },
-  ]));
+  ));
 
   return {
     type: 'modal',
+    callback_id: 'things-propose-2',
     title: TITLE,
     close: common.CLOSE,
+    submit: common.NEXT,
     blocks,
   };
 };
@@ -424,24 +428,23 @@ exports.thingsProposeEditView = function (things, branch = '') {
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
-  blocks.push(common.blockActions([
+  blocks.push(common.blockDivider());
+  blocks.push(common.blockInput(
+    'Choose a thing to edit',
     {
       type: 'static_select',
-      action_id: `things-propose-edit${branch}`,
+      action_id: 'thing',
       placeholder: common.blockPlaintext('Choose a thing'),
-      options: things.map((thing) => {
-        return {
-          value: JSON.stringify({ id: thing.id }),
-          text: common.blockPlaintext(exports.formatTypedThing(thing)),
-        };
-      }),
+      options: mapThings(things),
     },
-  ]));
+  ));
 
   return {
     type: 'modal',
+    callback_id: `things-propose-edit${branch}`,
     title: TITLE,
-    close: common.CLOSE,
+    close: common.BACK,
+    submit: common.NEXT,
     blocks,
   };
 };
@@ -462,6 +465,7 @@ exports.thingsProposeAddView = function (thing, branch = '') {
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockDivider());
   blocks.push(common.blockInput(
     'Category',
     {
@@ -515,14 +519,13 @@ exports.thingsProposeAddView = function (thing, branch = '') {
     callback_id: `things-propose-callback${branch}`,
     private_metadata: metadata,
     title: TITLE,
-    close: common.CLOSE,
+    close: common.BACK,
     submit: common.SUBMIT,
     blocks,
   };
 };
 
 exports.thingsProposeDeleteView = function (things) {
-  const metadata = JSON.stringify({ change: 'delete' });
   const header = 'Edit things list';
   const mainText = 'Remove an existing thing.';
 
@@ -535,21 +538,16 @@ exports.thingsProposeDeleteView = function (things) {
       action_id: 'thing',
       type: 'static_select',
       placeholder: common.blockPlaintext('Choose a thing'),
-      options: things.map((thing) => {
-        return {
-          value: JSON.stringify({ id: thing.id, type: thing.type, name: thing.name }),
-          text: common.blockPlaintext(exports.formatTypedThing(thing)),
-        };
-      }),
+      options: mapThings(things),
     },
   ));
 
   return {
     type: 'modal',
     callback_id: 'things-propose-callback',
-    private_metadata: metadata,
+    private_metadata: JSON.stringify({ change: 'delete' }),
     title: TITLE,
-    close: common.CLOSE,
+    close: common.BACK,
     submit: common.SUBMIT,
     blocks,
   };
@@ -585,3 +583,14 @@ exports.thingsProposeCallbackView = function (metadata, proposal, minVotes) {
   blocks.push(common.blockActions(common.makeVoteButtons(proposal.pollId, 1, 0)));
   return blocks;
 };
+
+// Internal
+
+function mapThings (things) {
+  return things.map((thing) => {
+    return {
+      value: JSON.stringify({ id: thing.id, type: thing.type, name: thing.name }),
+      text: common.blockPlaintext(exports.formatTypedThing(thing)),
+    };
+  });
+}
