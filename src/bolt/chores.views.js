@@ -207,6 +207,13 @@ exports.choresResetView = function () {
 // Main actions
 
 exports.choresClaimView = function (chores) {
+  const mappedChores = chores.map((c) => {
+    return {
+      value: JSON.stringify({ choreId: c.id }),
+      text: common.blockPlaintext(`${c.name} - ${c.value.toFixed(0)} points`),
+    };
+  });
+
   const header = 'Claim a chore';
   const mainText = 'Claims are verified by the house. ' +
     'Large claims (*10+ points*) require at least *2 upvotes*, including yours. ' +
@@ -215,31 +222,28 @@ exports.choresClaimView = function (chores) {
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
-  blocks.push(common.blockSection('*Chore to claim*'));
-  blocks.push(common.blockActions([
+  blocks.push(common.blockDivider());
+  blocks.push(common.blockInput(
+    'Chore to claim',
     {
+      action_id: 'chore',
       type: 'static_select',
-      action_id: 'chores-claim-2',
       placeholder: common.blockPlaintext('Choose a chore'),
-      options: chores.map((chore) => {
-        return {
-          value: JSON.stringify({ id: chore.id }),
-          text: common.blockPlaintext(`${chore.name} - ${chore.value.toFixed(0)} points`),
-        };
-      }),
+      options: mappedChores,
     },
-  ]));
+  ));
 
   return {
     type: 'modal',
+    callback_id: 'chores-claim-2',
     title: TITLE,
     close: common.CLOSE,
+    submit: common.NEXT,
     blocks,
   };
 };
 
 exports.choresClaimView2 = function (chore) {
-  const metadata = JSON.stringify({ id: chore.id, name: chore.name });
   const header = 'Claim a chore';
 
   const blocks = [];
@@ -250,9 +254,9 @@ exports.choresClaimView2 = function (chore) {
   return {
     type: 'modal',
     callback_id: 'chores-claim-callback',
-    private_metadata: metadata,
+    private_metadata: JSON.stringify(chore),
     title: TITLE,
-    close: common.CLOSE,
+    close: common.BACK,
     submit: common.SUBMIT,
     blocks,
   };

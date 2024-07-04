@@ -269,17 +269,15 @@ app.action('chores-claim', async ({ ack, body }) => {
   await ack();
 });
 
-app.action('chores-claim-2', async ({ ack, body }) => {
+app.view('chores-claim-2', async ({ ack, body }) => {
   const actionName = 'chores-claim-2';
   common.beginAction(actionName, body);
 
-  const { id: choreId } = JSON.parse(body.actions[0].selected_option.value);
+  const { choreId } = JSON.parse(common.getInputBlock(body, -1).chore.selected_option.value);
   const chore = await Chores.getChore(choreId);
 
   const view = views.choresClaimView2(chore);
-  await common.pushView(app, choresConf.oauth, body.trigger_id, view);
-
-  await ack();
+  await ack({ response_action: 'push', view });
 });
 
 app.view('chores-claim-callback', async ({ ack, body }) => {
