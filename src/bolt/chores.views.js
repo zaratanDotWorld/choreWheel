@@ -1,4 +1,11 @@
-const { pointsPerResident, achievementBase, choresPollLength, choresProposalPollLength, penaltyIncrement } = require('../config');
+const {
+  pointsPerResident,
+  achievementBase,
+  choresPollLength,
+  choresProposalPollLength,
+  penaltyIncrement,
+  pointsBuffer,
+} = require('../config');
 
 const common = require('./common');
 
@@ -80,7 +87,7 @@ exports.choresHomeView = function (choreStats, numActive, exempt) {
 
   const actions = [];
   if (!exempt) {
-    if (Number(pointsEarned) < Number(pointsOwed)) {
+    if (Number(pointsEarned) < Number(pointsOwed) + pointsBuffer) {
       actions.push(common.blockButton('chores-claim', 'Claim a chore'));
     }
     actions.push(common.blockButton('chores-break', 'Take a break'));
