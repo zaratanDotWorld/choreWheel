@@ -51,7 +51,7 @@ const app = new App({
   installerOptions: { directInstall: true },
 });
 
-// Define publishing functions
+// Define helper functions
 
 async function postMessage (text, blocks) {
   return common.postMessage(app, choresConf.oauth, choresConf.channel, text, blocks);
@@ -61,6 +61,11 @@ async function postEphemeral (residentId, text) {
   return common.postEphemeral(app, choresConf.oauth, choresConf.channel, residentId, text);
 }
 
+async function houseActive (houseId, now) {
+  const windowStart = new Date(now.getTime() - 30 * DAY);
+  return Admin.houseActive(houseId, 'ChoreClaim', 'claimedAt', windowStart, now);
+}
+
 // Event listeners
 
 app.event('app_uninstalled', async ({ context }) => {
@@ -68,11 +73,15 @@ app.event('app_uninstalled', async ({ context }) => {
 });
 
 app.event('user_change', async ({ payload }) => {
+  const now = new Date();
   const { user } = payload;
+
+  if (!(await houseActive(user.team_id, now))) { return; }
+
   console.log(`chores user_change - ${user.team_id} x ${user.id}`);
 
   await sleep(0 * 1000);
-  await common.syncWorkspaceMember(user.team_id, user, new Date());
+  await common.syncWorkspaceMember(user.team_id, user, now);
 });
 
 // Publish the app home

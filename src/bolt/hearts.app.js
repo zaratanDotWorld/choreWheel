@@ -7,7 +7,7 @@ if (process.env.NODE_ENV === 'production') {
 const { App, LogLevel } = require('@slack/bolt');
 
 const { Admin, Polls, Hearts } = require('../core/index');
-const { YAY, HEARTS_CONF } = require('../constants');
+const { YAY, DAY, HEARTS_CONF } = require('../constants');
 const { sleep } = require('../utils');
 
 const common = require('./common');
@@ -52,7 +52,7 @@ const app = new App({
   installerOptions: { directInstall: true },
 });
 
-// Define publishing functions
+// Define helper functions
 
 async function postMessage (text, blocks) {
   return common.postMessage(app, heartsConf.oauth, heartsConf.channel, text, blocks);
@@ -62,6 +62,11 @@ async function postEphemeral (residentId, text) {
   return common.postEphemeral(app, heartsConf.oauth, heartsConf.channel, residentId, text);
 }
 
+async function houseActive (houseId, now) {
+  const windowStart = new Date(now.getTime() - 30 * DAY);
+  return Admin.houseActive(houseId, 'Heart', 'generatedAt', windowStart, now);
+}
+
 // Event listeners
 
 app.event('app_uninstalled', async ({ context }) => {
@@ -69,7 +74,11 @@ app.event('app_uninstalled', async ({ context }) => {
 });
 
 app.event('user_change', async ({ payload }) => {
+  const now = new Date();
   const { user } = payload;
+
+  if (!(await houseActive(user.team_id, now))) { return; }
+
   console.log(`hearts user_change - ${user.team_id} x ${user.id}`);
 
   await sleep(1 * 1000);
