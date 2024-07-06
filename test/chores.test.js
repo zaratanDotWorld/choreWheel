@@ -921,6 +921,23 @@ describe('Chores', async () => {
       choreStats = await Chores.getHouseChoreStats(HOUSE, feb1, feb22);
       expect(choreStats.find(cs => cs.residentId === RESIDENT3).pointsEarned).to.be.almost(ppc * 0.25, 1e-5);
     });
+
+    it('can check if a house is active using claims', async () => {
+      const nextWeek = new Date(now.getTime() + 7 * DAY);
+
+      await db('ChoreValue').insert([
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 },
+      ]);
+
+      await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now);
+
+      let active;
+      active = await Admin.houseActive(HOUSE, 'ChoreClaim', 'claimedAt', now, tomorrow);
+      expect(active).to.be.true;
+
+      active = await Admin.houseActive(HOUSE, 'ChoreClaim', 'claimedAt', tomorrow, nextWeek);
+      expect(active).to.be.false;
+    });
   });
 
   describe('managing chore breaks', async () => {

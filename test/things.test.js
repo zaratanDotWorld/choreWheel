@@ -25,6 +25,7 @@ describe('Things', async () => {
 
   let now;
   let soon;
+  let tomorrow;
   let challengeEnd;
   let challengeEndSpecial;
   let proposalEnd;
@@ -32,6 +33,7 @@ describe('Things', async () => {
   beforeEach(async () => {
     now = new Date();
     soon = new Date(now.getTime() + HOUR);
+    tomorrow = new Date(now.getTime() + DAY);
     challengeEnd = new Date(now.getTime() + thingsPollLength);
     challengeEndSpecial = new Date(now.getTime() + thingsSpecialPollLength);
     proposalEnd = new Date(now.getTime() + thingsProposalPollLength);
@@ -338,6 +340,20 @@ describe('Things', async () => {
       expect(fulfilledBuys.length).to.equal(2);
       expect(fulfilledBuys.find(buy => buy.name === RICE).value).to.equal(-20);
       expect(fulfilledBuys.find(buy => buy.name === SOAP).value).to.equal(-15);
+    });
+
+    it('can check if a house is active using buys', async () => {
+      const nextWeek = new Date(now.getTime() + 7 * DAY);
+
+      await Things.loadAccount(HOUSE, GENERAL, RESIDENT1, now, 100);
+      await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, GENERAL, 60, 1);
+
+      let active;
+      active = await Admin.houseActive(HOUSE, 'ThingBuy', 'boughtAt', now, tomorrow);
+      expect(active).to.be.true;
+
+      active = await Admin.houseActive(HOUSE, 'ThingBuy', 'boughtAt', tomorrow, nextWeek);
+      expect(active).to.be.false;
     });
   });
 

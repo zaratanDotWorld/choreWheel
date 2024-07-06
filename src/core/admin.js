@@ -26,6 +26,16 @@ exports.updateHouseConf = async function (slackId, confName, conf) {
     .returning('*');
 };
 
+exports.houseActive = async function (houseId, table, field, startTime, endTime) {
+  // TODO: use count(*) and handle BigInt correctly
+  const obj = await db(table)
+    .where({ houseId })
+    .whereBetween(field, [ startTime, endTime ])
+    .select('id');
+
+  return obj.length > 0;
+};
+
 // Residents
 
 exports.activateResident = async function (houseId, slackId, activeAt) {

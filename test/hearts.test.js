@@ -5,7 +5,7 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
 const { Hearts, Polls, Admin } = require('../src/core/index');
-const { NAY, YAY, HOUR, HEART_UNKNOWN, HEART_KARMA, HEART_CHALLENGE } = require('../src/constants');
+const { NAY, YAY, HOUR, DAY, HEART_UNKNOWN, HEART_KARMA, HEART_CHALLENGE } = require('../src/constants');
 const { heartsPollLength, heartsBaselineAmount, heartsMaxBase, karmaDelay } = require('../src/config');
 const { getNextMonthStart } = require('../src/utils');
 const testHelpers = require('./helpers');
@@ -21,6 +21,7 @@ describe('Hearts', async () => {
 
   let now;
   let soon;
+  let tomorrow;
   let challengeEnd;
   let nextMonth;
   let twoMonths;
@@ -28,6 +29,7 @@ describe('Hearts', async () => {
   beforeEach(async () => {
     now = new Date();
     soon = new Date(now.getTime() + HOUR);
+    tomorrow = new Date(now.getTime() + DAY);
     challengeEnd = new Date(now.getTime() + heartsPollLength);
     nextMonth = getNextMonthStart(now);
     twoMonths = getNextMonthStart(nextMonth);
@@ -127,6 +129,19 @@ describe('Hearts', async () => {
 
       hearts = await Hearts.getHearts(RESIDENT1, now);
       expect(hearts.sum).to.equal(0);
+    });
+
+    it('can check if a house is active using hearts', async () => {
+      const nextWeek = new Date(now.getTime() + 7 * DAY);
+
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 1);
+
+      let active;
+      active = await Admin.houseActive(HOUSE, 'Heart', 'generatedAt', now, tomorrow);
+      expect(active).to.be.true;
+
+      active = await Admin.houseActive(HOUSE, 'Heart', 'generatedAt', tomorrow, nextWeek);
+      expect(active).to.be.false;
     });
   });
 
