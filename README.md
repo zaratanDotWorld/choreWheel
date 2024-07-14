@@ -23,6 +23,6 @@ Chore Wheel draws influence from the work of Elinor Ostrom, and is designed in r
 7. Self-determination of the community recognized by higher-level authorities; and
 8. In the case of larger common-pool resources, organization in the form of multiple layers of nested enterprises, with small local CPRs at the base level.
 
-Read the **[design document](https://docs.google.com/document/d/e/2PACX-1vRjC4BDc7nNF6gFRvDQrgod4zC_O--xzX-EwG1H2MCMV7YjvskIzxXfcC695cryegrqR6GHZAC_Y1q7/pub)** for more details.
+Read the **[design document](https://kronosapiens.github.io/papers/mirror.pdf)** for more details.
 
 Patent Pending
