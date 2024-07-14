@@ -99,8 +99,8 @@ app.event('message', async ({ payload }) => {
     console.log(`hearts karma-message - ${payload.team} x ${payload.user}`);
     const [ now, houseId, giverId ] = [ new Date(), payload.team, payload.user ];
 
-    for (const receiverId of karmaRecipients) {
-      await Hearts.giveKarma(houseId, giverId, receiverId, now);
+    for (const recipientId of karmaRecipients) {
+      await Hearts.giveKarma(houseId, giverId, recipientId, now);
     }
 
     await common.addReaction(app, heartsConf.oauth, payload, 'sparkles');
@@ -236,6 +236,34 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
     const { channel, ts } = await postMessage(text, blocks);
     await Polls.updateMetadata(challenge.pollId, { channel, ts });
   }
+});
+
+// Karma flow
+
+app.action('hearts-karma', async ({ ack, body }) => {
+  await ack();
+
+  const actionName = 'hearts-karma';
+  common.beginAction(actionName, body);
+
+  const view = views.heartsKarmaView();
+  await common.openView(app, heartsConf.oauth, body.trigger_id, view);
+});
+
+app.view('hearts-karma-callback', async ({ ack, body }) => {
+  await ack();
+
+  const actionName = 'hearts-karma-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
+
+  const recipientId = common.getInputBlock(body, -2).recipient.selected_user;
+  const circumstance = common.getInputBlock(body, -1).circumstance.value;
+
+  await Hearts.giveKarma(houseId, residentId, recipientId, now);
+
+  const text = `<@${residentId}> just gave <@${recipientId}> ++ good karma :sparkles: \n` +
+    `_${circumstance}_`;
+  await postMessage(text);
 });
 
 // Board flow

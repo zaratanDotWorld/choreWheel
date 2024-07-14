@@ -53,20 +53,19 @@ _For more details on *Hearts* functionality, read the <${DOCS_URL}|manual>._
 exports.heartsHomeView = function (numHearts, maxHearts, exempt) {
   const header = 'Welcome to Hearts';
   const textA = `We use *<${DOCS_URL}|Hearts>* to keep each other accountable.\n\n` +
-    'Everyone starts with *5 hearts*.\n\n' +
+    'Everyone starts with *5 hearts*. ' +
     'We lose hearts when we fail to uphold our commitments, ' +
-    'and we regain hearts over time *(½ per month)* or by earning *karma* :sparkles:\n\n' +
-    'You give *karma* by adding ++ after someone\'s name, like this: *@Name ++*. ' +
-    'Every month people with the most karma get *bonus hearts* :open_mouth:';
+    'and we regain hearts *over time* or by earning *karma* :sparkles:';
   const textB = (exempt)
     ? '*You are exempt from hearts!* :balloon:'
     : `You have *${numHearts} / ${maxHearts}* hearts: ${exports.heartEmoji(numHearts)}`;
 
   const actions = [];
-  actions.push(common.blockButton('hearts-board', 'See current hearts'));
   if (!exempt) {
-    actions.push(common.blockButton('hearts-challenge', 'Resolve a dispute'));
+    actions.push(common.blockButton('hearts-karma', 'Give karma'));
+    actions.push(common.blockButton('hearts-challenge', 'Settle a dispute'));
   }
+  actions.push(common.blockButton('hearts-board', 'See hearts'));
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
@@ -81,6 +80,8 @@ exports.heartsHomeView = function (numHearts, maxHearts, exempt) {
     blocks,
   };
 };
+
+// Challenge flow
 
 exports.heartsChallengeView = function (numVotingResidents) {
   const initialQuorum = Math.ceil(numVotingResidents * heartsMinPctInitial);
@@ -156,9 +157,9 @@ exports.heartsChallengeCallbackView = function (challenge, minVotes, circumstanc
 
 exports.heartsBoardView = function (hearts) {
   const header = 'Current hearts';
-  const mainText = 'Everyone has a baseline of *five hearts*. ' +
+  const mainText = 'The baseline is *five hearts*. ' +
     'Anyone with *less* will regenerate at a rate of *½ per month*, ' +
-    'and anyone with *more* will fade away at *¼ per month*, ' +
+    'and anyone with *more* will fade at *¼ per month*, ' +
     'until they reach five.';
 
   const blocks = [];
@@ -174,6 +175,44 @@ exports.heartsBoardView = function (hearts) {
     type: 'modal',
     title: TITLE,
     close: common.CLOSE,
+    blocks,
+  };
+};
+
+// Karma flow
+
+exports.heartsKarmaView = function () {
+  const header = 'Give karma';
+  const mainText = 'You can give someone good karma for any reason. ' +
+    'Every month, the people with the most karma get bonus hearts. \n\n' +
+    '_You can also give karma by "++"\'ing someone in chat: *@Name ++*_\n\n ';
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockInput(
+    'Recipient',
+    {
+      action_id: 'recipient',
+      type: 'users_select',
+      placeholder: common.blockPlaintext('Choose a resident'),
+    },
+  ));
+  blocks.push(common.blockInput(
+    'Circumstance',
+    {
+      action_id: 'circumstance',
+      type: 'plain_text_input',
+      placeholder: common.blockPlaintext('Why are you giving them karma?'),
+    },
+  ));
+
+  return {
+    type: 'modal',
+    callback_id: 'hearts-karma-callback',
+    title: TITLE,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
     blocks,
   };
 };
