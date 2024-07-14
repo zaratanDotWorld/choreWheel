@@ -2,9 +2,12 @@
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/zaratanDotWorld/choreWheel/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/zaratanDotWorld/choreWheel/tree/master) [![Documentation Status](https://readthedocs.org/projects/mirror/badge/?version=latest)](https://docs.chorewheel.zaratan.world/en/latest/?badge=latest)
 
+### Papers:
+- [Structures and Cultures](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4856267) (June 2024)
+
 ### Talks:
-- [Slack-Bot Boarding House](https://docs.google.com/presentation/d/1qnnFlv15heegRqlcoAHb6svTdcjtRcC_vIw5qtlqAfw/edit?usp=sharing) (Metagov Seminar, March 2023)
 - [Chores: A 21st century chore wheel](https://docs.google.com/presentation/d/1PcS42tksxbKC1MZDEbaWkzOAkOH88mPbcCnf0RR5CM0/edit?usp=sharing) (Metagov Seminar, June 2023)
+- [Slack-Bot Boarding House](https://docs.google.com/presentation/d/1qnnFlv15heegRqlcoAHb6svTdcjtRcC_vIw5qtlqAfw/edit?usp=sharing) (Metagov Seminar, March 2023)
 
 ### Overview:
 
