@@ -752,9 +752,9 @@ describe('Chores', async () => {
       let penalty;
       const penaltyTime = new Date(getNextMonthStart(feb1).getTime() + penaltyDelay);
       penalty = await Chores.calculatePenalty(RESIDENT1, penaltyTime);
-      expect(penalty).to.equal(0);
+      expect(penalty).to.equal(-0.5);
       penalty = await Chores.calculatePenalty(RESIDENT2, penaltyTime);
-      expect(penalty).to.equal(0);
+      expect(penalty).to.equal(-0.5);
       penalty = await Chores.calculatePenalty(RESIDENT3, penaltyTime);
       expect(penalty).to.equal(0.5);
     });
@@ -794,7 +794,7 @@ describe('Chores', async () => {
       let penaltyHearts;
       penaltyHearts = await Chores.addChorePenalties(HOUSE, penaltyTime);
       expect(penaltyHearts.length).to.equal(3);
-      expect(penaltyHearts[0].value).to.equal(0);
+      expect(penaltyHearts[0].value).to.equal(0.5);
       expect(penaltyHearts[1].value).to.equal(-2.5);
       expect(penaltyHearts[2].value).to.equal(-5.0);
 

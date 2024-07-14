@@ -487,9 +487,14 @@ exports.calculatePenalty = async function (residentId, penaltyTime) {
   const prevMonthStart = getMonthStart(prevMonthEnd);
   const choreStats = await exports.getChoreStats(residentId, prevMonthStart, prevMonthEnd);
 
-  const deficiency = Math.max(choreStats.pointsOwed - choreStats.pointsEarned, 0);
-  const truncatedDeficiency = Math.floor(deficiency / penaltyIncrement) * penaltyIncrement;
-  return truncatedDeficiency / (2 * penaltyIncrement);
+  const deficiency = choreStats.pointsOwed - choreStats.pointsEarned;
+
+  if (deficiency <= 0) {
+    return -0.5;
+  } else {
+    const truncatedDeficiency = Math.floor(deficiency / penaltyIncrement) * penaltyIncrement;
+    return truncatedDeficiency / (2 * penaltyIncrement);
+  }
 };
 
 // Chore Point Gifting

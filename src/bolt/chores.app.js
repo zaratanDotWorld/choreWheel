@@ -129,6 +129,10 @@ app.event('app_home_opened', async ({ body, event }) => {
         const text = 'You missed too many chores last month, ' +
           `and lost *${penaltyHeart.value.toFixed(1)}* hearts...`;
         await postEphemeral(penaltyHeart.residentId, text);
+      } else if (penaltyHeart.value > 0) {
+        const text = 'You did all your chores last month, ' +
+          `and earned *${penaltyHeart.value.toFixed(1)}* hearts!`;
+        await postEphemeral(penaltyHeart.residentId, text);
       }
     }
 
