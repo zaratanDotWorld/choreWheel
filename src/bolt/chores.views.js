@@ -616,6 +616,7 @@ exports.choresProposeAddView = function (chore) {
       action_id: 'description',
       type: 'plain_text_input',
       multiline: true,
+      max_length: 1000,
       initial_value: (chore) ? chore.metadata.description : undefined,
       placeholder: common.blockPlaintext('Describe the chore (bullet points work well)'),
     },
