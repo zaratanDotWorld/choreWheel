@@ -298,6 +298,8 @@ app.view('chores-claim-2', async ({ ack, body }) => {
 });
 
 app.view('chores-claim-callback', async ({ ack, body }) => {
+  await ack({ response_action: 'clear' });
+
   const actionName = 'chores-claim-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -323,7 +325,11 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const { channel, ts } = await postMessage(text, blocks);
   await Polls.updateMetadata(claim.pollId, { channel, ts });
 
-  await ack({ response_action: 'clear' });
+  // Append the description
+  if (chore.metadata && chore.metadata.description) {
+    const text = `*Chore description:*\n\n${chore.metadata.description}`;
+    await common.postReply(app, choresConf.oauth, channel, ts, text);
+  }
 });
 
 // Ranking flow
