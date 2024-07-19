@@ -10,6 +10,7 @@ exports.up = function(knex, Promise) {
         t.integer('pollId').references('Poll.id');
         t.timestamp('resolvedAt');
         t.boolean('valid').notNull().defaultTo(true);
+        t.jsonb('metadata').notNull().defaultTo({});
     });
 };
 
