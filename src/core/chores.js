@@ -279,7 +279,7 @@ exports.getChoreClaims = async function (claimedBy, startTime, endTime) {
     .where({ claimedBy, valid: true })
     .whereBetween('claimedAt', [ startTime, endTime ])
     .orderBy('claimedAt')
-    .select('*');
+    .select('Chore.name', 'ChoreClaim.claimedAt', 'ChoreClaim.value', 'ChoreClaim.metadata');
 };
 
 exports.getLatestChoreClaim = async function (choreId, currentTime, excludedClaimId = null) {
@@ -292,7 +292,7 @@ exports.getLatestChoreClaim = async function (choreId, currentTime, excludedClai
     .first();
 };
 
-exports.claimChore = async function (houseId, choreId, claimedBy, claimedAt) {
+exports.claimChore = async function (houseId, choreId, claimedBy, claimedAt, timeSpent) {
   const choreValue = (await exports.getCurrentChoreValue(choreId, claimedAt)).sum;
 
   assert(choreValue, 'Cannot claim a zero-value chore!');
@@ -301,7 +301,15 @@ exports.claimChore = async function (houseId, choreId, claimedBy, claimedAt) {
   const [ poll ] = await Polls.createPoll(houseId, claimedAt, choresPollLength, minVotes);
 
   return db('ChoreClaim')
-    .insert({ houseId, choreId, claimedBy, claimedAt, value: choreValue, pollId: poll.id })
+    .insert({
+      houseId,
+      choreId,
+      claimedBy,
+      claimedAt,
+      value: choreValue,
+      pollId: poll.id,
+      metadata: { timeSpent },
+    })
     .returning('*');
 };
 
