@@ -290,12 +290,10 @@ app.view('chores-claim-2', async ({ ack, body }) => {
   const actionName = 'chores-claim-2';
   common.beginAction(actionName, body);
 
-  const { id: choreId } = JSON.parse(common.getInputBlock(body, -2).chore.selected_option.value);
-  const timeSpent = JSON.parse(common.getInputBlock(body, -1).time.value);
-
+  const { id: choreId } = JSON.parse(common.getInputBlock(body, -1).chore.selected_option.value);
   const chore = await Chores.getChore(choreId);
 
-  const view = views.choresClaimView2(chore, timeSpent);
+  const view = views.choresClaimView2(chore);
   await ack({ response_action: 'push', view });
 });
 
@@ -305,7 +303,7 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const actionName = 'chores-claim-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
-  const { chore, timeSpent } = JSON.parse(body.view.private_metadata);
+  const { chore } = JSON.parse(body.view.private_metadata);
 
   // Get chore points over last six months
   const monthStart = getMonthStart(now);
@@ -313,8 +311,8 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   let monthlyPoints = await Chores.getAllChorePoints(residentId, monthStart, now);
   let achivementPoints = await Chores.getChorePoints(residentId, chore.id, achievementStart, now);
 
-  // Perform the claim
-  const [ claim ] = await Chores.claimChore(houseId, chore.id, residentId, now, timeSpent);
+  // Perform the claim, skipping timeSpent for now
+  const [ claim ] = await Chores.claimChore(houseId, chore.id, residentId, now, 0);
   await Polls.submitVote(claim.pollId, residentId, now, YAY);
   const { minVotes } = await Polls.getPoll(claim.pollId);
 

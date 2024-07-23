@@ -232,16 +232,6 @@ exports.choresClaimView = function (chores) {
       options: mapChoresValues(chores),
     },
   ));
-  blocks.push(common.blockInput(
-    'Time spent',
-    {
-      action_id: 'time',
-      type: 'number_input',
-      min_value: '0',
-      is_decimal_allowed: false,
-      placeholder: common.blockPlaintext('Enter a number (in minutes)'),
-    },
-  ));
 
   return {
     type: 'modal',
@@ -253,19 +243,18 @@ exports.choresClaimView = function (chores) {
   };
 };
 
-exports.choresClaimView2 = function (chore, timeSpent) {
+exports.choresClaimView2 = function (chore) {
   const header = 'Claim a chore';
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(`*${chore.name}*`));
-  blocks.push(common.blockSection(`_${timeSpent} minutes_`));
   blocks.push(common.blockSection(chore.metadata.description || ''));
 
   return {
     type: 'modal',
     callback_id: 'chores-claim-callback',
-    private_metadata: JSON.stringify({ chore, timeSpent }),
+    private_metadata: JSON.stringify({ chore }),
     title: TITLE,
     close: common.BACK,
     submit: common.SUBMIT,
@@ -291,13 +280,11 @@ exports.getSparkles = function (monthlyPoints) {
 };
 
 exports.choresClaimCallbackView = function (claim, choreName, minVotes, achivementPoints, monthlyPoints) {
-  const timeSpent = claim.metadata.timeSpent || 20;
   const achievement = exports.getAchievement(achivementPoints);
   const sparkles = exports.getSparkles(monthlyPoints);
 
   const mainText = `*<@${claim.claimedBy}>* did *${choreName}* for ` +
-    `*${claim.value.toFixed(0)} points* in *${timeSpent.toFixed(0)} minutes* ` +
-    `${achievement}${sparkles}`;
+    `*${claim.value.toFixed(0)} points* ${achievement}${sparkles}`;
 
   const blocks = [];
   blocks.push(common.blockSection(mainText));
