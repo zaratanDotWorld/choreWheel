@@ -1,4 +1,4 @@
-# Chore Wheel 🔆
+![chore-wheel-banner](https://github.com/user-attachments/assets/aed0482a-9804-4308-aae0-0e8e29124c59)
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/zaratanDotWorld/choreWheel/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/zaratanDotWorld/choreWheel/tree/master) [![Documentation Status](https://readthedocs.org/projects/mirror/badge/?version=latest)](https://docs.chorewheel.zaratan.world/en/latest/?badge=latest)
 
@@ -11,7 +11,7 @@
 
 ### Overview:
 
-Chore Wheel (formerly Mirror) is self-governance software for coliving, helping reshape the economics of housing.
+🔆 Chore Wheel (formerly Mirror) is self-governance software for coliving, helping reshape the economics of housing.
 
 Developed in collaboration with social scientists and game designers, Chore Wheel is a set of tools and processes which enable groups of individuals to easily and effectively share space, without reliance on expensive managers or tedious meetings. By lowering the cost of cooperation, Chore Wheel helps to bring coliving into the mainstream, reducing both the price and environmental impact of housing.
 
