@@ -253,6 +253,25 @@ exports.replyAdminOnly = function (app, oauth, command) {
   return exports.replyEphemeral(app, oauth, command, text);
 };
 
+exports.parseTitlecase = function (text) {
+  return voca(text).trim().lowerCase().titleCase().value();
+};
+
+exports.parseLowercase = function (text) {
+  return voca(text).trim().lowerCase().value();
+};
+
+exports.getInputBlock = function (body, blockIdx) {
+  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
+  const realIdx = (blockIdx < 0) ? body.view.blocks.length + blockIdx : blockIdx;
+  const blockId = body.view.blocks[realIdx].block_id;
+  return body.view.state.values[blockId];
+};
+
+exports.feedbackLink = '<mailto:support@zaratan.world|Submit Feedback>';
+
+// Vote processing
+
 exports.updateVoteCounts = async function (app, oauth, body, action) {
   const now = new Date();
   const channelId = body.channel.id;
@@ -325,23 +344,6 @@ exports.makeVoteButtons = function (pollId, yays, nays) {
     },
   ];
 };
-
-exports.parseTitlecase = function (text) {
-  return voca(text).trim().lowerCase().titleCase().value();
-};
-
-exports.parseLowercase = function (text) {
-  return voca(text).trim().lowerCase().value();
-};
-
-exports.getInputBlock = function (body, blockIdx) {
-  // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
-  const realIdx = (blockIdx < 0) ? body.view.blocks.length + blockIdx : blockIdx;
-  const blockId = body.view.blocks[realIdx].block_id;
-  return body.view.state.values[blockId];
-};
-
-exports.feedbackLink = '<mailto:support@zaratan.world|Submit Feedback>';
 
 // Block rendering
 
