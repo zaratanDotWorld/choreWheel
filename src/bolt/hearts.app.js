@@ -74,8 +74,7 @@ app.event('app_uninstalled', async ({ context }) => {
 });
 
 app.event('user_change', async ({ payload }) => {
-  const now = new Date();
-  const { user } = payload;
+  const [ now, user ] = [ new Date(), payload.user ];
 
   if (!(await houseActive(user.team_id, now))) { return; }
 
@@ -96,8 +95,9 @@ app.event('message', async ({ payload }) => {
   const karmaRecipients = Hearts.getKarmaRecipients(payload.text);
 
   if (karmaRecipients.length > 0) {
-    console.log(`hearts karma-message - ${payload.team} x ${payload.user}`);
-    const [ now, houseId, giverId ] = [ new Date(), payload.team, payload.user ];
+    const [ now, giverId ] = [ new Date(), payload.user ];
+    const houseId = (payload.subtype === 'thread_broadcast') ? payload.root.team : payload.team;
+    console.log(`hearts karma-message - ${houseId} x ${giverId}`);
 
     for (const recipientId of karmaRecipients) {
       await Hearts.giveKarma(houseId, giverId, recipientId, now);
