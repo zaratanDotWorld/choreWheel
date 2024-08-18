@@ -38,6 +38,20 @@ exports.formatBuy = function (buy, url = true) {
   return text;
 };
 
+function getUrlHost (buy) {
+  try {
+    return (new URL(buy.thingMetadata.url)).host;
+  } catch {
+    return '';
+  }
+}
+
+function urlCompare (a, b) {
+  const hostA = getUrlHost(a);
+  const hostB = getUrlHost(b);
+  return hostA.localeCompare(hostB);
+}
+
 // Home views
 
 exports.thingsIntroView = function () {
@@ -357,6 +371,7 @@ exports.thingsBoughtView = function (unfulfilledBuys, fulfilledBuys7, fulfilledB
 
   const confirmedBuysText = unfulfilledBuys
     .filter(buy => buy.resolvedAt !== null)
+    .sort((a, b) => urlCompare(a, b))
     .map(buy => exports.formatBuy(buy))
     .join('\n');
 
