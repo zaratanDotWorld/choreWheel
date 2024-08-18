@@ -25,9 +25,9 @@ exports.formatBuy = function (buy, url = true) {
   if (buy.metadata && buy.metadata.special) {
     text = `Special: ${buy.metadata.title}`;
   } else if (buy.metadata && buy.thingMetadata) {
-    text = `${buy.type}: ${buy.name} (${buy.metadata.quantity} x ${buy.thingMetadata.unit})`;
+    text = `${buy.name} (${buy.metadata.quantity} x ${buy.thingMetadata.unit})`;
   } else {
-    text = `${buy.type}: ${buy.name} (?)`;
+    text = `${buy.name} (?)`;
   }
 
   if (url && buy.thingMetadata && buy.thingMetadata.url) {
@@ -361,11 +361,11 @@ exports.thingsBoughtView = function (unfulfilledBuys, fulfilledBuys7, fulfilledB
     .join('\n');
 
   const fulfilledBuys7Text = fulfilledBuys7
-    .map(buy => `${buy.type}: ${buy.name} ($${-buy.value})`)
+    .map(buy => `${buy.name} ($${-buy.value})`)
     .join('\n');
 
   const fulfilledBuys90Text = fulfilledBuys90
-    .map(buy => `${buy.type}: ${buy.name} ($${-buy.value})`)
+    .map(buy => `${buy.name} ($${-buy.value})`)
     .join('\n');
 
   const blocks = [];
