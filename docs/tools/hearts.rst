@@ -5,6 +5,16 @@ Hearts
 
 `Install Hearts ↗ <https://hearts.mirror.zaratan.world/slack/install>`_
 
+Quickstart
+----------
+
+1. Set an app events channel
+2. Encourage people to give karma (``@Kira ++``) if someone exceeds expectations
+3. That's it! Everything else is automatic.
+
+Introduction
+------------
+
 Every community begins with the best of intentions.
 And every community, invariably, experiences conflict.
 Experiencing conflict is not a choice.
@@ -16,13 +26,6 @@ Or communities could choose to face conflict head-on, engaging in the essential 
 
 Hearts is an accountability tool, used to help **structure the experience and resolution of conflict**.
 Hearts is designed with two goals in mind: first, to give members of a community meaningful tools for holding each other accountable; second, to emphasize communication and repair over judgment and punishment.
-
-Quickstart
-----------
-
-1. Set an app events channel
-2. Encourage people to give karma (``@Kira ++``) if someone exceeds expectations
-3. That's it! Everything else is automatic.
 
 Core Concepts
 -------------

@@ -5,6 +5,18 @@ Things
 
 `Install Things ↗ <https://things.mirror.zaratan.world/slack/install>`_
 
+Quickstart
+----------
+
+1. Set an app events channel
+2. Decide on a monthly budget, and use ``/things-load`` to add it to the account
+3. Make a list of 3-5 things that the group buys on a regular basis
+4. Enter the things using ``Edit Things List``, and upvote them in the app  channel
+5. Encourage people to ``Buy a Thing`` whenever they notice something running low
+
+Introduction
+------------
+
 There's a saying that "organizations are communities with resources".
 One of the economic benefits of living in community is the opportunity to buy supplies more cheaply, in bulk.
 Rather than ten tiny bottles of olive oil crowded on the shelf, there can be one large (and cost-effective) bottle (and more shelf space).
@@ -17,15 +29,6 @@ Things is a spending tool, letting residents in a house spend out of a shared ac
   Things is a simple tool for managing shared funds directly in Slack.
   For communities with more advanced needs, consider a more full-featured tool like `Open Collective <https://opencollective.com/>`_.
   These tools can also be combined, allowing simple decisions when possible and more advanced decisions when necessary.
-
-Quickstart
-----------
-
-1. Set an app events channel
-2. Decide on a monthly budget, and use ``/things-load`` to add it to the account
-3. Make a list of 3-5 things that the group buys on a regular basis
-4. Enter the things using ``Edit Things List``, and upvote them in the app  channel
-5. Encourage people to ``Buy a Thing`` whenever they notice something running low
 
 Core Concepts
 -------------

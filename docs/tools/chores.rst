@@ -5,6 +5,19 @@ Chores
 
 `Install Chores ↗ <https://chores.mirror.zaratan.world/slack/install>`_
 
+Quickstart
+----------
+
+1. Set an app events channel
+2. Make a list of 3-5 starter chores/descriptions: dishes, sweeping, etc
+3. Enter the chores using ``Edit Chores List``, and upvote them in the app  channel
+4. Wait 1-2 days for the chores to accumulate points
+5. Encourage people to check current chore values and to ``Claim a Chore`` which is fairly-valued
+6. Encourage people to ``Set Priorities`` if they feel that a chore is being over/under valued
+
+Introduction
+------------
+
 A clean and organized house is a shared resource.
 We all consume that resource as a part of our day-to-day, and we all play a part in ensuring that resource is renewed.
 We all make messes, and we all help clean them up.
@@ -41,16 +54,6 @@ Everyone does the chores they think are worth their time, and the result is a co
 
   It all works.
   There is no right or wrong way to participate, although waiting until the last day is *probably* the worst strategy.
-
-Quickstart
-----------
-
-1. Set an app events channel
-2. Make a list of 3-5 starter chores/descriptions
-3. Enter the chores using ``Edit Chores List``, and upvote them in the app  channel
-4. Wait 1-3 days for the chores to accumulate points
-5. Encourage people to check current chore values and to ``Claim a Chore`` which is well-valued
-6. Encourage people to ``Set Priorities`` if they feel that a chore is being over/under valued
 
 Core Concepts
 -------------

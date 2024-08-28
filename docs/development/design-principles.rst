@@ -47,6 +47,12 @@ No Managers or Privileged Administrative Roles
 
   Chore Wheel conceptualizes leadership as "icing on the cake:" leaders can bring tremendous value, but if no-one is called to leadership, the community still functions.
 
+  .. note::
+
+    In practice, allowing a small number of privileged actions makes a few things much easier.
+    These actions are available to **any admin** in the workspace.
+    If a community would prefer that everyone can take these actions, they should make everyone an admin.
+
 Simple and Intuitive Inputs
   For self-governance to be meaningful, participants must be qualified to engage with the issues and decisions they are presented.
   Historically, this has been interpreted as a need for public education and the cultivation of an informed community.
