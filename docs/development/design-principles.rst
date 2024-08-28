@@ -7,7 +7,9 @@ Design Principles
 
   You can read the original project whitepaper `here <https://bit.ly/mirror-whitepaper>`_.
 
-Chore Wheel draws influences variously from **cognitive science, computer science, electoral theory, economics, cybernetics, and game design**, with four primary design principles:
+
+Chore Wheel is **open-source** and **privacy-preserving**, and contains the latest thinking in **ethical technology**.
+It draws influences variously from **cognitive science, computer science, electoral theory, economics, cybernetics, and game design**, with four primary design principles:
 
 - No managers or privileged administrative roles
 - Simple and intuitive inputs

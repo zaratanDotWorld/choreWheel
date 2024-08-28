@@ -4,26 +4,14 @@ Getting Started
 ===============
 
 Getting started with Chore Wheel is quick and easy, and you can be up-and-running in twenty minutes.
+It is recommended to choose one person to be the **coordinator** for the process.
 
-.. tip::
 
-  It is recommended that everyone be physically present during the set-up process.
-  Perhaps over brunch?
+Setting up the Slack workspace
+------------------------------
 
-Setting up the workspace
-------------------------
-
-First, designate one person to be the **coordinator** for the process.
-If the house already has a Slack workspace, they should be one of the `admins <https://slack.com/help/articles/360018112273-Types-of-roles-in-Slack>`_.
 If the house doesn't have a Slack workspace, they should `create one <https://slack.com/get-started#/createnew>`_ now.
 Chore Wheel works equally well on free and paid Slack plans.
-
-.. note::
-
-  One of the design principles of Chore Wheel is "no managers or privileged roles."
-  In practice, allowing a small number of privileged actions makes a few things much easier.
-  These actions are available to **any admin** in the workspace.
-  If your community would prefer that everyone can take these actions, they should make everyone an admin.
 
 Once your house has a Slack workspace, please invite everyone to join, and wait for them to accept their invites.
 
@@ -44,12 +32,21 @@ When using :ref:`chores` as a stand-alone tool, you get all the power of the cho
 By adding :ref:`hearts`, you get long-term accountability both for chores, and the ability to encourage and discourage specific behaviors.
 By adding :ref:`things`, you get some simple tooling for managing shared funds, useful for larger groups.
 
-The right mix of tools will depend on your specific needs. If you're just exploring, try getting started with :ref:`chores` and :ref:`hearts`.
+The right mix of tools will depend on your specific needs.
+If you're just exploring, try getting started with :ref:`chores` and :ref:`hearts`.
 
 .. tip::
 
   If 100% of the workspace votes yes for a proposal, it **passes immediately**.
   This is useful if folks are gathered in-person and want to get up-and-running quickly.
+
+.. note::
+
+  One of the design principles of Chore Wheel is "no managers or privileged roles."
+  In practice, allowing a small number of privileged actions makes a few things much easier.
+  These actions are available to **any admin** in the workspace.
+  If your community would prefer that everyone can take these actions, they should make everyone an admin.
+
 
 .. warning::
 

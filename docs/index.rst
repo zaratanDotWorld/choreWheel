@@ -1,25 +1,21 @@
 Chore Wheel
 ===========
 
-**🔆 Chore Wheel** is pioneering software for coliving, built by Zaratan and running on Slack.
+**🔆 Chore Wheel** is pioneering software for coliving, helping communities thrive.
 
-Created by **economists** and **game designers**, Chore Wheel is a family of tools helping people share space:
+Created by **coliving veterans** and **game designers**, Chore Wheel is a family of **Slack apps** helping people share space:
 
 - :ref:`chores` for keeping it clean
 - :ref:`hearts` for mutual accountability
 - :ref:`things` for bulk purchasing
-- and more to come
+- And more to come...
 
-Chore Wheel is **open-source** and **privacy-preserving**, and contains the latest thinking in **ethical technology**.
-Chore Wheel draws influences variously from **cognitive science, computer science, electoral theory, economics, cybernetics, and game design**, with four top-level :ref:`design principles <design-principles>`:
+Designed for **intentional communities**, **casual roommates**, **cohabitating partners**, and everything in-between, Chore Wheel helps people share the **emotional and mental labor** of sustaining communities.
+Groups using Chore Wheel have **fewer meetings** and **less conflict**, leaving more time for what really matters.
 
-- No managers or privileged administrative roles
-- Simple and intuitive inputs
-- Humans for sensing and judgment, machines for bookkeeping
-- Continuously available, asynchronous processes
+**The best part? It's very easy to use.**
 
-Groups using Chore Wheel find that they spend **less time doing chores**, **less time talking about chores**, and **less time worrying about their house in general**.
-Check out the :ref:`introduction <introduction>` for a more detailed overview of the project, or our :ref:`getting started guide <getting-started>` to get set up for yourself.
+Check out the :ref:`introduction <introduction>` for a more detailed overview, or the :ref:`getting started guide <getting-started>` to get set up for yourself.
 
 .. tip::
 
