@@ -194,7 +194,7 @@ app.command('/chores-exempt', async ({ ack, command }) => {
   const commandName = '/chores-exempt';
   const { now, houseId } = common.beginCommand(commandName, command);
 
-  if (!(await common.isAdmin(app, choresConf.oauth, command))) {
+  if (!(await common.isAdmin(app, choresConf.oauth, command.user_id))) {
     await common.replyAdminOnly(app, choresConf.oauth, command);
     return;
   }
@@ -244,7 +244,7 @@ app.command('/chores-reset', async ({ ack, command }) => {
   const commandName = '/chores-reset';
   common.beginCommand(commandName, command);
 
-  if (!(await common.isAdmin(app, choresConf.oauth, command))) {
+  if (!(await common.isAdmin(app, choresConf.oauth, command.user_id))) {
     await common.replyAdminOnly(app, choresConf.oauth, command);
     return;
   }
