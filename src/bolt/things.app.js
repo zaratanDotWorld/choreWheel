@@ -137,7 +137,7 @@ app.command('/things-load', async ({ ack, command }) => {
   const commandName = '/things-load';
   common.beginCommand(commandName, command);
 
-  if (!(await common.isAdmin(app, thingsConf.oauth, command))) {
+  if (!(await common.isAdmin(app, thingsConf.oauth, command.user_id))) {
     await common.replyAdminOnly(app, thingsConf.oauth, command);
     return;
   }
@@ -167,7 +167,7 @@ app.command('/things-fulfill', async ({ ack, command }) => {
   const commandName = '/things-fulfill';
   const { now, houseId } = common.beginCommand(commandName, command);
 
-  if (!(await common.isAdmin(app, thingsConf.oauth, command))) {
+  if (!(await common.isAdmin(app, thingsConf.oauth, command.user_id))) {
     await common.replyAdminOnly(app, thingsConf.oauth, command);
     return;
   }
@@ -205,7 +205,7 @@ app.command('/things-update', async ({ ack, command }) => {
   const commandName = '/things-update';
   const { houseId } = common.beginCommand(commandName, command);
 
-  if (!(await common.isAdmin(app, thingsConf.oauth, command))) {
+  if (!(await common.isAdmin(app, thingsConf.oauth, command.user_id))) {
     await common.replyAdminOnly(app, thingsConf.oauth, command);
     return;
   }

@@ -24,8 +24,8 @@ exports.getUser = async function (app, oauth, userId) {
   });
 };
 
-exports.isAdmin = async function (app, oauth, command) {
-  const { user } = await exports.getUser(app, oauth, command.user_id);
+exports.isAdmin = async function (app, oauth, userId) {
+  const { user } = await exports.getUser(app, oauth, userId);
   return user.is_admin;
 };
 
@@ -156,7 +156,7 @@ exports.uninstallApp = async function (app, appName, context) {
 };
 
 exports.setChannel = async function (app, oauth, confName, command) {
-  if (!(await exports.isAdmin(app, oauth, command))) {
+  if (!(await exports.isAdmin(app, oauth, command.user_id))) {
     await exports.replyAdminOnly(app, oauth, command);
     return;
   }
