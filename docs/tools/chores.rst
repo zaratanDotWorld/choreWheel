@@ -152,6 +152,11 @@ The app home is also the entryway into the basic functionality, described below:
   Chore edits start as proposals and go to the house for a vote.
   If the vote passes, the chore is created and begins accumulating points.
 
+  .. note::
+
+    Admins can "force" changes, bypassing the proposal process.
+    This can be useful when just getting started.
+
   .. warning::
 
       When defining chores, it is easy to either go **too micro** (e.g. "Wipe off the dinner table") or **too macro** (e.g. "Deep clean the whole kitchen").
