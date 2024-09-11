@@ -345,6 +345,32 @@ exports.makeVoteButtons = function (pollId, yays, nays) {
   ];
 };
 
+exports.makeForceInput = function () {
+  const options = [
+    { value: 'true', text: exports.blockMarkdown('Force (no vote)') },
+    { value: 'false', text: exports.blockMarkdown('Don\'t force (regular vote)') },
+  ];
+
+  return exports.blockInput(
+    '[Admin only] Would you like to force this change?',
+    {
+      type: 'radio_buttons',
+      action_id: 'force',
+      initial_option: options[1],
+      options,
+    },
+  );
+};
+
+// Block may or may not exist
+exports.getForceInput = function (block) {
+  if (block && block.force) {
+    return block.force.selected_option.value === 'true';
+  } else {
+    return false;
+  }
+};
+
 // Block rendering
 
 exports.blockPlaintext = function (text) {

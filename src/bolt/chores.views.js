@@ -519,7 +519,7 @@ exports.choresGiftView = function (currentBalance) {
 
 // Chore proposals
 
-exports.choresProposeView = function (minVotes) {
+exports.choresProposeView = function (minVotes, isAdmin) {
   const header = 'Edit chores list';
   const mainText = 'Chores are not set in stone. ' +
     'If you believe things could be flowing better, consider *adding, removing, or changing* some chores. ' +
@@ -533,6 +533,9 @@ exports.choresProposeView = function (minVotes) {
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
   blocks.push(common.blockDivider());
+  if (isAdmin) {
+    blocks.push(common.makeForceInput());
+  }
   blocks.push(common.blockInput(
     'What change would you like to make?',
     {
@@ -556,7 +559,7 @@ exports.choresProposeView = function (minVotes) {
   };
 };
 
-exports.choresProposeEditView = function (chores) {
+exports.choresProposeEditView = function (force, chores) {
   const header = 'Edit chores list';
   const mainText = 'Change an existing chore.';
 
@@ -577,6 +580,7 @@ exports.choresProposeEditView = function (chores) {
   return {
     type: 'modal',
     callback_id: 'chores-propose-edit',
+    private_metadata: JSON.stringify({ force }),
     title: TITLE,
     close: common.BACK,
     submit: common.NEXT,
@@ -585,15 +589,15 @@ exports.choresProposeEditView = function (chores) {
 };
 
 // NOTE: used for both add and edit flows
-exports.choresProposeAddView = function (chore) {
+exports.choresProposeAddView = function (force, chore) {
   const header = 'Edit chores list';
   let metadata, mainText;
 
   if (chore) {
-    metadata = JSON.stringify({ change: 'edit', chore: { id: chore.id, name: chore.name } });
+    metadata = JSON.stringify({ force, change: 'edit', chore: { id: chore.id, name: chore.name } });
     mainText = 'Change an existing chore.';
   } else {
-    metadata = JSON.stringify({ change: 'add' });
+    metadata = JSON.stringify({ force, change: 'add' });
     mainText = 'Add a new chore.';
   }
 
@@ -633,7 +637,7 @@ exports.choresProposeAddView = function (chore) {
   };
 };
 
-exports.choresProposeDeleteView = function (chores) {
+exports.choresProposeDeleteView = function (force, chores) {
   const header = 'Edit chores list';
   const mainText = 'Remove an existing chore.';
 
@@ -659,7 +663,7 @@ exports.choresProposeDeleteView = function (chores) {
   return {
     type: 'modal',
     callback_id: 'chores-propose-callback',
-    private_metadata: JSON.stringify({ change: 'delete' }),
+    private_metadata: JSON.stringify({ force, change: 'delete' }),
     title: TITLE,
     close: common.BACK,
     submit: common.SUBMIT,
@@ -691,6 +695,31 @@ exports.choresProposeCallbackView = function (metadata, proposal, minVotes) {
 
   blocks.push(common.blockSection(common.makeVoteText(minVotes, choresProposalPollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(proposal.pollId, 1, 0)));
+  return blocks;
+};
+
+exports.choresProposeCallbackViewForce = function (metadata, residentId, name, description) {
+  let mainText;
+  switch (metadata.change) {
+    case 'add':
+      mainText = `*<@${residentId}>* just *added* a chore:`;
+      break;
+    case 'edit':
+      mainText = `*<@${residentId}>* just *edited* the *${metadata.chore.name}* chore:`;
+      break;
+    case 'delete':
+      mainText = `*<@${residentId}>* just *deleted* a chore:`;
+      break;
+  }
+
+  const blocks = [];
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockSection(`*${name || metadata.chore.name}*`));
+
+  if (description) {
+    blocks.push(common.blockSection(description));
+  }
+
   return blocks;
 };
 
