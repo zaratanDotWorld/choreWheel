@@ -213,6 +213,23 @@ exports.choresResetView = function () {
 
 // Main actions
 
+exports.choresClaimViewZero = function () {
+  const header = 'No chores available';
+  const mainText = 'If no chores exist, create some using `Edit chores list`. ' +
+    'Otherwise, come back a little bit later.';
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+
+  return {
+    type: 'modal',
+    title: TITLE,
+    close: common.CLOSE,
+    blocks,
+  };
+};
+
 exports.choresClaimView = function (chores) {
   const header = 'Claim a chore';
   const mainText = 'Claims are verified by the house. ' +

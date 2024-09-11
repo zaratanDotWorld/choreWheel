@@ -222,6 +222,20 @@ describe('Chores', async () => {
       [ restock ] = await Chores.addChore(HOUSE, 'restock');
     });
 
+    it('handles the case of less than two chores', async () => {
+      await db('Chore').where({ houseId: HOUSE }).whereNot({ id: dishes.id }).delete();
+
+      let choreRankings;
+      choreRankings = await Chores.getChoreRankings(HOUSE, now, []);
+      expect(choreRankings.length).to.equal(1);
+      expect(choreRankings[0].ranking).to.equal(1);
+
+      await db('Chore').where({ houseId: HOUSE }).delete();
+
+      choreRankings = await Chores.getChoreRankings(HOUSE, now, []);
+      expect(choreRankings.length).to.equal(0);
+    });
+
     it('can return uniform rankings implicitly', async () => {
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
@@ -468,6 +482,13 @@ describe('Chores', async () => {
       const choreValues = await Chores.getUpdatedChoreValues(HOUSE, t1);
       const sumPoints = choreValues.map(cv => cv.value).reduce((sum, val) => sum + val, 0);
       expect(sumPoints).to.almost.equal(pointsPerResident * 3 / 6 * inflationFactor);
+    });
+
+    it('returns an empty array when no chores exist', async () => {
+      await db('Chore').where({ houseId: HOUSE }).delete();
+
+      const choreValues = await Chores.getUpdatedChoreValues(HOUSE, now);
+      expect(choreValues.length).to.equal(0);
     });
   });
 

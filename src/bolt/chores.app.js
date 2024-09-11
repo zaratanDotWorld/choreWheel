@@ -270,14 +270,14 @@ app.view('chores-reset-callback', async ({ ack, body }) => {
 
 app.action('chores-claim', async ({ ack, body }) => {
   const actionName = 'chores-claim';
-  const { now, houseId, residentId } = common.beginAction(actionName, body);
+  const { now, houseId } = common.beginAction(actionName, body);
 
   const choreValues = await Chores.getUpdatedChoreValues(houseId, now);
   const filteredChoreValues = choreValues.filter(choreValue => choreValue.value >= displayThreshold);
 
   if (!filteredChoreValues.length) {
-    const text = 'No chores are available to claim. Try again later :sweat_smile:';
-    await postEphemeral(residentId, text);
+    const view = views.choresClaimViewZero();
+    await common.openView(app, choresConf.oauth, body.trigger_id, view);
   } else {
     const view = views.choresClaimView(filteredChoreValues);
     await common.openView(app, choresConf.oauth, body.trigger_id, view);

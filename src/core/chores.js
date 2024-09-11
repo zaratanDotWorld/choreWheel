@@ -186,6 +186,13 @@ exports.getChoreRankings = async function (houseId, now, preferences) {
   const chores = await exports.getChores(houseId);
   const residents = await Admin.getResidents(houseId, now);
 
+  // Handle the case of less than two chores
+  if (chores.length <= 1) {
+    return chores.map((chore) => {
+      return { id: chore.id, name: chore.name, ranking: 1.0 };
+    });
+  }
+
   const choresSet = new Set(chores.map(c => c.id));
   const formattedPreferences = preferences.map((p) => {
     return { alpha: p.alphaChoreId, beta: p.betaChoreId, preference: p.preference };
@@ -234,6 +241,9 @@ exports.updateChoreValues = async function (houseId, now) {
   const updateScalar = (workingResidentCount * pointsPerResident) * intervalScalar * inflationFactor;
   const choreRankings = await exports.getCurrentChoreRankings(houseId, now);
   const metadata = { intervalScalar, residents: workingResidentCount };
+
+  // If there are no chores to update, short-circuit execution
+  if (!choreRankings.length) { return Promise.resolve([]); }
 
   const choreValues = choreRankings.map((chore) => {
     return {
