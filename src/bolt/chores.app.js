@@ -153,19 +153,20 @@ app.event('app_home_opened', async ({ body, event }) => {
 
 app.command('/chores-sync', async ({ ack, command }) => {
   const commandName = '/chores-sync';
-  common.beginCommand(commandName, command);
+  const { now, houseId } = common.beginCommand(commandName, command);
 
-  await common.syncWorkspace(app, choresConf.oauth, command, true, false);
+  const text = await common.syncWorkspaceMembers(app, choresConf.oauth, houseId, now);
+  await common.replyEphemeral(app, choresConf.oauth, command, text);
 
   await ack();
 });
 
 app.command('/chores-channel', async ({ ack, command }) => {
   const commandName = '/chores-channel';
-  common.beginCommand(commandName, command);
+  const { now, houseId } = common.beginCommand(commandName, command);
 
   await common.setChannel(app, choresConf.oauth, CHORES_CONF, command);
-  await common.syncWorkspace(app, choresConf.oauth, command, true, false);
+  await common.syncWorkspaceMembers(app, choresConf.oauth, houseId, now);
 
   await ack();
 });

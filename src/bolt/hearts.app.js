@@ -177,19 +177,20 @@ app.command('/hearts-sync', async ({ ack, command }) => {
   await ack();
 
   const commandName = '/hearts-sync';
-  common.beginCommand(commandName, command);
+  const { now, houseId } = common.beginCommand(commandName, command);
 
-  await common.syncWorkspace(app, heartsConf.oauth, command, true, true);
+  const text = await common.syncWorkspaceMembers(app, heartsConf.oauth, houseId, now);
+  await common.replyEphemeral(app, heartsConf.oauth, command, text);
 });
 
 app.command('/hearts-channel', async ({ ack, command }) => {
   await ack();
 
   const commandName = '/hearts-channel';
-  common.beginCommand(commandName, command);
+  const { now, houseId } = common.beginCommand(commandName, command);
 
   await common.setChannel(app, heartsConf.oauth, HEARTS_CONF, command);
-  await common.syncWorkspace(app, heartsConf.oauth, command, true, true);
+  await common.syncWorkspaceMembers(app, heartsConf.oauth, houseId, now);
 });
 
 // Challenge flow
