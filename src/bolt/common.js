@@ -200,19 +200,21 @@ exports.syncWorkspaceMember = async function (houseId, member, now) {
 };
 
 exports.syncWorkspaceChannels = async function (app, oauth) {
-  const { channels: workspaceChannels } = await app.client.conversations.list({ token: oauth.bot.token, exclude_archived: true });
-  const workspaceChannelIds = workspaceChannels.map(channel => channel.id);
-
   const { channels: botChannels } = await app.client.users.conversations({ token: oauth.bot.token });
-  const botChannelIds = botChannels.map(channel => channel.id);
+  const { channels: workspaceChannels } = await app.client.conversations.list({ token: oauth.bot.token, exclude_archived: true });
+
+  const botChannelIds = botChannels
+    .map(channel => channel.id);
+
+  const workspaceChannelIds = workspaceChannels
+    .filter(channel => !(channel.is_private || channel.is_archived || botChannelIds.includes(channel.id)))
+    .map(channel => channel.id);
 
   for (const channelId of workspaceChannelIds) {
-    if (!botChannelIds.includes(channelId)) {
-      await exports.joinChannel(app, oauth, channelId);
-    }
+    await exports.joinChannel(app, oauth, channelId);
   }
 
-  return `Synced workspace with ${workspaceChannels.length} channels`;
+  return `Synced workspace with ${workspaceChannels.length} public channels`;
 };
 
 exports.joinChannel = async function (app, oauth, channelId) {

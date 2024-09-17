@@ -107,5 +107,8 @@ Most people will not need to know about these commands to use Hearts.
 
 ``/hearts-sync``
   The ``/hearts-sync`` command will update the app with the current active users in the workspace, adding any new users and removing any who have been deactivated.
-  The sync command will also add the Hearts app to all public channels, allowing people to give karma in those channels.
   The app will normally keep itself synchronized in the background, but this command can be used to force a sync if necessary.
+
+  .. tip::
+
+    Passing the argument `channels` will sync the Hearts app to all public channels, allowing people to give karma in those channels.
