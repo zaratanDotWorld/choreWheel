@@ -16,7 +16,7 @@ features:
       description: Use the current channel for app events
     - command: /hearts-sync
       url: https://hearts.mirror.zaratan.world/slack/events
-      description: Sync active residents
+      description: Sync workspace members or channels
 oauth_config:
   redirect_urls:
     - https://hearts.mirror.zaratan.world/slack/oauth_redirect

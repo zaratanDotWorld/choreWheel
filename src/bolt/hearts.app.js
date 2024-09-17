@@ -179,7 +179,10 @@ app.command('/hearts-sync', async ({ ack, command }) => {
   const commandName = '/hearts-sync';
   const { now, houseId } = common.beginCommand(commandName, command);
 
-  const text = await common.syncWorkspaceMembers(app, heartsConf.oauth, houseId, now);
+  const text = (command.text === 'channels')
+    ? await common.syncWorkspaceChannels(app, heartsConf.oauth)
+    : await common.syncWorkspaceMembers(app, heartsConf.oauth, houseId, now);
+
   await common.replyEphemeral(app, heartsConf.oauth, command, text);
 });
 
