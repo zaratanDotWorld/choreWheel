@@ -177,35 +177,6 @@ exports.setChannel = async function (app, oauth, confName, command) {
   await exports.replyEphemeral(app, oauth, command, text);
 };
 
-exports.syncWorkspace = async function (app, oauth, command, syncMembers, syncChannels) {
-  const now = new Date();
-
-  let text;
-
-  if (command.text === 'help') {
-    text = 'Sync the workspace to the current number of active members. ' +
-    'This is important for ensuring the correct behavior of the app.';
-  } else {
-    text = 'Synced workspace with ';
-
-    if (syncMembers) {
-      const numResidents = await exports.syncWorkspaceMembers(app, oauth, command.team_id, now);
-      text += `${numResidents} active residents`;
-    }
-
-    if (syncMembers && syncChannels) {
-      text += ' and ';
-    }
-
-    if (syncChannels) {
-      const numChannels = await exports.syncWorkspaceChannels(app, oauth);
-      text += `${numChannels} public channels`;
-    }
-  }
-
-  await exports.replyEphemeral(app, oauth, command, text);
-};
-
 exports.syncWorkspaceMembers = async function (app, oauth, houseId, now) {
   const { members } = await app.client.users.list({ token: oauth.bot.token });
 
@@ -214,7 +185,7 @@ exports.syncWorkspaceMembers = async function (app, oauth, houseId, now) {
   }
 
   const residents = await Admin.getResidents(houseId, now);
-  return residents.length;
+  return `Synced workspace with ${residents.length} active residents`;
 };
 
 exports.syncWorkspaceMember = async function (houseId, member, now) {
@@ -241,7 +212,7 @@ exports.syncWorkspaceChannels = async function (app, oauth) {
     }
   }
 
-  return workspaceChannels.length;
+  return `Synced workspace with ${workspaceChannels.length} channels`;
 };
 
 exports.joinChannel = async function (app, oauth, channelId) {
