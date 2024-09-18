@@ -21,7 +21,7 @@ exports.formatStats = function (stats) {
   if (pointsEarned >= pointsOwed) {
     emoji = ':star:';
   } else if (pointsOwed - pointsEarned >= penaltyIncrement) {
-    emoji = ':crying_cat_face:';
+    emoji = ':broken_heart:';
   }
 
   return `<@${residentId}> - ${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} (${(completionPct * 100).toFixed(0)}%) ${emoji}`;
