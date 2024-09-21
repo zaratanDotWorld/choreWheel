@@ -591,11 +591,7 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
   const metadata = { description };
 
   if (privateMetadata.force) {
-    if (!choreId) {
-      await Chores.addChore(houseId, name, metadata);
-    } else {
-      await Chores.editChore(choreId, name, metadata, active);
-    }
+    await Chores.executeChoreProposal(houseId, choreId, name, metadata, active);
 
     const text = 'An admin just edited a chore';
     const blocks = views.choresProposeCallbackViewForce(privateMetadata, residentId, name, description);

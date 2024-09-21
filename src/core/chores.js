@@ -568,20 +568,22 @@ exports.getChoreProposalMinVotes = async function (houseId, now) {
   return Math.ceil(choreProposalPct * votingResidents.length);
 };
 
+exports.executeChoreProposal = async function (houseId, choreId, name, metadata, active) {
+  if (!choreId) {
+    await exports.addChore(houseId, name, metadata);
+  } else {
+    await exports.editChore(choreId, name, metadata, active);
+  }
+};
+
 exports.resolveChoreProposal = async function (proposalId, now) {
   const proposal = await exports.getChoreProposal(proposalId);
 
   assert(!proposal.resolvedAt, 'Proposal already resolved!');
 
-  const valid = await Polls.isPollValid(proposal.pollId, now);
-
-  if (valid) {
+  if (await Polls.isPollValid(proposal.pollId, now)) {
     const { houseId, choreId, name, metadata, active } = proposal;
-    if (!choreId) {
-      await exports.addChore(houseId, name, metadata);
-    } else {
-      await exports.editChore(choreId, name, metadata, active);
-    }
+    await exports.executeChoreProposal(houseId, choreId, name, metadata, active);
   }
 
   return db('ChoreProposal')
