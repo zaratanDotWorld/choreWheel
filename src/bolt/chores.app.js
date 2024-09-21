@@ -647,8 +647,8 @@ async function pingChores () {
   }
 }
 
-// Run every day at 12pm UTC
-cron.schedule('* * 12 * * *', async () => {
+// Run every day at 12:00 UTC
+cron.schedule('0 12 * * *', async () => {
   console.log('Pinging chores...');
   await pingChores();
 });
