@@ -15,6 +15,11 @@ exports.getHouse = async function (slackId) {
     .first();
 };
 
+exports.getHouses = async function () {
+  return db('House')
+    .select('slackId');
+};
+
 exports.updateHouseConf = async function (slackId, confName, conf) {
   // NOTE: May be possible as a single operation using a jsonb datatype
   const house = await exports.getHouse(slackId);

@@ -8,7 +8,6 @@ const { Admin } = require('../src/core/index');
 const { HOUR, DAY, CHORES_CONF, THINGS_CONF } = require('../src/constants');
 const { getMonthStart, getMonthEnd, getNextMonthStart, getPrevMonthEnd, getDateStart } = require('../src/utils');
 const testHelpers = require('./helpers');
-const { db } = require('../src/core/db');
 
 describe('Admin', async () => {
   const HOUSE1 = testHelpers.generateSlackId();
@@ -30,38 +29,38 @@ describe('Admin', async () => {
 
   describe('keeping track of houses', async () => {
     it('can add a house', async () => {
-      let numHouses;
+      let houses;
 
-      [ numHouses ] = await db('House').count('*');
-      expect(parseInt(numHouses.count)).to.equal(0);
+      houses = await Admin.getHouses();
+      expect(houses.length).to.equal(0);
 
       await Admin.addHouse(HOUSE1);
 
-      [ numHouses ] = await db('House').count('*');
-      expect(parseInt(numHouses.count)).to.equal(1);
+      houses = await Admin.getHouses();
+      expect(houses.length).to.equal(1);
 
       await Admin.addHouse(HOUSE2);
 
-      [ numHouses ] = await db('House').count('*');
-      expect(parseInt(numHouses.count)).to.equal(2);
+      houses = await Admin.getHouses();
+      expect(houses.length).to.equal(2);
     });
 
     it('can add a house idempotently', async () => {
-      let numHouses;
-      [ numHouses ] = await db('House').count('*');
-      expect(parseInt(numHouses.count)).to.equal(0);
+      let houses;
+      houses = await Admin.getHouses();
+      expect(houses.length).to.equal(0);
 
       await Admin.addHouse(HOUSE1);
       await Admin.addHouse(HOUSE2);
 
-      [ numHouses ] = await db('House').count('*');
-      expect(parseInt(numHouses.count)).to.equal(2);
+      houses = await Admin.getHouses();
+      expect(houses.length).to.equal(2);
 
       await Admin.addHouse(HOUSE1);
       await Admin.addHouse(HOUSE2);
 
-      [ numHouses ] = await db('House').count('*');
-      expect(parseInt(numHouses.count)).to.equal(2);
+      houses = await Admin.getHouses();
+      expect(houses.length).to.equal(2);
     });
 
     it('can update house info', async () => {
