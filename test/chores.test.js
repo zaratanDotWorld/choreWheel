@@ -484,6 +484,31 @@ describe('Chores', async () => {
       expect(sumPoints).to.almost.equal(pointsPerResident * 3 / 6 * inflationFactor);
     });
 
+    it('sets ping to true when the value crosses the ping interval', async () => {
+      const twoDays = new Date(tomorrow.getTime() + 24 * HOUR);
+
+      // Set initial chore value just below 25
+      await db('ChoreValue').insert([
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 24 },
+      ]);
+
+      // First update, should not ping
+      let choreValues = await Chores.getUpdatedChoreValues(HOUSE, now);
+      expect(choreValues.find(cv => cv.id === dishes.id).ping).to.be.false;
+      expect(choreValues.find(cv => cv.id === dishes.id).value).to.be.lt(25);
+
+      // Second update, should cross interval and ping
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, tomorrow);
+      expect(choreValues.find(cv => cv.id === dishes.id).ping).to.be.true;
+      expect(choreValues.find(cv => cv.id === dishes.id).value).to.be.gt(25);
+
+      // Third update, should not ping
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, twoDays);
+      expect(choreValues.find(cv => cv.id === dishes.id).ping).to.be.false;
+      expect(choreValues.find(cv => cv.id === dishes.id).value).to.be.gt(25);
+      expect(choreValues.find(cv => cv.id === dishes.id).value).to.be.lt(50);
+    });
+
     it('returns an empty array when no chores exist', async () => {
       await db('Chore').where({ houseId: HOUSE }).delete();
 

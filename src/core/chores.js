@@ -17,6 +17,7 @@ const {
   dampingFactor,
   choresProposalPollLength,
   choreProposalPct,
+  pingInterval,
 } = require('../config');
 
 const Admin = require('./admin');
@@ -271,7 +272,11 @@ exports.getUpdatedChoreValues = async function (houseId, updateTime) {
   const choreValueUpdates = await exports.updateChoreValues(houseId, updateTime);
 
   const updateMap = new Map(choreValueUpdates.map(update => [ update.choreId, update.value ]));
-  choreValues.forEach((choreValue) => { choreValue.value += updateMap.get(choreValue.id) || 0; });
+  choreValues.forEach((choreValue) => {
+    const prevValue = choreValue.value;
+    choreValue.value += updateMap.get(choreValue.id) || 0;
+    choreValue.ping = Math.trunc(prevValue / pingInterval) < Math.trunc(choreValue.value / pingInterval);
+  });
 
   return choreValues.sort((a, b) => b.value - a.value);
 };
