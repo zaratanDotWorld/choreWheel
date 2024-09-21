@@ -4,6 +4,7 @@ if (process.env.NODE_ENV === 'production') {
   require('newrelic');
 }
 
+const cron = require('node-cron');
 const { App, LogLevel } = require('@slack/bolt');
 
 const { Admin, Polls, Chores } = require('../core/index');
@@ -624,6 +625,31 @@ app.action(/poll-vote/, async ({ ack, body, action }) => {
   await common.updateVoteCounts(app, choresConf.oauth, body, action);
 
   await ack();
+});
+
+// Ping flow
+
+async function pingChores () {
+  const now = new Date();
+  const houses = await Admin.getHouses();
+
+  for (const house of houses) {
+    if (await houseActive(house.slackId, now)) {
+      const choreValues = await Chores.getUpdatedChoreValues(house.slackId, now);
+      const pingableChore = choreValues.find(cv => cv.ping); // Only ping highest-value chore
+      if (pingableChore) {
+        const { choresConf: config } = await Admin.getHouse(house.slackId);
+        const text = `Heads up, *${pingableChore.name}* is worth *${pingableChore.value.toFixed(0)} points* :bangbang:`;
+        return common.postMessage(app, config.oauth, config.channel, text);
+      }
+    }
+  }
+}
+
+// Run every day at 12pm UTC
+cron.schedule('* * 12 * * *', async () => {
+  console.log('Pinging chores...');
+  await pingChores();
 });
 
 // Launch the app
