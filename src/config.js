@@ -17,6 +17,7 @@ exports.choresProposalPollLength = 2 * DAY;
 exports.choreProposalPct = 0.4;
 exports.breakMinDays = 3;
 exports.pointsBuffer = 20;
+exports.pingInterval = 25;
 
 // Hearts
 exports.heartsPollLength = 3 * DAY;
