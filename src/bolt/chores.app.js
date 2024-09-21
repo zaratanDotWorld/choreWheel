@@ -638,6 +638,7 @@ async function pingChores () {
       const choreValues = await Chores.getUpdatedChoreValues(house.slackId, now);
       const pingableChore = choreValues.find(cv => cv.ping); // Only ping highest-value chore
       if (pingableChore) {
+        console.log(`Pinging ${house.slackId}`);
         const { choresConf: config } = await Admin.getHouse(house.slackId);
         const text = `Heads up, *${pingableChore.name}* is worth *${pingableChore.value.toFixed(0)} points* :bangbang:`;
         return common.postMessage(app, config.oauth, config.channel, text);
