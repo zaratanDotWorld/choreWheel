@@ -15,7 +15,7 @@ If your community doesn't have a Slack workspace, it should `create one <https:/
   Chore Wheel works equally well on free and paid Slack plans.
 
 
-1) Set up the tools
+2) Set up the tools
 -------------------
 
 **Click the link below to install each tool into the workspace**
