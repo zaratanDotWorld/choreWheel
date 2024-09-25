@@ -12,11 +12,11 @@ If your community doesn't have a Slack workspace, it should `create one <https:/
 
 .. tip::
 
-  Chore Wheel works equally well on free and paid Slack plans.
+  Chore Wheel works equally well on **free** and **paid** Slack plans.
 
 
-2) Set up the tools
--------------------
+2) Install the tools
+--------------------
 
 **Click the link below to install each tool into the workspace**
 
@@ -24,20 +24,17 @@ If your community doesn't have a Slack workspace, it should `create one <https:/
 - `Install Hearts ↗ <https://hearts.mirror.zaratan.world/slack/install>`_
 - `Install Things ↗ <https://things.mirror.zaratan.world/slack/install>`_
 
-All tools function as stand-alone apps, but complement each other when used together.
-There is a rough progression of power/complexity from using :ref:`chores` by itself, to combining it with :ref:`hearts`, to combining both with :ref:`things`.
-
-When using :ref:`chores` as a stand-alone tool, you get all the power of the chore system, but without a long-term accountability structure.
-By adding :ref:`hearts`, you get long-term accountability both for chores, and the ability to encourage and discourage specific behaviors.
-By adding :ref:`things`, you get some simple tooling for managing shared funds, useful for larger groups.
+When using :ref:`chores` as a stand-alone tool, you get all the power of the **chore system**, but without a long-term accountability structure.
+By adding :ref:`hearts`, you get **long-term accountability** both for chores, and the ability to encourage and discourage specific behaviors.
+By adding :ref:`things`, you get some simple tooling for **managing shared funds**, useful for larger groups.
 
 The right mix of tools will depend on your specific needs.
 **If you're just getting started**, try installing :ref:`chores` and :ref:`hearts`.
 
-.. tip::
+.. note::
 
-  If 100% of the workspace votes yes for a proposal, it **passes immediately**.
-  This is useful if folks are gathered in-person and want to get up-and-running quickly.
+  While Chore Wheel provides innovative tools for representing and distributing regenerative labor, it does not create buy-in automatically.
+  For communities to succeed with Chore Wheel, they need to establish some amount of **commitment** and **accountability** to the process.
 
 .. warning::
 

@@ -5,7 +5,7 @@ Design Principles
 
 .. note::
 
-  You can read the original project whitepaper `here <https://bit.ly/mirror-whitepaper>`_.
+  You can read the original project whitepaper `here <http://kronosapiens.github.io/papers/mirror.pdf>`_.
 
 
 Chore Wheel is **open-source** and **privacy-preserving**, and contains the latest thinking in **ethical technology**.

@@ -13,7 +13,7 @@ Created by **coliving veterans** and **game designers**, Chore Wheel is a family
 Designed for **intentional communities**, **casual roommates**, **cohabitating partners**, and everything in-between, Chore Wheel helps people share the **emotional and mental labor** of sustaining communities.
 Groups using Chore Wheel have **fewer meetings** and **less conflict**, leaving more time for what really matters.
 
-**The best part? It's fun to use.**
+**The best part? It's fun.**
 
 The :ref:`getting started <getting-started>` guide will get you going in less than **twenty minutes**.
 

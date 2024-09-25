@@ -159,11 +159,24 @@ The app home is also the entryway into the basic functionality, described below:
 
   .. warning::
 
-      When defining chores, it is easy to either go **too micro** (e.g. "Wipe off the dinner table") or **too macro** (e.g. "Deep clean the whole kitchen").
-      If too micro, people will resent having to officially "claim" the chore.
-      If too macro, the chore will never get done, despite being worth a lot of points.
+    When defining chores, it is easy to either go **too micro** (e.g. "Wipe off the dinner table") or **too macro** (e.g. "Deep clean the whole kitchen").
+    If too micro, people will resent having to officially "claim" the chore.
+    If too macro, the chore will never get done, despite being worth a lot of points.
 
-      Don't be afraid to experiment and add, remove, or edit chores in the first few weeks.
+    **Don't be afraid to experiment and add, remove, or edit chores.**
+    Consider meeting weekly in the first month or two to discuss what's working and what isn't.
+
+  .. tip::
+
+    Here is a comparison of two sets of chores, one from a house which continues to use the app, and one which stopped using it.
+
+    The **successful house** defined a comprehensive and complementary set of chores focused on the kitchen area.
+    The **unsuccessful house** defined chores in a way that created gaps and overlaps, such that important tasks went undone or were done without recognition.
+
+    .. csv-table:: Successful and Unsuccessful Chore Examples
+      :file: chore-examples.csv
+      :header-rows: 1
+      :widths: auto
 
 :guilabel:`Set priorities`
   The **total amount** of points distributed per month is fixed, at 100 points per resident.
