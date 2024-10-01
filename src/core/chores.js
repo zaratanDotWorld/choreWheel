@@ -621,9 +621,10 @@ exports.resetChorePoints = async function (houseId, now) {
     return { houseId, claimedBy: r.slackId, value: -userPoints, claimedAt: now }; // choreId = null
   }));
 
+  const metadata = { reason: 'reset' };
   const choreValues = await exports.getUpdatedChoreValues(houseId, now);
   const resetChoreClaims = choreValues.map((cv) => {
-    return { houseId, choreId: cv.id, value: cv.value, claimedAt: now }; // claimedBy = null
+    return { houseId, choreId: cv.id, value: cv.value, claimedAt: now, metadata }; // claimedBy = null
   });
 
   await db.transaction(async (tx) => {
