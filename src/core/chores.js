@@ -2,7 +2,7 @@ const assert = require('assert');
 
 const { db } = require('./db');
 
-const { HOUR, DAY, HEART_CHORE } = require('../constants');
+const { DAY, HEART_CHORE } = require('../constants');
 const { getMonthStart, getMonthEnd, getPrevMonthEnd, getNextMonthStart, getDateStart } = require('../utils');
 
 const {
@@ -207,51 +207,81 @@ exports.getChoreRankings = async function (houseId, now, preferences) {
   }).sort((a, b) => b.ranking - a.ranking);
 };
 
-exports.getChoreValueIntervalScalar = async function (houseId, updateTime) {
-  const lastChoreValue = await exports.getLastChoreValueUpdate(houseId);
-  const lastUpdateTime = (lastChoreValue)
-    ? lastChoreValue.valuedAt
-    : new Date(updateTime.getTime() - bootstrapDuration); // First update seeds a fixed amount of value
-
-  const hoursSinceUpdate = Math.max(Math.floor((updateTime - lastUpdateTime) / HOUR), 0);
-  const hoursInMonth = 24 * getMonthEnd(updateTime).getDate();
-
+// Interval scalar is *time since last update* / *time remaining in month*
+exports.getChoreValueIntervalScalar = async function (lastUpdateTime, updateTime) {
   // TODO: handle scenario where interval spans 2 months
-
-  return (hoursSinceUpdate / hoursInMonth);
+  const timeSinceUpdate = updateTime - lastUpdateTime;
+  const timeRemaining = getMonthEnd(updateTime) - lastUpdateTime;
+  return timeSinceUpdate / timeRemaining;
 };
 
-exports.getLastChoreValueUpdate = async function (houseId) {
-  return db('ChoreValue')
+exports.getLastChoreValueUpdateTime = async function (houseId, updateTime) {
+  const lastChoreValue = await db('ChoreValue')
     .join('Chore', 'ChoreValue.choreId', 'Chore.id')
     .where('Chore.houseId', houseId)
     .orderBy('ChoreValue.valuedAt', 'desc')
     .select('ChoreValue.valuedAt')
     .first();
+
+  return (lastChoreValue)
+    ? lastChoreValue.valuedAt
+    : new Date(updateTime - bootstrapDuration); // First update seeds a fixed value
+};
+
+exports.getPointsRemaining = async function (houseId, updateTime, now) {
+  // HACK: use _now_ to get working residents, otherwise bootstrap will fail
+  const workingResidents = await exports.getWorkingResidents(houseId, now);
+  const [ monthStart, monthEnd ] = [ getMonthStart(updateTime), getMonthEnd(updateTime) ];
+
+  // wt = sum_a{t_m - max(t_a, t_0)}
+  const monthlyWorkingTime = workingResidents
+    .reduce((sum, r) => sum + (monthEnd - Math.max(r.activeAt, monthStart)), 0);
+
+  // p_m = wt / (t_m - t_0) * ppr * inf
+  const monthlyPoints = (monthlyWorkingTime / (monthEnd - monthStart)) * pointsPerResident * inflationFactor;
+
+  // sum{r} + sum{s}
+  const assignedPoints = await exports.getSumChoreValues(houseId, monthStart, updateTime);
+
+  // p_r = p_m - sum{r} - sum{s}
+  return monthlyPoints - assignedPoints;
+};
+
+exports.getSumChoreValues = async function (houseId, startTime, endTime) {
+  const assignedPoints = await db('ChoreValue')
+    .where({ houseId })
+    .whereBetween('valuedAt', [ startTime, endTime ])
+    .sum('value')
+    .first();
+
+  return assignedPoints.sum || 0;
 };
 
 exports.updateChoreValues = async function (houseId, now) {
   const updateTime = truncateHour(now);
-  // TODO: lock tables during this function call
-  const intervalScalar = await exports.getChoreValueIntervalScalar(houseId, updateTime);
 
+  const lastUpdateTime = await exports.getLastChoreValueUpdateTime(houseId, updateTime);
   // If we've updated in the last interval, short-circuit execution
-  if (intervalScalar === 0) { return Promise.resolve([]); }
+  if (lastUpdateTime >= updateTime) { return Promise.resolve([]); }
 
-  const workingResidentCount = await exports.getWorkingResidentCount(houseId, now);
-  const updateScalar = (workingResidentCount * pointsPerResident) * intervalScalar * inflationFactor;
+  const pointsRemaining = await exports.getPointsRemaining(houseId, lastUpdateTime, now);
+  // If there are no points remaining, short-circuit execution
+  if (pointsRemaining <= 0) { return Promise.resolve([]); }
+
   const choreRankings = await exports.getCurrentChoreRankings(houseId, now);
-  const metadata = { intervalScalar, residents: workingResidentCount };
-
   // If there are no chores to update, short-circuit execution
   if (!choreRankings.length) { return Promise.resolve([]); }
+
+  const intervalScalar = await exports.getChoreValueIntervalScalar(lastUpdateTime, updateTime);
+  const totalUpdateValue = pointsRemaining * intervalScalar;
+  const metadata = { intervalScalar, pointsRemaining };
 
   const choreValues = choreRankings.map((chore) => {
     return {
       houseId,
       choreId: chore.id,
       valuedAt: updateTime,
-      value: chore.ranking * updateScalar,
+      value: chore.ranking * totalUpdateValue,
       metadata: { ...metadata, ranking: chore.ranking },
     };
   });
@@ -616,12 +646,16 @@ exports.resetChorePoints = async function (houseId, now) {
   });
 
   const monthStart = getMonthStart(now);
+  const metadata = { reason: 'reset' };
+
   const resetResidentClaims = await Promise.all(residents.map(async (r) => {
     const userPoints = await exports.getAllChorePoints(r.slackId, monthStart, now);
-    return { houseId, claimedBy: r.slackId, value: -userPoints, claimedAt: now }; // choreId = null
+    return { houseId, claimedBy: r.slackId, value: -userPoints, claimedAt: now, metadata }; // choreId = null
   }));
 
-  const metadata = { reason: 'reset' };
+  const sumChoreValues = await exports.getSumChoreValues(houseId, monthStart, now);
+  const resetChoreValues = { houseId, value: -sumChoreValues, valuedAt: now, metadata }; // choreId = null
+
   const choreValues = await exports.getUpdatedChoreValues(houseId, now);
   const resetChoreClaims = choreValues.map((cv) => {
     return { houseId, choreId: cv.id, value: cv.value, claimedAt: now, metadata }; // claimedBy = null
@@ -629,6 +663,7 @@ exports.resetChorePoints = async function (houseId, now) {
 
   await db.transaction(async (tx) => {
     await tx('Resident').insert(resetResidents).onConflict('slackId').merge(); // HACK: write Resident table directly
+    await tx('ChoreValue').insert(resetChoreValues);
     await tx('ChoreClaim').insert([ ...resetResidentClaims, ...resetChoreClaims ]);
   });
 };
