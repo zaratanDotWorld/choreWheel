@@ -16,6 +16,7 @@ const {
   penaltyDelay,
   choresPollLength,
   choresProposalPollLength,
+  specialChoreMaxProportion,
 } = require('../src/config');
 const { getMonthStart, getNextMonthStart, getPrevMonthEnd } = require('../src/utils');
 const testHelpers = require('./helpers');
@@ -609,6 +610,28 @@ describe('Chores', async () => {
 
       const choreValues = await Chores.getUpdatedChoreValues(HOUSE, now);
       expect(choreValues.length).to.equal(0);
+    });
+
+    it('can add special one-off chore values', async () => {
+      const pointsRemainingPre = await Chores.getPointsRemaining(HOUSE, now, now);
+
+      const [ name, description ] = [ 'Special Chore', 'Complicated task' ];
+      const [ choreValue ] = await Chores.addSpecialChoreValue(HOUSE, name, description, 10, now);
+      expect(choreValue.metadata.name).to.equal(name);
+      expect(choreValue.metadata.description).to.equal(description);
+      expect(choreValue.value).to.equal(10);
+
+      const pointsRemainingPost = await Chores.getPointsRemaining(HOUSE, now, now);
+      expect(pointsRemainingPre - pointsRemainingPost).to.equal(10);
+    });
+
+    it('cannot add special chore values that are too large', async () => {
+      const pointsRemaining = await Chores.getPointsRemaining(HOUSE, now, now);
+      const value = pointsRemaining * specialChoreMaxProportion + 1;
+
+      const [ name, description ] = [ 'Special Chore', 'Complicated task' ];
+      await expect(Chores.addSpecialChoreValue(HOUSE, name, description, value, now))
+        .to.be.rejectedWith('Value too large!');
     });
   });
 

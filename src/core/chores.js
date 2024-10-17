@@ -18,6 +18,7 @@ const {
   choresProposalPollLength,
   choreProposalPct,
   pingInterval,
+  specialChoreMaxProportion,
 } = require('../config');
 
 const Admin = require('./admin');
@@ -309,6 +310,19 @@ exports.getUpdatedChoreValues = async function (houseId, updateTime) {
   });
 
   return choreValues.sort((a, b) => b.value - a.value);
+};
+
+exports.addSpecialChoreValue = async function (houseId, name, description, value, now) {
+  const pointsRemaining = await exports.getPointsRemaining(houseId, now, now);
+
+  assert(value <= pointsRemaining * specialChoreMaxProportion, 'Value too large!');
+
+  const metadata = { name, description };
+  const choreValue = { houseId, value, valuedAt: now, metadata };
+
+  return db('ChoreValue')
+    .insert(choreValue)
+    .returning('*');
 };
 
 // Chore Claims
