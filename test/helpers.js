@@ -10,6 +10,13 @@ exports.generateSlackId = function () {
   });
 };
 
+exports.createActiveUsers = async function (houseId, num, now) {
+  for (let i = 0; i < num; i++) {
+    const residentId = exports.generateSlackId();
+    await Admin.activateResident(houseId, residentId, now);
+  }
+};
+
 exports.createExemptUsers = async function (houseId, num, now) {
   for (let i = 0; i < num; i++) {
     const residentId = exports.generateSlackId();

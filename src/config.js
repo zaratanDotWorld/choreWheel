@@ -18,6 +18,10 @@ exports.choreProposalPct = 0.4;
 exports.breakMinDays = 3;
 exports.pointsBuffer = 20;
 exports.pingInterval = 25;
+exports.specialChoreMaxValueProportion = 0.2;
+exports.specialChoreVoteIncrement = 25;
+exports.choreSpecialPctMin = 0.3; // Minimum threshold for special chores
+exports.choreSpecialPctMax = 0.6; // Maximum threshold for special chores
 
 // Hearts
 exports.heartsPollLength = 3 * DAY;

@@ -17,7 +17,11 @@ const {
   dampingFactor,
   choresProposalPollLength,
   choreProposalPct,
+  choreSpecialPctMin,
+  choreSpecialPctMax,
   pingInterval,
+  specialChoreMaxValueProportion,
+  specialChoreVoteIncrement,
 } = require('../config');
 
 const Admin = require('./admin');
@@ -154,19 +158,35 @@ exports.getChoreValue = async function (choreId, startTime, endTime) {
   return choreValue.sum || 0;
 };
 
-exports.getCurrentChoreValue = async function (choreId, currentTime, excludedClaimId = null) {
-  const latestClaim = await exports.getLatestChoreClaim(choreId, currentTime, excludedClaimId);
+exports.getCurrentChoreValue = async function (choreId, now, excludedClaimId = null) {
+  const latestClaim = await exports.getLatestChoreClaim(choreId, now, excludedClaimId);
   const latestClaimedAt = (latestClaim === undefined) ? new Date(0) : latestClaim.claimedAt;
-  return exports.getChoreValue(choreId, latestClaimedAt, currentTime);
+  return exports.getChoreValue(choreId, latestClaimedAt, now);
 };
 
-exports.getCurrentChoreValues = async function (houseId, currentTime) {
-  const choreValues = [];
-  const chores = await exports.getChores(houseId);
+exports.getSpecialChoreValues = async function (houseId, now) {
+  return db('ChoreValue')
+    .leftJoin('ChoreClaim', 'ChoreValue.id', 'ChoreClaim.choreValueId')
+    .where('ChoreValue.houseId', houseId)
+    .where('ChoreValue.valuedAt', '<=', now)
+    .whereNull('ChoreValue.choreId')
+    .where(function () {
+      this.where('ChoreClaim.valid', false)
+        .orWhereNull('ChoreClaim.valid');
+    })
+    .select('ChoreValue.*');
+};
 
-  for (const chore of chores) {
-    const choreValue = await exports.getCurrentChoreValue(chore.id, currentTime);
+exports.getCurrentChoreValues = async function (houseId, now) {
+  const choreValues = [];
+
+  for (const chore of await exports.getChores(houseId)) {
+    const choreValue = await exports.getCurrentChoreValue(chore.id, now);
     choreValues.push({ id: chore.id, name: chore.name, value: choreValue });
+  }
+
+  for (const choreValue of await exports.getSpecialChoreValues(houseId, now)) {
+    choreValues.push({ choreValueId: choreValue.id, name: choreValue.name, value: choreValue.value });
   }
 
   return choreValues;
@@ -309,6 +329,15 @@ exports.getUpdatedChoreValues = async function (houseId, updateTime) {
   });
 
   return choreValues.sort((a, b) => b.value - a.value);
+};
+
+exports.addSpecialChoreValue = async function (houseId, name, description, value, now) {
+  const metadata = { name, description };
+  const choreValue = { houseId, value, valuedAt: now, metadata };
+
+  return db('ChoreValue')
+    .insert(choreValue)
+    .returning('*');
 };
 
 // Chore Claims
@@ -586,6 +615,21 @@ exports.createChoreProposal = async function (houseId, proposedBy, choreId, name
     .returning('*');
 };
 
+exports.createSpecialChoreProposal = async function (houseId, proposedBy, name, description, value, now) {
+  const pointsRemaining = await exports.getPointsRemaining(houseId, now, now);
+
+  assert(value <= pointsRemaining * specialChoreMaxValueProportion, 'Value too large!');
+
+  const minVotes = await exports.getSpecialChoreProposalMinVotes(houseId, value, now);
+  const [ poll ] = await Polls.createPoll(houseId, now, choresProposalPollLength, minVotes);
+
+  const metadata = { description, value };
+
+  return db('ChoreProposal')
+    .insert({ houseId, proposedBy, name, metadata, pollId: poll.id })
+    .returning('*');
+};
+
 exports.getChoreProposal = async function (proposalId) {
   return db('ChoreProposal')
     .select('*')
@@ -598,8 +642,20 @@ exports.getChoreProposalMinVotes = async function (houseId, now) {
   return Math.ceil(choreProposalPct * votingResidents.length);
 };
 
-exports.executeChoreProposal = async function (houseId, choreId, name, metadata, active) {
-  if (!choreId) {
+exports.getSpecialChoreProposalMinVotes = async function (houseId, value, now) {
+  const votingResidents = await Admin.getVotingResidents(houseId, now);
+
+  const numVotes = Math.ceil(value / specialChoreVoteIncrement);
+  const minVotes = Math.ceil(choreSpecialPctMin * votingResidents.length);
+  const maxVotes = Math.ceil(choreSpecialPctMax * votingResidents.length);
+  return Math.min(Math.max(numVotes, minVotes), maxVotes);
+};
+
+exports.executeChoreProposal = async function (houseId, choreId, name, metadata, active, now) {
+  if (metadata.value) {
+    const { description, value } = metadata;
+    await exports.addSpecialChoreValue(houseId, name, description, value, now);
+  } else if (!choreId) {
     await exports.addChore(houseId, name, metadata);
   } else {
     await exports.editChore(choreId, name, metadata, active);
@@ -613,7 +669,7 @@ exports.resolveChoreProposal = async function (proposalId, now) {
 
   if (await Polls.isPollValid(proposal.pollId, now)) {
     const { houseId, choreId, name, metadata, active } = proposal;
-    await exports.executeChoreProposal(houseId, choreId, name, metadata, active);
+    await exports.executeChoreProposal(houseId, choreId, name, metadata, active, now);
   }
 
   return db('ChoreProposal')

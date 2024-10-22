@@ -16,6 +16,7 @@ const {
   penaltyDelay,
   choresPollLength,
   choresProposalPollLength,
+  specialChoreMaxValueProportion,
 } = require('../src/config');
 const { getMonthStart, getNextMonthStart, getPrevMonthEnd } = require('../src/utils');
 const testHelpers = require('./helpers');
@@ -609,6 +610,21 @@ describe('Chores', async () => {
 
       const choreValues = await Chores.getUpdatedChoreValues(HOUSE, now);
       expect(choreValues.length).to.equal(0);
+    });
+
+    it('can add special one-off chore values', async () => {
+      const pointsRemainingPre = await Chores.getPointsRemaining(HOUSE, now, now);
+
+      const [ name, description ] = [ 'Special Chore', 'Complicated task' ];
+      await Chores.addSpecialChoreValue(HOUSE, name, description, 10, now);
+
+      const [ choreValue ] = await Chores.getSpecialChoreValues(HOUSE, now);
+      expect(choreValue.metadata.name).to.equal(name);
+      expect(choreValue.metadata.description).to.equal(description);
+      expect(choreValue.value).to.equal(10);
+
+      const pointsRemainingPost = await Chores.getPointsRemaining(HOUSE, now, now);
+      expect(pointsRemainingPre - pointsRemainingPost).to.equal(10);
     });
   });
 
@@ -1579,6 +1595,58 @@ describe('Chores', async () => {
     it('cannot create a proposal without either a choreId or name', async () => {
       await expect(Chores.createChoreProposal(HOUSE, RESIDENT1, undefined, undefined, {}, true, now))
         .to.be.rejectedWith('Proposal must include either choreId or name!');
+    });
+
+    it('can create a special chore proposal', async () => {
+      const pointsRemaining = await Chores.getPointsRemaining(HOUSE, now, now);
+      const value = pointsRemaining * specialChoreMaxValueProportion;
+
+      const name = 'Pantry Clean';
+      const description = 'Clean the pantry';
+
+      let choreValue;
+
+      [ choreValue ] = await Chores.getSpecialChoreValues(HOUSE, now);
+      expect(choreValue).to.be.undefined;
+
+      const [ proposal ] = await Chores.createSpecialChoreProposal(HOUSE, RESIDENT1, name, description, value, now);
+
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+
+      await Chores.resolveChoreProposal(proposal.id, proposalEnd);
+
+      [ choreValue ] = await Chores.getSpecialChoreValues(HOUSE, proposalEnd);
+      expect(choreValue.metadata.name).to.equal(name);
+      expect(choreValue.metadata.description).to.equal(description);
+      expect(choreValue.value).to.almost.equal(value);
+    });
+
+    it('cannot create a special chore proposal with a too-large value', async () => {
+      const name = 'Pantry Clean';
+      const description = 'Clean the pantry';
+
+      const pointsRemaining = await Chores.getPointsRemaining(HOUSE, now, now);
+      const value = pointsRemaining * specialChoreMaxValueProportion + 1;
+
+      await expect(Chores.createSpecialChoreProposal(HOUSE, RESIDENT1, name, description, value, now))
+        .to.be.rejectedWith('Value too large!');
+    });
+
+    it('can return the minimum votes for a special chore proposal', async () => {
+      await testHelpers.createActiveUsers(HOUSE, 8, now); // 10 active users in total
+      await testHelpers.createExemptUsers(HOUSE, 2, now); // Exempt users don't count
+
+      let minVotes;
+
+      minVotes = await Chores.getSpecialChoreProposalMinVotes(HOUSE, 50, now);
+      expect(minVotes).to.equal(3); // Minimum 30%
+
+      minVotes = await Chores.getSpecialChoreProposalMinVotes(HOUSE, 100, now);
+      expect(minVotes).to.equal(4); // 1 person per 25 points
+
+      minVotes = await Chores.getSpecialChoreProposalMinVotes(HOUSE, 200, now);
+      expect(minVotes).to.equal(6); // Maximum 60%
     });
 
     it('cannot resolve a proposal before the poll is closed', async () => {
