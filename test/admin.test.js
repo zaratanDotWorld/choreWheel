@@ -6,7 +6,16 @@ chai.use(chaiAsPromised);
 
 const { Admin } = require('../src/core/index');
 const { HOUR, DAY, CHORES_CONF, THINGS_CONF } = require('../src/constants');
-const { getMonthStart, getMonthEnd, getNextMonthStart, getPrevMonthEnd, getDateStart } = require('../src/utils');
+
+const {
+  getMonthStart,
+  getMonthEnd,
+  getNextMonthStart,
+  getPrevMonthEnd,
+  getDateStart,
+  truncateHour,
+} = require('../src/utils');
+
 const testHelpers = require('./helpers');
 
 describe('Admin', async () => {
@@ -115,7 +124,7 @@ describe('Admin', async () => {
       expect(residents.length).to.equal(2);
 
       const resident1 = await Admin.getResident(RESIDENT1);
-      expect(resident1.activeAt.getTime()).to.equal(now.getTime());
+      expect(resident1.activeAt.getTime()).to.equal(truncateHour(now).getTime());
     });
 
     it('can activate a resident idempotently', async () => {
@@ -128,7 +137,7 @@ describe('Admin', async () => {
 
       residents = await Admin.getResidents(HOUSE1, now);
       expect(residents.length).to.equal(1);
-      expect(residents[0].activeAt.getTime()).to.equal(now.getTime());
+      expect(residents[0].activeAt.getTime()).to.equal(truncateHour(now).getTime());
     });
 
     it('can deactivate a resident', async () => {
@@ -155,7 +164,7 @@ describe('Admin', async () => {
 
       resident = await Admin.getResident(RESIDENT1);
       isExempt = await Admin.isExempt(RESIDENT1, now);
-      expect(resident.activeAt.getTime()).to.equal(now.getTime());
+      expect(resident.activeAt.getTime()).to.equal(truncateHour(now).getTime());
       expect(resident.exemptAt).to.equal(null);
       expect(isExempt).to.be.false;
 
@@ -163,8 +172,8 @@ describe('Admin', async () => {
 
       resident = await Admin.getResident(RESIDENT1);
       isExempt = await Admin.isExempt(RESIDENT1, soon);
-      expect(resident.activeAt.getTime()).to.equal(now.getTime());
-      expect(resident.exemptAt.getTime()).to.equal(soon.getTime());
+      expect(resident.activeAt.getTime()).to.equal(truncateHour(now).getTime());
+      expect(resident.exemptAt.getTime()).to.equal(truncateHour(soon).getTime());
       expect(isExempt).to.be.true;
 
       await Admin.unexemptResident(HOUSE1, RESIDENT1, soon);
@@ -182,8 +191,8 @@ describe('Admin', async () => {
       await Admin.activateResident(HOUSE1, RESIDENT1, soon);
 
       const resident = await Admin.getResident(RESIDENT1);
-      expect(resident.activeAt.getTime()).to.equal(now.getTime());
-      expect(resident.exemptAt.getTime()).to.equal(soon.getTime());
+      expect(resident.activeAt.getTime()).to.equal(truncateHour(now).getTime());
+      expect(resident.exemptAt.getTime()).to.equal(truncateHour(soon).getTime());
     });
 
     it('can exempt a resident idempotently if prior exemption exists', async () => {
@@ -192,20 +201,20 @@ describe('Admin', async () => {
 
       let resident;
       resident = await Admin.getResident(RESIDENT1);
-      expect(resident.exemptAt.getTime()).to.equal(now.getTime());
+      expect(resident.exemptAt.getTime()).to.equal(truncateHour(now).getTime());
 
       // Later exemption has no effect
       await Admin.exemptResident(HOUSE1, RESIDENT1, soon);
 
       resident = await Admin.getResident(RESIDENT1);
-      expect(resident.exemptAt.getTime()).to.equal(now.getTime());
+      expect(resident.exemptAt.getTime()).to.equal(truncateHour(now).getTime());
 
       // Earlier exemption overwrites current exemption
       const yesterday = new Date(now.getTime() - DAY);
       await Admin.exemptResident(HOUSE1, RESIDENT1, yesterday);
 
       resident = await Admin.getResident(RESIDENT1);
-      expect(resident.exemptAt.getTime()).to.equal(yesterday.getTime());
+      expect(resident.exemptAt.getTime()).to.equal(truncateHour(yesterday).getTime());
     });
 
     it('can get voting residents', async () => {
@@ -272,6 +281,9 @@ describe('Admin', async () => {
       expect(getPrevMonthEnd(mar1).getTime()).to.equal(feb28.getTime() + DAY - 1);
       expect(getPrevMonthEnd(mar15).getTime()).to.equal(feb28.getTime() + DAY - 1);
       expect(getPrevMonthEnd(mar31).getTime()).to.equal(feb28.getTime() + DAY - 1);
+
+      expect(getMonthEnd(feb1).getTime()).to.equal(getMonthStart(mar1).getTime() - 1);
+      expect(getMonthEnd(feb28).getTime()).to.equal(getMonthStart(mar31).getTime() - 1);
 
       expect(getNextMonthStart(feb1).getTime()).to.equal(mar1.getTime());
       expect(getNextMonthStart(feb14).getTime()).to.equal(mar1.getTime());

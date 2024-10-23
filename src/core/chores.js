@@ -3,7 +3,15 @@ const assert = require('assert');
 const { db } = require('./db');
 
 const { DAY, HEART_CHORE } = require('../constants');
-const { getMonthStart, getMonthEnd, getPrevMonthEnd, getNextMonthStart, getDateStart } = require('../utils');
+
+const {
+  getMonthStart,
+  getMonthEnd,
+  getPrevMonthEnd,
+  getNextMonthStart,
+  getDateStart,
+  truncateHour,
+} = require('../utils');
 
 const {
   pointsPerResident,
@@ -227,20 +235,11 @@ exports.getChoreRankings = async function (houseId, now, preferences) {
   }).sort((a, b) => b.ranking - a.ranking);
 };
 
-// Interval scalar is *time since last update* / *time remaining in month*
-exports.getChoreValueIntervalScalar = async function (lastUpdateTime, updateTime) {
-  // TODO: handle scenario where interval spans 2 months
-  const timeSinceUpdate = updateTime - lastUpdateTime;
-  const timeRemaining = getMonthEnd(updateTime) - lastUpdateTime;
-  return timeSinceUpdate / timeRemaining;
-};
-
 exports.getLastChoreValueUpdateTime = async function (houseId, updateTime) {
   const lastChoreValue = await db('ChoreValue')
-    .join('Chore', 'ChoreValue.choreId', 'Chore.id')
-    .where('Chore.houseId', houseId)
-    .orderBy('ChoreValue.valuedAt', 'desc')
-    .select('ChoreValue.valuedAt')
+    .where({ houseId })
+    .orderBy('valuedAt', 'desc')
+    .select('valuedAt')
     .first();
 
   return (lastChoreValue)
@@ -248,23 +247,49 @@ exports.getLastChoreValueUpdateTime = async function (houseId, updateTime) {
     : new Date(updateTime - bootstrapDuration); // First update seeds a fixed value
 };
 
-exports.getPointsRemaining = async function (houseId, updateTime, now) {
-  // HACK: use _now_ to get working residents, otherwise bootstrap will fail
-  const workingResidents = await exports.getWorkingResidents(houseId, now);
-  const [ monthStart, monthEnd ] = [ getMonthStart(updateTime), getMonthEnd(updateTime) ];
+exports.getAvailablePoints = async function (houseId, lastUpdateTime, updateTime) {
+  const workingResidents = await exports.getWorkingResidents(houseId, updateTime);
 
-  // wt = sum_a{t_m - max(t_a, t_0)}
-  const monthlyWorkingTime = workingResidents
-    .reduce((sum, r) => sum + (monthEnd - Math.max(r.activeAt, monthStart)), 0);
+  const availablePoints = [];
+  const updateTimeMonthEnd = getMonthEnd(updateTime);
 
-  // p_m = wt / (t_m - t_0) * ppr * inf
-  const monthlyPoints = (monthlyWorkingTime / (monthEnd - monthStart)) * pointsPerResident * inflationFactor;
+  let monthStart = getMonthStart(lastUpdateTime);
+  let monthEnd = getMonthEnd(lastUpdateTime);
 
-  // sum{r} + sum{s}
-  const assignedPoints = await exports.getSumChoreValues(houseId, monthStart, updateTime);
+  while (monthEnd <= updateTimeMonthEnd) {
+    // wt = sum_a{t_m - max(t_a, t_0)}
+    const monthlyWorkingTime = workingResidents
+      .reduce((sum, r) => sum + (monthEnd - Math.max(r.activeAt, monthStart)), 0);
 
-  // p_r = p_m - sum{r} - sum{s}
-  return monthlyPoints - assignedPoints;
+    // p_m = wt / (t_m - t_0) * ppr * inf
+    const monthlyPoints = (monthlyWorkingTime / (monthEnd - monthStart)) * pointsPerResident * inflationFactor;
+
+    // p_u = sum{r} + sum{s}
+    const usedPoints = await exports.getSumChoreValues(houseId, monthStart, lastUpdateTime);
+
+    // p_r = p_m - p_u
+    const pointsRemaining = monthlyPoints - usedPoints;
+
+    // is = t_n - t_l / t_m - t_l
+    const timeSinceUpdate = Math.min(monthEnd, updateTime) - Math.max(monthStart, lastUpdateTime);
+    const timeRemaining = monthEnd - Math.max(monthStart, lastUpdateTime);
+    const intervalScalar = timeSinceUpdate / timeRemaining;
+
+    availablePoints.push({
+      value: pointsRemaining * intervalScalar, // p_a = p_r / is
+      date: new Date(Math.min(monthEnd, updateTime)), // Assign p_a to the correct period
+    });
+
+    monthStart = getNextMonthStart(monthStart);
+    monthEnd = getMonthEnd(monthStart);
+  }
+
+  return availablePoints;
+};
+
+exports.getTotalAvailablePoints = async function (houseId, lastUpdateTime, updateTime) {
+  const availablePoints = await exports.getAvailablePoints(houseId, lastUpdateTime, updateTime);
+  return availablePoints.reduce((sum, ap) => sum + ap.value, 0);
 };
 
 exports.getSumChoreValues = async function (houseId, startTime, endTime) {
@@ -278,53 +303,49 @@ exports.getSumChoreValues = async function (houseId, startTime, endTime) {
 };
 
 exports.updateChoreValues = async function (houseId, now) {
+  // Semantically, updateTime indicates a truncated value
   const updateTime = truncateHour(now);
 
   const lastUpdateTime = await exports.getLastChoreValueUpdateTime(houseId, updateTime);
   // If we've updated in the last interval, short-circuit execution
   if (lastUpdateTime >= updateTime) { return Promise.resolve([]); }
 
-  const pointsRemaining = await exports.getPointsRemaining(houseId, lastUpdateTime, now);
+  const availablePoints = await exports.getAvailablePoints(houseId, lastUpdateTime, updateTime);
   // If there are no points remaining, short-circuit execution
-  if (pointsRemaining <= 0) { return Promise.resolve([]); }
+  if (availablePoints[0].value <= 0) { return Promise.resolve([]); }
 
   const choreRankings = await exports.getCurrentChoreRankings(houseId, now);
   // If there are no chores to update, short-circuit execution
   if (!choreRankings.length) { return Promise.resolve([]); }
 
-  const intervalScalar = await exports.getChoreValueIntervalScalar(lastUpdateTime, updateTime);
-  const totalUpdateValue = pointsRemaining * intervalScalar;
-  const metadata = { intervalScalar, pointsRemaining };
-
-  const choreValues = choreRankings.map((chore) => {
-    return {
-      houseId,
-      choreId: chore.id,
-      valuedAt: updateTime,
-      value: chore.ranking * totalUpdateValue,
-      metadata: { ...metadata, ranking: chore.ranking },
-    };
-  });
+  const choreValues = [];
+  for (const points of availablePoints) {
+    for (const chore of choreRankings) {
+      choreValues.push({
+        houseId,
+        choreId: chore.id,
+        valuedAt: points.date,
+        value: chore.ranking * points.value,
+        metadata: { ranking: chore.ranking, availablePoints: points.value },
+      });
+    }
+  }
 
   return db('ChoreValue')
     .insert(choreValues)
     .returning('*');
 };
 
-// Round down to the nearest hour
-function truncateHour (date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours());
-}
-
 exports.getUpdatedChoreValues = async function (houseId, updateTime) {
   // By doing it this way, we avoid race conditions
   const choreValues = await exports.getCurrentChoreValues(houseId, updateTime);
   const choreValueUpdates = await exports.updateChoreValues(houseId, updateTime);
 
-  const updateMap = new Map(choreValueUpdates.map(update => [ update.choreId, update.value ]));
   choreValues.forEach((choreValue) => {
     const prevValue = choreValue.value;
-    choreValue.value += updateMap.get(choreValue.id) || 0;
+    choreValue.value += choreValueUpdates
+      .filter(choreValueUpdate => choreValueUpdate.choreId === choreValue.id)
+      .reduce((sum, choreValueUpdate) => sum + choreValueUpdate.value, 0);
     choreValue.ping = Math.trunc(prevValue / pingInterval) < Math.trunc(choreValue.value / pingInterval);
   });
 
@@ -616,9 +637,9 @@ exports.createChoreProposal = async function (houseId, proposedBy, choreId, name
 };
 
 exports.createSpecialChoreProposal = async function (houseId, proposedBy, name, description, value, now) {
-  const pointsRemaining = await exports.getPointsRemaining(houseId, now, now);
+  const availablePoints = await exports.getTotalAvailablePoints(houseId, now, getMonthEnd(now));
 
-  assert(value <= pointsRemaining * specialChoreMaxValueProportion, 'Value too large!');
+  assert(value <= availablePoints * specialChoreMaxValueProportion, 'Value too large!');
 
   const minVotes = await exports.getSpecialChoreProposalMinVotes(houseId, value, now);
   const [ poll ] = await Polls.createPoll(houseId, now, choresProposalPollLength, minVotes);
