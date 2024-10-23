@@ -24,6 +24,10 @@ exports.shiftDate = function (date, minutes) {
   return new Date(date.getTime() + minutes * MINUTE);
 };
 
+exports.truncateHour = function (date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours());
+};
+
 exports.sleep = async function (ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);

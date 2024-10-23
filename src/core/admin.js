@@ -1,5 +1,7 @@
 const { db } = require('./db');
 
+const { truncateHour } = require('../utils');
+
 // Houses
 
 exports.addHouse = async function (slackId, name) {
@@ -43,10 +45,12 @@ exports.houseActive = async function (houseId, table, field, startTime, endTime)
 
 // Residents
 
-exports.activateResident = async function (houseId, slackId, activeAt) {
+exports.activateResident = async function (houseId, slackId, now) {
   // No-op if already active or exempt
   const resident = await exports.getResident(slackId);
   if (resident && (resident.activeAt || resident.exemptAt)) { return; }
+
+  const activeAt = truncateHour(now);
 
   return db('Resident')
     .insert({ houseId, slackId, activeAt, exemptAt: null })
@@ -59,10 +63,12 @@ exports.deactivateResident = async function (houseId, slackId) {
     .onConflict('slackId').merge();
 };
 
-exports.exemptResident = async function (houseId, slackId, exemptAt) {
+exports.exemptResident = async function (houseId, slackId, now) {
   // No-op if already exempt
   const resident = await exports.getResident(slackId);
-  if (resident && resident.exemptAt && resident.exemptAt <= exemptAt) { return; }
+  if (resident && resident.exemptAt && resident.exemptAt <= now) { return; }
+
+  const exemptAt = truncateHour(now);
 
   return db('Resident')
     .insert({ houseId, slackId, exemptAt })

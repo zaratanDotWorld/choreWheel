@@ -150,19 +150,19 @@ describe('Things', async () => {
     it('can get the minimum votes for a buy', async () => {
       let minVotes;
 
-      minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 10, now);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 10, soon);
       expect(minVotes).to.equal(1);
 
-      minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 70, now);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 70, soon);
       expect(minVotes).to.equal(2);
 
       // max: ceil( 4 residents * 60% ) = 3
-      minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 200, now);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 200, soon);
       expect(minVotes).to.equal(3);
 
       // Exempt users are not counted
-      await testHelpers.createExemptUsers(HOUSE, 10);
-      minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 500, now);
+      await testHelpers.createExemptUsers(HOUSE, 10, now);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 500, soon);
       expect(minVotes).to.equal(3);
     });
 
@@ -418,19 +418,19 @@ describe('Things', async () => {
       let minVotes;
 
       // min: ceil( 4 residents * 30% ) = 2
-      minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 10, now);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 10, soon);
       expect(minVotes).to.equal(2);
 
-      minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 100, now);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 100, soon);
       expect(minVotes).to.equal(2);
 
       // max: ceil( 4 residents * 60% ) = 3
-      minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 300, now);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 300, soon);
       expect(minVotes).to.equal(3);
 
       // Exempt users are not counted
-      await testHelpers.createExemptUsers(HOUSE, 10);
-      minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 500, now);
+      await testHelpers.createExemptUsers(HOUSE, 10, now);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 500, soon);
       expect(minVotes).to.equal(3);
     });
 
@@ -597,7 +597,7 @@ describe('Things', async () => {
       expect(minVotes).to.equal(2);
 
       // Exempt users are not counted
-      await testHelpers.createExemptUsers(HOUSE, 10);
+      await testHelpers.createExemptUsers(HOUSE, 10, now);
       minVotes = await Things.getThingProposalMinVotes(HOUSE, now);
       expect(minVotes).to.equal(2);
     });
