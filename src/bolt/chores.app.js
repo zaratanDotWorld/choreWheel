@@ -4,6 +4,7 @@ if (process.env.NODE_ENV === 'production') {
   require('newrelic');
 }
 
+const assert = require('assert');
 const cron = require('node-cron');
 const { App, LogLevel } = require('@slack/bolt');
 
@@ -292,8 +293,13 @@ app.view('chores-claim-2', async ({ ack, body }) => {
   const actionName = 'chores-claim-2';
   common.beginAction(actionName, body);
 
-  const { id: choreId } = JSON.parse(common.getInputBlock(body, -1).chore.selected_option.value);
-  const chore = await Chores.getChore(choreId);
+  const { choreId, choreValueId } = JSON.parse(common.getInputBlock(body, -1).chore.selected_option.value);
+
+  assert(choreId || choreValueId, 'Missing choreId or choreValueId');
+
+  const chore = (choreId)
+    ? await Chores.getChore(choreId)
+    : await Chores.getSpecialChoreValue(choreValueId);
 
   const view = views.choresClaimView2(chore);
   await ack({ response_action: 'push', view });
@@ -306,24 +312,41 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   const { chore } = JSON.parse(body.view.private_metadata);
+  const { id: choreId, choreValueId } = chore;
 
-  // Get chore points over last six months
+  assert(choreId || choreValueId, 'Missing choreId or choreValueId');
+
   const monthStart = getMonthStart(now);
-  const achievementStart = new Date(now.getTime() - achievementWindow);
   let monthlyPoints = await Chores.getAllChorePoints(residentId, monthStart, now);
-  let achivementPoints = await Chores.getChorePoints(residentId, chore.id, achievementStart, now);
+  let achivementPoints = 0;
 
-  // Perform the claim, skipping timeSpent for now
-  const [ claim ] = await Chores.claimChore(houseId, chore.id, residentId, now, 0);
+  let name;
+  let claim;
+
+  if (choreId) {
+    name = chore.name;
+
+    const achievementStart = new Date(now.getTime() - achievementWindow);
+    achivementPoints = await Chores.getChorePoints(residentId, choreId, achievementStart, now);
+
+    // Perform the regular claim, skipping timeSpent for now
+    [ claim ] = await Chores.claimChore(houseId, choreId, residentId, now, 0);
+
+    achivementPoints = achivementPoints + claim.value;
+  } else if (choreValueId) {
+    name = chore.metadata.name;
+
+    // Perform the special claim, skipping timeSpent for now
+    [ claim ] = await Chores.claimSpecialChore(houseId, choreValueId, residentId, now, 0);
+  }
+
+  monthlyPoints = monthlyPoints + claim.value;
+
   await Polls.submitVote(claim.pollId, residentId, now, YAY);
   const { minVotes } = await Polls.getPoll(claim.pollId);
 
-  // Get latest point values
-  monthlyPoints = monthlyPoints + claim.value;
-  achivementPoints = achivementPoints + claim.value;
-
   const text = 'Someone just completed a chore';
-  const blocks = views.choresClaimCallbackView(claim, chore.name, minVotes, achivementPoints, monthlyPoints);
+  const blocks = views.choresClaimCallbackView(claim, name, minVotes, achivementPoints, monthlyPoints);
   const { channel, ts } = await postMessage(text, blocks);
   await Polls.updateMetadata(claim.pollId, { channel, ts });
 

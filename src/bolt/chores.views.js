@@ -267,7 +267,7 @@ exports.choresClaimView2 = function (chore) {
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
-  blocks.push(common.blockSection(`*${chore.name}*`));
+  blocks.push(common.blockSection(`*${chore.name || chore.metadata.name}*`));
   blocks.push(common.blockSection(chore.metadata.description || ''));
 
   return {
@@ -298,11 +298,11 @@ exports.getSparkles = function (monthlyPoints) {
   return ':sparkles:'.repeat(Math.max(numSparkles, 0)); // Handle negative points
 };
 
-exports.choresClaimCallbackView = function (claim, choreName, minVotes, achivementPoints, monthlyPoints) {
+exports.choresClaimCallbackView = function (claim, name, minVotes, achivementPoints, monthlyPoints) {
   const achievement = exports.getAchievement(achivementPoints);
   const sparkles = exports.getSparkles(monthlyPoints);
 
-  const mainText = `*<@${claim.claimedBy}>* did *${choreName}* for ` +
+  const mainText = `*<@${claim.claimedBy}>* did *${name}* for ` +
     `*${claim.value.toFixed(0)} points* ${achievement}${sparkles}`;
 
   const blocks = [];
@@ -827,9 +827,10 @@ function mapChores (chores) {
 
 function mapChoresValues (chores) {
   return chores.map((chore) => {
+    const name = chore.name || chore.metadata.name;
     return {
-      value: JSON.stringify({ id: chore.id }),
-      text: common.blockPlaintext(`${chore.name} - ${chore.value.toFixed(0)} points`),
+      value: JSON.stringify({ choreId: chore.choreId, choreValueId: chore.choreValueId }),
+      text: common.blockPlaintext(`${name} - ${chore.value.toFixed(0)} points`),
     };
   });
 }
