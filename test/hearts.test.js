@@ -347,7 +347,7 @@ describe('Hearts', async () => {
 
       // Exempt users are not counted
       await testHelpers.createExemptUsers(HOUSE, 10, now);
-      minVotes = await Hearts.getChallengeMinVotes(HOUSE, RESIDENT2, 2, now);
+      minVotes = await Hearts.getChallengeMinVotes(HOUSE, RESIDENT2, 2, soon);
       expect(minVotes).to.equal(2);
     });
 

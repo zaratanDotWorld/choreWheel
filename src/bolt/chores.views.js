@@ -3,6 +3,7 @@ const {
   achievementBase,
   choresPollLength,
   choresProposalPollLength,
+  specialChoreMaxValueProportion,
   penaltyIncrement,
   pointsBuffer,
 } = require('../config');
@@ -92,6 +93,7 @@ exports.choresHomeView = function (choreStats, numActive, exempt) {
     }
     actions.push(common.blockButton('chores-break', 'Take a break'));
     actions.push(common.blockButton('chores-gift', 'Gift your points'));
+    actions.push(common.blockButton('chores-special', 'Add special chore'));
     actions.push(common.blockButton('chores-propose', 'Edit chores list'));
   }
   actions.push(common.blockButton('chores-rank', 'Set priorities'));
@@ -737,6 +739,78 @@ exports.choresProposeCallbackViewForce = function (metadata, residentId, name, d
     blocks.push(common.blockSection(description));
   }
 
+  return blocks;
+};
+
+// Special chore flow
+
+exports.choresSpecialView = function (availablePoints, minVotes) {
+  const maxPoints = availablePoints * specialChoreMaxValueProportion;
+
+  const header = 'Add special chore';
+  const mainText = 'Sometimes there are big one-off tasks that need to be done. ' +
+    'These can be seen as *special chores*.\n\n' +
+    `Creating special chores requires *one upvote per 25 points*, and a *minimum of ${minVotes} upvotes*.\n\n` +
+    `There are currently *${maxPoints.toFixed(0)} points* available for special chores.`;
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockDivider());
+  blocks.push(common.blockInput(
+    'Name',
+    {
+      action_id: 'name',
+      type: 'plain_text_input',
+      placeholder: common.blockPlaintext('Name of the chore'),
+    },
+  ));
+  blocks.push(common.blockInput(
+    'Description',
+    {
+      action_id: 'description',
+      type: 'plain_text_input',
+      multiline: true,
+      max_length: 1000,
+      placeholder: common.blockPlaintext('Describe the chore (bullet points work well)'),
+    },
+  ));
+  blocks.push(common.blockInput(
+    'Points',
+    {
+      action_id: 'points',
+      type: 'number_input',
+      min_value: '1',
+      max_value: maxPoints.toFixed(0),
+      is_decimal_allowed: false,
+      placeholder: common.blockPlaintext('Number of points the chore is worth'),
+    },
+  ));
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-special-callback',
+    title: TITLE,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
+    blocks,
+  };
+};
+
+exports.choresSpecialCallbackView = function (proposal, minVotes) {
+  const mainText = `*<@${proposal.proposedBy}>* wants to create a *special chore* ` +
+    `worth *${proposal.metadata.value} points*:`;
+
+  const blocks = [];
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockSection(`*${proposal.name}*`));
+
+  if (proposal.metadata.description) {
+    blocks.push(common.blockSection(proposal.metadata.description));
+  }
+
+  blocks.push(common.blockSection(common.makeVoteText(minVotes, choresProposalPollLength)));
+  blocks.push(common.blockActions(common.makeVoteButtons(proposal.pollId, 1, 0)));
   return blocks;
 };
 
