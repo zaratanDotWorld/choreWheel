@@ -172,6 +172,12 @@ exports.getCurrentChoreValue = async function (choreId, now, excludedClaimId = n
   return exports.getChoreValue(choreId, latestClaimedAt, now);
 };
 
+exports.getSpecialChoreValue = async function (choreValueId) {
+  return db('ChoreValue')
+    .where({ id: choreValueId })
+    .first();
+};
+
 exports.getSpecialChoreValues = async function (houseId, now) {
   return db('ChoreValue')
     .leftJoin('ChoreClaim', 'ChoreValue.id', 'ChoreClaim.choreValueId')
@@ -190,7 +196,7 @@ exports.getCurrentChoreValues = async function (houseId, now) {
 
   for (const chore of await exports.getChores(houseId)) {
     const choreValue = await exports.getCurrentChoreValue(chore.id, now);
-    choreValues.push({ id: chore.id, name: chore.name, value: choreValue });
+    choreValues.push({ choreId: chore.id, name: chore.name, value: choreValue });
   }
 
   for (const choreValue of await exports.getSpecialChoreValues(houseId, now)) {
@@ -238,6 +244,7 @@ exports.getChoreRankings = async function (houseId, now, preferences) {
 exports.getLastChoreValueUpdateTime = async function (houseId, updateTime) {
   const lastChoreValue = await db('ChoreValue')
     .where({ houseId })
+    .whereNotNull('choreId')
     .orderBy('valuedAt', 'desc')
     .select('valuedAt')
     .first();
@@ -338,13 +345,13 @@ exports.updateChoreValues = async function (houseId, now) {
 
 exports.getUpdatedChoreValues = async function (houseId, updateTime) {
   // By doing it this way, we avoid race conditions
-  const choreValues = await exports.getCurrentChoreValues(houseId, updateTime);
-  const choreValueUpdates = await exports.updateChoreValues(houseId, updateTime);
+  const choreValues = await exports.getCurrentChoreValues(houseId, updateTime); // Includes special chores
+  const choreValueUpdates = await exports.updateChoreValues(houseId, updateTime); // Excludes special chores
 
   choreValues.forEach((choreValue) => {
     const prevValue = choreValue.value;
     choreValue.value += choreValueUpdates
-      .filter(choreValueUpdate => choreValueUpdate.choreId === choreValue.id)
+      .filter(choreValueUpdate => choreValueUpdate.choreId === choreValue.choreId)
       .reduce((sum, choreValueUpdate) => sum + choreValueUpdate.value, 0);
     choreValue.ping = Math.trunc(prevValue / pingInterval) < Math.trunc(choreValue.value / pingInterval);
   });
@@ -372,7 +379,7 @@ exports.getChoreClaim = async function (claimId) {
 
 exports.getChoreClaims = async function (claimedBy, startTime, endTime) {
   return db('ChoreClaim')
-    .join('Chore', 'ChoreClaim.choreId', 'Chore.id')
+    .leftJoin('Chore', 'ChoreClaim.choreId', 'Chore.id')
     .where({ claimedBy, valid: true })
     .whereBetween('claimedAt', [ startTime, endTime ])
     .orderBy('claimedAt')
@@ -406,6 +413,25 @@ exports.claimChore = async function (houseId, choreId, claimedBy, claimedAt, tim
       value: choreValue,
       pollId: poll.id,
       metadata: { timeSpent },
+    })
+    .returning('*');
+};
+
+exports.claimSpecialChore = async function (houseId, choreValueId, claimedBy, claimedAt, timeSpent) {
+  const choreValue = await exports.getSpecialChoreValue(choreValueId);
+
+  const minVotes = (choreValue.value >= choreMinVotesThreshold) ? choresMinVotes : 1;
+  const [ poll ] = await Polls.createPoll(houseId, claimedAt, choresPollLength, minVotes);
+
+  return db('ChoreClaim')
+    .insert({
+      houseId,
+      choreValueId,
+      claimedBy,
+      claimedAt,
+      value: choreValue.value,
+      pollId: poll.id,
+      metadata: { ...choreValue.metadata, timeSpent },
     })
     .returning('*');
 };
@@ -735,7 +761,14 @@ exports.resetChorePoints = async function (houseId, now) {
 
   const choreValues = await exports.getUpdatedChoreValues(houseId, now);
   const resetChoreClaims = choreValues.map((cv) => {
-    return { houseId, choreId: cv.id, value: cv.value, claimedAt: now, metadata }; // claimedBy = null
+    return {
+      houseId,
+      choreId: cv.choreId,
+      choreValueId: cv.choreValueId,
+      value: cv.value,
+      claimedAt: now,
+      metadata,
+    }; // claimedBy = null
   });
 
   await db.transaction(async (tx) => {

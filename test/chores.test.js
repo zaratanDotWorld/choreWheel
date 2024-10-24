@@ -367,9 +367,9 @@ describe('Chores', async () => {
       const soon = new Date(now.getTime() + HOUR);
 
       const choreValues = await Chores.getCurrentChoreValues(HOUSE, soon);
-      expect(choreValues.find(x => x.id === dishes.id).value).to.equal(15);
-      expect(choreValues.find(x => x.id === sweeping.id).value).to.equal(20);
-      expect(choreValues.find(x => x.id === restock.id).value).to.equal(0);
+      expect(choreValues.find(cv => cv.choreId === dishes.id).value).to.equal(15);
+      expect(choreValues.find(cv => cv.choreId === sweeping.id).value).to.equal(20);
+      expect(choreValues.find(cv => cv.choreId === restock.id).value).to.equal(0);
     });
 
     it('can get the last chore value update time', async () => {
@@ -389,6 +389,14 @@ describe('Chores', async () => {
 
       updateTime = await Chores.getLastChoreValueUpdateTime(HOUSE, t1);
       expect(updateTime.getTime()).to.almost.equal(t1.getTime());
+
+      updateTime = await Chores.getLastChoreValueUpdateTime(HOUSE, t2);
+      expect(updateTime.getTime()).to.almost.equal(t1.getTime());
+
+      // Adding a special chore value does not affect the update time
+      await db('ChoreValue').insert([
+        { houseId: HOUSE, valuedAt: t2, value: 0 },
+      ]);
 
       updateTime = await Chores.getLastChoreValueUpdateTime(HOUSE, t2);
       expect(updateTime.getTime()).to.almost.equal(t1.getTime());
@@ -544,7 +552,6 @@ describe('Chores', async () => {
       const t2 = new Date(t0.getTime() + 61 * DAY); // May 31
       const t3 = new Date(t0.getTime() + 122 * DAY); // August 31
 
-      // Prevent bootstrap
       await db('ChoreValue').insert([
         { houseId: HOUSE, choreId: dishes.id, valuedAt: t0, value: 0 },
       ]);
@@ -556,7 +563,7 @@ describe('Chores', async () => {
       expect(choreValues.reduce((sum, cv) => sum + cv.value, 0))
         .to.be.almost(3 * pointsPerResident * inflationFactor * 2 / 3, 1e-5);
 
-      // 61 days, crossing one month boundary and completing the next month
+      // 41 days, crossing one month boundary and completing the next month
       choreValues = await Chores.getUpdatedChoreValues(HOUSE, t2);
       expect(choreValues.reduce((sum, cv) => sum + cv.value, 0))
         .to.be.almost(3 * pointsPerResident * inflationFactor * 2, 1e-4);
@@ -577,19 +584,19 @@ describe('Chores', async () => {
 
       // First update, should not ping
       let choreValues = await Chores.getUpdatedChoreValues(HOUSE, now);
-      expect(choreValues.find(cv => cv.id === dishes.id).ping).to.be.false;
-      expect(choreValues.find(cv => cv.id === dishes.id).value).to.be.lt(25);
+      expect(choreValues.find(cv => cv.choreId === dishes.id).ping).to.be.false;
+      expect(choreValues.find(cv => cv.choreId === dishes.id).value).to.be.lt(25);
 
       // Second update, should cross interval and ping
       choreValues = await Chores.getUpdatedChoreValues(HOUSE, tomorrow);
-      expect(choreValues.find(cv => cv.id === dishes.id).ping).to.be.true;
-      expect(choreValues.find(cv => cv.id === dishes.id).value).to.be.gt(25);
+      expect(choreValues.find(cv => cv.choreId === dishes.id).ping).to.be.true;
+      expect(choreValues.find(cv => cv.choreId === dishes.id).value).to.be.gt(25);
 
       // Third update, should not ping
       choreValues = await Chores.getUpdatedChoreValues(HOUSE, twoDays);
-      expect(choreValues.find(cv => cv.id === dishes.id).ping).to.be.false;
-      expect(choreValues.find(cv => cv.id === dishes.id).value).to.be.gt(25);
-      expect(choreValues.find(cv => cv.id === dishes.id).value).to.be.lt(50);
+      expect(choreValues.find(cv => cv.choreId === dishes.id).ping).to.be.false;
+      expect(choreValues.find(cv => cv.choreId === dishes.id).value).to.be.gt(25);
+      expect(choreValues.find(cv => cv.choreId === dishes.id).value).to.be.lt(50);
     });
 
     it('returns an empty array when no chores exist', async () => {
@@ -602,16 +609,16 @@ describe('Chores', async () => {
     it('can add special one-off chore values', async () => {
       const availablePointsPre = await Chores.getTotalAvailablePoints(HOUSE, now, monthEnd);
 
-      const [ name, description ] = [ 'Special Chore', 'Complicated task' ];
-      await Chores.addSpecialChoreValue(HOUSE, name, description, 10, now);
+      const [ name, description, value ] = [ 'Special Chore', 'Complicated task', 10 ];
+      await Chores.addSpecialChoreValue(HOUSE, name, description, value, now);
 
       const [ choreValue ] = await Chores.getSpecialChoreValues(HOUSE, now);
       expect(choreValue.metadata.name).to.equal(name);
       expect(choreValue.metadata.description).to.equal(description);
-      expect(choreValue.value).to.equal(10);
+      expect(choreValue.value).to.equal(value);
 
       const availablePointsPost = await Chores.getTotalAvailablePoints(HOUSE, now, monthEnd);
-      expect(availablePointsPre - availablePointsPost).to.equal(10);
+      expect(availablePointsPre - availablePointsPost).to.equal(value);
     });
   });
 
@@ -643,6 +650,27 @@ describe('Chores', async () => {
       expect(choreClaims[0].claimedAt.getTime()).to.equal(now.getTime());
       expect(choreClaims[0].value).to.equal(15);
       expect(choreClaims[0].metadata.timeSpent).to.equal(20);
+    });
+
+    it('can claim a special chore', async () => {
+      const [ name, description, value ] = [ 'Special Chore', 'Complicated task', 15 ];
+      await Chores.addSpecialChoreValue(HOUSE, name, description, value, now);
+
+      let choreValues;
+      choreValues = await Chores.getSpecialChoreValues(HOUSE, now);
+      expect(choreValues.length).to.equal(1);
+
+      await Chores.claimSpecialChore(HOUSE, choreValues[0].id, RESIDENT1, now, 20);
+
+      const choreClaims = await Chores.getChoreClaims(RESIDENT1, now, soon);
+      expect(choreClaims.length).to.equal(1);
+      expect(choreClaims[0].metadata.name).to.equal(name);
+      expect(choreClaims[0].claimedAt.getTime()).to.equal(now.getTime());
+      expect(choreClaims[0].value).to.equal(value);
+      expect(choreClaims[0].metadata.timeSpent).to.equal(20);
+
+      choreValues = await Chores.getSpecialChoreValues(HOUSE, now);
+      expect(choreValues.length).to.equal(0);
     });
 
     it('can get the latest chore claim', async () => {
@@ -834,6 +862,30 @@ describe('Chores', async () => {
       const [ resolvedClaim2 ] = await Chores.resolveChoreClaim(choreClaim2.id, t4);
       expect(resolvedClaim2.valid).to.be.true;
       expect(resolvedClaim2.value).to.equal(15);
+    });
+
+    it('can correctly invalidate a special chore claim', async () => {
+      const [ name, description, value ] = [ 'Special Chore', 'Complicated task', 15 ];
+      await Chores.addSpecialChoreValue(HOUSE, name, description, value, now);
+
+      let choreValues;
+      choreValues = await Chores.getSpecialChoreValues(HOUSE, now);
+      expect(choreValues.length).to.equal(1);
+
+      const [ choreClaim ] = await Chores.claimSpecialChore(HOUSE, choreValues[0].id, RESIDENT1, now, 0);
+
+      choreValues = await Chores.getSpecialChoreValues(HOUSE, now);
+      expect(choreValues.length).to.equal(0);
+
+      // Deny the claim
+      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, NAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT2, soon, NAY);
+
+      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, proposalEnd);
+      expect(resolvedClaim.valid).to.be.false;
+
+      choreValues = await Chores.getSpecialChoreValues(HOUSE, proposalEnd);
+      expect(choreValues.length).to.equal(1);
     });
 
     it('can query a users valid chore claims within a time range', async () => {
@@ -1057,9 +1109,9 @@ describe('Chores', async () => {
 
       // Check values
       choreValues = await Chores.getUpdatedChoreValues(HOUSE, feb15);
-      expect(choreValues.find(cv => cv.id === dishes.id).value).to.be.almost(ppc * 0.25, 1e-5);
-      expect(choreValues.find(cv => cv.id === sweeping.id).value).to.be.almost(ppc * 0, 1e-5);
-      expect(choreValues.find(cv => cv.id === restock.id).value).to.be.almost(ppc * 0.5, 1e-5);
+      expect(choreValues.find(cv => cv.choreId === dishes.id).value).to.be.almost(ppc * 0.25, 1e-5);
+      expect(choreValues.find(cv => cv.choreId === sweeping.id).value).to.be.almost(ppc * 0, 1e-5);
+      expect(choreValues.find(cv => cv.choreId === restock.id).value).to.be.almost(ppc * 0.5, 1e-5);
 
       choreStats = await Chores.getHouseChoreStats(HOUSE, feb1, feb15);
       expect(choreStats.find(cs => cs.residentId === RESIDENT1).pointsEarned).to.be.almost(ppc * 0.25, 1e-5);
@@ -1074,9 +1126,9 @@ describe('Chores', async () => {
 
       // Check values
       choreValues = await Chores.getUpdatedChoreValues(HOUSE, feb15);
-      expect(choreValues.find(cv => cv.id === dishes.id).value).to.equal(0);
-      expect(choreValues.find(cv => cv.id === sweeping.id).value).to.equal(0);
-      expect(choreValues.find(cv => cv.id === restock.id).value).to.equal(0);
+      expect(choreValues.find(cv => cv.choreId === dishes.id).value).to.equal(0);
+      expect(choreValues.find(cv => cv.choreId === sweeping.id).value).to.equal(0);
+      expect(choreValues.find(cv => cv.choreId === restock.id).value).to.equal(0);
 
       choreStats = await Chores.getHouseChoreStats(HOUSE, feb1, feb15);
       expect(choreStats.find(cs => cs.residentId === RESIDENT1).pointsEarned).to.equal(0);
@@ -1090,9 +1142,9 @@ describe('Chores', async () => {
       await Chores.claimChore(HOUSE, restock.id, RESIDENT3, feb22, 0);
 
       choreValues = await Chores.getUpdatedChoreValues(HOUSE, feb22);
-      expect(choreValues.find(cv => cv.id === dishes.id).value).to.be.almost(ppc * 0.25, 1e-5);
-      expect(choreValues.find(cv => cv.id === sweeping.id).value).to.be.almost(ppc * 0.25, 1e-5);
-      expect(choreValues.find(cv => cv.id === restock.id).value).to.be.almost(ppc * 0, 1e-5);
+      expect(choreValues.find(cv => cv.choreId === dishes.id).value).to.be.almost(ppc * 0.25, 1e-5);
+      expect(choreValues.find(cv => cv.choreId === sweeping.id).value).to.be.almost(ppc * 0.25, 1e-5);
+      expect(choreValues.find(cv => cv.choreId === restock.id).value).to.be.almost(ppc * 0, 1e-5);
 
       choreStats = await Chores.getHouseChoreStats(HOUSE, feb1, feb22);
       expect(choreStats.find(cs => cs.residentId === RESIDENT3).pointsEarned).to.be.almost(ppc * 0.25, 1e-5);
@@ -1585,8 +1637,7 @@ describe('Chores', async () => {
     });
 
     it('can create a special chore proposal', async () => {
-      const name = 'Pantry Clean';
-      const description = 'Clean the pantry';
+      const [ name, description ] = [ 'Special Chore', 'Complicated task' ];
 
       const availablePoints = await Chores.getTotalAvailablePoints(HOUSE, now, monthEnd);
       const value = availablePoints * specialChoreMaxValueProportion;
@@ -1610,8 +1661,7 @@ describe('Chores', async () => {
     });
 
     it('cannot create a special chore proposal with a too-large value', async () => {
-      const name = 'Pantry Clean';
-      const description = 'Clean the pantry';
+      const [ name, description ] = [ 'Special Chore', 'Complicated task' ];
 
       const availablePoints = await Chores.getTotalAvailablePoints(HOUSE, now, monthEnd);
       const value = availablePoints * specialChoreMaxValueProportion + 1;
@@ -1623,6 +1673,9 @@ describe('Chores', async () => {
     it('can return the minimum votes for a special chore proposal', async () => {
       await testHelpers.createActiveUsers(HOUSE, 8, now); // 10 active users in total
       await testHelpers.createExemptUsers(HOUSE, 2, now); // Exempt users don't count
+
+      const workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, now);
+      expect(workingResidentCount).to.equal(10);
 
       let minVotes;
 
