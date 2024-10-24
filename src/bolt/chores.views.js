@@ -744,6 +744,23 @@ exports.choresProposeCallbackViewForce = function (metadata, residentId, name, d
 
 // Special chore flow
 
+exports.choresSpecialNoPointsView = function () {
+  const header = 'Add special chore';
+  const mainText = 'There are currently no points available for special chores. ' +
+    'Try again next month.';
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+
+  return {
+    type: 'modal',
+    title: TITLE,
+    close: common.CLOSE,
+    blocks,
+  };
+};
+
 exports.choresSpecialView = function (availablePoints, minVotes) {
   const maxPoints = availablePoints * specialChoreMaxValueProportion;
 

@@ -642,9 +642,15 @@ app.action('chores-special', async ({ ack, body }) => {
   const { now, houseId } = common.beginAction(actionName, body);
 
   const availablePoints = await Chores.getTotalAvailablePoints(houseId, now, getMonthEnd(now));
-  const minVotes = await Chores.getSpecialChoreProposalMinVotes(houseId, 0, now);
 
-  const view = views.choresSpecialView(availablePoints, minVotes);
+  let view;
+  if (availablePoints > 0) {
+    const minVotes = await Chores.getSpecialChoreProposalMinVotes(houseId, 0, now);
+    view = views.choresSpecialView(availablePoints, minVotes);
+  } else {
+    view = views.choresSpecialNoPointsView();
+  }
+
   await common.openView(app, choresConf.oauth, body.trigger_id, view);
 
   await ack();
