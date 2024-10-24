@@ -10,7 +10,7 @@ const { App, LogLevel } = require('@slack/bolt');
 const { Admin, Polls, Chores } = require('../core/index');
 const { displayThreshold, breakMinDays, achievementWindow } = require('../config');
 const { YAY, DAY, CHORES_CONF } = require('../constants');
-const { getMonthStart, shiftDate, getPrevMonthEnd, sleep } = require('../utils');
+const { getMonthStart, getMonthEnd, shiftDate, getPrevMonthEnd, sleep } = require('../utils');
 
 const common = require('./common');
 const views = require('./chores.views');
@@ -608,6 +608,43 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
     const { channel, ts } = await postMessage(text, blocks);
     await Polls.updateMetadata(proposal.pollId, { channel, ts });
   }
+
+  await ack({ response_action: 'clear' });
+});
+
+// Special chore flow
+
+app.action('chores-special', async ({ ack, body }) => {
+  const actionName = 'chores-special';
+  const { now, houseId } = common.beginAction(actionName, body);
+
+  const availablePoints = await Chores.getTotalAvailablePoints(houseId, now, getMonthEnd(now));
+  const minVotes = await Chores.getSpecialChoreProposalMinVotes(houseId, 0, now);
+
+  const view = views.choresSpecialView(availablePoints, minVotes);
+  await common.openView(app, choresConf.oauth, body.trigger_id, view);
+
+  await ack();
+});
+
+app.view('chores-special-callback', async ({ ack, body }) => {
+  const actionName = 'chores-special-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
+
+  const name = common.parseTitlecase(common.getInputBlock(body, -3).name.value);
+  const description = common.getInputBlock(body, -2).description.value;
+  const points = common.getInputBlock(body, -1).points.value;
+
+  // Create the special chore proposal
+  const [ proposal ] = await Chores.createSpecialChoreProposal(houseId, residentId, name, description, points, now);
+  await Polls.submitVote(proposal.pollId, residentId, now, YAY);
+
+  const { minVotes } = await Polls.getPoll(proposal.pollId);
+
+  const text = 'Someone just proposed a special chore';
+  const blocks = views.choresSpecialCallbackView(proposal, minVotes);
+  const { channel, ts } = await postMessage(text, blocks);
+  await Polls.updateMetadata(proposal.pollId, { channel, ts });
 
   await ack({ response_action: 'clear' });
 });
