@@ -101,11 +101,11 @@ exports.thingsHomeView = function (accounts, exempt) {
 
   const actions = [];
   if (!exempt) {
-    actions.push(common.blockButton('things-buy', 'Buy a thing'));
-    actions.push(common.blockButton('things-special', 'Buy special thing'));
-    actions.push(common.blockButton('things-propose', 'Edit things list'));
+    actions.push(common.blockButton('things-buy', ':shopping_bags: Buy a thing'));
+    actions.push(common.blockButton('things-special', ':mirror_ball: Buy special thing'));
+    actions.push(common.blockButton('things-propose', ':ledger: Edit things list'));
   }
-  actions.push(common.blockButton('things-bought', 'See bought things'));
+  actions.push(common.blockButton('things-bought', ':bar_chart: See bought things'));
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
