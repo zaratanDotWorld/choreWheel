@@ -61,11 +61,11 @@ exports.heartsHomeView = function (numHearts, maxHearts, exempt) {
     : `You have *${numHearts} / ${maxHearts}* hearts: ${exports.heartEmoji(numHearts)}`;
 
   const actions = [];
+  actions.push(common.blockButton('hearts-board', ':two_hearts: See hearts'));
   if (!exempt) {
-    actions.push(common.blockButton('hearts-karma', 'Give karma'));
-    actions.push(common.blockButton('hearts-challenge', 'Settle a dispute'));
+    actions.push(common.blockButton('hearts-karma', ':sparkles: Give karma'));
+    actions.push(common.blockButton('hearts-challenge', ':fencer: Settle a dispute'));
   }
-  actions.push(common.blockButton('hearts-board', 'See hearts'));
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
