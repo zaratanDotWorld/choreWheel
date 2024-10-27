@@ -4,8 +4,8 @@ const chaiAsPromised = require('chai-as-promised');
 
 chai.use(chaiAsPromised);
 
-const { Things, Polls, Admin } = require('../src/core/index');
-const { NAY, YAY, HOUR, DAY } = require('../src/constants');
+const { Things, Hearts, Polls, Admin } = require('../src/core/index');
+const { NAY, YAY, HOUR, DAY, HEART_UNKNOWN } = require('../src/constants');
 const { thingsPollLength, thingsSpecialPollLength, thingsProposalPollLength } = require('../src/config');
 const testHelpers = require('./helpers');
 
@@ -150,20 +150,36 @@ describe('Things', async () => {
     it('can get the minimum votes for a buy', async () => {
       let minVotes;
 
-      minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 10, now);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, RESIDENT1, rice.id, 10, now);
       expect(minVotes).to.equal(1);
 
-      minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 70, now);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, RESIDENT1, rice.id, 70, now);
       expect(minVotes).to.equal(2);
 
       // max: ceil( 4 residents * 60% ) = 3
-      minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 200, now);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, RESIDENT1, rice.id, 200, now);
       expect(minVotes).to.equal(3);
 
       // Exempt users are not counted
       await testHelpers.createExemptUsers(HOUSE, 10, now);
-      minVotes = await Things.getThingBuyMinVotes(HOUSE, rice.id, 500, soon);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, RESIDENT1, rice.id, 500, soon);
       expect(minVotes).to.equal(3);
+    });
+
+    it('can scale the minimum votes based on hearts', async () => {
+      let minVotes;
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, RESIDENT1, rice.id, 100, now);
+      expect(minVotes).to.equal(2);
+
+      // 2 hearts (+ 60% = 3.2)
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 2);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, RESIDENT1, rice.id, 100, soon);
+      expect(minVotes).to.equal(4);
+
+      // 8 hearts (- 60% = 0.8)
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 6);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, RESIDENT1, rice.id, 100, soon);
+      expect(minVotes).to.equal(1);
     });
 
     it('can affirm a buy', async () => {
@@ -418,19 +434,19 @@ describe('Things', async () => {
       let minVotes;
 
       // min: ceil( 4 residents * 30% ) = 2
-      minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 10, now);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, RESIDENT1, null, 10, now);
       expect(minVotes).to.equal(2);
 
-      minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 100, now);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, RESIDENT1, null, 100, now);
       expect(minVotes).to.equal(2);
 
       // max: ceil( 4 residents * 60% ) = 3
-      minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 300, now);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, RESIDENT1, null, 300, now);
       expect(minVotes).to.equal(3);
 
       // Exempt users are not counted
       await testHelpers.createExemptUsers(HOUSE, 10, now);
-      minVotes = await Things.getThingBuyMinVotes(HOUSE, null, 500, soon);
+      minVotes = await Things.getThingBuyMinVotes(HOUSE, RESIDENT1, null, 500, soon);
       expect(minVotes).to.equal(3);
     });
 
