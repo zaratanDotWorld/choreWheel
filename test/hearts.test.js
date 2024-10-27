@@ -143,6 +143,39 @@ describe('Hearts', async () => {
       active = await Admin.houseActive(HOUSE, 'Heart', 'generatedAt', tomorrow, nextWeek);
       expect(active).to.be.false;
     });
+
+    it('can use hearts to scale required votes', async () => {
+      let voteScalar;
+
+      // Return 1 if not initialised
+      voteScalar = await Hearts.getHeartsVoteScalar(RESIDENT1, now);
+      expect(voteScalar).to.equal(1);
+
+      // 0 hearts
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 0);
+      voteScalar = await Hearts.getHeartsVoteScalar(RESIDENT1, now);
+      expect(voteScalar).to.equal(2);
+
+      // 3 hearts
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 3);
+      voteScalar = await Hearts.getHeartsVoteScalar(RESIDENT1, now);
+      expect(voteScalar).to.equal(1.4);
+
+      // Return 5 hearts
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 2);
+      voteScalar = await Hearts.getHeartsVoteScalar(RESIDENT1, now);
+      expect(voteScalar).to.equal(1);
+
+      // 7 hearts
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 2);
+      voteScalar = await Hearts.getHeartsVoteScalar(RESIDENT1, now);
+      expect(voteScalar).to.equal(0.6);
+
+      // 10 hearts
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 3);
+      voteScalar = await Hearts.getHeartsVoteScalar(RESIDENT1, now);
+      expect(voteScalar).to.equal(0);
+    });
   });
 
   describe('regenerating hearts', async () => {

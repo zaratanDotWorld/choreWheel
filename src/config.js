@@ -36,6 +36,7 @@ exports.karmaProportion = 3;
 exports.heartsMaxBase = 7;
 exports.heartsMaxLimit = 10;
 exports.heartsKarmaGrowthRate = 4;
+exports.heartsVoteScalar = 0.2;
 
 // Things
 exports.thingsPollLength = 6 * HOUR;

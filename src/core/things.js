@@ -13,6 +13,7 @@ const {
 } = require('../config');
 
 const Admin = require('./admin');
+const Hearts = require('./hearts');
 const Polls = require('./polls');
 
 // Things
@@ -80,7 +81,7 @@ exports.buyThing = async function (houseId, thingId, boughtBy, boughtAt, account
 
   assert(accountBalance.sum >= totalCost, 'Insufficient funds!');
 
-  const minVotes = await exports.getThingBuyMinVotes(houseId, thingId, totalCost, boughtAt);
+  const minVotes = await exports.getThingBuyMinVotes(houseId, boughtBy, thingId, totalCost, boughtAt);
   const [ poll ] = await Polls.createPoll(houseId, boughtAt, thingsPollLength, minVotes);
 
   return db('ThingBuy')
@@ -102,7 +103,7 @@ exports.buySpecialThing = async function (houseId, boughtBy, boughtAt, account, 
 
   assert(accountBalance.sum >= price, 'Insufficient funds!');
 
-  const minVotes = await exports.getThingBuyMinVotes(houseId, null, price, boughtAt);
+  const minVotes = await exports.getThingBuyMinVotes(houseId, boughtBy, null, price, boughtAt);
   const [ poll ] = await Polls.createPoll(houseId, boughtAt, thingsSpecialPollLength, minVotes);
 
   return db('ThingBuy')
@@ -253,15 +254,18 @@ exports.resolveThingProposals = async function (houseId, now) {
 
 // Utils
 
-exports.getThingBuyMinVotes = async function (houseId, thingId, price, now) {
+exports.getThingBuyMinVotes = async function (houseId, boughtBy, thingId, price, now) {
   const votingResidents = await Admin.getVotingResidents(houseId, now);
   const maxVotes = Math.ceil(thingsMaxPct * votingResidents.length);
   const minVotesSpecial = Math.ceil(thingsMinPctSpecial * votingResidents.length);
   const minVotesScaled = Math.ceil(Math.abs(price) / thingsMinVotesScalar);
 
-  return (thingId)
+  const minVotes = (thingId)
     ? Math.min(maxVotes, minVotesScaled) // Regular buy
     : Math.min(maxVotes, Math.max(minVotesScaled, minVotesSpecial)); // Special buy
+
+  const voteScalar = await Hearts.getHeartsVoteScalar(boughtBy, now);
+  return Math.ceil(minVotes * voteScalar);
 };
 
 exports.getThingProposalMinVotes = async function (houseId, now) {

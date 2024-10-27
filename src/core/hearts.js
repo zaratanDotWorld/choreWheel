@@ -18,6 +18,7 @@ const {
   heartsMaxLimit,
   heartsKarmaGrowthRate,
   heartsCriticalNum,
+  heartsVoteScalar,
 } = require('../config');
 
 const Admin = require('./admin');
@@ -99,6 +100,12 @@ exports.getRegenAmount = function (currentHearts) {
   return (baselineGap >= 0)
     ? Math.min(heartsRegenAmount, baselineGap)
     : Math.max(-heartsFadeAmount, baselineGap);
+};
+
+exports.getHeartsVoteScalar = async function (residentId, now) {
+  const hearts = await exports.getHearts(residentId, now);
+  const heartsValue = (hearts.sum === null) ? heartsBaselineAmount : hearts.sum;
+  return 1 - ((heartsValue - heartsBaselineAmount) * heartsVoteScalar);
 };
 
 // Challenges
