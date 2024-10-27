@@ -128,7 +128,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     const maxHearts = await Hearts.getResidentMaxHearts(residentId, now);
     const exempt = await Admin.isExempt(residentId, now);
 
-    view = views.heartsHomeView(hearts.sum || 0, maxHearts, exempt);
+    view = views.heartsHomeView(hearts || 0, maxHearts, exempt);
   } else {
     view = views.heartsIntroView();
   }

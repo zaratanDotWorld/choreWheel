@@ -56,9 +56,9 @@ describe('Hearts', async () => {
       const hearts2 = await Hearts.getHearts(RESIDENT2, now);
       const hearts3 = await Hearts.getHearts(RESIDENT3, now);
 
-      expect(hearts1.sum).to.equal(2);
-      expect(hearts2.sum).to.equal(1);
-      expect(hearts3.sum).to.equal(null);
+      expect(hearts1).to.equal(2);
+      expect(hearts2).to.equal(1);
+      expect(hearts3).to.equal(null);
     });
 
     it('can query for specific hearts', async () => {
@@ -97,7 +97,7 @@ describe('Hearts', async () => {
 
       const hearts = await Hearts.getHearts(RESIDENT1, now);
 
-      expect(hearts.sum).to.equal(1);
+      expect(hearts).to.equal(1);
     });
 
     it('can handle fractional hearts', async () => {
@@ -106,7 +106,7 @@ describe('Hearts', async () => {
 
       const hearts = await Hearts.getHearts(RESIDENT1, now);
 
-      expect(hearts.sum).to.equal(1.75);
+      expect(hearts).to.equal(1.75);
     });
 
     it('can initialise a resident', async () => {
@@ -114,13 +114,13 @@ describe('Hearts', async () => {
 
       let hearts;
       hearts = await Hearts.getHearts(RESIDENT1, now);
-      expect(hearts.sum).to.equal(heartsBaselineAmount);
+      expect(hearts).to.equal(heartsBaselineAmount);
 
       // But only once
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
 
       hearts = await Hearts.getHearts(RESIDENT1, now);
-      expect(hearts.sum).to.equal(heartsBaselineAmount);
+      expect(hearts).to.equal(heartsBaselineAmount);
 
       // Even if they go back to zero
       await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, -heartsBaselineAmount);
@@ -128,7 +128,7 @@ describe('Hearts', async () => {
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
 
       hearts = await Hearts.getHearts(RESIDENT1, now);
-      expect(hearts.sum).to.equal(0);
+      expect(hearts).to.equal(0);
     });
 
     it('can check if a house is active using hearts', async () => {
@@ -194,7 +194,7 @@ describe('Hearts', async () => {
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, nextMonth);
 
       hearts = await Hearts.getHearts(RESIDENT1, nextMonth);
-      expect(hearts.sum).to.equal(null);
+      expect(hearts).to.equal(null);
 
       // Generate a heart, now regeneration works
       await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 1);
@@ -202,19 +202,19 @@ describe('Hearts', async () => {
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, nextMonth);
 
       hearts = await Hearts.getHearts(RESIDENT1, nextMonth);
-      expect(hearts.sum).to.equal(1.25);
+      expect(hearts).to.equal(1.25);
 
       // But not in the same month
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, nextMonth);
 
       hearts = await Hearts.getHearts(RESIDENT1, nextMonth);
-      expect(hearts.sum).to.equal(1.25);
+      expect(hearts).to.equal(1.25);
 
       // But yes in another month
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, twoMonths);
 
       hearts = await Hearts.getHearts(RESIDENT1, twoMonths);
-      expect(hearts.sum).to.equal(1.5);
+      expect(hearts).to.equal(1.5);
     });
 
     it('cannot regenerate hearts if full', async () => {
@@ -223,23 +223,23 @@ describe('Hearts', async () => {
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
 
       hearts = await Hearts.getHearts(RESIDENT1, now);
-      expect(hearts.sum).to.equal(5);
+      expect(hearts).to.equal(5);
 
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, now);
 
       hearts = await Hearts.getHearts(RESIDENT1, now);
-      expect(hearts.sum).to.equal(5);
+      expect(hearts).to.equal(5);
 
       // Or overloaded
       await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, nextMonth, 1);
 
       hearts = await Hearts.getHearts(RESIDENT1, nextMonth);
-      expect(hearts.sum).to.equal(6);
+      expect(hearts).to.equal(6);
 
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, nextMonth);
 
       hearts = await Hearts.getHearts(RESIDENT1, nextMonth);
-      expect(hearts.sum).to.equal(6);
+      expect(hearts).to.equal(6);
     });
 
     it('can regenerate hearts in bulk', async () => {
@@ -289,8 +289,8 @@ describe('Hearts', async () => {
 
       const hearts1 = await Hearts.getHearts(RESIDENT1, challengeEnd);
       const hearts2 = await Hearts.getHearts(RESIDENT2, challengeEnd);
-      expect(hearts1.sum).to.equal(5);
-      expect(hearts2.sum).to.equal(4);
+      expect(hearts1).to.equal(5);
+      expect(hearts2).to.equal(4);
     });
 
     it('can resolve a challenge where the challenger loses', async () => {
@@ -304,8 +304,8 @@ describe('Hearts', async () => {
 
       const hearts1 = await Hearts.getHearts(RESIDENT1, challengeEnd);
       const hearts2 = await Hearts.getHearts(RESIDENT2, challengeEnd);
-      expect(hearts1.sum).to.equal(4);
-      expect(hearts2.sum).to.equal(5);
+      expect(hearts1).to.equal(4);
+      expect(hearts2).to.equal(5);
     });
 
     it('can resolve a challenge where minVotes is not reached', async () => {
@@ -318,8 +318,8 @@ describe('Hearts', async () => {
 
       const hearts1 = await Hearts.getHearts(RESIDENT1, challengeEnd);
       const hearts2 = await Hearts.getHearts(RESIDENT2, challengeEnd);
-      expect(hearts1.sum).to.equal(4);
-      expect(hearts2.sum).to.equal(5);
+      expect(hearts1).to.equal(4);
+      expect(hearts2).to.equal(5);
     });
 
     it('can resolve challenges in bulk', async () => {
@@ -338,9 +338,9 @@ describe('Hearts', async () => {
       const hearts1 = await Hearts.getHearts(RESIDENT1, challengeEnd);
       const hearts2 = await Hearts.getHearts(RESIDENT2, challengeEnd);
       const hearts3 = await Hearts.getHearts(RESIDENT3, challengeEnd);
-      expect(hearts1.sum).to.equal(5);
-      expect(hearts2.sum).to.equal(4);
-      expect(hearts3.sum).to.equal(3);
+      expect(hearts1).to.equal(5);
+      expect(hearts2).to.equal(4);
+      expect(hearts3).to.equal(3);
     });
 
     it('cannot resolve a challenge before the poll is closed', async () => {
