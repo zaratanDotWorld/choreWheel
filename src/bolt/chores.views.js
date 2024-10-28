@@ -89,11 +89,11 @@ exports.choresHomeView = function (choreStats, numActive, exempt) {
   const actions = [];
   if (!exempt) {
     if (Number(pointsEarned) < Number(pointsOwed) + pointsBuffer) {
-      actions.push(common.blockButton('chores-claim', ':hand: Claim a chore'));
+      actions.push(common.blockButton('chores-claim', ':hand::skin-tone-4: Claim a chore'));
     }
     actions.push(common.blockButton('chores-break', ':camping: Take a break'));
     actions.push(common.blockButton('chores-gift', ':gift: Gift your points'));
-    actions.push(common.blockButton('chores-special', ':black_joker: Add special chore'));
+    actions.push(common.blockButton('chores-special', ':bulb: Add special chore'));
     actions.push(common.blockButton('chores-propose', ':notebook: Edit chores list'));
   }
   actions.push(common.blockButton('chores-rank', ':scales: Set priorities'));

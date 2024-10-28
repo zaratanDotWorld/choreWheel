@@ -158,8 +158,8 @@ exports.heartsChallengeCallbackView = function (challenge, minVotes, circumstanc
 exports.heartsBoardView = function (hearts) {
   const header = 'Current hearts';
   const mainText = 'The baseline is *five hearts*. ' +
-    'Anyone with *less* will regenerate at a rate of *½ per month*, ' +
-    'and anyone with *more* will fade at *½ per month*, ' +
+    'Anyone with *less* will regenerate at a rate of *¼ per month*, ' +
+    'and anyone with *more* will fade at *¼ per month*, ' +
     'until they reach five.';
 
   const blocks = [];
