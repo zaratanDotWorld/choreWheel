@@ -575,28 +575,30 @@ describe('Chores', async () => {
     });
 
     it('sets ping to true when the value crosses the ping interval', async () => {
-      const twoDays = new Date(tomorrow.getTime() + 24 * HOUR);
+      const t0 = new Date(3000, 3, 1); // April 1, a 30 day month
+      const t1 = new Date(t0.getTime() + 1 * DAY);
+      const t2 = new Date(t0.getTime() + 2 * DAY);
 
-      // Set initial chore value just below 25
+      // Set initial chore value just below 50
       await db('ChoreValue').insert([
-        { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 24 },
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: t0, value: 49 },
       ]);
 
       // First update, should not ping
-      let choreValues = await Chores.getUpdatedChoreValues(HOUSE, now);
+      let choreValues = await Chores.getUpdatedChoreValues(HOUSE, t0);
       expect(choreValues.find(cv => cv.choreId === dishes.id).ping).to.be.false;
-      expect(choreValues.find(cv => cv.choreId === dishes.id).value).to.be.lt(25);
+      expect(choreValues.find(cv => cv.choreId === dishes.id).value).to.be.lt(50);
 
       // Second update, should cross interval and ping
-      choreValues = await Chores.getUpdatedChoreValues(HOUSE, tomorrow);
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, t1);
       expect(choreValues.find(cv => cv.choreId === dishes.id).ping).to.be.true;
-      expect(choreValues.find(cv => cv.choreId === dishes.id).value).to.be.gt(25);
+      expect(choreValues.find(cv => cv.choreId === dishes.id).value).to.be.gt(50);
 
       // Third update, should not ping
-      choreValues = await Chores.getUpdatedChoreValues(HOUSE, twoDays);
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, t2);
       expect(choreValues.find(cv => cv.choreId === dishes.id).ping).to.be.false;
-      expect(choreValues.find(cv => cv.choreId === dishes.id).value).to.be.gt(25);
-      expect(choreValues.find(cv => cv.choreId === dishes.id).value).to.be.lt(50);
+      expect(choreValues.find(cv => cv.choreId === dishes.id).value).to.be.gt(50);
+      expect(choreValues.find(cv => cv.choreId === dishes.id).value).to.be.lt(100);
     });
 
     it('returns an empty array when no chores exist', async () => {
