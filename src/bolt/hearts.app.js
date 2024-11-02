@@ -153,8 +153,8 @@ app.event('app_home_opened', async ({ body, event }) => {
   for (const regenHeart of (await Hearts.regenerateHouseHearts(houseId, now))) {
     if (regenHeart.value !== 0) {
       const text = (regenHeart.value > 0)
-        ? `You regenerated *${regenHeart.value.toFixed(1)}* heart(s)!`
-        : `Your karma faded by *${(-regenHeart.value).toFixed(1)}* heart(s)!`;
+        ? `You regenerated *${regenHeart.value.toFixed(2)}* heart(s)!`
+        : `Your karma faded by *${(-regenHeart.value).toFixed(2)}* heart(s)!`;
       await postEphemeral(regenHeart.residentId, text);
     }
   }
