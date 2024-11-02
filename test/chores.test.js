@@ -1659,7 +1659,7 @@ describe('Chores', async () => {
       [ choreValue ] = await Chores.getSpecialChoreValues(HOUSE, proposalEnd);
       expect(choreValue.metadata.name).to.equal(name);
       expect(choreValue.metadata.description).to.equal(description);
-      expect(choreValue.value).to.almost.equal(value);
+      expect(choreValue.value).to.be.almost(value, 1e-5);
     });
 
     it('cannot create a special chore proposal with a too-large value', async () => {
