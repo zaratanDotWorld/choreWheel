@@ -280,7 +280,7 @@ exports.getAvailablePoints = async function (houseId, lastUpdateTime, updateTime
     // is = t_n - t_l / t_m - t_l
     const timeSinceUpdate = Math.min(monthEnd, updateTime) - Math.max(monthStart, lastUpdateTime);
     const timeRemaining = monthEnd - Math.max(monthStart, lastUpdateTime);
-    const intervalScalar = timeSinceUpdate / timeRemaining;
+    const intervalScalar = timeSinceUpdate / (timeRemaining || Infinity); // Avoid divide-by-zero
 
     availablePoints.push({
       value: pointsRemaining * intervalScalar, // p_a = p_r / is
@@ -318,8 +318,8 @@ exports.updateChoreValues = async function (houseId, now) {
   if (lastUpdateTime >= updateTime) { return Promise.resolve([]); }
 
   const availablePoints = await exports.getAvailablePoints(houseId, lastUpdateTime, updateTime);
-  // If there are no points remaining, short-circuit execution
-  if (availablePoints[0].value <= 0) { return Promise.resolve([]); }
+  // If there are no available points, short-circuit execution
+  if (!availablePoints.filter(p => p.value > 0).length) { return Promise.resolve([]); }
 
   const choreRankings = await exports.getCurrentChoreRankings(houseId, now);
   // If there are no chores to update, short-circuit execution
@@ -327,6 +327,8 @@ exports.updateChoreValues = async function (houseId, now) {
 
   const choreValues = [];
   for (const points of availablePoints) {
+    if (points.value <= 0) { continue; } // TODO: Test this
+
     for (const chore of choreRankings) {
       choreValues.push({
         houseId,
