@@ -421,14 +421,6 @@ describe('Chores', async () => {
       // Three months
       availablePoints = await Chores.getTotalAvailablePoints(HOUSE, t0, t3);
       expect(availablePoints).to.almost.equal(3 * pointsPerResident * inflationFactor * 3);
-
-      // Points reduced appropriately
-      await db('ChoreValue').insert([
-        { houseId: HOUSE, choreId: dishes.id, valuedAt: t0, value: 100 },
-      ]);
-
-      availablePoints = await Chores.getTotalAvailablePoints(HOUSE, t0, t2);
-      expect(availablePoints).to.almost.equal(3 * pointsPerResident * inflationFactor - 100);
     });
 
     it('can update chore values on an hourly basis', async () => {
@@ -538,12 +530,12 @@ describe('Chores', async () => {
       // Calculate the initial 3 days
       choreValues = await Chores.getUpdatedChoreValues(HOUSE, t1);
       expect(choreValues.reduce((sum, cv) => sum + cv.value, 0))
-        .to.be.almost(3 * pointsPerResident * 2 / 3 * inflationFactor * 3 / 23);
+        .to.be.almost(3 * pointsPerResident * inflationFactor * 3 / 30);
 
       // Calculate the next 10 days
       choreValues = await Chores.getUpdatedChoreValues(HOUSE, t2);
       expect(choreValues.reduce((sum, cv) => sum + cv.value, 0))
-        .to.be.almost(3 * pointsPerResident * 2 / 3 * inflationFactor * 13 / 23, 1e-5);
+        .to.be.almost(3 * pointsPerResident * inflationFactor * 13 / 30, 1e-5);
     });
 
     it('can return sensible chore values when updating across the month boundary', async () => {
@@ -609,8 +601,6 @@ describe('Chores', async () => {
     });
 
     it('can add special one-off chore values', async () => {
-      const availablePointsPre = await Chores.getTotalAvailablePoints(HOUSE, now, monthEnd);
-
       const [ name, description, value ] = [ 'Special Chore', 'Complicated task', 10 ];
       await Chores.addSpecialChoreValue(HOUSE, name, description, value, now);
 
@@ -618,9 +608,70 @@ describe('Chores', async () => {
       expect(choreValue.metadata.name).to.equal(name);
       expect(choreValue.metadata.description).to.equal(description);
       expect(choreValue.value).to.equal(value);
+    });
 
-      const availablePointsPost = await Chores.getTotalAvailablePoints(HOUSE, now, monthEnd);
-      expect(availablePointsPre - availablePointsPost).to.equal(value);
+    it('can correctly the points discount due to special chores', async () => {
+      const t0 = new Date(3000, 3, 1); // April 1, a 30 day month
+      const t1 = new Date(t0.getTime() + 10 * DAY);
+      const t2 = new Date(t0.getTime() + 20 * DAY);
+      const t3 = new Date(t0.getTime() + 30 * DAY);
+
+      const [ name, description, value ] = [ 'Special Chore', 'Complicated task', 10 ];
+
+      let pointsDiscount;
+
+      const [ v1, v2, v3 ] = [ value / (t3 - t0), value / (t3 - t1), value / (t3 - t2) ];
+
+      await Chores.addSpecialChoreValue(HOUSE, name, description, value, t0);
+
+      pointsDiscount = await Chores.getPointsDiscount(HOUSE, t0, t0);
+      expect(pointsDiscount).to.be.almost(v1, 1e-5);
+
+      await Chores.addSpecialChoreValue(HOUSE, name, description, value, t1);
+
+      pointsDiscount = await Chores.getPointsDiscount(HOUSE, t0, t1);
+      expect(pointsDiscount).to.be.almost(v1 + v2, 1e-5);
+
+      await Chores.addSpecialChoreValue(HOUSE, name, description, value, t2);
+
+      pointsDiscount = await Chores.getPointsDiscount(HOUSE, t0, t2);
+      expect(pointsDiscount).to.be.almost(v1 + v2 + v3, 1e-5);
+    });
+
+    it('can correctly incorporate special chores when calculating values', async () => {
+      const t0 = new Date(3000, 3, 1); // April 1, a 30 day month
+      const t1 = new Date(t0.getTime() + 10 * DAY);
+      const t2 = new Date(t0.getTime() + 20 * DAY);
+      const t3 = new Date(t0.getTime() + 30 * DAY);
+
+      const [ name, description ] = [ 'Special Chore', 'Complicated task' ];
+
+      await db('ChoreValue').insert([
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: t0, value: 0 },
+      ]);
+
+      let pointsDiscount;
+      let choreValues;
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, t1);
+      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0))
+        .to.be.almost(3 * pointsPerResident * inflationFactor / 3, 1e-5);
+
+      await Chores.addSpecialChoreValue(HOUSE, name, description, 80, t1);
+      pointsDiscount = await Chores.getPointsDiscount(HOUSE, t0, t3);
+      expect(pointsDiscount).to.be.almost(80 / (t3 - t1));
+
+      // Add 40 accelerated points from the special chore
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, t2);
+      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0))
+        .to.be.almost(3 * pointsPerResident * inflationFactor / 3 * 2 + 40, 1e-5);
+
+      await Chores.addSpecialChoreValue(HOUSE, name, description, 40, t2);
+      pointsDiscount = await Chores.getPointsDiscount(HOUSE, t0, t3);
+      expect(pointsDiscount).to.be.almost(80 / (t3 - t1) + 40 / (t3 - t2));
+
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, t3);
+      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0))
+        .to.be.almost(3 * pointsPerResident * inflationFactor, 1e-5);
     });
   });
 

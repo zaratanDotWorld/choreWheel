@@ -254,37 +254,30 @@ exports.getLastChoreValueUpdateTime = async function (houseId, updateTime) {
     : new Date(updateTime - bootstrapDuration); // First update seeds a fixed value
 };
 
-exports.getAvailablePoints = async function (houseId, lastUpdateTime, updateTime) {
-  const workingResidents = await exports.getWorkingResidents(houseId, updateTime);
+exports.getAvailablePoints = async function (houseId, startTime, endTime) {
+  // mp = u_w * ppr * inf
+  const workingResidentCount = await exports.getWorkingResidentCount(houseId, endTime);
+  const monthlyPoints = workingResidentCount * pointsPerResident * inflationFactor;
 
   const availablePoints = [];
-  const updateTimeMonthEnd = getMonthEnd(updateTime);
+  const finalMonthEnd = getMonthEnd(endTime);
 
-  let monthStart = getMonthStart(lastUpdateTime);
-  let monthEnd = getMonthEnd(lastUpdateTime);
+  let monthStart = getMonthStart(startTime);
+  let monthEnd = getMonthEnd(startTime);
 
-  while (monthEnd <= updateTimeMonthEnd) {
-    // wt = sum_a{t_m - max(t_a, t_0)}
-    const monthlyWorkingTime = workingResidents
-      .reduce((sum, r) => sum + (monthEnd - Math.max(r.activeAt, monthStart)), 0);
+  while (monthEnd <= finalMonthEnd) {
+    // pps = mp / (t_m - t_0)
+    const pointsPerSecond = monthlyPoints / (monthEnd - monthStart);
 
-    // p_m = wt / (t_m - t_0) * ppr * inf
-    const monthlyPoints = (monthlyWorkingTime / (monthEnd - monthStart)) * pointsPerResident * inflationFactor;
+    // pd = sum{scv / (t_m - t_s)}
+    const pointsDiscount = await exports.getPointsDiscount(houseId, monthStart, monthEnd);
 
-    // p_u = sum{r} + sum{s}
-    const usedPoints = await exports.getSumChoreValues(houseId, monthStart, lastUpdateTime);
-
-    // p_r = p_m - p_u
-    const pointsRemaining = monthlyPoints - usedPoints;
-
-    // is = t_n - t_l / t_m - t_l
-    const timeSinceUpdate = Math.min(monthEnd, updateTime) - Math.max(monthStart, lastUpdateTime);
-    const timeRemaining = monthEnd - Math.max(monthStart, lastUpdateTime);
-    const intervalScalar = timeSinceUpdate / (timeRemaining || Infinity); // Avoid divide-by-zero
+    // ui = t_n - t_l
+    const updateInterval = Math.min(monthEnd, endTime) - Math.max(monthStart, startTime);
 
     availablePoints.push({
-      value: pointsRemaining * intervalScalar, // p_a = p_r / is
-      date: new Date(Math.min(monthEnd, updateTime)), // Assign p_a to the correct period
+      value: (pointsPerSecond - pointsDiscount) * updateInterval, // p_a = (pps - pd) * ui
+      date: new Date(Math.min(monthEnd, endTime)), // Assign p_a to the correct period
     });
 
     monthStart = getNextMonthStart(monthStart);
@@ -294,19 +287,21 @@ exports.getAvailablePoints = async function (houseId, lastUpdateTime, updateTime
   return availablePoints;
 };
 
-exports.getTotalAvailablePoints = async function (houseId, lastUpdateTime, updateTime) {
-  const availablePoints = await exports.getAvailablePoints(houseId, lastUpdateTime, updateTime);
+exports.getTotalAvailablePoints = async function (houseId, startTime, endTime) {
+  const availablePoints = await exports.getAvailablePoints(houseId, startTime, endTime);
   return availablePoints.reduce((sum, ap) => sum + ap.value, 0);
 };
 
-exports.getSumChoreValues = async function (houseId, startTime, endTime) {
-  const assignedPoints = await db('ChoreValue')
+exports.getPointsDiscount = async function (houseId, monthStart, now) {
+  const specialChoreValues = await db('ChoreValue')
     .where({ houseId })
-    .whereBetween('valuedAt', [ startTime, endTime ])
-    .sum('value')
-    .first();
+    .whereNull('choreId')
+    .whereBetween('valuedAt', [ monthStart, now ])
+    .select('*');
 
-  return assignedPoints.sum || 0;
+  const monthEnd = getMonthEnd(now);
+  return specialChoreValues
+    .reduce((sum, scv) => sum + scv.value / (monthEnd - scv.valuedAt), 0);
 };
 
 exports.updateChoreValues = async function (houseId, now) {
@@ -361,6 +356,7 @@ exports.getUpdatedChoreValues = async function (houseId, updateTime) {
   return choreValues.sort((a, b) => b.value - a.value);
 };
 
+// Special chore values have choreId = null
 exports.addSpecialChoreValue = async function (houseId, name, description, value, now) {
   const metadata = { name, description };
   const choreValue = { houseId, value, valuedAt: now, metadata };
@@ -758,9 +754,6 @@ exports.resetChorePoints = async function (houseId, now) {
     return { houseId, claimedBy: r.slackId, value: -userPoints, claimedAt: now, metadata }; // choreId = null
   }));
 
-  const sumChoreValues = await exports.getSumChoreValues(houseId, monthStart, now);
-  const resetChoreValues = { houseId, value: -sumChoreValues, valuedAt: now, metadata }; // choreId = null
-
   const choreValues = await exports.getUpdatedChoreValues(houseId, now);
   const resetChoreClaims = choreValues.map((cv) => {
     return {
@@ -775,7 +768,6 @@ exports.resetChorePoints = async function (houseId, now) {
 
   await db.transaction(async (tx) => {
     await tx('Resident').insert(resetResidents).onConflict('slackId').merge(); // HACK: write Resident table directly
-    await tx('ChoreValue').insert(resetChoreValues);
     await tx('ChoreClaim').insert([ ...resetResidentClaims, ...resetChoreClaims ]);
   });
 };
