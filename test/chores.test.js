@@ -29,6 +29,8 @@ describe('Chores', async () => {
   const RESIDENT3 = testHelpers.generateSlackId();
   const RESIDENT4 = testHelpers.generateSlackId();
 
+  const PPR = pointsPerResident * inflationFactor;
+
   let dishes;
   let sweeping;
   let restock;
@@ -43,6 +45,10 @@ describe('Chores', async () => {
   async function setChorePreference (houseId, residentId, targetChoreId, sourceChoreId, preference) {
     const normalizedPref = Chores.normalizeChorePreference({ targetChoreId, sourceChoreId, preference });
     return Chores.setChorePreferences(houseId, [ { residentId, ...normalizedPref } ]);
+  }
+
+  function reduce (choreValues) {
+    return choreValues.reduce((sum, cv) => sum + cv.value, 0);
   }
 
   beforeEach(async () => {
@@ -515,6 +521,33 @@ describe('Chores', async () => {
         .to.almost.equal(3 * pointsPerResident * inflationFactor * 5 / 30);
     });
 
+    it('can incorporate chore breaks when calculating chore values', async () => {
+      const t0 = new Date(3000, 3, 1); // April 1, a 30 day month
+      const t1 = new Date(t0.getTime() + 10 * DAY);
+      const t2 = new Date(t0.getTime() + 20 * DAY);
+      const t3 = new Date(t0.getTime() + 30 * DAY);
+
+      await db('ChoreValue').insert([
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: t0, value: 0 },
+      ]);
+
+      let choreValues;
+
+      // 1/3
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, t1);
+      expect(reduce(choreValues)).to.be.almost(3 * PPR * (1 / 3), 1e-5);
+
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, t1, new Date(t2.getTime() + DAY), '');
+
+      // 1/3 + 2/9 = 5/9
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, t2);
+      expect(reduce(choreValues)).to.be.almost(3 * PPR * (5 / 9), 1e-4);
+
+      // 1/3 + 2/9 + 1/3 = 8/9
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, t3);
+      expect(reduce(choreValues)).to.be.almost(3 * PPR * (8 / 9), 1e-4);
+    });
+
     it('can return sensible chore values when initialised part-way through the month', async () => {
       const t0 = new Date(3000, 3, 1); // April 1, a 30 day month
       const t1 = new Date(t0.getTime() + 10 * DAY);
@@ -610,7 +643,7 @@ describe('Chores', async () => {
       expect(choreValue.value).to.equal(value);
     });
 
-    it('can correctly the points discount due to special chores', async () => {
+    it('can correctly get the points discount due to special chores', async () => {
       const t0 = new Date(3000, 3, 1); // April 1, a 30 day month
       const t1 = new Date(t0.getTime() + 10 * DAY);
       const t2 = new Date(t0.getTime() + 20 * DAY);
@@ -652,6 +685,7 @@ describe('Chores', async () => {
 
       let pointsDiscount;
       let choreValues;
+
       choreValues = await Chores.getUpdatedChoreValues(HOUSE, t1);
       expect(choreValues.reduce((sum, cv) => sum + cv.value, 0))
         .to.be.almost(3 * pointsPerResident * inflationFactor / 3, 1e-5);
@@ -672,6 +706,65 @@ describe('Chores', async () => {
       choreValues = await Chores.getUpdatedChoreValues(HOUSE, t3);
       expect(choreValues.reduce((sum, cv) => sum + cv.value, 0))
         .to.be.almost(3 * pointsPerResident * inflationFactor, 1e-5);
+    });
+
+    it('can correctly incorporate both special chores and chore breaks', async () => {
+      const t0 = new Date(3000, 3, 1); // April 1, a 30 day month
+      const t1 = new Date(t0.getTime() + 15 * DAY);
+      const t2 = new Date(t0.getTime() + 30 * DAY);
+
+      await db('ChoreValue').insert([
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: t0, value: 0 },
+      ]);
+
+      let choreValues;
+
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, t1);
+      expect(reduce(choreValues)).to.be.almost(3 * PPR / 2, 1e-5);
+
+      // Leave 30 points for regular chores
+      await Chores.addSpecialChoreValue(HOUSE, '', '', 120, t1);
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, t1, new Date(t2.getTime() + DAY), '');
+
+      // Should issue 20 more points, skipping 10 for the break
+      // Note that we've issued 290 points over an obligation of 250
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, t2);
+      expect(reduce(choreValues)).to.be.almost(3 * PPR - 10, 1e-5);
+    });
+
+    it('can correctly incorporate both special chores and chore breaks II', async () => {
+      const t0 = new Date(3000, 1, 1); // Feb 1, a 30 day month
+      const t1 = new Date(t0.getTime() + 7 * DAY);
+      // We skip t2 here
+      const t3 = new Date(t0.getTime() + 21 * DAY);
+      const t4 = new Date(t0.getTime() + 28 * DAY);
+
+      // So 400 points in total
+      await Admin.activateResident(HOUSE, RESIDENT4, getPrevMonthEnd(t0));
+
+      await db('ChoreValue').insert([
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: t0, value: 0 },
+      ]);
+
+      let choreValues;
+
+      // Issue 100 points in first 1/4 of month
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, t1);
+      expect(reduce(choreValues)).to.be.almost(4 * PPR / 4, 1e-5);
+
+      await Chores.addSpecialChoreValue(HOUSE, '', '', 120, t1);
+      await Chores.addChoreBreak(HOUSE, RESIDENT1, t1, new Date(t3.getTime() + DAY), '');
+
+      // Issue 90 points in middle 1/2 of month, plus 120 for the special
+      // Note that while the special chore uses up 80 of the 200 points,
+      //  we reduce issuance by 60 (150 - 60 = 90), scaled due to the break
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, t3);
+      expect(reduce(choreValues)).to.be.almost(4 * PPR / 4 + 90 + 120, 1e-5);
+
+      // Issue 60 points in final 1/4 of month, as the special chore uses up 40
+      // Total points are reduced by 50 due to the break, with a surplus of 20
+      choreValues = await Chores.getUpdatedChoreValues(HOUSE, t4);
+      expect(reduce(choreValues)).to.be.almost(4 * PPR - 50 + 20, 1e-5);
     });
   });
 
@@ -1283,7 +1376,7 @@ describe('Chores', async () => {
       expect(choreBreaks.length).to.equal(0);
     });
 
-    it('can exclude on-break residents from the chore valuing', async () => {
+    it('can exclude on-break residents from the working resident count', async () => {
       await Admin.activateResident(HOUSE, RESIDENT3, now);
       await Admin.activateResident(HOUSE, RESIDENT4, now);
 
@@ -1307,6 +1400,10 @@ describe('Chores', async () => {
       await Chores.addChoreBreak(HOUSE, RESIDENT1, now, twoDays, '');
       workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, now);
       expect(workingResidentCount).to.equal(2);
+
+      // Breaks are not inclusive of the end date
+      workingResidentCount = await Chores.getWorkingResidentCount(HOUSE, twoDays);
+      expect(workingResidentCount).to.equal(3);
 
       // Can handle overlapping breaks
       await Chores.addChoreBreak(HOUSE, RESIDENT1, now, tomorrow, '');
