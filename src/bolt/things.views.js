@@ -92,16 +92,18 @@ _For more details on *Things* functionality, read the <${DOCS_URL}|manual>._
 };
 
 exports.thingsHomeView = function (accounts, exempt) {
+  const getMoneybags = sum => ':moneybag:'.repeat(Math.round(Math.sqrt(sum) / 10));
+
   const header = 'Welcome to Things';
   const textA = `We use *<${DOCS_URL}|Things>* to spend money together.\n\n` +
     'Anyone can propose a buy, which requires *1 upvote per $50*. ' +
     'Special buys require at least *30%* whole-house approval.';
   const textB = 'The house has the *following balances*:\n' +
-    accounts.map(account => `\n:moneybag:*${account.account}* account: *$${account.sum}*`);
+    accounts.map(account => `\n${getMoneybags(account.sum)}*${account.account}* account: *$${account.sum}*`);
 
   const actions = [];
   if (!exempt) {
-    actions.push(common.blockButton('things-buy', ':shopping_bags: Buy a thing'));
+    actions.push(common.blockButton('things-buy', ':package: Buy a thing'));
     actions.push(common.blockButton('things-special', ':mirror_ball: Buy special thing'));
     actions.push(common.blockButton('things-propose', ':ledger: Edit things list'));
   }
