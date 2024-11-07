@@ -255,6 +255,9 @@ exports.getLastChoreValueUpdateTime = async function (houseId, updateTime) {
 };
 
 exports.getAvailablePoints = async function (houseId, startTime, endTime) {
+  const votingResidents = await Admin.getVotingResidents(houseId, endTime);
+  const votingResidentCount = votingResidents.length;
+
   // mp = u_w * ppr * inf
   const workingResidentCount = await exports.getWorkingResidentCount(houseId, endTime);
   const monthlyPoints = workingResidentCount * pointsPerResident * inflationFactor;
@@ -269,8 +272,9 @@ exports.getAvailablePoints = async function (houseId, startTime, endTime) {
     // pps = mp / (t_m - t_0)
     const pointsPerSecond = monthlyPoints / (monthEnd - monthStart);
 
-    // pd = sum{scv / (t_m - t_s)}
-    const pointsDiscount = await exports.getPointsDiscount(houseId, monthStart, monthEnd);
+    // pd = sum_i{scv_i / (t_m - t_i)} * (u_w / u_v)
+    const workingRatio = workingResidentCount / votingResidentCount;
+    const pointsDiscount = await exports.getPointsDiscount(houseId, monthEnd) * workingRatio;
 
     // ui = t_n - t_l
     const updateInterval = Math.min(monthEnd, endTime) - Math.max(monthStart, startTime);
@@ -292,14 +296,16 @@ exports.getTotalAvailablePoints = async function (houseId, startTime, endTime) {
   return availablePoints.reduce((sum, ap) => sum + ap.value, 0);
 };
 
-exports.getPointsDiscount = async function (houseId, monthStart, now) {
+exports.getPointsDiscount = async function (houseId, now) {
+  const monthStart = getMonthStart(now);
+  const monthEnd = getMonthEnd(now);
+
   const specialChoreValues = await db('ChoreValue')
     .where({ houseId })
     .whereNull('choreId')
     .whereBetween('valuedAt', [ monthStart, now ])
     .select('*');
 
-  const monthEnd = getMonthEnd(now);
   return specialChoreValues
     .reduce((sum, scv) => sum + scv.value / (monthEnd - scv.valuedAt), 0);
 };
