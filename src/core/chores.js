@@ -258,9 +258,12 @@ exports.getAvailablePoints = async function (houseId, startTime, endTime) {
   const votingResidents = await Admin.getVotingResidents(houseId, endTime);
   const votingResidentCount = votingResidents.length;
 
-  // mp = u_w * ppr * inf
+  // mp = (u_v * ppr * inf)
+  const monthlyPoints = votingResidentCount * pointsPerResident * inflationFactor;
+
+  // wr = u_w / u_v
   const workingResidentCount = await exports.getWorkingResidentCount(houseId, endTime);
-  const monthlyPoints = workingResidentCount * pointsPerResident * inflationFactor;
+  const workingRatio = workingResidentCount / votingResidentCount;
 
   const availablePoints = [];
   const finalMonthEnd = getMonthEnd(endTime);
@@ -272,16 +275,17 @@ exports.getAvailablePoints = async function (houseId, startTime, endTime) {
     // pps = mp / (t_m - t_0)
     const pointsPerSecond = monthlyPoints / (monthEnd - monthStart);
 
-    // pd = sum_i{scv_i / (t_m - t_i)} * (u_w / u_v)
-    const workingRatio = workingResidentCount / votingResidentCount;
-    const pointsDiscount = await exports.getPointsDiscount(houseId, monthEnd) * workingRatio;
+    // pd = sum_i{scv_i / (t_m - t_i)}
+    const pointsDiscount = await exports.getPointsDiscount(houseId, monthEnd);
 
     // ui = t_n - t_l
     const updateInterval = Math.min(monthEnd, endTime) - Math.max(monthStart, startTime);
 
     availablePoints.push({
-      value: (pointsPerSecond - pointsDiscount) * updateInterval, // p_a = (pps - pd) * ui
-      date: new Date(Math.min(monthEnd, endTime)), // Assign p_a to the correct period
+      // p_a = (pps - pd) * wr * ui
+      value: (pointsPerSecond - pointsDiscount) * workingRatio * updateInterval,
+      // Assign p_a to the correct period
+      date: new Date(Math.min(monthEnd, endTime)),
     });
 
     monthStart = getNextMonthStart(monthStart);
