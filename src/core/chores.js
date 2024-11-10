@@ -196,11 +196,20 @@ exports.getCurrentChoreValues = async function (houseId, now) {
 
   for (const chore of await exports.getChores(houseId)) {
     const choreValue = await exports.getCurrentChoreValue(chore.id, now);
-    choreValues.push({ choreId: chore.id, name: chore.name, value: choreValue });
+    choreValues.push({
+      choreId: chore.id,
+      name: chore.name,
+      value: choreValue,
+    });
   }
 
   for (const choreValue of await exports.getSpecialChoreValues(houseId, now)) {
-    choreValues.push({ choreValueId: choreValue.id, name: choreValue.name, value: choreValue.value });
+    choreValues.push({
+      choreValueId: choreValue.id,
+      name: choreValue.name,
+      value: choreValue.value,
+      metadata: choreValue.metadata,
+    });
   }
 
   return choreValues;

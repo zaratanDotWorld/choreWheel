@@ -368,14 +368,16 @@ describe('Chores', async () => {
         { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 },
         { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 5 },
         { houseId: HOUSE, choreId: sweeping.id, valuedAt: now, value: 20 },
+        { houseId: HOUSE, valuedAt: now, value: 30, metadata: { name: 'Special chore' } },
       ]);
 
-      const soon = new Date(now.getTime() + HOUR);
-
-      const choreValues = await Chores.getCurrentChoreValues(HOUSE, soon);
+      const choreValues = await Chores.getCurrentChoreValues(HOUSE, now);
       expect(choreValues.find(cv => cv.choreId === dishes.id).value).to.equal(15);
       expect(choreValues.find(cv => cv.choreId === sweeping.id).value).to.equal(20);
       expect(choreValues.find(cv => cv.choreId === restock.id).value).to.equal(0);
+
+      expect(choreValues.find(cv => !cv.choreId).value).to.equal(30);
+      expect(choreValues.find(cv => !cv.choreId).metadata.name).to.equal('Special chore');
     });
 
     it('can get the last chore value update time', async () => {
