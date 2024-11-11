@@ -312,9 +312,6 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   const { chore } = JSON.parse(body.view.private_metadata);
-  const { id: choreId, choreValueId } = chore;
-
-  assert(choreId || choreValueId, 'Missing choreId or choreValueId');
 
   const monthStart = getMonthStart(now);
   let monthlyPoints = await Chores.getAllChorePoints(residentId, monthStart, now);
@@ -323,21 +320,24 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   let name;
   let claim;
 
-  if (choreId) {
+  // HACK: Can we do better than conditioning on `name`?
+  if (chore.name) {
+    // Regular chore
     name = chore.name;
 
     const achievementStart = new Date(now.getTime() - achievementWindow);
-    achivementPoints = await Chores.getChorePoints(residentId, choreId, achievementStart, now);
+    achivementPoints = await Chores.getChorePoints(residentId, chore.id, achievementStart, now);
 
     // Perform the regular claim, skipping timeSpent for now
-    [ claim ] = await Chores.claimChore(houseId, choreId, residentId, now, 0);
+    [ claim ] = await Chores.claimChore(houseId, chore.id, residentId, now, 0);
 
     achivementPoints = achivementPoints + claim.value;
-  } else if (choreValueId) {
+  } else {
+    // Special chore
     name = chore.metadata.name;
 
     // Perform the special claim, skipping timeSpent for now
-    [ claim ] = await Chores.claimSpecialChore(houseId, choreValueId, residentId, now, 0);
+    [ claim ] = await Chores.claimSpecialChore(houseId, chore.id, residentId, now, 0);
   }
 
   monthlyPoints = monthlyPoints + claim.value;
