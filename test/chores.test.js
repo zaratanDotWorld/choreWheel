@@ -187,6 +187,49 @@ describe('Chores', async () => {
       expect(pref.preference).to.almost.equal(0.7);
     });
 
+    it('can orient a chore preference', async () => {
+      let pref;
+
+      pref = Chores.orientChorePreferences(dishes.id, { alphaChoreId: dishes.id, betaChoreId: sweeping.id, preference: 0.7 });
+      expect(pref.targetChoreId).to.equal(dishes.id);
+      expect(pref.sourceChoreId).to.equal(sweeping.id);
+      expect(pref.preference).to.almost.equal(0.7);
+
+      pref = Chores.orientChorePreferences(sweeping.id, { alphaChoreId: dishes.id, betaChoreId: sweeping.id, preference: 0.7 });
+      expect(pref.targetChoreId).to.equal(sweeping.id);
+      expect(pref.sourceChoreId).to.equal(dishes.id);
+      expect(pref.preference).to.almost.equal(0.3);
+
+      pref = Chores.orientChorePreferences(restock.id, { alphaChoreId: dishes.id, betaChoreId: sweeping.id, preference: 0.7 });
+      expect(pref).to.be.undefined;
+    });
+
+    it('can create a source exclusion set of preferences', async () => {
+      const preferences = [
+        { residentId: RESIDENT1, targetChoreId: dishes.id, sourceChoreId: sweeping.id, preference: 0.7 },
+        { residentId: RESIDENT1, targetChoreId: dishes.id, sourceChoreId: restock.id, preference: 0.3 },
+      ];
+
+      let sourceExclusionSet;
+      // Neither is invalid (both less than 1)
+      sourceExclusionSet = Chores.createSourceExclusionSet(preferences, 1);
+      expect(sourceExclusionSet.size).to.equal(0);
+
+      // Sweeping is invalid (equal to 0.7)
+      sourceExclusionSet = Chores.createSourceExclusionSet(preferences, 0.7);
+      expect(sourceExclusionSet.size).to.equal(1);
+      expect(sourceExclusionSet.has(sweeping.id)).to.be.true;
+
+      // Restock is invalid (equal to 0.3)
+      sourceExclusionSet = Chores.createSourceExclusionSet(preferences, 0.3);
+      expect(sourceExclusionSet.size).to.equal(1);
+      expect(sourceExclusionSet.has(restock.id)).to.be.true;
+
+      // Neither is invalid (both greater than 0)
+      sourceExclusionSet = Chores.createSourceExclusionSet(preferences, 0);
+      expect(sourceExclusionSet.size).to.equal(0);
+    });
+
     it('can merge two sets of chore preferences', async () => {
       const currentPrefs = [
         { residentId: RESIDENT1, alphaChoreId: dishes.id, betaChoreId: sweeping.id, preference: 1 },
@@ -207,7 +250,7 @@ describe('Chores', async () => {
       ];
 
       const mergedPrefs = Chores.mergeChorePreferences(currentPrefs, newPrefs);
-      const mergedPrefsMap = Chores.toPreferenceMap(mergedPrefs);
+      const mergedPrefsMap = Chores.toPrefsMap(mergedPrefs);
 
       expect(mergedPrefs.length).to.equal(5);
       expect(mergedPrefsMap.get(Chores.toPrefKey(currentPrefs[0])).preference).to.equal(1);

@@ -103,8 +103,17 @@ exports.setChorePreferences = async function (houseId, prefs) {
 
 // Chore Preference Processing
 
+exports.toPrefsMap = function (prefs) {
+  return new Map(prefs.map(p => [ exports.toPrefKey(p), p ]));
+};
+
+exports.toPrefKey = function (pref) {
+  assert(pref.residentId && pref.alphaChoreId && pref.betaChoreId, 'Invalid chore preference!');
+  return `${pref.residentId}-${pref.alphaChoreId}-${pref.betaChoreId}`;
+};
+
 exports.mergeChorePreferences = function (currentPrefs, newPrefs) {
-  const currentPrefsMap = exports.toPreferenceMap(currentPrefs);
+  const currentPrefsMap = exports.toPrefsMap(currentPrefs);
 
   newPrefs.forEach((p) => {
     const prefKey = exports.toPrefKey(p);
@@ -124,7 +133,7 @@ exports.normalizeChorePreference = function (pref) {
 
   let alphaChoreId, betaChoreId, preference;
 
-  // Value flows from source to target, and from beta to alpha
+  // Value flows from source to target (oriented), and from beta to alpha (normalized)
   if (pref.targetChoreId < pref.sourceChoreId) {
     alphaChoreId = pref.targetChoreId;
     betaChoreId = pref.sourceChoreId;
@@ -138,19 +147,35 @@ exports.normalizeChorePreference = function (pref) {
   return { alphaChoreId, betaChoreId, preference };
 };
 
-exports.filterChorePreferences = async function (houseId, residentId, prefs) {
-  return prefs
-    .filter(p => p.targetChoreId !== p.sourceChoreId)
-    .map((p) => { return { residentId, ...exports.normalizeChorePreference(p) }; });
+exports.orientChorePreferences = function (targetChoreId, pref) {
+  let sourceChoreId, preference;
+
+  // Value flows from source to target (oriented), and from beta to alpha (normalized)
+  switch (targetChoreId) {
+    case pref.alphaChoreId:
+      sourceChoreId = pref.betaChoreId;
+      preference = pref.preference;
+      break;
+    case pref.betaChoreId:
+      sourceChoreId = pref.alphaChoreId;
+      preference = 1 - pref.preference;
+      break;
+    default:
+      // If the preference does not include targetChoreId, return undefined
+      return;
+  }
+
+  return { targetChoreId, sourceChoreId, preference };
 };
 
-exports.toPreferenceMap = function (prefs) {
-  return new Map(prefs.map(p => [ exports.toPrefKey(p), p ]));
-};
-
-exports.toPrefKey = function (pref) {
-  assert(pref.residentId && pref.alphaChoreId && pref.betaChoreId, 'Invalid chore preference!');
-  return `${pref.residentId}-${pref.alphaChoreId}-${pref.betaChoreId}`;
+// *Exclude* preferences for which the new value is semantically *invalid*
+//  E.g. if I want to prioritize _a little_, exclude those already prioritized by _a lot_
+exports.createSourceExclusionSet = function (orientedPreferences, newValue) {
+  const prioritizing = newValue >= 0.5;
+  // NOTE: Typescript would be useful here
+  return new Set(orientedPreferences
+    .filter(pref => (prioritizing) ? pref.preference >= newValue : pref.preference <= newValue)
+    .map(pref => pref.sourceChoreId));
 };
 
 // Chore Values

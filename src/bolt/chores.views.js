@@ -316,12 +316,17 @@ exports.choresRankView = function (choreRankings) {
   const header = 'Set chore priorities';
   const mainText = 'If you feel a chore should be worth more (or less), you can change it\'s *priority*. ' +
     'The higher priority a chore is, the more points it will be worth over time.\n\n' +
-    'Priority-setting is a *cumulative, collaborative, and ongoing* process, ' +
-    'where every input makes a difference, and anyone can make small (or large) changes at any time.';
+    'Chore priorities are measured in *points-per-thousand* (ppt), which always add up to *1000*. ' +
+    'A ppt of *0* means a chore gets no points, while a ppt of *1000* means a chore gets _all_ the points.';
 
   const actions = [
-    { value: 'prioritize', text: common.blockPlaintext('prioritize (more points over time)') },
-    { value: 'deprioritize', text: common.blockPlaintext('deprioritize (less points over time)') },
+    { value: String(1), text: common.blockPlaintext('prioritize (more points over time)') },
+    { value: String(0), text: common.blockPlaintext('deprioritize (less points over time)') },
+  ];
+
+  const preferenceOptions = [
+    { value: String(0.7), text: common.blockPlaintext('a little') },
+    { value: String(1.0), text: common.blockPlaintext('a lot') },
   ];
 
   const blocks = [];
@@ -346,6 +351,15 @@ exports.choresRankView = function (choreRankings) {
       options: mapChoreRankings(choreRankings),
     },
   ));
+  blocks.push(common.blockInput(
+    'by',
+    {
+      action_id: 'preference',
+      type: 'static_select',
+      initial_option: preferenceOptions[0],
+      options: preferenceOptions,
+    },
+  ));
   return {
     type: 'modal',
     callback_id: 'chores-rank-2',
@@ -356,41 +370,25 @@ exports.choresRankView = function (choreRankings) {
   };
 };
 
-exports.choresRankView2 = function (action, targetChore, choreRankings) {
-  const prioritize = action === 'prioritize';
-  const preferenceOptions = [
-    { value: String((prioritize) ? 0.7 : 1 - 0.7), text: common.blockPlaintext('a little') },
-    { value: String((prioritize) ? 1.0 : 1 - 1.0), text: common.blockPlaintext('a lot') },
-  ];
-
+exports.choresRankView2 = function (preference, targetChore, choreRankings) {
   const header = 'Set chore priorities';
-  const mainText = 'Choose chores to update. ' +
-    'Chore priorities are measured in *points-per-thousand* (ppt), which always add up to *1000*. ' +
-    'A ppt of *0* means a chore gets no points, while a ppt of *1000* means a chore gets _all_ the points.\n\n' +
-    'You can think of updating as "taking" priority from some chores and giving it to others. ' +
+  const mainText = 'Priority-setting is a *cumulative, collaborative, and ongoing* process, ' +
+    'where people "take" priority from some chores and give it to others. ' +
     '*Example:* "I want to _prioritize_ dishes and _deprioritize_ yardwork."\n\n' +
-    '*Some things to keep in mind:*\n\n' +
-    '*1.* A *strong preference* has a bigger effect.\n' +
-    '*2.* Taking from *high-priority chores* has a bigger effect.\n' +
-    '*3.* Taking from *more chores* has a bigger effect.\n' +
-    '*4.* *More participants* have a bigger effect.\n\n' +
-    'It\'s more involved than just "subtracting" ppt, but not by much.';
+    '*Some things to keep in mind:*\n' +
+    '*1.* Taking from *high-priority chores* has a bigger effect.\n' +
+    '*2.* Taking from *more chores* has a bigger effect.\n' +
+    '*3.* *More participants* have a bigger effect.';
+  const actionText = `You want to *${(preference >= 0.5) ? 'prioritize' : 'deprioritize'}* ` +
+    `*${targetChore.name}* by *${Math.abs(preference - 0.5) > 0.2 ? 'a lot' : 'a little'}*,`;
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
   blocks.push(common.blockDivider());
+  blocks.push(common.blockSection(actionText));
   blocks.push(common.blockInput(
-    `I want to ${action} ${targetChore.name}`,
-    {
-      action_id: 'preference',
-      type: 'static_select',
-      initial_option: preferenceOptions[0],
-      options: preferenceOptions,
-    },
-  ));
-  blocks.push(common.blockInput(
-    `by ${(prioritize) ? 'deprioritizing' : 'prioritizing'}`,
+    `by ${(preference >= 0.5) ? 'deprioritizing' : 'prioritizing'}`,
     {
       action_id: 'chores',
       type: 'multi_static_select',
@@ -402,7 +400,7 @@ exports.choresRankView2 = function (action, targetChore, choreRankings) {
   return {
     type: 'modal',
     callback_id: 'chores-rank-3',
-    private_metadata: JSON.stringify({ targetChore }),
+    private_metadata: JSON.stringify({ preference, targetChore }),
     title: TITLE,
     close: common.BACK,
     submit: common.NEXT,
@@ -438,6 +436,24 @@ exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetada
     title: TITLE,
     close: common.BACK,
     submit: common.SUBMIT,
+    blocks,
+  };
+};
+
+exports.choresRankViewZero = function (preference) {
+  const header = 'Set chore priorities';
+  const mainText = `No chores available to *${(preference >= 0.5) ? 'deprioritize' : 'prioritize'}*, ` +
+    'most likely because you\'ve put in these preferences already.\n\n' +
+    'Try asking someone else to submit the same preferences as you.';
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+
+  return {
+    type: 'modal',
+    title: TITLE,
+    close: common.BACK,
     blocks,
   };
 };
