@@ -373,13 +373,26 @@ app.action('chores-rank', async ({ ack, body }) => {
 
 app.view('chores-rank-2', async ({ ack, body }) => {
   const actionName = 'chores-rank-2';
-  const { now, houseId } = common.beginAction(actionName, body);
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
 
-  const action = common.getInputBlock(body, -2).action.selected_option.value;
-  const targetChore = JSON.parse(common.getInputBlock(body, -1).chore.selected_option.value);
-  const choreRankings = await Chores.getCurrentChoreRankings(houseId, now);
+  const action = JSON.parse(common.getInputBlock(body, -3).action.selected_option.value);
+  const targetChore = JSON.parse(common.getInputBlock(body, -2).chore.selected_option.value);
+  const preference = JSON.parse(common.getInputBlock(body, -1).preference.selected_option.value);
 
-  const view = views.choresRankView2(action, targetChore, choreRankings);
+  const actionPreference = (action) ? preference : 1 - preference;
+
+  const orientedCurrentPreferences = (await Chores.getResidentChorePreferences(houseId, residentId))
+    .map(pref => Chores.orientChorePreferences(targetChore.id, pref))
+    .filter(pref => pref);
+
+  const sourceExclusionSet = Chores.createSourceExclusionSet(orientedCurrentPreferences, actionPreference);
+  const choreRankings = (await Chores.getCurrentChoreRankings(houseId, now))
+    .filter(ranking => ranking.id !== targetChore.id && !sourceExclusionSet.has(ranking.id));
+
+  const view = (choreRankings.length)
+    ? views.choresRankView2(actionPreference, targetChore, choreRankings)
+    : views.choresRankViewZero(actionPreference);
+
   await ack({ response_action: 'push', view });
 });
 
@@ -387,22 +400,20 @@ app.view('chores-rank-3', async ({ ack, body }) => {
   const actionName = 'chores-rank-3';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
-  const { targetChore } = JSON.parse(body.view.private_metadata);
-  const preference = Number(common.getInputBlock(body, -2).preference.selected_option.value);
-  const sourceChores = common.getInputBlock(body, -1).chores.selected_options
-    .map(option => JSON.parse(option.value));
+  const { preference, targetChore } = JSON.parse(body.view.private_metadata);
+  const sourceChoreIds = common.getInputBlock(body, -1).chores.selected_options
+    .map(option => JSON.parse(option.value).id);
 
-  const newPrefs = sourceChores.map((sc) => {
-    return { targetChoreId: targetChore.id, sourceChoreId: sc.id, preference };
+  const newPrefs = sourceChoreIds.map((scId) => {
+    const pref = { targetChoreId: targetChore.id, sourceChoreId: scId, preference };
+    return { residentId, ...Chores.normalizeChorePreference(pref) };
   });
 
-  // Get the new ranking
-  const filteredPrefs = await Chores.filterChorePreferences(houseId, residentId, newPrefs);
-  const proposedRankings = await Chores.getProposedChoreRankings(houseId, filteredPrefs, now);
-  const targetChoreRanking = proposedRankings.find(chore => chore.id === targetChore.id);
+  // Get the proposed ranking
+  const proposedRankings = await Chores.getProposedChoreRankings(houseId, newPrefs, now);
+  const targetChoreRanking = proposedRankings.find(ranking => ranking.id === targetChore.id);
 
   // Forward the preferences through metadata
-  const sourceChoreIds = sourceChores.map(sc => sc.id);
   const prefsMetadata = JSON.stringify({ targetChore, sourceChoreIds, preference });
 
   const view = views.choresRankView3(targetChore, targetChoreRanking, prefsMetadata);
@@ -416,12 +427,12 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   const { targetChore, sourceChoreIds, preference } = JSON.parse(body.view.private_metadata);
 
   const newPrefs = sourceChoreIds.map((scId) => {
-    return { targetChoreId: targetChore.id, sourceChoreId: scId, preference };
+    const pref = { targetChoreId: targetChore.id, sourceChoreId: scId, preference };
+    return { residentId, ...Chores.normalizeChorePreference(pref) };
   });
 
-  // Get the new ranking
-  const filteredPrefs = await Chores.filterChorePreferences(houseId, residentId, newPrefs);
-  await Chores.setChorePreferences(houseId, filteredPrefs); // Actually set the chores
+  // Get the real new ranking
+  await Chores.setChorePreferences(houseId, newPrefs);
   const choreRankings = await Chores.getCurrentChoreRankings(houseId, now);
   const targetChoreRanking = choreRankings.find(chore => chore.id === targetChore.id);
 
