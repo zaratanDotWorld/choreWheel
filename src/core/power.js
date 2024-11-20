@@ -62,8 +62,15 @@ class PowerRanker {
     preferences.forEach((p) => {
       const alphaIx = itemMap.get(p.alpha);
       const betaIx = itemMap.get(p.beta);
-      matrix.data[betaIx][alphaIx] += p.preference - implicitPref;
-      matrix.data[alphaIx][betaIx] += (1 - p.preference) - implicitPref;
+      matrix.data[betaIx][alphaIx] -= implicitPref;
+      matrix.data[alphaIx][betaIx] -= implicitPref;
+
+      // We only record the dominant preference
+      if (p.preference >= 0.5) {
+        matrix.data[betaIx][alphaIx] += p.preference;
+      } else {
+        matrix.data[alphaIx][betaIx] += (1 - p.preference);
+      }
     });
 
     // Add the diagonals (sums of columns)

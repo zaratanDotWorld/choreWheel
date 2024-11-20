@@ -316,9 +316,9 @@ describe('Chores', async () => {
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.37949915168275505);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.3721885654420433);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.24831228287520143);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.4670116340772533);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.31890095736170976);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.21408740856103664);
     });
 
     it('can use preferences to determine complex chore rankings', async () => {
@@ -364,17 +364,17 @@ describe('Chores', async () => {
       newPrefs.push({ residentId: RESIDENT1, alphaChoreId: dishes.id, betaChoreId: sweeping.id, preference: 0.7 });
       choreRankings = await Chores.getProposedChoreRankings(HOUSE, newPrefs, now);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.3921602623439877);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.43526893223314683);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.17257080542286504);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.4466524560901651);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.35710339136726454);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.19624415254257002);
 
       // Shift priority from sweeping to restock
       newPrefs.push({ residentId: RESIDENT2, alphaChoreId: sweeping.id, betaChoreId: restock.id, preference: 0.7 });
       choreRankings = await Chores.getProposedChoreRankings(HOUSE, newPrefs, now);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.37949915168275505);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.3721885654420433);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.24831228287520143);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.4670116340772533);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.31890095736170976);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.21408740856103664);
     });
   });
 
