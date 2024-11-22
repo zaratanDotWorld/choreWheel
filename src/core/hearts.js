@@ -23,7 +23,6 @@ const {
 
 const Admin = require('./admin');
 const Polls = require('./polls');
-const { PowerRanker } = require('./power');
 
 // Hearts
 
@@ -204,18 +203,29 @@ exports.getKarmaRankings = async function (houseId, startTime, endTime) {
   const karma = await exports.getKarma(houseId, startTime, endTime);
   if (karma.length === 0) { return []; }
 
-  const residentSet = new Set(karma.map(k => [ k.receiverId, k.giverId ]).flat());
-  const formattedKarma = karma.map((k) => {
-    return { alpha: k.receiverId, beta: k.giverId, preference: 1 };
-  });
+  // Create influenceMap
+  const houseHearts = await exports.getHouseHearts(houseId, endTime);
+  const influenceMap = new Map(houseHearts.map(h => [ h.residentId, { hearts: h.sum, issued: 0 } ]));
 
-  // TODO: Update PowerRanker to handle 0 implicit pref
-  const powerRanker = new PowerRanker(residentSet, formattedKarma, residentSet.size);
-  const rankings = powerRanker.run();
+  for (const k of karma) {
+    influenceMap.get(k.giverId).issued++;
+  }
 
-  return Array.from(residentSet).map((id) => {
-    return { slackId: id, ranking: rankings.get(id) };
-  }).sort((a, b) => b.ranking - a.ranking);
+  for (const h of houseHearts) {
+    const influence = influenceMap.get(h.residentId);
+    influence.value = influence.hearts / Math.max(influence.issued, 1);
+  }
+
+  // Create karmaMap
+  const karmaMap = new Map(karma.map(k => [ k.receiverId, 0 ]));
+  for (const k of karma) {
+    const value = karmaMap.get(k.receiverId) + influenceMap.get(k.giverId).value;
+    karmaMap.set(k.receiverId, value);
+  }
+
+  return Array.from(karmaMap.entries())
+    .map(([ slackId, ranking ]) => ({ slackId, ranking }))
+    .sort((a, b) => b.ranking - a.ranking);
 };
 
 exports.getNumKarmaWinners = async function (houseId, startTime, endTime) {
