@@ -417,6 +417,13 @@ describe('Hearts', async () => {
     beforeEach(async () => {
       await Admin.activateResident(HOUSE, RESIDENT6, now);
 
+      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT2, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT3, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT4, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT5, now);
+      await Hearts.initialiseResident(HOUSE, RESIDENT6, now);
+
       nextMonthKarma = new Date(nextMonth.getTime() + karmaDelay);
       twoMonthsKarma = new Date(twoMonths.getTime() + karmaDelay);
     });
@@ -448,10 +455,14 @@ describe('Hearts', async () => {
 
     it('can calculate ranks based on karma', async () => {
       await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT2, now);
-      await Hearts.giveKarma(HOUSE, RESIDENT2, RESIDENT3, now);
+      await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT3, now);
+      await Hearts.giveKarma(HOUSE, RESIDENT3, RESIDENT2, now);
 
       const rankings = await Hearts.getKarmaRankings(HOUSE, now, challengeEnd);
-      expect(rankings[0].slackId).to.equal(RESIDENT3);
+      expect(rankings[0].slackId).to.equal(RESIDENT2);
+      expect(rankings[0].ranking).to.equal(7.5);
+      expect(rankings[1].slackId).to.equal(RESIDENT3);
+      expect(rankings[1].ranking).to.equal(2.5);
     });
 
     it('can get the number of karma winners based on house size', async () => {
@@ -469,6 +480,8 @@ describe('Hearts', async () => {
 
       await Admin.activateResident(house, r1, now);
       await Admin.activateResident(house, r2, now);
+      await Hearts.initialiseResident(house, r1, now);
+      await Hearts.initialiseResident(house, r2, now);
       // Create two unique recipients
       await Hearts.giveKarma(house, r1, r2, now);
       await Hearts.giveKarma(house, r2, r1, now);
@@ -479,11 +492,15 @@ describe('Hearts', async () => {
       await Admin.activateResident(house, r3, now);
       await Admin.activateResident(house, r4, now);
       await Admin.activateResident(house, r5, now);
+      await Hearts.initialiseResident(house, r3, now);
+      await Hearts.initialiseResident(house, r4, now);
+      await Hearts.initialiseResident(house, r5, now);
       // Five residents, one karma heart
       numWinners = await Hearts.getNumKarmaWinners(house, now, soon);
       expect(numWinners).to.equal(1);
 
       await Admin.activateResident(house, r6, now);
+      await Hearts.initialiseResident(house, r6, now);
       // Six residents, two karma hearts
       numWinners = await Hearts.getNumKarmaWinners(house, now, soon);
       expect(numWinners).to.equal(2);
@@ -525,14 +542,15 @@ describe('Hearts', async () => {
       expect(karmaHearts[0].residentId).to.equal(RESIDENT2);
       expect(karmaHearts[0].value).to.equal(1);
       expect(karmaHearts[0].type).to.equal(HEART_KARMA);
-      expect(karmaHearts[0].metadata.ranking).to.equal(0.8333333333333335);
+      expect(karmaHearts[0].metadata.ranking).to.equal(5);
 
       // But not twice
       karmaHearts = await Hearts.generateKarmaHearts(HOUSE, nextMonthKarma);
       expect(karmaHearts.length).to.equal(0);
 
       // If they're at the limit, they get less
-      await Hearts.generateHearts(HOUSE, RESIDENT4, HEART_UNKNOWN, nextMonthKarma, heartsMaxBase - 0.5);
+      const numToGenerate = heartsMaxBase - heartsBaselineAmount - 0.5;
+      await Hearts.generateHearts(HOUSE, RESIDENT4, HEART_UNKNOWN, nextMonthKarma, numToGenerate);
       await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT4, nextMonthKarma);
 
       karmaHearts = await Hearts.generateKarmaHearts(HOUSE, twoMonthsKarma);
