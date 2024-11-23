@@ -456,13 +456,23 @@ describe('Hearts', async () => {
     it('can calculate ranks based on karma', async () => {
       await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT2, now);
       await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT3, now);
-      await Hearts.giveKarma(HOUSE, RESIDENT3, RESIDENT2, now);
+      await Hearts.giveKarma(HOUSE, RESIDENT2, RESIDENT3, now);
+
+      const rankings = await Hearts.getKarmaRankings(HOUSE, now, challengeEnd);
+      expect(rankings[0].slackId).to.equal(RESIDENT3);
+      expect(rankings[0].ranking).to.equal(7.5);
+      expect(rankings[1].slackId).to.equal(RESIDENT2);
+      expect(rankings[1].ranking).to.equal(2.5);
+    });
+
+    it('cannot game the rankings by issuing a lot of karma', async () => {
+      await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT2, now);
+      await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT2, now);
+      await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT2, now);
 
       const rankings = await Hearts.getKarmaRankings(HOUSE, now, challengeEnd);
       expect(rankings[0].slackId).to.equal(RESIDENT2);
-      expect(rankings[0].ranking).to.equal(7.5);
-      expect(rankings[1].slackId).to.equal(RESIDENT3);
-      expect(rankings[1].ranking).to.equal(2.5);
+      expect(rankings[0].ranking).to.equal(5);
     });
 
     it('can get the number of karma winners based on house size', async () => {
@@ -549,7 +559,7 @@ describe('Hearts', async () => {
       expect(karmaHearts.length).to.equal(0);
 
       // If they're at the limit, they get less
-      const numToGenerate = heartsMaxBase - heartsBaselineAmount - 0.5;
+      const numToGenerate = (heartsMaxBase - heartsBaselineAmount) - 0.5;
       await Hearts.generateHearts(HOUSE, RESIDENT4, HEART_UNKNOWN, nextMonthKarma, numToGenerate);
       await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT4, nextMonthKarma);
 

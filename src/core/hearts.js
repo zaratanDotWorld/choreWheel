@@ -201,29 +201,29 @@ exports.giveKarma = async function (houseId, giverId, receiverId, givenAt) {
 
 exports.getKarmaRankings = async function (houseId, startTime, endTime) {
   const karma = await exports.getKarma(houseId, startTime, endTime);
-  if (karma.length === 0) { return []; }
+  if (!karma.length) return [];
 
-  // Create influenceMap
-  const houseHearts = await exports.getHouseHearts(houseId, endTime);
-  const influenceMap = new Map(houseHearts.map(h => [ h.residentId, { hearts: h.sum, issued: 0 } ]));
+  const hearts = await exports.getHouseHearts(houseId, endTime);
 
-  for (const k of karma) {
-    influenceMap.get(k.giverId).issued++;
-  }
+  // Sum up issued karma per giver
+  const issued = karma.reduce((obj, k) => {
+    obj[k.giverId] = (obj[k.giverId] || 0) + 1;
+    return obj;
+  }, {});
 
-  for (const h of houseHearts) {
-    const influence = influenceMap.get(h.residentId);
-    influence.value = influence.hearts / Math.max(influence.issued, 1);
-  }
+  // Divide giver hearts by issued karma to get influence
+  const influence = hearts.reduce((obj, h) => {
+    obj[h.residentId] = h.sum / (issued[h.residentId] || 1);
+    return obj;
+  }, {});
 
-  // Create karmaMap
-  const karmaMap = new Map(karma.map(k => [ k.receiverId, 0 ]));
-  for (const k of karma) {
-    const value = karmaMap.get(k.receiverId) + influenceMap.get(k.giverId).value;
-    karmaMap.set(k.receiverId, value);
-  }
+  // Sum up influence per receiver
+  const rankings = karma.reduce((obj, k) => {
+    obj[k.receiverId] = (obj[k.receiverId] || 0) + influence[k.giverId];
+    return obj;
+  }, {});
 
-  return Array.from(karmaMap.entries())
+  return Object.entries(rankings)
     .map(([ slackId, ranking ]) => ({ slackId, ranking }))
     .sort((a, b) => b.ranking - a.ranking);
 };
