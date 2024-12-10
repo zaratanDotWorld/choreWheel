@@ -35,7 +35,8 @@ const {
 const Admin = require('./admin');
 const Hearts = require('./hearts');
 const Polls = require('./polls');
-const { PowerRanker } = require('./power');
+
+const { PowerRanker } = require('power-ranker');
 
 // Chores
 
@@ -262,13 +263,15 @@ exports.getChoreRankings = async function (houseId, now, preferences) {
     });
   }
 
-  const choresSet = new Set(chores.map(c => c.id));
-  const formattedPreferences = preferences.map((p) => {
-    return { alpha: p.alphaChoreId, beta: p.betaChoreId, preference: p.preference };
-  });
+  const items = new Set(chores.map(c => c.id));
+  const options = { numParticipants: residents.length, implicitPref: (1 / residents.length) / 2 };
+  const powerRanker = new PowerRanker({ items, options });
 
-  const powerRanker = new PowerRanker(choresSet, formattedPreferences, residents.length);
-  const rankings = powerRanker.run(d = dampingFactor); // eslint-disable-line no-undef
+  powerRanker.addPreferences(preferences.map((p) => {
+    return { target: p.alphaChoreId, source: p.betaChoreId, value: p.preference };
+  }));
+
+  const rankings = powerRanker.run({ d: dampingFactor });
 
   return chores.map((chore) => {
     return { id: chore.id, name: chore.name, ranking: rankings.get(chore.id) };
