@@ -26,6 +26,7 @@ exports.choreSpecialPctMax = 0.6; // Maximum threshold for special chores
 // Hearts
 exports.heartsPollLength = 3 * DAY;
 exports.heartsBaselineAmount = 5;
+exports.heartsReviveAmount = 3;
 exports.heartsRegenAmount = 0.25;
 exports.heartsFadeAmount = 0.25;
 exports.heartsMinPctInitial = 0.4; // For removing initial hearts
