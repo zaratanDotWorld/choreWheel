@@ -169,6 +169,13 @@ app.event('app_home_opened', async ({ body, event }) => {
 
     await postMessage(text);
   }
+
+  // Revive any residents
+  for (const revivalHeart of (await Hearts.reviveResidents(houseId, now))) {
+    const text = `Hello <!channel>! *<@${revivalHeart.residentId}> lost all their hearts*, ` +
+      'and has been revived to three. :fairy:';
+    await postMessage(text);
+  }
 });
 
 // Slash commands
