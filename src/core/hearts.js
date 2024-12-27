@@ -61,6 +61,12 @@ exports.getHouseHearts = async function (houseId, now) {
     .orderBy('sum', 'desc');
 };
 
+exports.generateHearts = async function (houseId, residentId, type, generatedAt, value) {
+  return db('Heart')
+    .insert({ houseId, residentId, type, generatedAt, value })
+    .returning('*');
+};
+
 exports.initialiseResident = async function (houseId, residentId, now) {
   const hearts = await exports.getHearts(residentId, now);
   if (hearts === null) {
@@ -75,17 +81,11 @@ exports.reviveResident = async function (houseId, residentId, now) {
   } else { return []; }
 };
 
-exports.generateHearts = async function (houseId, residentId, type, generatedAt, value) {
-  return db('Heart')
-    .insert({ houseId, residentId, type, generatedAt, value })
-    .returning('*');
-};
+exports.reviveResidents = async function (houseId, now) {
+  const revivedResidents = (await Admin.getVotingResidents(houseId, now))
+    .map(resident => exports.reviveResident(houseId, resident.slackId, now));
 
-exports.regenerateHouseHearts = async function (houseId, now) {
-  const houseHearts = (await Admin.getVotingResidents(houseId, now))
-    .map(resident => exports.regenerateHearts(houseId, resident.slackId, now));
-
-  return (await Promise.all(houseHearts)).flat();
+  return (await Promise.all(revivedResidents)).flat();
 };
 
 exports.regenerateHearts = async function (houseId, residentId, now) {
@@ -109,6 +109,13 @@ exports.getRegenAmount = function (currentHearts) {
   return (baselineGap >= 0)
     ? Math.min(heartsRegenAmount, baselineGap)
     : Math.max(-heartsFadeAmount, baselineGap);
+};
+
+exports.regenerateHouseHearts = async function (houseId, now) {
+  const houseHearts = (await Admin.getVotingResidents(houseId, now))
+    .map(resident => exports.regenerateHearts(houseId, resident.slackId, now));
+
+  return (await Promise.all(houseHearts)).flat();
 };
 
 // Challenges

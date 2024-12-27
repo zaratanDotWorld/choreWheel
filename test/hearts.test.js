@@ -140,14 +140,14 @@ describe('Hearts', async () => {
       await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, -heartsBaselineAmount);
 
       // Will revive at 0 hearts
-      [ heart ] = await Hearts.reviveResident(HOUSE, RESIDENT1, now);
+      [ heart ] = await Hearts.reviveResidents(HOUSE, now);
       expect(heart.type).to.equal(HEART_REVIVE);
 
       hearts = await Hearts.getHearts(RESIDENT1, now);
       expect(hearts).to.equal(heartsReviveAmount);
 
       // But not twice
-      [ heart ] = await Hearts.reviveResident(HOUSE, RESIDENT1, now);
+      [ heart ] = await Hearts.reviveResidents(HOUSE, now);
       expect(heart).to.be.undefined;
 
       hearts = await Hearts.getHearts(RESIDENT1, now);
