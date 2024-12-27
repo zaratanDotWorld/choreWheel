@@ -5,8 +5,8 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
 const { Hearts, Polls, Admin } = require('../src/core/index');
-const { NAY, YAY, HOUR, DAY, HEART_UNKNOWN, HEART_KARMA, HEART_CHALLENGE } = require('../src/constants');
-const { heartsPollLength, heartsBaselineAmount, heartsMaxBase, karmaDelay } = require('../src/config');
+const { NAY, YAY, HOUR, DAY, HEART_UNKNOWN, HEART_KARMA, HEART_CHALLENGE, HEART_REVIVE } = require('../src/constants');
+const { heartsPollLength, heartsBaselineAmount, heartsReviveAmount, heartsMaxBase, karmaDelay } = require('../src/config');
 const { getNextMonthStart } = require('../src/utils');
 const testHelpers = require('./helpers');
 
@@ -129,6 +129,29 @@ describe('Hearts', async () => {
 
       hearts = await Hearts.getHearts(RESIDENT1, now);
       expect(hearts).to.equal(0);
+    });
+
+    it('can revive a resident', async () => {
+      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
+
+      let heart;
+      let hearts;
+
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, -heartsBaselineAmount);
+
+      // Will revive at 0 hearts
+      [ heart ] = await Hearts.reviveResident(HOUSE, RESIDENT1, now);
+      expect(heart.type).to.equal(HEART_REVIVE);
+
+      hearts = await Hearts.getHearts(RESIDENT1, now);
+      expect(hearts).to.equal(heartsReviveAmount);
+
+      // But not twice
+      [ heart ] = await Hearts.reviveResident(HOUSE, RESIDENT1, now);
+      expect(heart).to.be.undefined;
+
+      hearts = await Hearts.getHearts(RESIDENT1, now);
+      expect(hearts).to.equal(heartsReviveAmount);
     });
 
     it('can check if a house is active using hearts', async () => {

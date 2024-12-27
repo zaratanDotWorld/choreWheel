@@ -3,12 +3,13 @@ const assert = require('assert');
 const { db } = require('./db');
 
 const { getMonthStart, getPrevMonthEnd } = require('../utils');
-const { HEART_REGEN, HEART_CHALLENGE, HEART_KARMA } = require('../constants');
+const { HEART_REGEN, HEART_CHALLENGE, HEART_KARMA, HEART_REVIVE } = require('../constants');
 
 const {
   heartsMinPctInitial,
   heartsMinPctCritical,
   heartsBaselineAmount,
+  heartsReviveAmount,
   heartsRegenAmount,
   heartsFadeAmount,
   heartsPollLength,
@@ -60,17 +61,24 @@ exports.getHouseHearts = async function (houseId, now) {
     .orderBy('sum', 'desc');
 };
 
-exports.generateHearts = async function (houseId, residentId, type, generatedAt, value) {
-  return db('Heart')
-    .insert({ houseId, residentId, type, generatedAt, value })
-    .returning('*');
-};
-
 exports.initialiseResident = async function (houseId, residentId, now) {
   const hearts = await exports.getHearts(residentId, now);
   if (hearts === null) {
     return exports.generateHearts(houseId, residentId, HEART_REGEN, now, heartsBaselineAmount);
   } else { return []; }
+};
+
+exports.reviveResident = async function (houseId, residentId, now) {
+  const hearts = await exports.getHearts(residentId, now);
+  if (hearts <= 0) {
+    return exports.generateHearts(houseId, residentId, HEART_REVIVE, now, heartsReviveAmount - hearts);
+  } else { return []; }
+};
+
+exports.generateHearts = async function (houseId, residentId, type, generatedAt, value) {
+  return db('Heart')
+    .insert({ houseId, residentId, type, generatedAt, value })
+    .returning('*');
 };
 
 exports.regenerateHouseHearts = async function (houseId, now) {
@@ -101,12 +109,6 @@ exports.getRegenAmount = function (currentHearts) {
   return (baselineGap >= 0)
     ? Math.min(heartsRegenAmount, baselineGap)
     : Math.max(-heartsFadeAmount, baselineGap);
-};
-
-exports.getHeartsVoteScalar = async function (residentId, now) {
-  const hearts = await exports.getHearts(residentId, now);
-  const heartsValue = (hearts === null) ? heartsBaselineAmount : hearts;
-  return 1 - ((heartsValue - heartsBaselineAmount) * heartsVoteScalar);
 };
 
 // Challenges
@@ -287,4 +289,12 @@ exports.getResidentMaxHearts = async function (residentId, now) {
     heartsMaxBase + Math.floor(karmaHearts.length / heartsKarmaGrowthRate),
     heartsMaxLimit,
   );
+};
+
+// Utilities
+
+exports.getHeartsVoteScalar = async function (residentId, now) {
+  const hearts = await exports.getHearts(residentId, now);
+  const heartsValue = (hearts === null) ? heartsBaselineAmount : hearts;
+  return 1 - ((heartsValue - heartsBaselineAmount) * heartsVoteScalar);
 };
