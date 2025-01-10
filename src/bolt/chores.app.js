@@ -216,7 +216,9 @@ app.view('chores-exempt-callback', async ({ ack, body }) => {
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   const action = common.getInputBlock(body, -2).action.selected_option.value;
-  const residentIds = common.getInputBlock(body, -1).residents.selected_users;
+  const residentIds = common.getInputBlock(body, -1).residents.selected_conversations;
+
+  const residentText = residentIds.map(residentId => `<@${residentId}>`).join(' and ');
 
   let text;
 
@@ -225,13 +227,13 @@ app.view('chores-exempt-callback', async ({ ack, body }) => {
       for (const residentId of residentIds) {
         await Admin.exemptResident(houseId, residentId, now);
       }
-      text = 'Exemption succeeded :fire:';
+      text = `Exempted ${residentText} :fire:`;
       break;
     case 'unexempt':
       for (const residentId of residentIds) {
         await Admin.unexemptResident(houseId, residentId, now);
       }
-      text = 'Unexemption succeeded :fire:';
+      text = `Unexempted ${residentText} :fire:`;
       break;
     default:
       console.log('No match found!');

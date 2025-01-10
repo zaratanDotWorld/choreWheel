@@ -177,7 +177,8 @@ exports.choresExemptView = function (exemptResidents) {
     'Residents',
     {
       action_id: 'residents',
-      type: 'multi_users_select',
+      type: 'multi_conversations_select',
+      filter: { include: [ 'im' ], exclude_bot_users: true },
       placeholder: common.blockPlaintext('Choose some residents'),
     },
   ));
