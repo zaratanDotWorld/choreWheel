@@ -148,19 +148,31 @@ app.command('/things-load', async ({ ack, command }) => {
   await ack();
 });
 
+app.view('things-load-2', async ({ ack, body }) => {
+  const actionName = 'things-load-2';
+  const { now, houseId } = common.beginAction(actionName, body);
+
+  const account = common.parseTitlecase(common.getInputBlock(body, -2).account.value);
+  const amount = Number(common.getInputBlock(body, -1).amount.value);
+
+  const currentAmount = await Things.getAccountBalance(houseId, account, now);
+
+  const view = views.thingsLoadView2(account, currentAmount.sum || 0, amount);
+  await ack({ response_action: 'push', view });
+});
+
 app.view('things-load-callback', async ({ ack, body }) => {
   const actionName = 'things-load-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
-  const account = common.parseTitlecase(common.getInputBlock(body, -2).account.value);
-  const amount = common.getInputBlock(body, -1).amount.value;
+  const { account, amount } = JSON.parse(body.view.private_metadata);
 
   const [ thing ] = await Things.loadAccount(houseId, account, residentId, now, amount);
 
   const text = `<@${thing.boughtBy}> just loaded *$${thing.value}* into the *${thing.account}* account :chart_with_upwards_trend:`;
   await postMessage(text);
 
-  await ack();
+  await ack({ response_action: 'clear' });
 });
 
 app.command('/things-fulfill', async ({ ack, command }) => {

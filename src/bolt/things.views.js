@@ -150,9 +150,29 @@ exports.thingsLoadView = function () {
 
   return {
     type: 'modal',
-    callback_id: 'things-load-callback',
+    callback_id: 'things-load-2',
     title: TITLE,
     close: common.CLOSE,
+    submit: common.SUBMIT,
+    blocks,
+  };
+};
+
+exports.thingsLoadView2 = function (account, currentAmount, amount) {
+  const header = 'Load an account';
+  const text = `You are loading *$${amount}* into the *${account}* account.\n\n` +
+    `The new balance will be *$${currentAmount + amount}*.`;
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(text));
+
+  return {
+    type: 'modal',
+    callback_id: 'things-load-callback',
+    private_metadata: JSON.stringify({ account, amount }),
+    title: TITLE,
+    close: common.BACK,
     submit: common.SUBMIT,
     blocks,
   };
