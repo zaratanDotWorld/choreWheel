@@ -126,9 +126,9 @@ app.event('app_home_opened', async ({ body, event }) => {
   if (heartsConf.channel) {
     const hearts = await Hearts.getHearts(residentId, now);
     const maxHearts = await Hearts.getResidentMaxHearts(residentId, now);
-    const exempt = await Admin.isExempt(residentId, now);
+    const isActive = await Admin.isActive(residentId, now);
 
-    view = views.heartsHomeView(hearts || 0, maxHearts, exempt);
+    view = views.heartsHomeView(hearts || 0, maxHearts, isActive);
   } else {
     view = views.heartsIntroView();
   }
@@ -211,9 +211,9 @@ app.action('hearts-challenge', async ({ ack, body }) => {
   const actionName = 'hearts-challenge';
   const { now, houseId } = common.beginAction(actionName, body);
 
-  const votingResidents = await Admin.getVotingResidents(houseId, now);
+  const residents = await Admin.getResidents(houseId, now);
 
-  const view = views.heartsChallengeView(votingResidents.length);
+  const view = views.heartsChallengeView(residents.length);
   await common.openView(app, heartsConf.oauth, body.trigger_id, view);
 });
 
@@ -229,8 +229,8 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
 
   const unresolvedChallenges = await Hearts.getUnresolvedChallenges(houseId, challengeeId);
 
-  if (await Admin.isExempt(challengeeId, now)) {
-    const text = `<@${challengeeId}> is exempt and cannot be challenged :weary:`;
+  if (!(await Admin.isActive(challengeeId, now))) {
+    const text = `<@${challengeeId}> is not active and cannot be challenged :weary:`;
     await postEphemeral(residentId, text);
   } else if (unresolvedChallenges.length) {
     const text = `<@${challengeeId}> is already being challenged!`;

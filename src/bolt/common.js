@@ -250,8 +250,8 @@ exports.updateVoteCounts = async function (app, oauth, body, action) {
   const channelId = body.channel.id;
   const residentId = body.user.id;
 
-  if (await Admin.isExempt(residentId, now)) {
-    const text = ':warning: Exempt residents are not allowed to vote :warning:';
+  if (!(await Admin.isActive(residentId, now))) {
+    const text = ':warning: Inactive residents are not allowed to vote :warning:';
     await exports.postEphemeral(app, oauth, channelId, residentId, text);
     return;
   }

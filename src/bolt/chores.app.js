@@ -92,16 +92,14 @@ app.event('app_home_opened', async ({ body, event }) => {
   if (event.tab !== 'home') { return; }
 
   const { now, houseId, residentId } = common.beginHome('chores', body, event);
-  await Admin.activateResident(houseId, residentId, now);
 
   let view;
   if (choresConf.channel) {
     const monthStart = getMonthStart(now);
     const choreStats = await Chores.getChoreStats(residentId, monthStart, now);
     const workingResidentCount = await Chores.getWorkingResidentCount(houseId, now);
-    const exempt = await Admin.isExempt(residentId, now);
 
-    view = views.choresHomeView(choreStats, workingResidentCount, exempt);
+    view = views.choresHomeView(choreStats, workingResidentCount);
   } else {
     view = views.choresIntroView();
   }
@@ -189,58 +187,6 @@ app.command('/chores-stats', async ({ ack, command }) => {
 
   const view = views.choresStatsView(choreClaims, choreBreaks, choreStats);
   await common.openView(app, choresConf.oauth, command.trigger_id, view);
-
-  await ack();
-});
-
-app.command('/chores-exempt', async ({ ack, command }) => {
-  const commandName = '/chores-exempt';
-  const { now, houseId } = common.beginCommand(commandName, command);
-
-  if (!(await common.isAdmin(app, choresConf.oauth, command.user_id))) {
-    await common.replyAdminOnly(app, choresConf.oauth, command);
-    return;
-  }
-
-  const exemptResidents = (await Admin.getResidents(houseId, now))
-    .filter(r => r.exemptAt && r.exemptAt <= now);
-
-  const view = views.choresExemptView(exemptResidents);
-  await common.openView(app, choresConf.oauth, command.trigger_id, view);
-
-  await ack();
-});
-
-app.view('chores-exempt-callback', async ({ ack, body }) => {
-  const actionName = 'chores-exempt-callback';
-  const { now, houseId, residentId } = common.beginAction(actionName, body);
-
-  const action = common.getInputBlock(body, -2).action.selected_option.value;
-  const residentIds = common.getInputBlock(body, -1).residents.selected_conversations;
-
-  const residentText = residentIds.map(residentId => `<@${residentId}>`).join(' and ');
-
-  let text;
-
-  switch (action) {
-    case 'exempt':
-      for (const residentId of residentIds) {
-        await Admin.exemptResident(houseId, residentId, now);
-      }
-      text = `Exempted ${residentText} :fire:`;
-      break;
-    case 'unexempt':
-      for (const residentId of residentIds) {
-        await Admin.unexemptResident(houseId, residentId, now);
-      }
-      text = `Unexempted ${residentText} :fire:`;
-      break;
-    default:
-      console.log('No match found!');
-      return;
-  }
-
-  await postEphemeral(residentId, text);
 
   await ack();
 });
@@ -519,8 +465,8 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
   const points = common.getInputBlock(body, 3).points.value;
   const circumstance = common.getInputBlock(body, 4).circumstance.value;
 
-  if (await Admin.isExempt(recipientId, now)) {
-    const text = `<@${recipientId}> is exempt and cannot earn points :confused:`;
+  if (!(await Admin.isActive(recipientId, now))) {
+    const text = `<@${recipientId}> is not active and cannot earn points :confused:`;
     await postEphemeral(residentId, text);
   } else if (points > currentBalance) {
     const text = 'You can\'t gift more points than you have! :face_with_monocle:';

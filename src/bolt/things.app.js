@@ -98,9 +98,9 @@ app.event('app_home_opened', async ({ body, event }) => {
   let view;
   if (thingsConf.channel) {
     const activeAccounts = await Things.getActiveAccounts(houseId, now);
-    const exempt = await Admin.isExempt(residentId, now);
+    const isActive = await Admin.isActive(residentId, now);
 
-    view = views.thingsHomeView(activeAccounts, exempt);
+    view = views.thingsHomeView(activeAccounts, isActive);
   } else {
     view = views.thingsIntroView();
   }
@@ -302,10 +302,10 @@ app.action('things-special', async ({ ack, body }) => {
   const actionName = 'things-special';
   const { now, houseId } = common.beginAction(actionName, body);
 
-  const votingResidents = await Admin.getVotingResidents(houseId, now);
+  const residents = await Admin.getResidents(houseId, now);
   const accounts = await Things.getActiveAccounts(houseId, now);
 
-  const view = views.thingsSpecialBuyView(votingResidents.length, accounts);
+  const view = views.thingsSpecialBuyView(residents.length, accounts);
   await common.openView(app, thingsConf.oauth, body.trigger_id, view);
 
   await ack();
