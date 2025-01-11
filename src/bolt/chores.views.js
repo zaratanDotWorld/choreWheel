@@ -67,7 +67,7 @@ _For more details on *Chores* functionality, read the <${DOCS_URL}|manual>._
   };
 };
 
-exports.choresHomeView = function (choreStats, numActive, exempt) {
+exports.choresHomeView = function (choreStats, numActive) {
   const pointsEarned = choreStats.pointsEarned.toFixed(0);
   const pointsOwed = choreStats.pointsOwed.toFixed(0);
   const progressEmoji = (pointsOwed - pointsEarned < penaltyIncrement)
@@ -81,13 +81,13 @@ exports.choresHomeView = function (choreStats, numActive, exempt) {
     'The points for a chore go up *every hour* until someone claims them. ' +
     'If you feel a chore should be worth more (or less), you can change it\'s *priority*.\n\n' +
     'If you think a chore should be *added, changed, or removed*, you can propose that as well.';
-  const textB = (exempt)
-    ? '*You are exempt from chores!* :tada:'
-    : `You've earned *${pointsEarned} / ${pointsOwed} points* this month ${progressEmoji}`;
+  const textB = (pointsOwed > 0)
+    ? `You've earned *${pointsEarned} / ${pointsOwed} points* this month ${progressEmoji}`
+    : '*You are exempt from chores!* :tada:';
   const textC = `There are *${numActive} people* around today :sunny:`;
 
   const actions = [];
-  if (!exempt) {
+  if (pointsOwed > 0) {
     if (Number(pointsEarned) < Number(pointsOwed) + pointsBuffer) {
       actions.push(common.blockButton('chores-claim', ':hand::skin-tone-4: Claim a chore'));
     }
@@ -143,52 +143,6 @@ exports.choresStatsView = function (choreClaims, choreBreaks, choreStats) {
     type: 'modal',
     title: TITLE,
     close: common.CLOSE,
-    blocks,
-  };
-};
-
-exports.choresExemptView = function (exemptResidents) {
-  const header = 'Set chore exemptions';
-  const mainText = 'Exempt residents are excused from chores and cannot create or vote on polls.';
-
-  const exemptText = '*Current exemptions:*\n' +
-    exemptResidents
-      .sort((a, b) => a.exemptAt < b.exemptAt)
-      .map(r => `\n${r.exemptAt.toDateString()} - <@${r.slackId}>`)
-      .join('');
-
-  const blocks = [];
-  blocks.push(common.blockHeader(header));
-  blocks.push(common.blockSection(mainText));
-  blocks.push(common.blockSection(exemptText));
-  blocks.push(common.blockDivider());
-  blocks.push(common.blockInput(
-    'Action',
-    {
-      action_id: 'action',
-      type: 'radio_buttons',
-      options: [
-        { value: 'exempt', text: common.blockMarkdown('*Exempt* some residents') },
-        { value: 'unexempt', text: common.blockMarkdown('*Unexempt* some residents') },
-      ],
-    },
-  ));
-  blocks.push(common.blockInput(
-    'Residents',
-    {
-      action_id: 'residents',
-      type: 'multi_conversations_select',
-      filter: { include: [ 'im' ], exclude_bot_users: true },
-      placeholder: common.blockPlaintext('Choose some residents'),
-    },
-  ));
-
-  return {
-    type: 'modal',
-    callback_id: 'chores-exempt-callback',
-    title: TITLE,
-    close: common.CLOSE,
-    submit: common.SUBMIT,
     blocks,
   };
 };
