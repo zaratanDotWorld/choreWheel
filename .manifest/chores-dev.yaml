@@ -15,9 +15,9 @@ features:
       url: https://zaratan.ngrok.io/slack/events
       description: Use the current channel for app events
       should_escape: false
-    - command: /chores-sync
+    - command: /chores-prune
       url: https://zaratan.ngrok.io/slack/events
-      description: Sync active residents
+      description: Prune nonexistent residents
       should_escape: false
     - command: /chores-stats
       url: https://zaratan.ngrok.io/slack/events

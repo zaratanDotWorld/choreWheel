@@ -136,6 +136,9 @@ app.event('app_home_opened', async ({ body, event }) => {
       }
     }
 
+    // Prune workspace
+    await common.pruneWorkspaceMembers(app, choresConf.oauth, houseId, now);
+
     // Post house stats
     const prevMonthEnd = getPrevMonthEnd(now);
     const prevMonthStart = getMonthStart(prevMonthEnd);
@@ -151,8 +154,8 @@ app.event('app_home_opened', async ({ body, event }) => {
 
 // Slash commands
 
-app.command('/chores-sync', async ({ ack, command }) => {
-  const commandName = '/chores-sync';
+app.command('/chores-prune', async ({ ack, command }) => {
+  const commandName = '/chores-prune';
   const { now, houseId } = common.beginCommand(commandName, command);
 
   const text = await common.pruneWorkspaceMembers(app, choresConf.oauth, houseId, now);
