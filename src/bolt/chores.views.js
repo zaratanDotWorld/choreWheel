@@ -184,7 +184,7 @@ exports.choresActivateView = function (residents) {
     true,
   ));
   blocks.push(common.blockInput(
-    'Update ~selected~ residents',
+    'or, Update ~selected~ residents',
     {
       action_id: 'residents',
       type: 'multi_conversations_select',

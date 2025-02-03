@@ -182,12 +182,19 @@ app.command('/hearts-sync', async ({ ack, command }) => {
   await ack();
 
   const commandName = '/hearts-sync';
+  common.beginCommand(commandName, command);
+
+  const text = await common.syncWorkspaceChannels(app, heartsConf.oauth);
+  await common.replyEphemeral(app, heartsConf.oauth, command, text);
+});
+
+app.command('/hearts-prune', async ({ ack, command }) => {
+  await ack();
+
+  const commandName = '/hearts-prune';
   const { now, houseId } = common.beginCommand(commandName, command);
 
-  const text = (command.text === 'channels')
-    ? await common.syncWorkspaceChannels(app, heartsConf.oauth)
-    : await common.pruneWorkspaceMembers(app, heartsConf.oauth, houseId, now);
-
+  const text = await common.pruneWorkspaceMembers(app, heartsConf.oauth, houseId, now);
   await common.replyEphemeral(app, heartsConf.oauth, command, text);
 });
 
