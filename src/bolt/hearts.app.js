@@ -81,7 +81,7 @@ app.event('user_change', async ({ payload }) => {
   console.log(`hearts user_change - ${user.team_id} x ${user.id}`);
 
   await sleep(HEARTS_IDX * 1000);
-  await common.pruneWorkspaceMember(user.team_id, user, new Date());
+  await common.pruneWorkspaceMember(user.team_id, user);
 });
 
 app.event('channel_created', async ({ payload }) => {

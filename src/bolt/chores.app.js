@@ -83,7 +83,7 @@ app.event('user_change', async ({ payload }) => {
   console.log(`chores user_change - ${user.team_id} x ${user.id}`);
 
   await sleep(CHORES_IDX * 1000);
-  await common.pruneWorkspaceMember(user.team_id, user, now);
+  await common.pruneWorkspaceMember(user.team_id, user);
 });
 
 // Publish the app home
@@ -211,8 +211,6 @@ app.command('/chores-activate', async ({ ack, command }) => {
 });
 
 app.view('chores-activate-callback', async ({ ack, body }) => {
-  await ack({ response_action: 'clear' });
-
   const actionName = 'chores-activate-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -250,6 +248,8 @@ app.view('chores-activate-callback', async ({ ack, body }) => {
   }
 
   await postEphemeral(residentId, text);
+
+  await ack();
 });
 
 app.command('/chores-reset', async ({ ack, command }) => {
