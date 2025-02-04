@@ -105,7 +105,8 @@ exports.heartsChallengeView = function (numResidents) {
     'Challengee',
     {
       action_id: 'challengee',
-      type: 'users_select',
+      type: 'conversations_select',
+      filter: common.userFilter,
       placeholder: common.blockPlaintext('Choose a resident'),
     },
   ));
@@ -194,7 +195,8 @@ exports.heartsKarmaView = function () {
     'Recipient',
     {
       action_id: 'recipient',
-      type: 'users_select',
+      type: 'conversations_select',
+      filter: common.userFilter,
       placeholder: common.blockPlaintext('Choose a resident'),
     },
   ));

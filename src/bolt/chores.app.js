@@ -522,7 +522,7 @@ app.view('chores-gift-callback', async ({ ack, body }) => {
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   const currentBalance = Number(body.view.private_metadata);
-  const recipientId = common.getInputBlock(body, 2).recipient.selected_user;
+  const recipientId = common.getInputBlock(body, 2).recipient.selected_conversation;
   const points = common.getInputBlock(body, 3).points.value;
   const circumstance = common.getInputBlock(body, 4).circumstance.value;
 

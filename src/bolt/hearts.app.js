@@ -227,7 +227,7 @@ app.view('hearts-challenge-callback', async ({ ack, body }) => {
   const actionName = 'hearts-challenge-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
-  const challengeeId = common.getInputBlock(body, 2).challengee.selected_user;
+  const challengeeId = common.getInputBlock(body, 2).challengee.selected_conversation;
   const numHearts = common.getInputBlock(body, 3).hearts.selected_option.value;
   const circumstance = common.getInputBlock(body, 4).circumstance.value;
 
@@ -271,7 +271,7 @@ app.view('hearts-karma-callback', async ({ ack, body }) => {
   const actionName = 'hearts-karma-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
-  const recipientId = common.getInputBlock(body, -2).recipient.selected_user;
+  const recipientId = common.getInputBlock(body, -2).recipient.selected_conversation;
   const circumstance = common.getInputBlock(body, -1).circumstance.value;
 
   await Hearts.giveKarma(houseId, residentId, recipientId, now);

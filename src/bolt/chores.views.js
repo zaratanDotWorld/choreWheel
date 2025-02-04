@@ -530,7 +530,8 @@ exports.choresGiftView = function (currentBalance) {
     'Recipient',
     {
       action_id: 'recipient',
-      type: 'users_select',
+      type: 'conversations_select',
+      filter: common.userFilter,
       placeholder: common.blockPlaintext('Choose a resident'),
     },
   ));
