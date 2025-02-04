@@ -2,6 +2,8 @@ const { db } = require('./db');
 
 const { truncateHour } = require('../utils');
 
+const { choresHourPrecision } = require('../config');
+
 // Houses
 
 exports.addHouse = async function (slackId, name) {
@@ -50,7 +52,8 @@ exports.activateResident = async function (houseId, slackId, now) {
   const resident = await exports.getResident(slackId);
   if (resident && resident.activeAt) { return; }
 
-  const activeAt = truncateHour(now);
+  // Avoid issuing points before residents are active
+  const activeAt = truncateHour(now, choresHourPrecision);
 
   return db('Resident')
     .insert({ houseId, slackId, activeAt, exemptAt: null })

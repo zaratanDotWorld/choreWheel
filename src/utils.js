@@ -24,8 +24,10 @@ exports.shiftDate = function (date, minutes) {
   return new Date(date.getTime() + minutes * MINUTE);
 };
 
-exports.truncateHour = function (date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours());
+exports.truncateHour = function (date, precision) {
+  // Note: `precision` defines the "block" of hours to truncate to
+  const truncatedHour = precision * Math.floor(date.getHours() / precision);
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), truncatedHour);
 };
 
 exports.sleep = async function (ms) {

@@ -1,6 +1,7 @@
 const { HOUR, DAY } = require('./constants');
 
 // Chores
+exports.choresHourPrecision = 3;
 exports.choresPollLength = DAY;
 exports.choresMinVotes = 2;
 exports.choreMinVotesThreshold = 10;

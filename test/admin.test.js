@@ -124,7 +124,7 @@ describe('Admin', async () => {
       expect(residents.length).to.equal(2);
 
       const resident1 = await Admin.getResident(RESIDENT1);
-      expect(resident1.activeAt.getTime()).to.equal(truncateHour(now).getTime());
+      expect(resident1.activeAt.getTime()).to.equal(truncateHour(now, 3).getTime());
     });
 
     it('can activate a resident idempotently', async () => {
@@ -137,7 +137,7 @@ describe('Admin', async () => {
 
       residents = await Admin.getResidents(HOUSE1, now);
       expect(residents.length).to.equal(1);
-      expect(residents[0].activeAt.getTime()).to.equal(truncateHour(now).getTime());
+      expect(residents[0].activeAt.getTime()).to.equal(truncateHour(now, 3).getTime());
     });
 
     it('can deactivate a resident', async () => {
@@ -199,6 +199,18 @@ describe('Admin', async () => {
       expect(getDateStart(now).getHours()).to.equal(0);
       expect(getDateStart(now).getMinutes()).to.equal(0);
       expect(getDateStart(now).getSeconds()).to.equal(0);
+    });
+
+    it('can truncate timestamps correctly', async () => {
+      const time = new Date(2022, 1, 1, 14, 37, 12); // 2:37:12 PM
+
+      expect(truncateHour(time, 1).getHours()).to.equal(14);
+      expect(truncateHour(time, 1).getMinutes()).to.equal(0);
+      expect(truncateHour(time, 1).getSeconds()).to.equal(0);
+
+      expect(truncateHour(time, 3).getHours()).to.equal(12);
+      expect(truncateHour(time, 3).getMinutes()).to.equal(0);
+      expect(truncateHour(time, 3).getSeconds()).to.equal(0);
     });
   });
 });

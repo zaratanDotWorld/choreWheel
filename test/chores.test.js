@@ -474,12 +474,12 @@ describe('Chores', async () => {
       expect(availablePoints).to.almost.equal(3 * pointsPerResident * inflationFactor * 3);
     });
 
-    it('can update chore values on an hourly basis', async () => {
+    it('can update chore values on an 3-hourly basis', async () => {
       const t0 = new Date(3000, 3, 1); // April 1, a 30 day month
-      const t1 = new Date(t0.getTime() + 30 * MINUTE);
+      const t1 = new Date(t0.getTime() + 2 * HOUR);
       // Skip t2 in this test
-      const t3 = new Date(t0.getTime() + 90 * MINUTE);
-      const t4 = new Date(t0.getTime() + 120 * MINUTE);
+      const t3 = new Date(t0.getTime() + 4 * HOUR);
+      const t4 = new Date(t0.getTime() + 6 * HOUR);
 
       await db('ChoreValue').insert([
         { houseId: HOUSE, choreId: dishes.id, valuedAt: t0, value: 0 },
@@ -492,19 +492,19 @@ describe('Chores', async () => {
       choreValues = await Chores.updateChoreValues(HOUSE, t1);
       expect(choreValues.length).to.equal(0);
 
-      // Skip t2, do the update at 30 minutes past the hour
+      // Skip t2, do the update at 60 minutes past the hour
       choreValues = await Chores.updateChoreValues(HOUSE, t3);
       expect(choreValues.length).to.equal(3);
       expect(choreValues[0].metadata.ranking).to.almost.equal(1 / 3);
       expect(choreValues[0].metadata.availablePoints)
-        .to.almost.equal(3 * pointsPerResident * inflationFactor * 1 / 720);
+        .to.almost.equal(3 * pointsPerResident * inflationFactor * 3 / 720);
 
       // This update succeeds since the previous update was truncated
       choreValues = await Chores.updateChoreValues(HOUSE, t4);
       expect(choreValues.length).to.equal(3);
       expect(choreValues[0].metadata.ranking).to.almost.equal(1 / 3);
       expect(choreValues[0].metadata.availablePoints)
-        .to.almost.equal(3 * pointsPerResident * inflationFactor * 1 / 720);
+        .to.almost.equal(3 * pointsPerResident * inflationFactor * 3 / 720);
     });
 
     it('can do an end-to-end update of chore values', async () => {

@@ -14,6 +14,7 @@ const {
 } = require('../utils');
 
 const {
+  choresHourPrecision,
   pointsPerResident,
   inflationFactor,
   bootstrapDuration,
@@ -353,7 +354,7 @@ exports.getPointsDiscount = async function (houseId, now) {
 
 exports.updateChoreValues = async function (houseId, now) {
   // Semantically, updateTime indicates a truncated value
-  const updateTime = truncateHour(now);
+  const updateTime = truncateHour(now, choresHourPrecision);
 
   const lastUpdateTime = await exports.getLastChoreValueUpdateTime(houseId, updateTime);
   // If we've updated in the last interval, short-circuit execution
