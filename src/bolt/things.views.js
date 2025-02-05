@@ -320,7 +320,7 @@ exports.thingsSpecialBuyView = function (numResidents, accounts) {
       placeholder: common.blockPlaintext('Short description of the thing'),
     },
   ));
-  blocks.push(common.blockInput(
+  blocks.push(common.blockInputOptional(
     'Additional details',
     {
       action_id: 'details',
@@ -371,7 +371,9 @@ exports.thingsSpecialBuyCallbackView = function (buy, balance, minVotes) {
   const blocks = [];
   blocks.push(common.blockSection(textA));
   blocks.push(common.blockSection(`*${buy.metadata.title}*`));
-  blocks.push(common.blockSection(buy.metadata.details));
+  if (buy.metadata.details) {
+    blocks.push(common.blockSection(buy.metadata.details));
+  }
   blocks.push(common.blockSection(textB));
   blocks.push(common.blockSection(common.makeVoteText(minVotes, thingsSpecialPollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(buy.pollId, 1, 0)));

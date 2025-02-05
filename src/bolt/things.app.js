@@ -314,8 +314,8 @@ app.view('things-special-callback', async ({ ack, body }) => {
   const actionName = 'things-special-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
-  const title = common.getInputBlock(body, -4).title.value.trim();
-  const details = common.getInputBlock(body, -3).details.value.trim();
+  const title = common.getInputBlock(body, -4).title.value;
+  const details = common.getInputBlock(body, -3).details.value;
   const cost = common.getInputBlock(body, -2).cost.value;
   const { account } = JSON.parse(common.getInputBlock(body, -1).account.selected_option.value);
 

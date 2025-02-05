@@ -174,16 +174,15 @@ exports.choresActivateView = function (residents) {
       options,
     },
   ));
-  blocks.push(common.blockInput(
+  blocks.push(common.blockInputOptional(
     'Update ~all~ residents',
     {
       type: 'checkboxes',
       action_id: 'select_all',
       options: [ { value: 'true', text: common.blockPlaintext('Yes') } ],
     },
-    true,
   ));
-  blocks.push(common.blockInput(
+  blocks.push(common.blockInputOptional(
     'or, Update ~selected~ residents',
     {
       action_id: 'residents',
@@ -191,7 +190,6 @@ exports.choresActivateView = function (residents) {
       filter: common.userFilter,
       placeholder: common.blockPlaintext('Choose some residents'),
     },
-    true,
   ));
 
   return {

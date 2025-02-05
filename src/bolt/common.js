@@ -382,8 +382,12 @@ exports.blockActions = function (elements) {
   return { type: 'actions', elements };
 };
 
-exports.blockInput = function (label, element, optional = false) {
-  return { type: 'input', label: exports.blockPlaintext(label), element, optional };
+exports.blockInput = function (label, element) {
+  return { type: 'input', label: exports.blockPlaintext(label), element };
+};
+
+exports.blockInputOptional = function (label, element) {
+  return { ...exports.blockInput(label, element), optional: true };
 };
 
 exports.blockOptionGroup = function (label, options) {
