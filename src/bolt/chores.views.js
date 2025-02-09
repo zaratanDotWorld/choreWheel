@@ -308,7 +308,7 @@ exports.getSparkles = function (monthlyPoints) {
   return ':sparkles:'.repeat(Math.max(numSparkles, 0)); // Handle negative points
 };
 
-exports.choresClaimCallbackView = function (claim, name, minVotes, achivementPoints, monthlyPoints) {
+exports.choresClaimCallbackView = function (claim, name, description, minVotes, achivementPoints, monthlyPoints) {
   const achievement = exports.getAchievement(achivementPoints);
   const sparkles = exports.getSparkles(monthlyPoints);
 
@@ -317,6 +317,9 @@ exports.choresClaimCallbackView = function (claim, name, minVotes, achivementPoi
 
   const blocks = [];
   blocks.push(common.blockSection(mainText));
+  if (description) {
+    blocks.push(common.blockSection(description));
+  }
   blocks.push(common.blockSection(common.makeVoteText(minVotes, choresPollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(claim.pollId, 1, 0)));
   return blocks;

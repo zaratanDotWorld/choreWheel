@@ -320,7 +320,9 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const actionName = 'chores-claim-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
+  // Note that this could be either a regular or special chore
   const { chore } = JSON.parse(body.view.private_metadata);
+  const { description } = chore.metadata;
 
   const monthStart = getMonthStart(now);
   let monthlyPoints = await Chores.getAllChorePoints(residentId, monthStart, now);
@@ -355,15 +357,8 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
   const { minVotes } = await Polls.getPoll(claim.pollId);
 
   const text = 'Someone just completed a chore';
-  const blocks = views.choresClaimCallbackView(claim, name, minVotes, achivementPoints, monthlyPoints);
-  const { channel, ts } = await postMessage(text, blocks);
-  await Polls.updateMetadata(claim.pollId, { channel, ts });
-
-  // Append the description
-  if (chore.metadata && chore.metadata.description) {
-    const text = `*Description:*\n${chore.metadata.description}`;
-    await common.postReply(app, choresConf.oauth, channel, ts, text);
-  }
+  const blocks = views.choresClaimCallbackView(claim, name, description, minVotes, achivementPoints, monthlyPoints);
+  await postMessage(text, blocks);
 });
 
 // Ranking flow
