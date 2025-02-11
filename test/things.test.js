@@ -92,10 +92,10 @@ describe('Things', async () => {
 
       let balance;
       balance = await Things.getAccountBalance(HOUSE, GENERAL, now);
-      expect(balance.sum).to.equal(100);
+      expect(balance).to.equal(100);
 
       balance = await Things.getAccountBalance(HOUSE, SPECIAL, now);
-      expect(balance.sum).to.equal(250);
+      expect(balance).to.equal(250);
     });
 
     it('can return active accounts', async () => {
@@ -128,14 +128,14 @@ describe('Things', async () => {
 
       let balance;
       balance = await Things.getAccountBalance(HOUSE, GENERAL, now);
-      expect(balance.sum).to.equal(40);
+      expect(balance).to.equal(40);
 
       [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, SPECIAL, 10, 12);
       expect(buy.value).to.equal(-120);
       expect(buy.metadata.quantity).to.equal(12);
 
       balance = await Things.getAccountBalance(HOUSE, SPECIAL, now);
-      expect(balance.sum).to.equal(130);
+      expect(balance).to.equal(130);
     });
 
     it('cannot buy a thing with insufficient funds', async () => {
@@ -187,7 +187,7 @@ describe('Things', async () => {
       await Things.resolveThingBuy(buy.id, challengeEnd);
 
       const balance = await Things.getAccountBalance(HOUSE, GENERAL, challengeEnd);
-      expect(balance.sum).to.equal(90);
+      expect(balance).to.equal(90);
 
       buy = await Things.getThingBuy(buy.id);
       expect(buy.valid).to.be.true;
@@ -205,7 +205,7 @@ describe('Things', async () => {
       await Things.resolveThingBuy(buy.id, challengeEnd);
 
       const balance = await Things.getAccountBalance(HOUSE, GENERAL, challengeEnd);
-      expect(balance.sum).to.equal(100);
+      expect(balance).to.equal(100);
 
       buy = await Things.getThingBuy(buy.id);
       expect(buy.valid).to.be.false;
@@ -381,7 +381,7 @@ describe('Things', async () => {
       expect(buy.metadata.special).to.be.true;
 
       const balance = await Things.getAccountBalance(HOUSE, GENERAL, now);
-      expect(balance.sum).to.equal(50);
+      expect(balance).to.equal(50);
     });
 
     it('can affirm a special buy', async () => {
@@ -400,7 +400,7 @@ describe('Things', async () => {
       await Things.resolveThingBuy(buy.id, challengeEndSpecial);
 
       const balance = await Things.getAccountBalance(HOUSE, GENERAL, challengeEndSpecial);
-      expect(balance.sum).to.equal(50);
+      expect(balance).to.equal(50);
 
       buy = await Things.getThingBuy(buy.id);
       expect(buy.valid).to.be.true;
@@ -418,7 +418,7 @@ describe('Things', async () => {
       await Things.resolveThingBuy(buy.id, challengeEndSpecial);
 
       const balance = await Things.getAccountBalance(HOUSE, GENERAL, challengeEndSpecial);
-      expect(balance.sum).to.equal(250);
+      expect(balance).to.equal(250);
 
       buy = await Things.getThingBuy(buy.id);
       expect(buy.valid).to.be.false;

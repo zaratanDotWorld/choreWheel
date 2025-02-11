@@ -154,9 +154,9 @@ app.view('things-load-2', async ({ ack, body }) => {
   const account = common.parseTitlecase(common.getInputBlock(body, -2).account.value);
   const amount = Number(common.getInputBlock(body, -1).amount.value);
 
-  const currentAmount = await Things.getAccountBalance(houseId, account, now);
+  const balance = await Things.getAccountBalance(houseId, account, now);
 
-  const view = views.thingsLoadView2(account, currentAmount.sum || 0, amount);
+  const view = views.thingsLoadView2(account, balance, amount);
   await ack({ response_action: 'push', view });
 });
 
@@ -290,7 +290,7 @@ app.view('things-buy-callback', async ({ ack, body }) => {
   const balance = await Things.getAccountBalance(houseId, account, now);
 
   const text = 'Someone just bought a thing';
-  const blocks = views.thingsBuyCallbackView(buy, thing, balance.sum, minVotes);
+  const blocks = views.thingsBuyCallbackView(buy, thing, balance, minVotes);
   const { channel, ts } = await postMessage(text, blocks);
   await Polls.updateMetadata(buy.pollId, { channel, ts });
 
@@ -327,7 +327,7 @@ app.view('things-special-callback', async ({ ack, body }) => {
   const balance = await Things.getAccountBalance(houseId, account, now);
 
   const text = 'Someone just bought a thing';
-  const blocks = views.thingsSpecialBuyCallbackView(buy, balance.sum, minVotes);
+  const blocks = views.thingsSpecialBuyCallbackView(buy, balance, minVotes);
   const { channel, ts } = await postMessage(text, blocks);
   await Polls.updateMetadata(buy.pollId, { channel, ts });
 

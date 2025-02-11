@@ -99,7 +99,7 @@ exports.thingsHomeView = function (isActive, accounts) {
     'Anyone can propose a buy, which requires *1 upvote per $50*. ' +
     'Special buys require at least *30%* whole-house approval.';
   const textB = 'The house has the *following balances*:\n' +
-    accounts.map(account => `\n${getMoneybags(account.sum)}*${account.account}* account: *$${account.sum}*`);
+    accounts.map(account => `\n*${account.account}* account: *$${account.sum}* ${getMoneybags(account.sum)}`);
 
   const actions = [];
   if (isActive) {

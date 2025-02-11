@@ -51,11 +51,13 @@ exports.getThing = async function (thingId) {
 // Buys
 
 exports.getAccountBalance = async function (houseId, account, now) {
-  return db('ThingBuy')
+  const balance = await db('ThingBuy')
     .where({ houseId, account, valid: true })
     .where('boughtAt', '<=', now)
     .sum('value')
     .first();
+
+  return balance.sum || 0;
 };
 
 exports.getActiveAccounts = async function (houseId, now) {
@@ -76,10 +78,10 @@ exports.loadAccount = async function (houseId, account, loadedBy, loadedAt, valu
 };
 
 exports.buyThing = async function (houseId, thingId, boughtBy, boughtAt, account, price, quantity) {
-  const accountBalance = await exports.getAccountBalance(houseId, account, boughtAt);
+  const balance = await exports.getAccountBalance(houseId, account, boughtAt);
   const totalCost = price * quantity;
 
-  assert(accountBalance.sum >= totalCost, 'Insufficient funds!');
+  assert(balance >= totalCost, 'Insufficient funds!');
 
   const minVotes = await exports.getThingBuyMinVotes(houseId, boughtBy, thingId, totalCost, boughtAt);
   const [ poll ] = await Polls.createPoll(houseId, boughtAt, thingsPollLength, minVotes);
@@ -99,9 +101,9 @@ exports.buyThing = async function (houseId, thingId, boughtBy, boughtAt, account
 };
 
 exports.buySpecialThing = async function (houseId, boughtBy, boughtAt, account, price, title, details) {
-  const accountBalance = await exports.getAccountBalance(houseId, account, boughtAt);
+  const balance = await exports.getAccountBalance(houseId, account, boughtAt);
 
-  assert(accountBalance.sum >= price, 'Insufficient funds!');
+  assert(balance >= price, 'Insufficient funds!');
 
   const minVotes = await exports.getThingBuyMinVotes(houseId, boughtBy, null, price, boughtAt);
   const [ poll ] = await Polls.createPoll(houseId, boughtAt, thingsSpecialPollLength, minVotes);
