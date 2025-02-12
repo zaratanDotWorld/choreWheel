@@ -98,8 +98,11 @@ Most people will not need to know about these commands to use Hearts.
 ``/hearts-channel`` \*
   The ``/hearts-channel`` command is used by workspace administrators to set the events channel for Hearts, which is where app activity is posted and where housemates go to vote on challenges.
   This command takes no arguments, and will set the events channel to the channel in which the command is invoked.
-  If set to a public channel, the app will automatically join the channel.
-  If set to a private channel, the app must be added manually.
+
+  .. note::
+
+    If set to a **public** channel, the app will automatically join the channel.
+    If set to a **private** channel, the app must be added manually, before calling the command.
 
   .. warning::
 
