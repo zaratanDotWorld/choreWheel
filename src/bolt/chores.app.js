@@ -358,7 +358,9 @@ app.view('chores-claim-callback', async ({ ack, body }) => {
 
   const text = 'Someone just completed a chore';
   const blocks = views.choresClaimCallbackView(claim, name, description, minVotes, achivementPoints, monthlyPoints);
-  await postMessage(text, blocks);
+  const { channel, ts } = await postMessage(text, blocks);
+
+  await Polls.updateMetadata(claim.pollId, { channel, ts });
 });
 
 // Ranking flow
