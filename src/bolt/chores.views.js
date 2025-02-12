@@ -35,26 +35,28 @@ exports.choresIntroView = function () {
 
   const instructions = `
 *Follow these steps* to get set up (must be a workspace admin).
-_Setup is easiest if everyone is in the same place, but it's not strictly necessary._
 
-*1.* *Invite* all housemates to the Slack, and wait for them to join.
+*1.* *Invite* all participants to the Slack.
 
 *2.* Make a list of *3-5 starter chores*. Good chores:
   • Take between *5-30 minutes* to do.
   • Are things that folks *usually won't do* on their own.
   • Can be done *anytime* (i.e. not on fixed schedule).
+  • Don't overlap with other chores.
 
 *3.* Set an events channel by calling \`/chores-channel\`, which *unlocks the app*.
+  • If using a *public* channel, you can just call the command in the channel.
+  • If using a *private* channel, manually invite the app to the channel first.
 
-*4.* Use *\`Edit chores list\`* to enter the chores you came up with.
+*4.* Use *\`Edit chores list\`* to add the chores you came up with.
   • Adding a few bullet points as a description will help folks stay consistent.
+  • As an admin, you can "force" the proposal and create the chores immediately.
 
-*5.* Have the housemates go to the events channel and *upvote the edits*.
+*5.* *Activate* all the participants by calling \`/chores-activate\`.
 
-Once the chores have been fully upvoted, *you're ready to go!* :rocket:
-Just sit back and watch the magic happen...
+Then just sit back and watch the magic happen...
 
-_For more details on *Chores* functionality, read the <${DOCS_URL}|manual>._
+_For more tips and tricks for using *Chores*, read the <${DOCS_URL}|manual>._
 `;
 
   const blocks = [];
