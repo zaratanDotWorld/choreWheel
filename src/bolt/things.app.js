@@ -180,10 +180,11 @@ app.command('/things-fulfill', async ({ ack, command, respond }) => {
     return;
   }
 
-  const unfulfilledBuys = await Things.getUnfulfilledThingBuys(houseId, now);
+  const confirmedBuys = (await Things.getUnfulfilledThingBuys(houseId, now))
+    .filter(buy => buy.resolvedAt);
 
-  if (unfulfilledBuys.length) {
-    const view = views.thingsFulfillView(unfulfilledBuys);
+  if (confirmedBuys.length) {
+    const view = views.thingsFulfillView(confirmedBuys);
     await common.openView(app, thingsConf.oauth, command.trigger_id, view);
   } else {
     await respond({ response_type: 'ephemeral', text: 'There are no buys to fulfill :relieved:' });
