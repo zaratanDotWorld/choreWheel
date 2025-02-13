@@ -178,33 +178,33 @@ app.event('app_home_opened', async ({ body, event }) => {
 
 // Slash commands
 
-app.command('/hearts-sync', async ({ ack, command }) => {
+app.command('/hearts-sync', async ({ ack, command, respond }) => {
   await ack();
 
   const commandName = '/hearts-sync';
   common.beginCommand(commandName, command);
 
   const text = await common.syncWorkspaceChannels(app, heartsConf.oauth);
-  await common.replyEphemeral(app, heartsConf.oauth, command, text);
+  await respond({ response_type: 'ephemeral', text });
 });
 
-app.command('/hearts-prune', async ({ ack, command }) => {
+app.command('/hearts-prune', async ({ ack, command, respond }) => {
   await ack();
 
   const commandName = '/hearts-prune';
   const { now, houseId } = common.beginCommand(commandName, command);
 
   const text = await common.pruneWorkspaceMembers(app, heartsConf.oauth, houseId, now);
-  await common.replyEphemeral(app, heartsConf.oauth, command, text);
+  await respond({ response_type: 'ephemeral', text });
 });
 
-app.command('/hearts-channel', async ({ ack, command }) => {
+app.command('/hearts-channel', async ({ ack, command, respond }) => {
   await ack();
 
   const commandName = '/hearts-channel';
   common.beginCommand(commandName, command);
 
-  await common.setChannel(app, heartsConf.oauth, HEARTS_CONF, command);
+  await common.setChannel(app, heartsConf.oauth, HEARTS_CONF, command, respond);
 });
 
 // Challenge flow

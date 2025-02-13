@@ -60,10 +60,6 @@ async function postEphemeral (residentId, text) {
   return common.postEphemeral(app, thingsConf.oauth, thingsConf.channel, residentId, text);
 }
 
-async function replyEphemeral (command, text) {
-  return common.replyEphemeral(app, thingsConf.oauth, command, text);
-}
-
 async function houseActive (houseId, now) {
   const windowStart = new Date(now.getTime() - 30 * DAY);
   return Admin.houseActive(houseId, 'ThingBuy', 'boughtAt', windowStart, now);
@@ -123,28 +119,27 @@ app.event('app_home_opened', async ({ body, event }) => {
 
 // Slash commands
 
-app.command('/things-channel', async ({ ack, command }) => {
+app.command('/things-channel', async ({ ack, command, respond }) => {
+  await ack();
+
   const commandName = '/things-channel';
   common.beginCommand(commandName, command);
 
-  await common.setChannel(app, thingsConf.oauth, THINGS_CONF, command);
-
-  await ack();
+  await common.setChannel(app, thingsConf.oauth, THINGS_CONF, command, respond);
 });
 
-app.command('/things-load', async ({ ack, command }) => {
+app.command('/things-load', async ({ ack, command, respond }) => {
+  await ack();
+
   const commandName = '/things-load';
   common.beginCommand(commandName, command);
 
   if (!(await common.isAdmin(app, thingsConf.oauth, command.user_id))) {
-    await common.replyAdminOnly(app, thingsConf.oauth, command);
-    return;
+    await respond({ response_type: 'ephemeral', text: common.ADMIN_ONLY });
+  } else {
+    const view = views.thingsLoadView();
+    await common.openView(app, thingsConf.oauth, command.trigger_id, view);
   }
-
-  const view = views.thingsLoadView();
-  await common.openView(app, thingsConf.oauth, command.trigger_id, view);
-
-  await ack();
 });
 
 app.view('things-load-2', async ({ ack, body }) => {
@@ -161,6 +156,8 @@ app.view('things-load-2', async ({ ack, body }) => {
 });
 
 app.view('things-load-callback', async ({ ack, body }) => {
+  await ack({ response_action: 'clear' });
+
   const actionName = 'things-load-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -170,16 +167,16 @@ app.view('things-load-callback', async ({ ack, body }) => {
 
   const text = `<@${thing.boughtBy}> just loaded *$${thing.value}* into the *${thing.account}* account :chart_with_upwards_trend:`;
   await postMessage(text);
-
-  await ack({ response_action: 'clear' });
 });
 
-app.command('/things-fulfill', async ({ ack, command }) => {
+app.command('/things-fulfill', async ({ ack, command, respond }) => {
+  await ack();
+
   const commandName = '/things-fulfill';
   const { now, houseId } = common.beginCommand(commandName, command);
 
   if (!(await common.isAdmin(app, thingsConf.oauth, command.user_id))) {
-    await common.replyAdminOnly(app, thingsConf.oauth, command);
+    await respond({ response_type: 'ephemeral', text: common.ADMIN_ONLY });
     return;
   }
 
@@ -189,13 +186,13 @@ app.command('/things-fulfill', async ({ ack, command }) => {
     const view = views.thingsFulfillView(unfulfilledBuys);
     await common.openView(app, thingsConf.oauth, command.trigger_id, view);
   } else {
-    await replyEphemeral(command, 'There are no buys to fulfill :relieved:');
+    await respond({ response_type: 'ephemeral', text: 'There are no buys to fulfill :relieved:' });
   }
-
-  await ack();
 });
 
 app.view('things-fulfill-callback', async ({ ack, body }) => {
+  await ack();
+
   const actionName = 'things-fulfill-callback';
   const { now, residentId } = common.beginAction(actionName, body);
 
@@ -208,26 +205,23 @@ app.view('things-fulfill-callback', async ({ ack, body }) => {
 
   const text = 'Fulfillment succeeded :shopping_bags:';
   await postEphemeral(residentId, text);
-
-  await ack();
 });
 
-app.command('/things-update', async ({ ack, command }) => {
+app.command('/things-update', async ({ ack, command, respond }) => {
+  await ack();
+
   const commandName = '/things-update';
   const { houseId } = common.beginCommand(commandName, command);
 
   if (!(await common.isAdmin(app, thingsConf.oauth, command.user_id))) {
-    await common.replyAdminOnly(app, thingsConf.oauth, command);
-    return;
+    await respond({ response_type: 'ephemeral', text: common.ADMIN_ONLY });
+  } else {
+    const things = await Things.getThings(houseId);
+
+    // TODO: improve this (hacky) implementation
+    const view = views.thingsProposeEditView(things, '-admin');
+    await common.openView(app, thingsConf.oauth, command.trigger_id, view);
   }
-
-  const things = await Things.getThings(houseId);
-
-  // TODO: improve this (hacky) implementation
-  const view = views.thingsProposeEditView(things, '-admin');
-  await common.openView(app, thingsConf.oauth, command.trigger_id, view);
-
-  await ack();
 });
 
 app.view('things-propose-edit-admin', async ({ ack, body }) => {
