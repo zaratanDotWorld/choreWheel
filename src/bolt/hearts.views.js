@@ -55,7 +55,7 @@ exports.heartsHomeView = function (isActive, numHearts, maxHearts) {
   const textA = `We use *<${DOCS_URL}|Hearts>* to keep each other accountable.\n\n` +
     'Everyone starts with *5 hearts*. ' +
     'We lose hearts when we fail to uphold our commitments, ' +
-    'and we regain hearts *over time* or by earning *karma* :sparkles:';
+    'and we regain hearts *over time* or by earning *karma*.';
   const textB = (isActive)
     ? `You have *${numHearts} / ${maxHearts}* hearts: ${exports.heartEmoji(numHearts)}`
     : '*You are exempt from hearts!* :balloon:';

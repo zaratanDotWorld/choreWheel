@@ -81,7 +81,7 @@ exports.choresHomeView = function (choreStats, numActive) {
     'Instead of a simple chore wheel or schedule, everyone owes *100 points* per month (UTC). ' +
     'You earn points by doing chores you want, on your terms.\n\n' +
     'The point value for a chore will _keep going up_ until someone claims it. ' +
-    'If you feel a chore should be worth more (or less), you can change it\'s *priority*.\n\n' +
+    'If you feel a chore should be worth more (or less), you can change it\'s *priority*. ' +
     'If you think a chore should be *added, changed, or removed*, you can propose that as well.';
   const textB = (pointsOwed > 0)
     ? `You've earned *${pointsEarned} / ${pointsOwed} points* this month ${progressEmoji}`
