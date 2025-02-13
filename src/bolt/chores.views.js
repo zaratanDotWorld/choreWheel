@@ -69,7 +69,7 @@ _For more tips and tricks for using *Chores*, read the <${DOCS_URL}|manual>._
   };
 };
 
-exports.choresHomeView = function (choreStats, numActive) {
+exports.choresHomeView = function (choreChannel, choreStats, numActive) {
   const pointsEarned = choreStats.pointsEarned.toFixed(0);
   const pointsOwed = choreStats.pointsOwed.toFixed(0);
   const progressEmoji = (pointsOwed - pointsEarned < penaltyIncrement)
@@ -77,16 +77,18 @@ exports.choresHomeView = function (choreStats, numActive) {
     : ':muscle::skin-tone-4:';
 
   const header = 'Welcome to Chores';
-  const textA = `We use *<${DOCS_URL}|Chores>* to keep the house a nice place to live.\n\n` +
+  const mainText = `We use *<${DOCS_URL}|Chores>* to keep the house a nice place to live.\n\n` +
     'Instead of a simple chore wheel or schedule, everyone owes *100 points* per month (UTC). ' +
     'You earn points by doing chores you want, on your terms.\n\n' +
     'The point value for a chore will _keep going up_ until someone claims it. ' +
     'If you feel a chore should be worth more (or less), you can change it\'s *priority*. ' +
     'If you think a chore should be *added, changed, or removed*, you can propose that as well.';
-  const textB = (pointsOwed > 0)
+
+  const pointsText = (pointsOwed > 0)
     ? `You've earned *${pointsEarned} / ${pointsOwed} points* this month ${progressEmoji}`
     : '*You are exempt from chores!* :tada:';
-  const textC = `There are *${numActive} people* around today :sunny:`;
+  const activeText = `There are *${numActive} people* around today :sunny:`;
+  const channelText = `Events will be posted in <#${choreChannel}> :mailbox_with_mail:`;
 
   const actions = [];
   if (pointsOwed > 0) {
@@ -102,11 +104,12 @@ exports.choresHomeView = function (choreStats, numActive) {
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
-  blocks.push(common.blockSection(textA));
+  blocks.push(common.blockSection(mainText));
   blocks.push(common.blockSection(common.feedbackLink));
   blocks.push(common.blockDivider());
-  blocks.push(common.blockSection(textB));
-  blocks.push(common.blockSection(textC));
+  blocks.push(common.blockSection(pointsText));
+  blocks.push(common.blockSection(activeText));
+  blocks.push(common.blockSection(channelText));
   blocks.push(common.blockActions(actions));
 
   return {

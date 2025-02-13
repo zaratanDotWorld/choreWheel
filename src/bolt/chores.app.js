@@ -99,7 +99,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     const choreStats = await Chores.getChoreStats(residentId, monthStart, now);
     const workingResidentCount = await Chores.getWorkingResidentCount(houseId, now);
 
-    view = views.choresHomeView(choreStats, workingResidentCount);
+    view = views.choresHomeView(choresConf.channel, choreStats, workingResidentCount);
   } else {
     view = views.choresIntroView();
   }

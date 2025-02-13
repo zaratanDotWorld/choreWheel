@@ -50,15 +50,16 @@ _For more details on *Hearts* functionality, read the <${DOCS_URL}|manual>._
   };
 };
 
-exports.heartsHomeView = function (isActive, numHearts, maxHearts) {
+exports.heartsHomeView = function (heartsChannel, isActive, numHearts, maxHearts) {
   const header = 'Welcome to Hearts';
-  const textA = `We use *<${DOCS_URL}|Hearts>* to keep each other accountable.\n\n` +
+  const mainText = `We use *<${DOCS_URL}|Hearts>* to keep each other accountable.\n\n` +
     'Everyone starts with *5 hearts*. ' +
     'We lose hearts when we fail to uphold our commitments, ' +
     'and we regain hearts *over time* or by earning *karma*.';
-  const textB = (isActive)
+  const activeText = (isActive)
     ? `You have *${numHearts} / ${maxHearts}* hearts: ${exports.heartEmoji(numHearts)}`
     : '*You are exempt from hearts!* :balloon:';
+  const channelText = `Events will be posted in <#${heartsChannel}> :mailbox_with_mail:`;
 
   const actions = [];
   actions.push(common.blockButton('hearts-board', ':two_hearts: See hearts'));
@@ -69,10 +70,11 @@ exports.heartsHomeView = function (isActive, numHearts, maxHearts) {
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
-  blocks.push(common.blockSection(textA));
+  blocks.push(common.blockSection(mainText));
   blocks.push(common.blockSection(common.feedbackLink));
   blocks.push(common.blockDivider());
-  blocks.push(common.blockSection(textB));
+  blocks.push(common.blockSection(activeText));
+  blocks.push(common.blockSection(channelText));
   blocks.push(common.blockActions(actions));
 
   return {

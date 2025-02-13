@@ -126,7 +126,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     const hearts = await Hearts.getHearts(residentId, now);
     const maxHearts = await Hearts.getResidentMaxHearts(residentId, now);
 
-    view = views.heartsHomeView(isActive, hearts || 0, maxHearts);
+    view = views.heartsHomeView(heartsConf.channel, isActive, hearts || 0, maxHearts);
   } else {
     view = views.heartsIntroView();
   }

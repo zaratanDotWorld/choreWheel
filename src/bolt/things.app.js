@@ -99,7 +99,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     const isActive = await Admin.isActive(residentId, now);
     const activeAccounts = await Things.getActiveAccounts(houseId, now);
 
-    view = views.thingsHomeView(isActive, activeAccounts);
+    view = views.thingsHomeView(thingsConf.channel, isActive, activeAccounts);
   } else {
     view = views.thingsIntroView();
   }

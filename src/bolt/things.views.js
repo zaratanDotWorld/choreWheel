@@ -91,15 +91,16 @@ _For more details on *Things* functionality, read the <${DOCS_URL}|manual>._
   };
 };
 
-exports.thingsHomeView = function (isActive, accounts) {
+exports.thingsHomeView = function (thingsChannel, isActive, accounts) {
   const getMoneybags = sum => ':moneybag:'.repeat(Math.round(Math.sqrt(sum) / 10));
 
   const header = 'Welcome to Things';
-  const textA = `We use *<${DOCS_URL}|Things>* to spend money together.\n\n` +
+  const mainText = `We use *<${DOCS_URL}|Things>* to spend money together.\n\n` +
     'Anyone can propose a buy, which requires *1 upvote per $50*. ' +
     'Special buys require at least *30%* whole-house approval.';
-  const textB = 'The house has the *following balances*:\n' +
+  const balancesText = 'The house has the *following balances*:\n' +
     accounts.map(account => `\n*${account.account}* account: *$${account.sum}* ${getMoneybags(account.sum)}`);
+  const channelText = `Events will be posted in <#${thingsChannel}> :mailbox_with_mail:`;
 
   const actions = [];
   if (isActive) {
@@ -111,10 +112,11 @@ exports.thingsHomeView = function (isActive, accounts) {
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
-  blocks.push(common.blockSection(textA));
+  blocks.push(common.blockSection(mainText));
   blocks.push(common.blockSection(common.feedbackLink));
   blocks.push(common.blockDivider());
-  blocks.push(common.blockSection(textB));
+  blocks.push(common.blockSection(balancesText));
+  blocks.push(common.blockSection(channelText));
   blocks.push(common.blockActions(actions));
 
   return {
