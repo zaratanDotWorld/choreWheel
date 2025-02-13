@@ -70,11 +70,6 @@ exports.beginCommand = function (commandName, command) {
 
 // Publishing
 
-exports.replyEphemeral = async function (app, oauth, command, text) {
-  const { channel_id: channelId, user_id: residentId } = command;
-  return exports.postEphemeral(app, oauth, channelId, residentId, text);
-};
-
 exports.postEphemeral = async function (app, oauth, channelId, residentId, text) {
   return app.client.chat.postEphemeral({
     token: oauth.bot.token,
@@ -155,26 +150,29 @@ exports.uninstallApp = async function (app, appName, context) {
   await installationStore.deleteInstallation(context);
 };
 
-exports.setChannel = async function (app, oauth, confName, command) {
-  if (!(await exports.isAdmin(app, oauth, command.user_id))) {
-    await exports.replyAdminOnly(app, oauth, command);
-    return;
-  }
-
+exports.setChannel = async function (app, oauth, confName, command, respond) {
   let text;
 
-  if (command.text === 'help') {
-    text = 'Set the current channel as the events channel for the app. ' +
-    'The app will use this channel to post polls and share public activity.';
+  if (!(await exports.isAdmin(app, oauth, command.user_id))) {
+    text = exports.ADMIN_ONLY;
   } else {
     const [ houseId, channelId ] = [ command.team_id, command.channel_id ];
     await Admin.updateHouseConf(houseId, confName, { channel: channelId });
 
-    await app.client.conversations.join({ token: oauth.bot.token, channel: channelId });
-    text = `App events channel set to *<#${channelId}>* :fire:`;
+    try {
+      await app.client.conversations.join({ token: oauth.bot.token, channel: channelId });
+      text = `App events channel set to <#${channelId}> :fire:`;
+    } catch (error) {
+      if (error.data.error === 'method_not_supported_for_channel_type') {
+        text = `App events channel set to <#${channelId}>. ` +
+          'Make sure you\'ve added the app to the private channel!';
+      } else {
+        throw error;
+      }
+    }
   }
 
-  await exports.replyEphemeral(app, oauth, command, text);
+  return respond({ response_type: 'ephemeral', text });
 };
 
 exports.activateResident = async function (houseId, residentId, now) {
@@ -229,11 +227,6 @@ exports.joinChannel = async function (app, oauth, channelId) {
   return app.client.conversations.join({ token: oauth.bot.token, channel: channelId });
 };
 
-exports.replyAdminOnly = function (app, oauth, command) {
-  const text = ':warning: This function is admin-only :warning:';
-  return exports.replyEphemeral(app, oauth, command, text);
-};
-
 exports.parseTitlecase = function (text) {
   return voca(text).trim().lowerCase().titleCase().value();
 };
@@ -250,6 +243,8 @@ exports.getInputBlock = function (body, blockIdx) {
 };
 
 exports.feedbackLink = '<mailto:support@zaratan.world|Submit Feedback>';
+
+exports.ADMIN_ONLY = ':warning: This function is admin-only :warning:';
 
 // Vote processing
 

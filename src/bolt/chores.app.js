@@ -154,26 +154,28 @@ app.event('app_home_opened', async ({ body, event }) => {
 
 // Slash commands
 
-app.command('/chores-prune', async ({ ack, command }) => {
+app.command('/chores-prune', async ({ ack, command, respond }) => {
+  await ack();
+
   const commandName = '/chores-prune';
   const { now, houseId } = common.beginCommand(commandName, command);
 
   const text = await common.pruneWorkspaceMembers(app, choresConf.oauth, houseId, now);
-  await common.replyEphemeral(app, choresConf.oauth, command, text);
-
-  await ack();
+  await respond({ response_type: 'ephemeral', text });
 });
 
-app.command('/chores-channel', async ({ ack, command }) => {
+app.command('/chores-channel', async ({ ack, command, respond }) => {
+  await ack();
+
   const commandName = '/chores-channel';
   common.beginCommand(commandName, command);
 
-  await common.setChannel(app, choresConf.oauth, CHORES_CONF, command);
-
-  await ack();
+  await common.setChannel(app, choresConf.oauth, CHORES_CONF, command, respond);
 });
 
 app.command('/chores-stats', async ({ ack, command }) => {
+  await ack();
+
   const commandName = '/chores-stats';
   const { now, houseId, residentId } = common.beginCommand(commandName, command);
 
@@ -189,28 +191,27 @@ app.command('/chores-stats', async ({ ack, command }) => {
 
   const view = views.choresStatsView(choreClaims, choreBreaks, choreStats);
   await common.openView(app, choresConf.oauth, command.trigger_id, view);
-
-  await ack();
 });
 
-app.command('/chores-activate', async ({ ack, command }) => {
+app.command('/chores-activate', async ({ ack, command, respond }) => {
+  await ack();
+
   const commandName = '/chores-activate';
   const { now, houseId } = common.beginCommand(commandName, command);
 
   if (!(await common.isAdmin(app, choresConf.oauth, command.user_id))) {
-    await common.replyAdminOnly(app, choresConf.oauth, command);
-    return;
+    await respond({ response_type: 'ephemeral', text: common.ADMIN_ONLY });
+  } else {
+    const residents = await Admin.getResidents(houseId, now);
+
+    const view = views.choresActivateView(residents);
+    await common.openView(app, choresConf.oauth, command.trigger_id, view);
   }
-
-  const residents = await Admin.getResidents(houseId, now);
-
-  const view = views.choresActivateView(residents);
-  await common.openView(app, choresConf.oauth, command.trigger_id, view);
-
-  await ack();
 });
 
 app.view('chores-activate-callback', async ({ ack, body }) => {
+  await ack();
+
   const actionName = 'chores-activate-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
@@ -248,34 +249,31 @@ app.view('chores-activate-callback', async ({ ack, body }) => {
   }
 
   await postEphemeral(residentId, text);
-
-  await ack();
 });
 
-app.command('/chores-reset', async ({ ack, command }) => {
+app.command('/chores-reset', async ({ ack, command, respond }) => {
+  await ack();
+
   const commandName = '/chores-reset';
   common.beginCommand(commandName, command);
 
   if (!(await common.isAdmin(app, choresConf.oauth, command.user_id))) {
-    await common.replyAdminOnly(app, choresConf.oauth, command);
-    return;
+    await respond({ response_type: 'ephemeral', text: common.ADMIN_ONLY });
+  } else {
+    const view = views.choresResetView();
+    await common.openView(app, choresConf.oauth, command.trigger_id, view);
   }
-
-  const view = views.choresResetView();
-  await common.openView(app, choresConf.oauth, command.trigger_id, view);
-
-  await ack();
 });
 
 app.view('chores-reset-callback', async ({ ack, body }) => {
+  await ack();
+
   const actionName = 'chores-reset-callback';
   const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   await Chores.resetChorePoints(houseId, now);
 
   await postMessage(`<@${residentId}> just reset all chore points :volcano:`);
-
-  await ack();
 });
 
 // Claim flow
