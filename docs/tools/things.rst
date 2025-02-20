@@ -100,7 +100,7 @@ Most people will not need to know about these commands to use Things.
   .. note::
 
     If set to a **public** channel, the app will automatically join the channel.
-    If set to a **private** channel, the app must be added manually, before calling the command.
+    If set to a **private** channel, the app must be added manually before calling the command.
 
   .. warning::
 

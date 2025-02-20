@@ -33,6 +33,12 @@ Core Concepts
 Hearts
   The core concept of Hearts is, unsurprisingly, **hearts**.
   Everyone starts with five hearts, and gains and loses them as the result of various processes.
+  While losing a heart here and there is not a big deal, losing all your hearts represents a major failure.
+
+  .. note::
+
+    Each community decides for itself what the consequence is for losing all your hearts.
+    The penalty can range in severity: taking the group out to dinner, paying a fine, or even moving out.
 
 Karma
   Much of Hearts is about handling conflict.
@@ -102,7 +108,7 @@ Most people will not need to know about these commands to use Hearts.
   .. note::
 
     If set to a **public** channel, the app will automatically join the channel.
-    If set to a **private** channel, the app must be added manually, before calling the command.
+    If set to a **private** channel, the app must be added manually before calling the command.
 
   .. warning::
 
