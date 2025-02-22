@@ -207,6 +207,31 @@ app.command('/hearts-channel', async ({ ack, command, respond }) => {
   await common.setChannel(app, heartsConf.oauth, HEARTS_CONF, command, respond);
 });
 
+app.command('/hearts-reset', async ({ ack, command, respond }) => {
+  await ack();
+
+  const commandName = '/hearts-reset';
+  common.beginCommand(commandName, command);
+
+  if (!(await common.isAdmin(app, heartsConf.oauth, command.user_id))) {
+    await respond({ response_type: 'ephemeral', text: common.ADMIN_ONLY });
+  } else {
+    const view = views.heartsResetView();
+    await common.openView(app, heartsConf.oauth, command.trigger_id, view);
+  }
+});
+
+app.view('hearts-reset-callback', async ({ ack, body }) => {
+  await ack();
+
+  const actionName = 'hearts-reset-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
+
+  await Hearts.resetResidents(houseId, now);
+
+  await postMessage(`<@${residentId}> just reset all hearts :heartpulse:`);
+});
+
 // Challenge flow
 
 app.action('hearts-challenge', async ({ ack, body }) => {
