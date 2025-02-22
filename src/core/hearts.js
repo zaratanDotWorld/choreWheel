@@ -3,7 +3,7 @@ const assert = require('assert');
 const { db } = require('./db');
 
 const { getMonthStart, getPrevMonthEnd } = require('../utils');
-const { HEART_REGEN, HEART_CHALLENGE, HEART_KARMA, HEART_REVIVE } = require('../constants');
+const { HEART_REGEN, HEART_CHALLENGE, HEART_KARMA, HEART_REVIVE, HEART_RESET } = require('../constants');
 
 const {
   heartsMinPctInitial,
@@ -85,6 +85,18 @@ exports.reviveResidents = async function (houseId, now) {
     .map(resident => exports.reviveResident(houseId, resident.slackId, now));
 
   return (await Promise.all(revivedResidents)).flat();
+};
+
+exports.resetResident = async function (houseId, residentId, now) {
+  const hearts = await exports.getHearts(residentId, now);
+  return exports.generateHearts(houseId, residentId, HEART_RESET, now, heartsBaselineAmount - hearts);
+};
+
+exports.resetResidents = async function (houseId, now) {
+  const resetResidents = (await Admin.getResidents(houseId, now))
+    .map(resident => exports.resetResident(houseId, resident.slackId, now));
+
+  return (await Promise.all(resetResidents)).flat();
 };
 
 exports.regenerateHearts = async function (houseId, residentId, now) {

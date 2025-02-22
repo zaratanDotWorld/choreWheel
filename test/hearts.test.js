@@ -158,6 +158,16 @@ describe('Hearts', async () => {
       expect(hearts).to.equal(heartsReviveAmount);
     });
 
+    it('can reset a resident', async () => {
+      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
+
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, -2);
+      await Hearts.resetResident(HOUSE, RESIDENT1, now);
+
+      const hearts = await Hearts.getHearts(RESIDENT1, now);
+      expect(hearts).to.equal(heartsBaselineAmount);
+    });
+
     it('can check if a house is active using hearts', async () => {
       const nextWeek = new Date(now.getTime() + 7 * DAY);
 
