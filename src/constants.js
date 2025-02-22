@@ -15,6 +15,7 @@ exports.HEART_CHALLENGE = 2;
 exports.HEART_KARMA = 3;
 exports.HEART_CHORE = 4;
 exports.HEART_REVIVE = 5;
+exports.HEART_RESET = 6;
 
 exports.CHORES_CONF = 'choresConf';
 exports.HEARTS_CONF = 'heartsConf';
