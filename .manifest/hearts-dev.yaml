@@ -20,6 +20,9 @@ features:
     - command: /hearts-sync
       url: https://zaratan.ngrok.io/slack/events
       description: Sync workspace members or channels
+    - command: /hearts-reset
+      url: https://zaratan.ngrok.io/slack/events
+      description: Reset hearts for all residents
 oauth_config:
   redirect_urls:
     - https://zaratan.ngrok.io/slack/oauth_redirect
