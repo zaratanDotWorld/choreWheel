@@ -70,6 +70,9 @@ async function houseActive (houseId, now) {
 // Event listeners
 
 app.event('app_uninstalled', async ({ context }) => {
+  const [ now, houseId ] = [ new Date(), context.teamId ];
+
+  await Hearts.resetResidents(houseId, now);
   await common.uninstallApp(app, 'hearts', context);
 });
 
