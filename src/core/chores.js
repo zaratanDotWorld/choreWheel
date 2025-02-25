@@ -183,6 +183,8 @@ exports.createSourceExclusionSet = function (orientedPreferences, newValue) {
 // Chore Values
 
 exports.getChoreValue = async function (choreId, startTime, endTime) {
+  assert(choreId, 'Invalid choreId!');
+
   const choreValue = await db('ChoreValue')
     .where({ choreId })
     .where('valuedAt', '>', startTime)
@@ -485,7 +487,11 @@ exports.claimSpecialChore = async function (houseId, choreValueId, claimedBy, cl
 exports.resolveChoreClaim = async function (claimId, resolvedAt) {
   const choreClaim = await exports.getChoreClaim(claimId);
   const valid = await Polls.isPollValid(choreClaim.pollId, resolvedAt);
-  const value = await exports.getCurrentChoreValue(choreClaim.choreId, choreClaim.claimedAt, claimId);
+
+  // If a special chore, no need to recalculate the value
+  const value = (choreClaim.choreId)
+    ? await exports.getCurrentChoreValue(choreClaim.choreId, choreClaim.claimedAt, claimId)
+    : choreClaim.value;
 
   return db('ChoreClaim')
     .where({ id: claimId, resolvedAt: null }) // Cannot resolve twice

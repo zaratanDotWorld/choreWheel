@@ -867,6 +867,22 @@ describe('Chores', async () => {
       expect(choreValues.length).to.equal(0);
     });
 
+    it('can resolve a special chore claim', async () => {
+      const [ name, description, value ] = [ 'Special Chore', 'Complicated task', 15 ];
+      await Chores.addSpecialChoreValue(HOUSE, name, description, value, now);
+
+      const [ choreValue ] = await Chores.getSpecialChoreValues(HOUSE, now);
+      const [ choreClaim ] = await Chores.claimSpecialChore(HOUSE, choreValue.id, RESIDENT1, now, 20);
+
+      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT2, soon, YAY);
+
+      const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, challengeEnd);
+      expect(resolvedClaim.valid).to.be.true;
+      expect(resolvedClaim.value).to.equal(value);
+      expect(resolvedClaim.resolvedAt.getTime()).to.equal(challengeEnd.getTime());
+    });
+
     it('can get the latest chore claim', async () => {
       await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 } ]);
 
