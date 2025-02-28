@@ -265,16 +265,16 @@ exports.getProposedHouseChoreRankings = async function (houseId, newPrefs, now) 
   return exports.getChoreRankings(houseId, residents.length, proposedPrefs);
 };
 
-// exports.getCurrentResidentChoreRankings = async function (houseId, residentId) {
-//   const preferences = await exports.getResidentChorePreferences(residentId);
-//   return exports.getChoreRankings(houseId, 1, preferences);
-// };
+exports.getCurrentResidentChoreRankings = async function (houseId, residentId) {
+  const preferences = await exports.getResidentChorePreferences(houseId, residentId);
+  return exports.getChoreRankings(houseId, 1, preferences);
+};
 
-// exports.getProposedResidentChoreRankings = async function (houseId, residentId, newPrefs) {
-//   const currentPrefs = await exports.getResidentChorePreferences(residentId);
-//   const proposedPrefs = exports.mergeChorePreferences(currentPrefs, newPrefs);
-//   return exports.getChoreRankings(houseId, 1, proposedPrefs);
-// };
+exports.getProposedResidentChoreRankings = async function (houseId, residentId, newPrefs) {
+  const currentPrefs = await exports.getResidentChorePreferences(houseId, residentId);
+  const proposedPrefs = exports.mergeChorePreferences(currentPrefs, newPrefs);
+  return exports.getChoreRankings(houseId, 1, proposedPrefs);
+};
 
 exports.getChoreRankings = async function (houseId, numParticipants, preferences) {
   const chores = await exports.getChores(houseId);

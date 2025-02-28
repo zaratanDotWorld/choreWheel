@@ -336,8 +336,8 @@ describe('Chores', async () => {
     it('can handle circular chore rankings', async () => {
       // A cycle of preferences
       await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
-      await setChorePreference(HOUSE, RESIDENT1, sweeping.id, restock.id, 1);
-      await setChorePreference(HOUSE, RESIDENT1, restock.id, dishes.id, 1);
+      await setChorePreference(HOUSE, RESIDENT2, sweeping.id, restock.id, 1);
+      await setChorePreference(HOUSE, RESIDENT3, restock.id, dishes.id, 1);
 
       const choreRankings = await Chores.getCurrentHouseChoreRankings(HOUSE, now);
 
@@ -375,6 +375,49 @@ describe('Chores', async () => {
       expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.4670116340772533);
       expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.31890095736170976);
       expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.21408740856103664);
+    });
+
+    it('can use preferences to determine resident chore rankings', async () => {
+      // Prefer dishes to sweeping, and sweeping to restock
+      await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
+      await setChorePreference(HOUSE, RESIDENT1, sweeping.id, restock.id, 1);
+
+      const choreRankings = await Chores.getCurrentResidentChoreRankings(HOUSE, RESIDENT1);
+
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.5962170669450809);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.20305569888457617);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.20072723417034274);
+    });
+
+    it('can get proposed resident chore rankings', async () => {
+      // Dishes <- Sweeping <- Restock
+      await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1);
+      await setChorePreference(HOUSE, RESIDENT1, sweeping.id, restock.id, 1);
+
+      let choreRankings;
+
+      const newPrefs = [];
+      choreRankings = await Chores.getProposedResidentChoreRankings(HOUSE, RESIDENT1, newPrefs);
+
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.5962170669450809);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.20305569888457617);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.20072723417034274);
+
+      // Shift priority from dishes to sweeping
+      newPrefs.push({ residentId: RESIDENT1, alphaChoreId: dishes.id, betaChoreId: sweeping.id, preference: 0.7 });
+      choreRankings = await Chores.getProposedResidentChoreRankings(HOUSE, RESIDENT1, newPrefs);
+
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.5326257997389809);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.25674323881688454);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.21063096144413457);
+
+      // Shift priority from sweeping to restock
+      newPrefs.push({ residentId: RESIDENT1, alphaChoreId: sweeping.id, betaChoreId: restock.id, preference: 0.7 });
+      choreRankings = await Chores.getProposedResidentChoreRankings(HOUSE, RESIDENT1, newPrefs);
+
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.5651944375567426);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.19774710419802777);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.23705845824522992);
     });
   });
 
