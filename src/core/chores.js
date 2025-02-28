@@ -81,7 +81,13 @@ exports.getChorePreferences = async function (houseId) {
 
 exports.getResidentChorePreferences = async function (houseId, residentId) {
   return db('ChorePref')
-    .where({ houseId, residentId })
+    .join('Chore AS AlphaChore', 'ChorePref.alphaChoreId', 'AlphaChore.id')
+    .join('Chore AS BetaChore', 'ChorePref.betaChoreId', 'BetaChore.id')
+    .join('Resident', 'ChorePref.residentId', 'Resident.slackId')
+    .where('ChorePref.houseId', houseId)
+    .where('Resident.slackId', residentId)
+    .where('AlphaChore.active', true)
+    .where('BetaChore.active', true)
     .select('residentId', 'alphaChoreId', 'betaChoreId', 'preference');
 };
 
@@ -244,20 +250,34 @@ exports.getCurrentChoreValues = async function (houseId, now) {
   return choreValues;
 };
 
-exports.getCurrentChoreRankings = async function (houseId, now) {
+// Chore Rankings
+
+exports.getCurrentHouseChoreRankings = async function (houseId, now) {
   const preferences = await exports.getActiveChorePreferences(houseId, now);
-  return exports.getChoreRankings(houseId, now, preferences);
+  const residents = await Admin.getResidents(houseId, now);
+  return exports.getChoreRankings(houseId, residents.length, preferences);
 };
 
-exports.getProposedChoreRankings = async function (houseId, newPrefs, now) {
+exports.getProposedHouseChoreRankings = async function (houseId, newPrefs, now) {
   const currentPrefs = await exports.getActiveChorePreferences(houseId, now);
   const proposedPrefs = exports.mergeChorePreferences(currentPrefs, newPrefs);
-  return exports.getChoreRankings(houseId, now, proposedPrefs);
+  const residents = await Admin.getResidents(houseId, now);
+  return exports.getChoreRankings(houseId, residents.length, proposedPrefs);
 };
 
-exports.getChoreRankings = async function (houseId, now, preferences) {
+// exports.getCurrentResidentChoreRankings = async function (houseId, residentId) {
+//   const preferences = await exports.getResidentChorePreferences(residentId);
+//   return exports.getChoreRankings(houseId, 1, preferences);
+// };
+
+// exports.getProposedResidentChoreRankings = async function (houseId, residentId, newPrefs) {
+//   const currentPrefs = await exports.getResidentChorePreferences(residentId);
+//   const proposedPrefs = exports.mergeChorePreferences(currentPrefs, newPrefs);
+//   return exports.getChoreRankings(houseId, 1, proposedPrefs);
+// };
+
+exports.getChoreRankings = async function (houseId, numParticipants, preferences) {
   const chores = await exports.getChores(houseId);
-  const residents = await Admin.getResidents(houseId, now);
 
   // Handle the case of less than two chores
   if (chores.length <= 1) {
@@ -267,7 +287,7 @@ exports.getChoreRankings = async function (houseId, now, preferences) {
   }
 
   const items = new Set(chores.map(c => c.id));
-  const options = { numParticipants: residents.length, implicitPref: (1 / residents.length) / 2 };
+  const options = { numParticipants, implicitPref: (1 / numParticipants) / 2 };
   const powerRanker = new PowerRanker({ items, options });
 
   powerRanker.addPreferences(preferences.map((p) => {
@@ -281,6 +301,8 @@ exports.getChoreRankings = async function (houseId, now, preferences) {
   }).sort((a, b) => b.ranking - a.ranking);
 };
 
+// Chore Values II (TODO: move this section)
+
 exports.getLastChoreValueUpdateTime = async function (houseId, updateTime) {
   const lastChoreValue = await db('ChoreValue')
     .where({ houseId })
@@ -293,6 +315,8 @@ exports.getLastChoreValueUpdateTime = async function (houseId, updateTime) {
     ? lastChoreValue.valuedAt
     : new Date(updateTime - bootstrapDuration); // First update seeds a fixed value
 };
+
+// Chore Points
 
 exports.getAvailablePoints = async function (houseId, startTime, endTime) {
   const residents = await Admin.getResidents(houseId, endTime);
@@ -354,6 +378,8 @@ exports.getPointsDiscount = async function (houseId, now) {
     .reduce((sum, scv) => sum + scv.value / (monthEnd - scv.valuedAt), 0);
 };
 
+// Chore Values III (TODO: move this section)
+
 exports.updateChoreValues = async function (houseId, now) {
   // Semantically, updateTime indicates a truncated value
   const updateTime = truncateHour(now, choresHourPrecision);
@@ -366,7 +392,7 @@ exports.updateChoreValues = async function (houseId, now) {
   // If there are no available points, short-circuit execution
   if (!availablePoints.filter(p => p.value > 0).length) { return Promise.resolve([]); }
 
-  const choreRankings = await exports.getCurrentChoreRankings(houseId, now);
+  const choreRankings = await exports.getCurrentHouseChoreRankings(houseId, now);
   // If there are no chores to update, short-circuit execution
   if (!choreRankings.length) { return Promise.resolve([]); }
 

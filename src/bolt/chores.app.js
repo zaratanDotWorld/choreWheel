@@ -371,7 +371,7 @@ app.action('chores-rank', async ({ ack, body }) => {
   const actionName = 'chores-rank';
   const { now, houseId } = common.beginAction(actionName, body);
 
-  const choreRankings = await Chores.getCurrentChoreRankings(houseId, now);
+  const choreRankings = await Chores.getCurrentHouseChoreRankings(houseId, now);
 
   const view = views.choresRankView(choreRankings);
   await common.openView(app, choresConf.oauth, body.trigger_id, view);
@@ -394,7 +394,7 @@ app.view('chores-rank-2', async ({ ack, body }) => {
     .filter(pref => pref);
 
   const sourceExclusionSet = Chores.createSourceExclusionSet(orientedCurrentPreferences, actionPreference);
-  const choreRankings = (await Chores.getCurrentChoreRankings(houseId, now))
+  const choreRankings = (await Chores.getCurrentHouseChoreRankings(houseId, now))
     .filter(ranking => ranking.id !== targetChore.id && !sourceExclusionSet.has(ranking.id));
 
   const view = (choreRankings.length)
@@ -418,7 +418,7 @@ app.view('chores-rank-3', async ({ ack, body }) => {
   });
 
   // Get the proposed ranking
-  const proposedRankings = await Chores.getProposedChoreRankings(houseId, newPrefs, now);
+  const proposedRankings = await Chores.getProposedHouseChoreRankings(houseId, newPrefs, now);
   const targetChoreRanking = proposedRankings.find(ranking => ranking.id === targetChore.id);
 
   // Forward the preferences through metadata
@@ -441,7 +441,7 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
 
   // Get the real new ranking
   await Chores.setChorePreferences(houseId, newPrefs);
-  const choreRankings = await Chores.getCurrentChoreRankings(houseId, now);
+  const choreRankings = await Chores.getCurrentHouseChoreRankings(houseId, now);
   const targetChoreRanking = choreRankings.find(chore => chore.id === targetChore.id);
 
   const newPriority = Math.round(targetChoreRanking.ranking * 1000);
