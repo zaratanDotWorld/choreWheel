@@ -381,7 +381,7 @@ app.action('chores-rank', async ({ ack, body }) => {
 
 app.view('chores-rank-2', async ({ ack, body }) => {
   const actionName = 'chores-rank-2';
-  const { now, houseId, residentId } = common.beginAction(actionName, body);
+  const { houseId, residentId } = common.beginAction(actionName, body);
 
   const action = JSON.parse(common.getInputBlock(body, -3).action.selected_option.value);
   const targetChore = JSON.parse(common.getInputBlock(body, -2).chore.selected_option.value);
@@ -391,15 +391,18 @@ app.view('chores-rank-2', async ({ ack, body }) => {
 
   const orientedCurrentPreferences = (await Chores.getResidentChorePreferences(houseId, residentId))
     .map(pref => Chores.orientChorePreferences(targetChore.id, pref))
-    .filter(pref => pref);
+    .filter(pref => pref); // Exclude preferences without targetChore
 
   const sourceExclusionSet = Chores.createSourceExclusionSet(orientedCurrentPreferences, actionPreference);
-  const choreRankings = (await Chores.getCurrentHouseChoreRankings(houseId, now))
-    .filter(ranking => ranking.id !== targetChore.id && !sourceExclusionSet.has(ranking.id));
+
+  // Get available chores for counter-weighting
+  const residentRankings = await Chores.getCurrentResidentChoreRankings(houseId, residentId);
+  const choreRankings = residentRankings.filter(ranking => ranking.id !== targetChore.id && !sourceExclusionSet.has(ranking.id));
+  const residentRanking = residentRankings.filter(ranking => ranking.id === targetChore.id)[0];
 
   const view = (choreRankings.length)
-    ? views.choresRankView2(actionPreference, targetChore, choreRankings)
-    : views.choresRankViewZero(actionPreference);
+    ? views.choresRankView2(actionPreference, targetChore, choreRankings, residentRanking)
+    : views.choresRankViewZero(targetChore, actionPreference);
 
   await ack({ response_action: 'push', view });
 });
@@ -417,14 +420,18 @@ app.view('chores-rank-3', async ({ ack, body }) => {
     return { residentId, ...Chores.normalizeChorePreference(pref) };
   });
 
-  // Get the proposed ranking
-  const proposedRankings = await Chores.getProposedHouseChoreRankings(houseId, newPrefs, now);
-  const targetChoreRanking = proposedRankings.find(ranking => ranking.id === targetChore.id);
+  // Get the proposed resident ranking
+  const proposedResidentRankings = await Chores.getProposedResidentChoreRankings(houseId, residentId, newPrefs);
+  const residentChoreRanking = proposedResidentRankings.find(ranking => ranking.id === targetChore.id);
+
+  // Get the proposed house ranking
+  const proposedHouseRankings = await Chores.getProposedHouseChoreRankings(houseId, newPrefs, now);
+  const houseChoreRanking = proposedHouseRankings.find(ranking => ranking.id === targetChore.id);
 
   // Forward the preferences through metadata
   const prefsMetadata = JSON.stringify({ targetChore, sourceChoreIds, preference });
 
-  const view = views.choresRankView3(targetChore, targetChoreRanking, prefsMetadata);
+  const view = views.choresRankView3(targetChore, residentChoreRanking, houseChoreRanking, prefsMetadata);
   await ack({ response_action: 'push', view });
 });
 
