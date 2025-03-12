@@ -1,9 +1,10 @@
-![chore-wheel-banner](https://github.com/user-attachments/assets/beb204ed-4d54-47cd-8893-9ada76a03b22)
+![Chore Wheel Banner](https://github.com/user-attachments/assets/b8149779-4af0-4580-99b7-f9131626f3cc)
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/zaratanDotWorld/choreWheel/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/zaratanDotWorld/choreWheel/tree/master) [![Documentation Status](https://readthedocs.org/projects/mirror/badge/?version=latest)](https://docs.chorewheel.zaratan.world/en/latest/?badge=latest)
 
 ### Papers:
-- [Structures and Cultures](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4856267) (June 2024)
+- [Cybernetic Governance in a Coliving House](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4856267) (Workshop on the Ostrom Workshop, June 2024)
+- [Chore Protocols](https://protocolized.summerofprotocols.com/p/chore-protocols) (Protocolized Magazine, February 2025)
 
 ### Talks:
 - [Chores: A 21st century chore wheel](https://docs.google.com/presentation/d/1PcS42tksxbKC1MZDEbaWkzOAkOH88mPbcCnf0RR5CM0/edit?usp=sharing) (Metagov Seminar, June 2023)
