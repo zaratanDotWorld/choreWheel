@@ -340,8 +340,8 @@ exports.choresRankView = function (choreRankings) {
   ];
 
   const preferenceOptions = [
-    { value: String(0.7), text: common.blockPlaintext('a little') },
     { value: String(1.0), text: common.blockPlaintext('a lot') },
+    { value: String(0.7), text: common.blockPlaintext('a little') },
   ];
 
   const blocks = [];
@@ -423,22 +423,21 @@ exports.choresRankView2 = function (preference, targetChore, choreRankings) {
   };
 };
 
-exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetadata) {
+exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetadata, preferencePosition) {
   const newPriority = Math.round(targetChoreRanking.ranking * 1000);
   const change = newPriority - targetChore.priority;
 
   const effect = change >= 0 ? 'an *increase*' : 'a *decrease*';
   const emoji = change >= 0 ? ':rocket:' : ':snail:';
 
+  const formattedPosition = (preferencePosition * 100).toFixed(0);
+
   const header = 'Set chore priorities';
-  const mainText = (change !== 0)
-    ? 'After your update, ' +
+  const mainText = 'After your update, ' +
       `*${targetChore.name}* will have a priority of *${newPriority} ppt*, ` +
-      `${effect} of *${Math.abs(change)} ppt* ${emoji}\n\n` +
-      '*Submit* to confirm, or go *back* to change your update.'
-    : 'These are your current preferences, so this update will have *no effect*.\n\n' +
-      'For additional effect, *choose more or different chores* or a *stronger preference*. ' +
-      'Alternatively, try and *convince others* to support your priorities.';
+      `${effect} of *${Math.abs(change)} ppt* ${emoji}.\n\n` +
+      `Your preferences will be stronger than *${formattedPosition}%* of residents.\n\n` +
+      '*Submit* to confirm, or go *back* to change your update.';
 
   const blocks = [];
   blocks.push(common.blockHeader(header));

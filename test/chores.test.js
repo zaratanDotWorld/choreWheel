@@ -264,57 +264,67 @@ describe('Chores', async () => {
       await Admin.activateResident(HOUSE, RESIDENT3, now);
       await Admin.activateResident(HOUSE, RESIDENT4, now);
 
-      let position;
+      let preferences, position;
 
       await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1.0);
       await setChorePreference(HOUSE, RESIDENT2, dishes.id, sweeping.id, 0.7);
       await setChorePreference(HOUSE, RESIDENT3, dishes.id, sweeping.id, 0.3);
       await setChorePreference(HOUSE, RESIDENT4, dishes.id, sweeping.id, 0.0);
 
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
+
       // 75% of residents have a weaker preference: [4, 3, 2, 1]
-      position = await Chores.getResidentPreferencePosition(HOUSE, RESIDENT1, dishes.id, now);
+      position = await Chores.getPreferencePosition(HOUSE, RESIDENT1, dishes.id, preferences, now);
       expect(position).to.equal(0.75);
 
       // 0% of residents have a weaker preference [1, 2, 3, 4]
-      position = await Chores.getResidentPreferencePosition(HOUSE, RESIDENT1, sweeping.id, now);
+      position = await Chores.getPreferencePosition(HOUSE, RESIDENT1, sweeping.id, preferences, now);
       expect(position).to.equal(0.0);
 
       await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.3);
 
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
+
       // 25% of residents have a weaker preference [4, 1, 3, 2]
-      position = await Chores.getResidentPreferencePosition(HOUSE, RESIDENT1, dishes.id, now);
+      position = await Chores.getPreferencePosition(HOUSE, RESIDENT1, dishes.id, preferences, now);
       expect(position).to.equal(0.25);
 
       // 25% of residents have a weaker preference [2, 1, 3, 4]
-      position = await Chores.getResidentPreferencePosition(HOUSE, RESIDENT1, sweeping.id, now);
+      position = await Chores.getPreferencePosition(HOUSE, RESIDENT1, sweeping.id, preferences, now);
       expect(position).to.equal(0.25);
 
       // Only consider active residents
       await Admin.deactivateResident(HOUSE, RESIDENT3);
       await Admin.deactivateResident(HOUSE, RESIDENT4);
 
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
+
       // 0% of residents have a weaker preference [1, 2]
-      position = await Chores.getResidentPreferencePosition(HOUSE, RESIDENT1, dishes.id, now);
+      position = await Chores.getPreferencePosition(HOUSE, RESIDENT1, dishes.id, preferences, now);
       expect(position).to.equal(0.0);
 
       // 50% of residents have a weaker preference [2, 1]
-      position = await Chores.getResidentPreferencePosition(HOUSE, RESIDENT1, sweeping.id, now);
+      position = await Chores.getPreferencePosition(HOUSE, RESIDENT1, sweeping.id, preferences, now);
       expect(position).to.equal(0.5);
     });
 
     it('can return a resident preference position for a chore II', async () => {
-      let position;
+      let preferences, position;
 
       await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 1.0);
       await setChorePreference(HOUSE, RESIDENT2, dishes.id, sweeping.id, 0.0);
 
-      position = await Chores.getResidentPreferencePosition(HOUSE, RESIDENT1, dishes.id, now);
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
+
+      position = await Chores.getPreferencePosition(HOUSE, RESIDENT1, dishes.id, preferences, now);
       expect(position).to.equal(0.25);
 
       await setChorePreference(HOUSE, RESIDENT1, dishes.id, restock.id, 1.0);
       await setChorePreference(HOUSE, RESIDENT2, dishes.id, restock.id, 0.0);
 
-      position = await Chores.getResidentPreferencePosition(HOUSE, RESIDENT1, dishes.id, now);
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
+
+      position = await Chores.getPreferencePosition(HOUSE, RESIDENT1, dishes.id, preferences, now);
       expect(position).to.equal(0.50);
     });
   });
