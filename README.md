@@ -1,4 +1,4 @@
-![Chore Wheel Banner](https://github.com/user-attachments/assets/b8149779-4af0-4580-99b7-f9131626f3cc)
+![Chore Wheel Banner](https://github.com/user-attachments/assets/5d718ce8-c18d-4dc2-951a-03658722d5ff)
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/zaratanDotWorld/choreWheel/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/zaratanDotWorld/choreWheel/tree/master) [![Documentation Status](https://readthedocs.org/projects/mirror/badge/?version=latest)](https://docs.chorewheel.zaratan.world/en/latest/?badge=latest)
 
