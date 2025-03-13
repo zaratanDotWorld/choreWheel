@@ -66,10 +66,10 @@ exports.deactivateResident = async function (houseId, slackId) {
     .onConflict('slackId').merge();
 };
 
-exports.getResidents = async function (houseId, now) {
+exports.getResidents = async function (houseId) {
   return db('Resident')
     .where({ houseId })
-    .where('activeAt', '<=', now)
+    .whereNotNull('activeAt')
     .select('*');
 };
 

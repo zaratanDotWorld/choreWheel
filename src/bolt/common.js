@@ -189,12 +189,12 @@ exports.getWorkspaceMembers = async function (app, oauth) {
   return members.filter(member => !(member.is_bot || member.id === SLACKBOT));
 };
 
-exports.pruneWorkspaceMembers = async function (app, oauth, houseId, now) {
+exports.pruneWorkspaceMembers = async function (app, oauth, houseId) {
   for (const member of (await exports.getWorkspaceMembers(app, oauth))) {
     await exports.pruneWorkspaceMember(houseId, member);
   }
 
-  const residents = await Admin.getResidents(houseId, now);
+  const residents = await Admin.getResidents(houseId);
   return `Pruned workspace with ${residents.length} active residents`;
 };
 

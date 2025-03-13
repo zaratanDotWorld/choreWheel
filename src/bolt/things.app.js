@@ -296,7 +296,7 @@ app.action('things-special', async ({ ack, body }) => {
   const actionName = 'things-special';
   const { now, houseId } = common.beginAction(actionName, body);
 
-  const residents = await Admin.getResidents(houseId, now);
+  const residents = await Admin.getResidents(houseId);
   const accounts = await Things.getActiveAccounts(houseId, now);
 
   const view = views.thingsSpecialBuyView(residents.length, accounts);
@@ -349,9 +349,9 @@ app.action('things-bought', async ({ ack, body }) => {
 
 app.action('things-propose', async ({ ack, body }) => {
   const actionName = 'things-propose';
-  const { now, houseId } = common.beginAction(actionName, body);
+  const { houseId } = common.beginAction(actionName, body);
 
-  const minVotes = await Things.getThingProposalMinVotes(houseId, now);
+  const minVotes = await Things.getThingProposalMinVotes(houseId);
 
   const view = views.thingsProposeView(minVotes);
   await common.openView(app, thingsConf.oauth, body.trigger_id, view);

@@ -110,17 +110,17 @@ describe('Admin', async () => {
 
     it('can activate a resident', async () => {
       let residents;
-      residents = await Admin.getResidents(HOUSE1, now);
+      residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(0);
 
       await Admin.activateResident(HOUSE1, RESIDENT1, now);
 
-      residents = await Admin.getResidents(HOUSE1, now);
+      residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(1);
 
       await Admin.activateResident(HOUSE1, RESIDENT2, now);
 
-      residents = await Admin.getResidents(HOUSE1, now);
+      residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(2);
 
       const resident1 = await Admin.getResident(RESIDENT1);
@@ -129,13 +129,13 @@ describe('Admin', async () => {
 
     it('can activate a resident idempotently', async () => {
       let residents;
-      residents = await Admin.getResidents(HOUSE1, now);
+      residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(0);
 
       await Admin.activateResident(HOUSE1, RESIDENT1, now);
       await Admin.activateResident(HOUSE1, RESIDENT1, soon);
 
-      residents = await Admin.getResidents(HOUSE1, now);
+      residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(1);
       expect(residents[0].activeAt.getTime()).to.equal(truncateHour(now, 3).getTime());
     });
@@ -144,12 +144,12 @@ describe('Admin', async () => {
       await Admin.activateResident(HOUSE1, RESIDENT1, now);
 
       let residents;
-      residents = await Admin.getResidents(HOUSE1, now);
+      residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(1);
 
       await Admin.deactivateResident(HOUSE1, RESIDENT1);
 
-      residents = await Admin.getResidents(HOUSE1, now);
+      residents = await Admin.getResidents(HOUSE1);
       expect(residents.length).to.equal(0);
 
       const resident = await Admin.getResident(RESIDENT1);

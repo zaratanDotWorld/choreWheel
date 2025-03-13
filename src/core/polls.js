@@ -32,7 +32,7 @@ exports.submitVote = async function (pollId, residentId, now, vote) {
     .onConflict([ 'pollId', 'encryptedResidentId' ]).merge();
 
   const pollResults = await exports.getPollResults(pollId);
-  const residents = await Admin.getResidents(poll.houseId, now);
+  const residents = await Admin.getResidents(poll.houseId);
 
   // If everyone has voted, close the poll
   if (pollResults.length >= residents.length) {

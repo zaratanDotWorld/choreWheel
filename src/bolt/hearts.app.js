@@ -195,9 +195,9 @@ app.command('/hearts-prune', async ({ ack, command, respond }) => {
   await ack();
 
   const commandName = '/hearts-prune';
-  const { now, houseId } = common.beginCommand(commandName, command);
+  const { houseId } = common.beginCommand(commandName, command);
 
-  const text = await common.pruneWorkspaceMembers(app, heartsConf.oauth, houseId, now);
+  const text = await common.pruneWorkspaceMembers(app, heartsConf.oauth, houseId);
   await respond({ response_type: 'ephemeral', text });
 });
 
@@ -241,9 +241,9 @@ app.action('hearts-challenge', async ({ ack, body }) => {
   await ack();
 
   const actionName = 'hearts-challenge';
-  const { now, houseId } = common.beginAction(actionName, body);
+  const { houseId } = common.beginAction(actionName, body);
 
-  const residents = await Admin.getResidents(houseId, now);
+  const residents = await Admin.getResidents(houseId);
 
   const view = views.heartsChallengeView(residents.length);
   await common.openView(app, heartsConf.oauth, body.trigger_id, view);

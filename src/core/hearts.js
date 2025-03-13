@@ -81,7 +81,7 @@ exports.reviveResident = async function (houseId, residentId, now) {
 };
 
 exports.reviveResidents = async function (houseId, now) {
-  const revivedResidents = (await Admin.getResidents(houseId, now))
+  const revivedResidents = (await Admin.getResidents(houseId))
     .map(resident => exports.reviveResident(houseId, resident.slackId, now));
 
   return (await Promise.all(revivedResidents)).flat();
@@ -93,7 +93,7 @@ exports.resetResident = async function (houseId, residentId, now) {
 };
 
 exports.resetResidents = async function (houseId, now) {
-  const resetResidents = (await Admin.getResidents(houseId, now))
+  const resetResidents = (await Admin.getResidents(houseId))
     .map(resident => exports.resetResident(houseId, resident.slackId, now));
 
   return (await Promise.all(resetResidents)).flat();
@@ -123,7 +123,7 @@ exports.getRegenAmount = function (currentHearts) {
 };
 
 exports.regenerateHouseHearts = async function (houseId, now) {
-  const houseHearts = (await Admin.getResidents(houseId, now))
+  const houseHearts = (await Admin.getResidents(houseId))
     .map(resident => exports.regenerateHearts(houseId, resident.slackId, now));
 
   return (await Promise.all(houseHearts)).flat();
@@ -158,7 +158,7 @@ exports.getUnresolvedChallenges = async function (houseId, challengeeId) {
 };
 
 exports.getChallengeMinVotes = async function (houseId, challengeeId, value, challengedAt) {
-  const residents = await Admin.getResidents(houseId, challengedAt);
+  const residents = await Admin.getResidents(houseId);
   const challengeeHearts = await exports.getHearts(challengeeId, challengedAt);
   return (challengeeHearts - value <= heartsCriticalNum)
     ? Math.ceil(residents.length * heartsMinPctCritical)
@@ -249,7 +249,7 @@ exports.getKarmaRankings = async function (houseId, startTime, endTime) {
 };
 
 exports.getNumKarmaWinners = async function (houseId, startTime, endTime) {
-  const residents = await Admin.getResidents(houseId, endTime);
+  const residents = await Admin.getResidents(houseId);
   const maxWinners = Math.floor(residents.length / karmaProportion);
 
   const karma = await exports.getKarma(houseId, startTime, endTime);

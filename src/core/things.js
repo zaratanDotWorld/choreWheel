@@ -201,7 +201,7 @@ exports.createThingProposal = async function (houseId, proposedBy, thingId, type
   // TODO: Can this be done as a table constraint?
   assert(thingId || (type && name), 'Proposal must include either thingId or type and name!');
 
-  const minVotes = await exports.getThingProposalMinVotes(houseId, now);
+  const minVotes = await exports.getThingProposalMinVotes(houseId);
   const [ poll ] = await Polls.createPoll(houseId, now, thingsProposalPollLength, minVotes);
 
   return db('ThingProposal')
@@ -257,7 +257,7 @@ exports.resolveThingProposals = async function (houseId, now) {
 // Utils
 
 exports.getThingBuyMinVotes = async function (houseId, boughtBy, thingId, price, now) {
-  const residents = await Admin.getResidents(houseId, now);
+  const residents = await Admin.getResidents(houseId);
   const maxVotes = Math.ceil(thingsMaxPct * residents.length);
   const minVotesSpecial = Math.ceil(thingsMinPctSpecial * residents.length);
   const minVotesScaled = Math.ceil(Math.abs(price) / thingsMinVotesScalar);
@@ -270,7 +270,7 @@ exports.getThingBuyMinVotes = async function (houseId, boughtBy, thingId, price,
   return Math.ceil(minVotes * voteScalar);
 };
 
-exports.getThingProposalMinVotes = async function (houseId, now) {
-  const residents = await Admin.getResidents(houseId, now);
+exports.getThingProposalMinVotes = async function (houseId) {
+  const residents = await Admin.getResidents(houseId);
   return Math.ceil(thingsProposalPct * residents.length);
 };

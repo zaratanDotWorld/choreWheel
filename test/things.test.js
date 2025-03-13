@@ -599,14 +599,14 @@ describe('Things', async () => {
       let minVotes;
 
       // min: ceil( 4 residents * 40% ) = 2
-      minVotes = await Things.getThingProposalMinVotes(HOUSE, now);
+      minVotes = await Things.getThingProposalMinVotes(HOUSE);
       expect(minVotes).to.equal(2);
 
-      await Admin.deactivateResident(HOUSE, RESIDENT3, now);
-      await Admin.deactivateResident(HOUSE, RESIDENT4, now);
+      await Admin.deactivateResident(HOUSE, RESIDENT3);
+      await Admin.deactivateResident(HOUSE, RESIDENT4);
 
       // min: ceil( 2 residents * 40% ) = 1
-      minVotes = await Things.getThingProposalMinVotes(HOUSE, now);
+      minVotes = await Things.getThingProposalMinVotes(HOUSE);
       expect(minVotes).to.equal(1);
     });
 

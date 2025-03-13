@@ -137,7 +137,7 @@ app.event('app_home_opened', async ({ body, event }) => {
     }
 
     // Prune workspace
-    await common.pruneWorkspaceMembers(app, choresConf.oauth, houseId, now);
+    await common.pruneWorkspaceMembers(app, choresConf.oauth, houseId);
 
     // Post house stats
     const prevMonthEnd = getPrevMonthEnd(now);
@@ -158,9 +158,9 @@ app.command('/chores-prune', async ({ ack, command, respond }) => {
   await ack();
 
   const commandName = '/chores-prune';
-  const { now, houseId } = common.beginCommand(commandName, command);
+  const { houseId } = common.beginCommand(commandName, command);
 
-  const text = await common.pruneWorkspaceMembers(app, choresConf.oauth, houseId, now);
+  const text = await common.pruneWorkspaceMembers(app, choresConf.oauth, houseId);
   await respond({ response_type: 'ephemeral', text });
 });
 
@@ -197,12 +197,12 @@ app.command('/chores-activate', async ({ ack, command, respond }) => {
   await ack();
 
   const commandName = '/chores-activate';
-  const { now, houseId } = common.beginCommand(commandName, command);
+  const { houseId } = common.beginCommand(commandName, command);
 
   if (!(await common.isAdmin(app, choresConf.oauth, command.user_id))) {
     await respond({ response_type: 'ephemeral', text: common.ADMIN_ONLY });
   } else {
-    const residents = await Admin.getResidents(houseId, now);
+    const residents = await Admin.getResidents(houseId);
 
     const view = views.choresActivateView(residents);
     await common.openView(app, choresConf.oauth, command.trigger_id, view);
