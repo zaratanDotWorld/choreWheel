@@ -177,14 +177,8 @@ describe('Chores', async () => {
       expect(pref.betaChoreId).to.equal(sweeping.id);
       expect(pref.preference).to.almost.equal(0.3);
 
-      expect(() => Chores.normalizeChorePreference({ alphaChoreId: sweeping.id, betaChoreId: dishes.id }))
+      expect(() => Chores.normalizeChorePreference({ alphaChoreId: sweeping.id, betaChoreId: dishes.id, preference: 0.7 }))
         .to.throw('Invalid chore preference!');
-
-      // If already normalized, no-op
-      pref = Chores.normalizeChorePreference({ alphaChoreId: dishes.id, betaChoreId: sweeping.id, preference: 0.7 });
-      expect(pref.alphaChoreId).to.equal(dishes.id);
-      expect(pref.betaChoreId).to.equal(sweeping.id);
-      expect(pref.preference).to.almost.equal(0.7);
     });
 
     it('can orient a chore preference', async () => {

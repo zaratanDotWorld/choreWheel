@@ -137,12 +137,7 @@ exports.mergeChorePreferences = function (currentPrefs, newPrefs) {
 };
 
 exports.normalizeChorePreference = function (pref) {
-  // If already normalized, no-op
-  // NOTE: Typescript would be useful here
-  if (pref.alphaChoreId || pref.betaChoreId) {
-    assert(pref.alphaChoreId < pref.betaChoreId, 'Invalid chore preference!');
-    return pref;
-  }
+  assert(pref.targetChoreId && pref.sourceChoreId, 'Invalid chore preference!');
 
   let alphaChoreId, betaChoreId, preference;
 
@@ -161,6 +156,8 @@ exports.normalizeChorePreference = function (pref) {
 };
 
 exports.orientChorePreference = function (targetChoreId, pref) {
+  assert(pref.alphaChoreId && pref.betaChoreId, 'Invalid chore preference!');
+
   const { residentId } = pref;
   let sourceChoreId, preference;
 
