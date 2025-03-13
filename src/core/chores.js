@@ -97,17 +97,6 @@ exports.getActiveChorePreferences = async function (houseId, now) {
     .select('residentId', 'alphaChoreId', 'betaChoreId', 'preference');
 };
 
-exports.getSpecificChorePreferences = async function (choreId, now) {
-  return db('ChorePref')
-    .join('Resident', 'ChorePref.residentId', 'Resident.slackId')
-    .where('Resident.activeAt', '<=', now)
-    .where(function () {
-      this.where('ChorePref.alphaChoreId', choreId)
-        .orWhere('ChorePref.betaChoreId', choreId);
-    })
-    .select('residentId', 'alphaChoreId', 'betaChoreId', 'preference');
-};
-
 exports.setChorePreferences = async function (houseId, prefs) {
   return db('ChorePref')
     .insert(prefs.map((p) => { return { houseId, ...p }; }))
@@ -190,23 +179,22 @@ exports.createSourceExclusionSet = function (orientedPreferences, newValue) {
     .map(pref => pref.sourceChoreId));
 };
 
-// Note: is `now` needed anymore when getting residents? activeAt will always be in the past when it exists.
-
 // This function is used to get the relative strength of a resident's preference for a chore
 // E.g. If 3/4 of residents have a weaker preference for a chore, the function will return 0.75
-exports.getResidentPreferencePosition = async function (houseId, residentId, choreId, now) {
+exports.getPreferencePosition = async function (houseId, residentId, choreId, preferences, now) {
   const residents = await Admin.getResidents(houseId, now);
 
   const chores = (await exports.getChores(houseId))
     .filter(chore => chore.id !== choreId);
 
-  const preferences = (await exports.getSpecificChorePreferences(choreId, now))
+  const filteredPreferences = preferences
+    .filter(pref => pref.alphaChoreId === choreId || pref.betaChoreId === choreId)
     .map(pref => exports.orientChorePreference(choreId, pref));
 
   // Split preferences into arrays, keyed on sourceChoreId
   const prefArrays = new Map();
   chores.forEach(chore => prefArrays.set(chore.id, []));
-  preferences.forEach(pref => prefArrays.get(pref.sourceChoreId).push(pref));
+  filteredPreferences.forEach(pref => prefArrays.get(pref.sourceChoreId).push(pref));
 
   // Add dummy preferences, sort arrays, save residentId's preference position
   const prefPositions = [];
@@ -231,6 +219,12 @@ exports.getResidentPreferencePosition = async function (houseId, residentId, cho
 
   // Return relative position of resident's preferences
   return prefPositions.reduce((sum, val) => sum + val, 0) / (chores.length * residents.length);
+};
+
+exports.getProposedPreferencePosition = async function (houseId, residentId, choreId, newPrefs, now) {
+  const currentPrefs = await exports.getActiveChorePreferences(houseId, now);
+  const proposedPrefs = exports.mergeChorePreferences(currentPrefs, newPrefs);
+  return exports.getPreferencePosition(houseId, residentId, choreId, proposedPrefs, now);
 };
 
 // Chore Values

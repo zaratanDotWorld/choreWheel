@@ -417,14 +417,15 @@ app.view('chores-rank-3', async ({ ack, body }) => {
     return { residentId, ...Chores.normalizeChorePreference(pref) };
   });
 
-  // Get the proposed ranking
+  // Get the proposed ranking and preference position
   const proposedRankings = await Chores.getProposedChoreRankings(houseId, newPrefs, now);
+  const preferencePosition = await Chores.getProposedPreferencePosition(houseId, residentId, targetChore.id, newPrefs, now);
   const targetChoreRanking = proposedRankings.find(ranking => ranking.id === targetChore.id);
 
   // Forward the preferences through metadata
   const prefsMetadata = JSON.stringify({ targetChore, sourceChoreIds, preference });
 
-  const view = views.choresRankView3(targetChore, targetChoreRanking, prefsMetadata);
+  const view = views.choresRankView3(targetChore, targetChoreRanking, prefsMetadata, preferencePosition);
   await ack({ response_action: 'push', view });
 });
 
