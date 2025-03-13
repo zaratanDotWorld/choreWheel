@@ -97,6 +97,17 @@ exports.getActiveChorePreferences = async function (houseId, now) {
     .select('residentId', 'alphaChoreId', 'betaChoreId', 'preference');
 };
 
+exports.getSpecificChorePreferences = async function (choreId, now) {
+  return db('ChorePref')
+    .join('Resident', 'ChorePref.residentId', 'Resident.slackId')
+    .where('Resident.activeAt', '<=', now)
+    .where(function () {
+      this.where('ChorePref.alphaChoreId', choreId)
+        .orWhere('ChorePref.betaChoreId', choreId);
+    })
+    .select('residentId', 'alphaChoreId', 'betaChoreId', 'preference');
+};
+
 exports.setChorePreferences = async function (houseId, prefs) {
   return db('ChorePref')
     .insert(prefs.map((p) => { return { houseId, ...p }; }))
@@ -149,7 +160,8 @@ exports.normalizeChorePreference = function (pref) {
   return { alphaChoreId, betaChoreId, preference };
 };
 
-exports.orientChorePreferences = function (targetChoreId, pref) {
+exports.orientChorePreference = function (targetChoreId, pref) {
+  const { residentId } = pref;
   let sourceChoreId, preference;
 
   // Value flows from source to target (oriented), and from beta to alpha (normalized)
@@ -164,10 +176,11 @@ exports.orientChorePreferences = function (targetChoreId, pref) {
       break;
     default:
       // If the preference does not include targetChoreId, return undefined
+      // NOTE: Caller should make sure to handle this correctly
       return;
   }
 
-  return { targetChoreId, sourceChoreId, preference };
+  return { targetChoreId, sourceChoreId, preference, residentId };
 };
 
 // *Exclude* preferences for which the new value is semantically *invalid*
@@ -178,6 +191,49 @@ exports.createSourceExclusionSet = function (orientedPreferences, newValue) {
   return new Set(orientedPreferences
     .filter(pref => (prioritizing) ? pref.preference >= newValue : pref.preference <= newValue)
     .map(pref => pref.sourceChoreId));
+};
+
+// Note: is `now` needed anymore when getting residents? activeAt will always be in the past when it exists.
+
+// This function is used to get the relative strength of a resident's preference for a chore
+// E.g. If 3/4 of residents have a weaker preference for a chore, the function will return 0.75
+exports.getResidentPreferencePosition = async function (houseId, residentId, choreId, now) {
+  const residents = await Admin.getResidents(houseId, now);
+
+  const chores = (await exports.getChores(houseId))
+    .filter(chore => chore.id !== choreId);
+
+  const preferences = (await exports.getSpecificChorePreferences(choreId, now))
+    .map(pref => exports.orientChorePreference(choreId, pref));
+
+  // Split preferences into arrays, keyed on sourceChoreId
+  const prefArrays = new Map();
+  chores.forEach(chore => prefArrays.set(chore.id, []));
+  preferences.forEach(pref => prefArrays.get(pref.sourceChoreId).push(pref));
+
+  // Add dummy preferences, sort arrays, save residentId's preference position
+  const prefPositions = [];
+  for (const chore of chores) {
+    const prefArray = prefArrays.get(chore.id);
+
+    const position = prefArray
+      .concat(Array(residents.length - prefArray.length).fill({ preference: 0.5 }))
+      .sort((a, b) => {
+        // Sort in ascending order, with residentId first in case of ties
+        const diff = a.preference - b.preference;
+        if (diff !== 0) return diff;
+        if (a.residentId === residentId) return -1;
+        if (b.residentId === residentId) return 1;
+        return 0;
+      })
+      .findIndex(pref => pref.residentId === residentId);
+
+    // If no preference exists, return 0
+    prefPositions.push(Math.max(0, position));
+  }
+
+  // Return relative position of resident's preferences
+  return prefPositions.reduce((sum, val) => sum + val, 0) / (chores.length * residents.length);
 };
 
 // Chore Values
@@ -244,6 +300,8 @@ exports.getCurrentChoreValues = async function (houseId, now) {
   return choreValues;
 };
 
+// Chore Rankings
+
 exports.getCurrentChoreRankings = async function (houseId, now) {
   const preferences = await exports.getActiveChorePreferences(houseId, now);
   return exports.getChoreRankings(houseId, now, preferences);
@@ -281,6 +339,8 @@ exports.getChoreRankings = async function (houseId, now, preferences) {
   }).sort((a, b) => b.ranking - a.ranking);
 };
 
+// Chore Values II (TODO: move this section)
+
 exports.getLastChoreValueUpdateTime = async function (houseId, updateTime) {
   const lastChoreValue = await db('ChoreValue')
     .where({ houseId })
@@ -293,6 +353,8 @@ exports.getLastChoreValueUpdateTime = async function (houseId, updateTime) {
     ? lastChoreValue.valuedAt
     : new Date(updateTime - bootstrapDuration); // First update seeds a fixed value
 };
+
+// Chore Points
 
 exports.getAvailablePoints = async function (houseId, startTime, endTime) {
   const residents = await Admin.getResidents(houseId, endTime);
@@ -353,6 +415,8 @@ exports.getPointsDiscount = async function (houseId, now) {
   return specialChoreValues
     .reduce((sum, scv) => sum + scv.value / (monthEnd - scv.valuedAt), 0);
 };
+
+// Chore Values III (TODO: move this section)
 
 exports.updateChoreValues = async function (houseId, now) {
   // Semantically, updateTime indicates a truncated value

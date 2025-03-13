@@ -390,7 +390,7 @@ app.view('chores-rank-2', async ({ ack, body }) => {
   const actionPreference = (action) ? preference : 1 - preference;
 
   const orientedCurrentPreferences = (await Chores.getResidentChorePreferences(houseId, residentId))
-    .map(pref => Chores.orientChorePreferences(targetChore.id, pref))
+    .map(pref => Chores.orientChorePreference(targetChore.id, pref))
     .filter(pref => pref);
 
   const sourceExclusionSet = Chores.createSourceExclusionSet(orientedCurrentPreferences, actionPreference);
