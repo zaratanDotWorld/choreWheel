@@ -81,7 +81,13 @@ exports.getChorePreferences = async function (houseId) {
 
 exports.getResidentChorePreferences = async function (houseId, residentId) {
   return db('ChorePref')
-    .where({ houseId, residentId })
+    .join('Chore AS AlphaChore', 'ChorePref.alphaChoreId', 'AlphaChore.id')
+    .join('Chore AS BetaChore', 'ChorePref.betaChoreId', 'BetaChore.id')
+    .join('Resident', 'ChorePref.residentId', 'Resident.slackId')
+    .where('ChorePref.houseId', houseId)
+    .where('Resident.slackId', residentId)
+    .where('AlphaChore.active', true)
+    .where('BetaChore.active', true)
     .select('residentId', 'alphaChoreId', 'betaChoreId', 'preference');
 };
 
