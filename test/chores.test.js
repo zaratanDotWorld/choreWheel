@@ -102,6 +102,11 @@ describe('Chores', async () => {
 
       preferences = await Chores.getResidentChorePreferences(HOUSE, RESIDENT1, now);
       expect(preferences.length).to.equal(1);
+
+      await Chores.editChore(sweeping.id, sweeping.name, {}, false);
+
+      preferences = await Chores.getResidentChorePreferences(HOUSE, RESIDENT1, now);
+      expect(preferences.length).to.equal(0);
     });
 
     it('can set multiple chore preferences', async () => {
