@@ -265,18 +265,21 @@ describe('Chores', async () => {
     it('can return a resident preference saturation for a chore', async () => {
       let preferences, saturation;
 
+      // [ 0.5, 0.5 ]
       preferences = await Chores.getActiveChorePreferences(HOUSE, now);
       saturation = await Chores.getPreferenceSaturation(HOUSE, RESIDENT1, dishes.id, preferences);
       expect(saturation).to.equal(0.5);
 
       await setChorePreference(HOUSE, RESIDENT1, dishes.id, restock.id, 1.0);
 
+      // [ 1.0, 0.5 ]
       preferences = await Chores.getActiveChorePreferences(HOUSE, now);
       saturation = await Chores.getPreferenceSaturation(HOUSE, RESIDENT1, dishes.id, preferences);
       expect(saturation).to.equal(0.75);
 
       await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.2);
 
+      // [ 1.0, 0.2 ]
       preferences = await Chores.getActiveChorePreferences(HOUSE, now);
       saturation = await Chores.getPreferenceSaturation(HOUSE, RESIDENT1, dishes.id, preferences);
       expect(saturation).to.equal(0.6);
