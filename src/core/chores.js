@@ -194,8 +194,8 @@ exports.getPreferencePosition = async function (houseId, residentId, choreId, pr
     .filter(chore => chore.id !== choreId);
 
   const filteredPreferences = preferences
-    .filter(pref => pref.alphaChoreId === choreId || pref.betaChoreId === choreId)
-    .map(pref => exports.orientChorePreference(choreId, pref));
+    .map(pref => exports.orientChorePreference(choreId, pref))
+    .filter(pref => pref && pref.targetChoreId === choreId);
 
   // Split preferences into arrays, keyed on sourceChoreId
   const prefArrays = new Map();
@@ -231,6 +231,29 @@ exports.getProposedPreferencePosition = async function (houseId, residentId, cho
   const currentPrefs = await exports.getActiveChorePreferences(houseId, now);
   const proposedPrefs = exports.mergeChorePreferences(currentPrefs, newPrefs);
   return exports.getPreferencePosition(houseId, residentId, choreId, proposedPrefs, now);
+};
+
+exports.getPreferenceSaturation = async function (houseId, residentId, choreId, preferences) {
+  const chores = (await exports.getChores(houseId))
+    .filter(chore => chore.id !== choreId);
+
+  const filteredPreferences = preferences
+    .map(pref => exports.orientChorePreference(choreId, pref))
+    .filter(pref => pref && pref.residentId === residentId && pref.targetChoreId === choreId);
+
+  const sourcePreferences = new Map();
+  chores.forEach(chore => sourcePreferences.set(chore.id, 0.5));
+  filteredPreferences.forEach(pref => sourcePreferences.set(pref.sourceChoreId, pref.preference));
+
+  // Return average preference value across all source chores
+  return Array.from(sourcePreferences.values())
+    .reduce((sum, val) => sum + val, 0) / chores.length;
+};
+
+exports.getProposedPreferenceSaturation = async function (houseId, residentId, choreId, newPrefs, now) {
+  const currentPrefs = await exports.getActiveChorePreferences(houseId, now);
+  const proposedPrefs = exports.mergeChorePreferences(currentPrefs, newPrefs);
+  return exports.getPreferenceSaturation(houseId, residentId, choreId, proposedPrefs);
 };
 
 // Chore Values

@@ -324,6 +324,7 @@ describe('Chores', async () => {
       position = await Chores.getPreferencePosition(HOUSE, RESIDENT1, dishes.id, preferences, now);
       expect(position).to.equal(0.25);
 
+      // Incorporate a second chore pair
       await setChorePreference(HOUSE, RESIDENT1, dishes.id, restock.id, 1.0);
       await setChorePreference(HOUSE, RESIDENT2, dishes.id, restock.id, 0.0);
 
@@ -331,6 +332,26 @@ describe('Chores', async () => {
 
       position = await Chores.getPreferencePosition(HOUSE, RESIDENT1, dishes.id, preferences, now);
       expect(position).to.equal(0.50);
+    });
+
+    it('can return a resident preference saturation for a chore', async () => {
+      let preferences, saturation;
+
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
+      saturation = await Chores.getPreferenceSaturation(HOUSE, RESIDENT1, dishes.id, preferences);
+      expect(saturation).to.equal(0.5);
+
+      await setChorePreference(HOUSE, RESIDENT1, dishes.id, restock.id, 1.0);
+
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
+      saturation = await Chores.getPreferenceSaturation(HOUSE, RESIDENT1, dishes.id, preferences);
+      expect(saturation).to.equal(0.75);
+
+      await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.2);
+
+      preferences = await Chores.getActiveChorePreferences(HOUSE, now);
+      saturation = await Chores.getPreferenceSaturation(HOUSE, RESIDENT1, dishes.id, preferences);
+      expect(saturation).to.equal(0.6);
     });
   });
 

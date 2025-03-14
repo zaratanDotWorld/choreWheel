@@ -423,25 +423,28 @@ exports.choresRankView2 = function (preference, targetChore, choreRankings) {
   };
 };
 
-exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetadata, preferencePosition) {
+exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetadata, preferenceSaturation) {
   const newPriority = Math.round(targetChoreRanking.ranking * 1000);
   const change = newPriority - targetChore.priority;
 
   const effect = change >= 0 ? 'an *increase*' : 'a *decrease*';
   const emoji = change >= 0 ? ':rocket:' : ':snail:';
-
-  const formattedPosition = (preferencePosition * 100).toFixed(0);
+  const saturation = change >= 0 ? preferenceSaturation : 1 - preferenceSaturation;
 
   const header = 'Set chore priorities';
-  const mainText = 'After your update, ' +
+  const priorityText = 'After your update, ' +
       `*${targetChore.name}* will have a priority of *${newPriority} ppt*, ` +
-      `${effect} of *${Math.abs(change)} ppt* ${emoji}.\n\n` +
-      `Your preferences will be stronger than *${formattedPosition}%* of residents.\n\n` +
-      '*Submit* to confirm, or go *back* to change your update.';
+      `${effect} of *${Math.abs(change)} ppt* ${emoji}.`;
+  const saturationText = `Your preferences for *${targetChore.name}* are at *${(saturation * 100).toFixed(0)}%* of possible strength. ` +
+    'If you want a *bigger effect*, ' +
+    (saturation > 0.8 ? 'ask others to support your priorities.' : 'you can strengthen your preferences.');
+  const submitText = '*Submit* to confirm, or go *back* to change your update.';
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
-  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockSection(priorityText));
+  blocks.push(common.blockSection(saturationText));
+  blocks.push(common.blockSection(submitText));
 
   return {
     type: 'modal',
