@@ -185,54 +185,6 @@ exports.createSourceExclusionSet = function (orientedPreferences, newValue) {
     .map(pref => pref.sourceChoreId));
 };
 
-// This function is used to get the relative strength of a resident's preference for a chore
-// E.g. If 3/4 of residents have a weaker preference for a chore, the function will return 0.75
-exports.getPreferencePosition = async function (houseId, residentId, choreId, preferences, now) {
-  const residents = await Admin.getResidents(houseId, now);
-
-  const chores = (await exports.getChores(houseId))
-    .filter(chore => chore.id !== choreId);
-
-  const filteredPreferences = preferences
-    .map(pref => exports.orientChorePreference(choreId, pref))
-    .filter(pref => pref && pref.targetChoreId === choreId);
-
-  // Split preferences into arrays, keyed on sourceChoreId
-  const prefArrays = new Map();
-  chores.forEach(chore => prefArrays.set(chore.id, []));
-  filteredPreferences.forEach(pref => prefArrays.get(pref.sourceChoreId).push(pref));
-
-  // Add dummy preferences, sort arrays, save residentId's preference position
-  const prefPositions = [];
-  for (const chore of chores) {
-    const prefArray = prefArrays.get(chore.id);
-
-    const position = prefArray
-      .concat(Array(residents.length - prefArray.length).fill({ preference: 0.5 }))
-      .sort((a, b) => {
-        // Sort in ascending order, with residentId first in case of ties
-        const diff = a.preference - b.preference;
-        if (diff !== 0) return diff;
-        if (a.residentId === residentId) return -1;
-        if (b.residentId === residentId) return 1;
-        return 0;
-      })
-      .findIndex(pref => pref.residentId === residentId);
-
-    // If no preference exists, return 0
-    prefPositions.push(Math.max(0, position));
-  }
-
-  // Return relative position of resident's preferences
-  return prefPositions.reduce((sum, val) => sum + val, 0) / (chores.length * residents.length);
-};
-
-exports.getProposedPreferencePosition = async function (houseId, residentId, choreId, newPrefs, now) {
-  const currentPrefs = await exports.getActiveChorePreferences(houseId, now);
-  const proposedPrefs = exports.mergeChorePreferences(currentPrefs, newPrefs);
-  return exports.getPreferencePosition(houseId, residentId, choreId, proposedPrefs, now);
-};
-
 exports.getPreferenceSaturation = async function (houseId, residentId, choreId, preferences) {
   const chores = (await exports.getChores(houseId))
     .filter(chore => chore.id !== choreId);
