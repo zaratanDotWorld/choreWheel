@@ -191,14 +191,14 @@ exports.getPreferenceSaturation = async function (houseId, residentId, choreId, 
 
   const filteredPreferences = preferences
     .map(pref => exports.orientChorePreference(choreId, pref))
-    .filter(pref => pref && pref.residentId === residentId && pref.targetChoreId === choreId);
+    .filter(pref => pref && pref.residentId === residentId);
 
-  const sourcePreferences = new Map();
-  chores.forEach(chore => sourcePreferences.set(chore.id, 0.5));
-  filteredPreferences.forEach(pref => sourcePreferences.set(pref.sourceChoreId, pref.preference));
+  const preferenceValues = new Map();
+  chores.forEach(chore => preferenceValues.set(chore.id, 0.5));
+  filteredPreferences.forEach(pref => preferenceValues.set(pref.sourceChoreId, pref.preference));
 
   // Return average preference value across all source chores
-  return Array.from(sourcePreferences.values())
+  return Array.from(preferenceValues.values())
     .reduce((sum, val) => sum + val, 0) / chores.length;
 };
 
