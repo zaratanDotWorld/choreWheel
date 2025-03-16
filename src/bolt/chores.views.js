@@ -79,10 +79,10 @@ exports.choresHomeView = function (choreChannel, choreStats, numActive) {
   const header = 'Welcome to Chores';
   const mainText = `We use *<${DOCS_URL}|Chores>* to keep the house a nice place to live.\n\n` +
     'Instead of a simple chore wheel or schedule, everyone owes *100 points* per month (UTC). ' +
-    'You earn points by doing chores you want, on your terms.\n\n' +
-    'The point value for a chore will _keep going up_ until someone claims it. ' +
+    'You earn points by doing chores you want, on your terms. ' +
+    'The point value for a chore will _keep going up_ until someone claims it.\n\n' +
     'If you feel a chore should be worth more (or less), you can change it\'s *priority*. ' +
-    'If you think a chore should be *added, changed, or removed*, you can propose that as well.';
+    'If you think a chore should be *added*, *changed*, or *removed*, you can propose that also.';
 
   const pointsText = (pointsOwed > 0)
     ? `You've earned *${pointsEarned} / ${pointsOwed} points* this month ${progressEmoji}`
@@ -329,8 +329,7 @@ exports.choresClaimCallbackView = function (claim, name, minVotes, achivementPoi
 
 exports.choresRankView = function (choreRankings) {
   const header = 'Set chore priorities';
-  const mainText = 'If you feel a chore should be worth more (or less), you can change it\'s *priority*. ' +
-    'The higher priority a chore is, the more points it will be worth over time.\n\n' +
+  const mainText = 'The higher a chore\'s priority, the more points it will be worth over time.\n\n' +
     'Chore priorities are measured in *points-per-thousand* (ppt), which always add up to *1000*. ' +
     'A ppt of *0* means a chore gets no points, while a ppt of *1000* means a chore gets _all_ the points.';
 
@@ -387,13 +386,14 @@ exports.choresRankView = function (choreRankings) {
 
 exports.choresRankView2 = function (preference, targetChore, choreRankings) {
   const header = 'Set chore priorities';
-  const mainText = 'Priority-setting is a *cumulative, collaborative, and ongoing* process, ' +
-    'where people "take" priority from some chores and give it to others. ' +
+  const mainText = 'Priority-setting is a *collaborative and ongoing* process, ' +
+    'where people "take" priority from some chores and give it to others.\n\n' +
     '*Example:* "I want to _prioritize_ dishes and _deprioritize_ yardwork."\n\n' +
-    '*Some things to keep in mind:*\n' +
-    '*1.* Taking from *high-priority chores* has a bigger effect.\n' +
-    '*2.* Taking from *more chores* has a bigger effect.\n' +
-    '*3.* *More participants* have a bigger effect.';
+    'To have a *bigger effect,* you can: ' +
+    '*1)* take from *more* chores, ' +
+    '*2)* take from *higher-priority* chores, ' +
+    '*3)* set a *stronger* preference, ' +
+    'or *4)* get *other people* to back you up.';
   const actionText = `You want to *${(preference >= 0.5) ? 'prioritize' : 'deprioritize'}* ` +
     `*${targetChore.name}* by *${Math.abs(preference - 0.5) > 0.2 ? 'a lot' : 'a little'}*,`;
 
