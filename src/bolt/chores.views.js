@@ -79,10 +79,10 @@ exports.choresHomeView = function (choreChannel, choreStats, numActive) {
   const header = 'Welcome to Chores';
   const mainText = `We use *<${DOCS_URL}|Chores>* to keep the house a nice place to live.\n\n` +
     'Instead of a simple chore wheel or schedule, everyone owes *100 points* per month (UTC). ' +
-    'You earn points by doing chores you want, on your terms. ' +
-    'The point value for a chore will _keep going up_ until someone claims it.\n\n' +
-    'If you feel a chore should be worth more (or less), you can change it\'s *priority*. ' +
-    'If you think a chore should be *added*, *changed*, or *removed*, you can propose that also.';
+    'You earn points by doing chores you want, on your terms — ' +
+    'the point value for a chore _keeps going up_ until someone claims it.\n\n' +
+    'If you feel a chore should be worth more (or less) over time, you can change it\'s *priority*. ' +
+    'If you think a chore should be *added*, *changed*, or *removed*, you can propose that too.';
 
   const pointsText = (pointsOwed > 0)
     ? `You've earned *${pointsEarned} / ${pointsOwed} points* this month ${progressEmoji}`
@@ -249,9 +249,8 @@ exports.choresClaimViewZero = function () {
 
 exports.choresClaimView = function (chores) {
   const header = 'Claim a chore';
-  const mainText = 'Claims are verified by the house. ' +
-    'Large claims (*10+ points*) require at least *2 upvotes*, including yours. ' +
-    'Posting pictures will help others check your work.';
+  const mainText = 'Claims are verified by the group. ' +
+    'Large claims (*10+ points*) require at least *2 upvotes*, including yours.';
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
@@ -578,8 +577,8 @@ exports.choresProposeView = function (minVotes, isAdmin) {
     'If you believe things could be flowing better, consider *adding, removing, or changing* some chores. ' +
     `As a major house decision, a minimum of *${minVotes} upvote(s)* are required.\n\n` +
     'When defining chores, a key challenge is finding the right "size". ' +
-    'Bigger chores are harder to do, but easier to prioritize and evaluate. ' +
-    'Smaller chores are the opposite -- easier to do, but harder to prioritize and evaluate.\n\n' +
+    'Bigger chores are harder to do, but easier to prioritize and verify. ' +
+    'Smaller chores are the opposite.\n\n' +
     'Ultimately, finding the right balance is an ongoing discovery process.';
 
   const blocks = [];
@@ -780,7 +779,7 @@ exports.choresProposeCallbackViewForce = function (metadata, residentId, name, d
 
 exports.choresSpecialNoPointsView = function () {
   const header = 'Add special chore';
-  const mainText = 'There are currently no points available for special chores. ' +
+  const mainText = 'There are no points available for special chores. ' +
     'Try again next month.';
 
   const blocks = [];
@@ -802,7 +801,7 @@ exports.choresSpecialView = function (availablePoints, minVotes) {
   const mainText = 'Sometimes there are big one-off tasks that need to be done. ' +
     'These can be seen as *special chores*.\n\n' +
     `Creating special chores requires *one upvote per 25 points*, and a *minimum of ${minVotes} upvotes*.\n\n` +
-    `There are currently *${maxPoints.toFixed(0)} points* available for special chores.`;
+    `There are *${maxPoints.toFixed(0)} points* available for special chores.`;
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
