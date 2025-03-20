@@ -870,7 +870,7 @@ function mapChores (chores) {
   return chores.map((chore) => {
     return {
       value: JSON.stringify({ id: chore.id }),
-      text: common.blockPlaintext(chore.name),
+      text: common.blockPlaintext(chore.name.slice(0, 60)),
     };
   });
 }
@@ -880,7 +880,7 @@ function mapChoresValues (chores) {
     const name = chore.name || chore.metadata.name;
     return {
       value: JSON.stringify({ choreId: chore.choreId, choreValueId: chore.choreValueId }),
-      text: common.blockPlaintext(`${name} - ${chore.value.toFixed(0)} points`),
+      text: common.blockPlaintext(`${name.slice(0, 60)} - ${chore.value.toFixed(0)} points`),
     };
   });
 }
@@ -890,7 +890,7 @@ function mapChoreRankings (choreRankings) {
     const priority = Math.round(chore.ranking * 1000);
     return {
       value: JSON.stringify({ id: chore.id, name: chore.name, priority }),
-      text: common.blockPlaintext(`${chore.name} - ${priority} ppt`),
+      text: common.blockPlaintext(`${chore.name.slice(0, 60)} - ${priority} ppt`),
     };
   });
 }
