@@ -6,8 +6,8 @@ project = 'Chore Wheel'
 copyright = '2023, Kronosapiens Labs'
 author = 'Daniel Kronovet'
 
-release = '0.3'
-version = '0.3.0'
+release = '0.6'
+version = '0.6.0'
 
 # -- General configuration
 

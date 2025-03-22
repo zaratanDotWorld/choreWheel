@@ -51,3 +51,4 @@ Contents
   :caption: Development
 
   development/design-principles.rst
+  development/contributing.rst
