@@ -151,24 +151,54 @@ exports.uninstallApp = async function (app, appName, context) {
 };
 
 exports.setChannel = async function (app, oauth, confName, command, respond) {
+  const token = oauth.bot.token;
   let text;
 
   if (!(await exports.isAdmin(app, oauth, command.user_id))) {
     text = exports.ADMIN_ONLY;
   } else {
     const [ houseId, channelId ] = [ command.team_id, command.channel_id ];
-    await Admin.updateHouseConf(houseId, confName, { channel: channelId });
+    let joined;
 
+    // First, check if the public/private channel is already joined
     try {
-      await app.client.conversations.join({ token: oauth.bot.token, channel: channelId });
-      text = `App events channel set to <#${channelId}> :fire:`;
+      const result = await app.client.conversations.info({ token, channel: channelId });
+      joined = result.channel.is_member;
     } catch (error) {
-      if (error.data.error === 'method_not_supported_for_channel_type') {
-        text = `App events channel set to <#${channelId}>. ` +
-          'Make sure you\'ve added the app to the private channel!';
+      // This error is returned if the channel is private and the bot is not a member
+      if (error.data.error === 'channel_not_found') {
+        joined = false;
       } else {
+        // Otherwise, it's something else
         throw error;
       }
+    }
+
+    // Otherwise, try and join it
+    if (!joined) {
+      try {
+        await app.client.conversations.join({ token, channel: channelId });
+        joined = true;
+      } catch (error) {
+        // This error is returned if the channel is private
+        if (error.data.error === 'channel_not_found') {
+          joined = false;
+          // This error is returned if the channel is private / something else
+        } else if (error.data.error === 'method_not_supported_for_channel_type') {
+          joined = false;
+        } else {
+          // Otherwise, it's something else
+          throw error;
+        }
+      }
+    }
+
+    if (joined) {
+      await Admin.updateHouseConf(houseId, confName, { channel: channelId });
+      text = `App events channel set to <#${channelId}> :fire:`;
+    } else {
+      text = 'Could not set the channel. ' +
+        'If this is a private channel, invite the app manually first, *then* set the channel.';
     }
   }
 
