@@ -485,7 +485,10 @@ exports.claimChore = async function (houseId, choreId, claimedBy, claimedAt, tim
 
   assert(choreValue, 'Cannot claim a zero-value chore!');
 
-  const minVotes = (choreValue >= choreMinVotesThreshold) ? choresMinVotes : 1;
+  const minVotes = (choreValue >= choreMinVotesThreshold)
+    ? Math.min(choresMinVotes, (await Admin.getResidents(houseId, claimedAt)).length) // Hacky, but efficient
+    : 1;
+
   const [ poll ] = await Polls.createPoll(houseId, claimedAt, choresPollLength, minVotes);
 
   return db('ChoreClaim')
