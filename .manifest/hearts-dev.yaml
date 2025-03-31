@@ -34,6 +34,7 @@ oauth_config:
       - chat:write
       - commands
       - groups:history
+      - groups:read
       - reactions:write
       - users:read
 settings:

@@ -34,9 +34,11 @@ oauth_config:
     bot:
       - channels:history
       - channels:join
+      - channels:read
       - chat:write
       - commands
       - groups:history
+      - groups:read
       - users:read
 settings:
   event_subscriptions:

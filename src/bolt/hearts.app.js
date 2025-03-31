@@ -31,6 +31,7 @@ const app = new App({
     'chat:write',
     'commands',
     'groups:history',
+    'groups:read',
     'users:read',
     'reactions:write',
   ],
