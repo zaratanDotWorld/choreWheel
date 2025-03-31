@@ -30,9 +30,11 @@ const app = new App({
   scopes: [
     'channels:history',
     'channels:join',
+    'channels:read',
     'chat:write',
     'commands',
     'groups:history',
+    'groups:read',
     'users:read',
   ],
   installationStore: {
