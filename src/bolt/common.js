@@ -151,14 +151,12 @@ exports.uninstallApp = async function (app, appName, context) {
 };
 
 exports.setChannel = async function (app, oauth, confName, command, respond) {
-  const token = oauth.bot.token;
-  let text;
-
   if (!(await exports.isAdmin(app, oauth, command.user_id))) {
-    text = exports.ADMIN_ONLY;
+    return respond({ response_type: 'ephemeral', text: exports.ADMIN_ONLY });
   } else {
-    const [ houseId, channelId ] = [ command.team_id, command.channel_id ];
     let joined;
+    const token = oauth.bot.token;
+    const [ houseId, channelId ] = [ command.team_id, command.channel_id ];
 
     // First, check if the public/private channel is already joined
     try {
@@ -168,6 +166,9 @@ exports.setChannel = async function (app, oauth, confName, command, respond) {
       // This error is returned if the channel is private and the bot is not a member
       if (error.data.error === 'channel_not_found') {
         joined = false;
+      // Short-circuit return if the app needs to be reinstalled
+      } else if (error.data.error === 'missing_scope') {
+        return respond({ response_type: 'ephemeral', text: exports.MISSING_SCOPE });
       } else {
         // Otherwise, it's something else
         throw error;
@@ -193,6 +194,8 @@ exports.setChannel = async function (app, oauth, confName, command, respond) {
       }
     }
 
+    let text;
+
     if (joined) {
       await Admin.updateHouseConf(houseId, confName, { channel: channelId });
       text = `App events channel set to <#${channelId}> :fire:`;
@@ -200,9 +203,9 @@ exports.setChannel = async function (app, oauth, confName, command, respond) {
       text = 'Could not set the channel. ' +
         'If this is a private channel, invite the app manually first, *then* set the channel.';
     }
-  }
 
-  return respond({ response_type: 'ephemeral', text });
+    return respond({ response_type: 'ephemeral', text });
+  }
 };
 
 exports.activateResident = async function (houseId, residentId, now) {
@@ -275,6 +278,8 @@ exports.getInputBlock = function (body, blockIdx) {
 exports.feedbackLink = '<mailto:support@zaratan.world|Submit Feedback>';
 
 exports.ADMIN_ONLY = ':warning: This function is admin-only :warning:';
+exports.MISSING_SCOPE = ':cd: Please <https://www.zaratan.world/chorewheel/start|reinstall the app> ' +
+  'for the latest features :cd:';
 
 // Vote processing
 
