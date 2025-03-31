@@ -38,10 +38,12 @@ oauth_config:
     bot:
       - channels:history
       - channels:join
+      - channels:read
       - chat:write
       - commands
       - users:read
       - groups:history
+      - groups:read
 settings:
   event_subscriptions:
     request_url: https://chores.mirror.zaratan.world/slack/events
