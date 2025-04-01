@@ -158,37 +158,35 @@ exports.setChannel = async function (app, oauth, confName, command, respond) {
     const token = oauth.bot.token;
     const [ houseId, channelId ] = [ command.team_id, command.channel_id ];
 
-    // First, check if the public/private channel is already joined
+    // Check if the app is already in the channel
     try {
       const result = await app.client.conversations.info({ token, channel: channelId });
       joined = result.channel.is_member;
     } catch (error) {
-      // This error is returned if the channel is private and the bot is not a member
       if (error.data.error === 'channel_not_found') {
+        // The channel is private and the bot is not a member
         joined = false;
-      // Short-circuit return if the app needs to be reinstalled
       } else if (error.data.error === 'missing_scope') {
+        // The app needs to be reinstalled; short-circuit and return
         return respond({ response_type: 'ephemeral', text: exports.MISSING_SCOPE });
       } else {
-        // Otherwise, it's something else
         throw error;
       }
     }
 
-    // Otherwise, try and join it
+    // If not, try and join it
     if (!joined) {
       try {
         await app.client.conversations.join({ token, channel: channelId });
         joined = true;
       } catch (error) {
-        // This error is returned if the channel is private
         if (error.data.error === 'channel_not_found') {
+          // The channel is private
           joined = false;
-          // This error is returned if the channel is private / something else
         } else if (error.data.error === 'method_not_supported_for_channel_type') {
+          // The channel is private
           joined = false;
         } else {
-          // Otherwise, it's something else
           throw error;
         }
       }
