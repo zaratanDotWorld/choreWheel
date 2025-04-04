@@ -28,6 +28,14 @@ exports.formatStats = function (stats) {
   return `<@${residentId}> - ${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} (${(completionPct * 100).toFixed(0)}%) ${emoji}`;
 };
 
+exports.formatTotalStats = function (stats) {
+  const pointsEarned = stats.reduce((sum, stat) => sum + stat.pointsEarned, 0);
+  const pointsOwed = stats.reduce((sum, stat) => sum + stat.pointsOwed, 0);
+  const completionPct = pointsEarned / pointsOwed;
+
+  return `*Total - ${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} (${(completionPct * 100).toFixed(0)}%)*`;
+};
+
 // Home views
 
 exports.choresIntroView = function () {

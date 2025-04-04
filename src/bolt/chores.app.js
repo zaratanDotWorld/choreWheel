@@ -141,15 +141,22 @@ app.event('app_home_opened', async ({ body, event }) => {
     // Prune workspace
     await common.pruneWorkspaceMembers(app, choresConf.oauth, houseId, now);
 
-    // Post house stats
-    const prevMonthEnd = getPrevMonthEnd(now);
-    const prevMonthStart = getMonthStart(prevMonthEnd);
-    const choreStats = await Chores.getHouseChoreStats(houseId, prevMonthStart, prevMonthEnd);
-    if (choreStats.length) {
-      const text = ':scroll: *Last month\'s chore points* :scroll: \n' +
-        choreStats.map(cs => `\n${views.formatStats(cs)}`)
-          .join('');
-      await postMessage(text);
+    // Post house stats (checking the length to avoid posting when someone gets activated)
+    if (chorePenalties.length > 1) {
+      const prevMonthEnd = getPrevMonthEnd(now);
+      const prevMonthStart = getMonthStart(prevMonthEnd);
+      const choreStats = await Chores.getHouseChoreStats(houseId, prevMonthStart, prevMonthEnd);
+
+      if (choreStats.length) {
+        const HEARTS_URL = 'https://www.zaratan.world/chorewheel/hearts';
+        const { heartsConf } = await Admin.getHouse(houseId);
+
+        let text = ':scroll: *Last month\'s chore points* :scroll: \n';
+        text += choreStats.map(cs => `\n${views.formatStats(cs)}`).join('');
+        text += `\n${views.formatTotalStats(choreStats)}`;
+        text += (!heartsConf) ? `\n\n:heart: Want month-to-month accountability? *Get <${HEARTS_URL}|Hearts>!* :heart:` : '';
+        await postMessage(text);
+      }
     }
   }
 });
