@@ -17,7 +17,7 @@ const {
   choresHourPrecision,
   pointsPerResident,
   inflationFactor,
-  bootstrapDuration,
+  bootstrapValue,
   choresMinVotes,
   choreMinVotesThreshold,
   penaltyIncrement,
@@ -210,6 +210,12 @@ exports.getProposedPreferenceSaturation = async function (houseId, residentId, c
 
 // Chore Values
 
+exports.addChoreValues = async function (choreValues) {
+  return db('ChoreValue')
+    .insert(choreValues)
+    .returning('*');
+};
+
 exports.getChoreValue = async function (choreId, startTime, endTime) {
   assert(choreId, 'Invalid choreId!');
 
@@ -323,7 +329,7 @@ exports.getLastChoreValueUpdateTime = async function (houseId, updateTime) {
 
   return (lastChoreValue)
     ? lastChoreValue.valuedAt
-    : new Date(updateTime - bootstrapDuration); // First update seeds a fixed value
+    : updateTime;
 };
 
 // Chore Points
@@ -421,9 +427,7 @@ exports.updateChoreValues = async function (houseId, now) {
     }
   }
 
-  return db('ChoreValue')
-    .insert(choreValues)
-    .returning('*');
+  return exports.addChoreValues(choreValues);
 };
 
 exports.getUpdatedChoreValues = async function (houseId, updateTime) {
@@ -447,9 +451,7 @@ exports.addSpecialChoreValue = async function (houseId, name, description, value
   const metadata = { name, description };
   const choreValue = { houseId, value, valuedAt: now, metadata };
 
-  return db('ChoreValue')
-    .insert(choreValue)
-    .returning('*');
+  return exports.addChoreValues(choreValue);
 };
 
 // Chore Claims
@@ -787,11 +789,16 @@ exports.getSpecialChoreProposalMinVotes = async function (houseId, value, now) {
 
 exports.executeChoreProposal = async function (houseId, choreId, name, metadata, active, now) {
   if (metadata.value) {
+    // Add a special chore
     const { description, value } = metadata;
     await exports.addSpecialChoreValue(houseId, name, description, value, now);
   } else if (!choreId) {
-    await exports.addChore(houseId, name, metadata);
+    // Add a regular chore
+    const [ chore ] = await exports.addChore(houseId, name, metadata);
+    const choreValue = { houseId, choreId: chore.id, valuedAt: now, value: bootstrapValue };
+    await exports.addChoreValues(choreValue);
   } else {
+    // Edit/deactivate a regular chore
     await exports.editChore(choreId, name, metadata, active);
   }
 };
