@@ -429,12 +429,14 @@ app.view('chores-rank-3', async ({ ack, body }) => {
   // Get the proposed ranking and preference saturation
   const proposedRankings = await Chores.getProposedChoreRankings(houseId, newPrefs, now);
   const targetChoreRanking = proposedRankings.find(ranking => ranking.id === targetChore.id);
-  const preferenceSaturation = await Chores.getProposedPreferenceSaturation(houseId, residentId, targetChore.id, newPrefs, now);
+  const prefSaturation = await Chores.getProposedPreferenceSaturation(houseId, residentId, targetChore.id, newPrefs, now);
 
   // Forward the preferences through metadata
   const prefsMetadata = JSON.stringify({ targetChore, sourceChoreIds, preference });
 
-  const view = views.choresRankView3(targetChore, targetChoreRanking, prefsMetadata, preferenceSaturation);
+  const numResidents = (await Admin.getResidents(houseId, now)).length;
+
+  const view = views.choresRankView3(targetChore, targetChoreRanking, prefsMetadata, prefSaturation, numResidents);
   await ack({ response_action: 'push', view });
 });
 
@@ -457,11 +459,15 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   const newPriority = Math.round(targetChoreRanking.ranking * 1000);
   const change = newPriority - targetChore.priority;
 
+  const numResidents = (await Admin.getResidents(houseId, now)).length;
+
   if (change > 0) {
-    const text = `Someone *prioritized ${targetChore.name}* by *${change}*, to *${newPriority} ppt* :rocket:`;
+    const text = `Someone *prioritized ${targetChore.name}* by *${change} pptt*, to *${newPriority}* :rocket:\n\n` +
+      `That's about *${views.formatPointsPerDay(targetChoreRanking.ranking, numResidents)} points per day*.`;
     await postMessage(text);
   } else if (change < 0) {
-    const text = `Someone *deprioritized ${targetChore.name}* by *${Math.abs(change)}*, to *${newPriority} ppt* :snail:`;
+    const text = `Someone *deprioritized ${targetChore.name}* by *${Math.abs(change)} ppt*, to *${newPriority}* :snail:\n\n` +
+      `That's about *${views.formatPointsPerDay(targetChoreRanking.ranking, numResidents)} points per day*.`;
     await postMessage(text);
   }
 

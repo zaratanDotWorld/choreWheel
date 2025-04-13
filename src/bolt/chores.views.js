@@ -36,6 +36,11 @@ exports.formatTotalStats = function (stats) {
   return `*Total - ${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} (${(completionPct * 100).toFixed(0)}%)*`;
 };
 
+exports.formatPointsPerDay = function (ranking, numResidents) {
+  const pointsPerDay = ranking * (pointsPerResident / 30) * numResidents;
+  return (pointsPerDay > 5) ? pointsPerDay.toFixed(0) : pointsPerDay.toFixed(1);
+};
+
 // Home views
 
 exports.choresIntroView = function () {
@@ -430,18 +435,20 @@ exports.choresRankView2 = function (preference, targetChore, choreRankings) {
   };
 };
 
-exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetadata, preferenceSaturation) {
+exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetadata, prefSaturation, numResidents) {
   const newPriority = Math.round(targetChoreRanking.ranking * 1000);
   const change = newPriority - targetChore.priority;
+  const pointsPerDay = exports.formatPointsPerDay(targetChoreRanking.ranking, numResidents);
 
   const effect = change >= 0 ? 'an *increase*' : 'a *decrease*';
   const emoji = change >= 0 ? ':rocket:' : ':snail:';
-  const saturation = change >= 0 ? preferenceSaturation : 1 - preferenceSaturation;
+  const saturation = change >= 0 ? prefSaturation : 1 - prefSaturation;
 
   const header = 'Set chore priorities';
   const priorityText = 'After your update, ' +
       `*${targetChore.name}* will have a priority of *${newPriority} ppt*, ` +
-      `${effect} of *${Math.abs(change)} ppt* ${emoji}.`;
+      `${effect} of *${Math.abs(change)} ppt* ${emoji}\n\n` +
+      `That's about *${pointsPerDay} points per day*.`;
   const saturationText = `Your preferences for *${targetChore.name}* are at *${(saturation * 100).toFixed(0)}%* of possible strength. ` +
     'If you want a *bigger effect*, ' +
     (saturation > 0.8 ? 'ask others to support your priorities.' : 'you can strengthen your preferences.');
