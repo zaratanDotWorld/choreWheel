@@ -104,16 +104,15 @@ exports.choresHomeView = function (choreChannel, choreStats, numActive) {
   const channelText = `Events will be posted in <#${choreChannel}> :mailbox_with_mail:`;
 
   const actions = [];
-  if (pointsOwed > 0) {
-    if (Number(pointsEarned) < Number(pointsOwed) + pointsBuffer) {
-      actions.push(common.blockButton('chores-claim', ':hand::skin-tone-4: Claim a chore'));
-    }
-    actions.push(common.blockButton('chores-break', ':camping: Take a break'));
-    actions.push(common.blockButton('chores-gift', ':gift: Gift your points'));
-    actions.push(common.blockButton('chores-special', ':bulb: Add special chore'));
-    actions.push(common.blockButton('chores-rank', ':scales: Set priorities'));
-    actions.push(common.blockButton('chores-propose', ':notebook: Edit chores list'));
+
+  if (Number(pointsEarned) < Number(pointsOwed) + pointsBuffer) {
+    actions.push(common.blockButton('chores-claim', ':hand::skin-tone-4: Claim a chore'));
   }
+  actions.push(common.blockButton('chores-break', ':camping: Take a break'));
+  actions.push(common.blockButton('chores-gift', ':gift: Gift your points'));
+  actions.push(common.blockButton('chores-special', ':bulb: Add special chore'));
+  actions.push(common.blockButton('chores-rank', ':scales: Set priorities'));
+  actions.push(common.blockButton('chores-propose', ':notebook: Edit chores list'));
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
@@ -123,7 +122,10 @@ exports.choresHomeView = function (choreChannel, choreStats, numActive) {
   blocks.push(common.blockSection(pointsText));
   blocks.push(common.blockSection(activeText));
   blocks.push(common.blockSection(channelText));
-  blocks.push(common.blockActions(actions));
+
+  if (pointsOwed > 0) {
+    blocks.push(common.blockActions(actions));
+  }
 
   return {
     type: 'home',
