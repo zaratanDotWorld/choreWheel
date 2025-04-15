@@ -1178,7 +1178,7 @@ describe('Chores', async () => {
       let penalty;
       const penaltyTime = new Date(getNextMonthStart(now).getTime() + penaltyDelay);
       penalty = await Chores.calculatePenalty(RESIDENT1, penaltyTime);
-      expect(penalty).to.equal(0);
+      expect(penalty).to.equal(0.25);
       penalty = await Chores.calculatePenalty(RESIDENT2, penaltyTime);
       expect(penalty).to.equal(1);
       penalty = await Chores.calculatePenalty(RESIDENT3, penaltyTime);

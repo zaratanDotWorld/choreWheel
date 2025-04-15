@@ -21,6 +21,7 @@ const {
   choresMinVotes,
   choreMinVotesThreshold,
   penaltyIncrement,
+  penaltyUnit,
   penaltyDelay,
   choresPollLength,
   dampingFactor,
@@ -716,8 +717,7 @@ exports.calculatePenalty = async function (residentId, penaltyTime) {
   if (deficiency <= 0) {
     return -0.5;
   } else {
-    const truncatedDeficiency = Math.floor(deficiency / penaltyIncrement) * penaltyIncrement;
-    return truncatedDeficiency / (2 * penaltyIncrement);
+    return Math.floor(deficiency / penaltyIncrement) * penaltyUnit;
   }
 };
 

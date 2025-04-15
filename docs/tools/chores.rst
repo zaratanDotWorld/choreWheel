@@ -179,6 +179,8 @@ The app home is also the entryway into the basic functionality, described below:
       :header-rows: 1
       :widths: auto
 
+    If you want **more examples** of potential chores, check out `this spreadsheet <https://docs.google.com/spreadsheets/d/1e5vQ7JFIPl50Grc97bLkgGBV4tbhh-VOZcKkThWNqa8/edit?gid=0#gid=0>`_.
+
 :guilabel:`Set priorities`
   The **total amount** of points distributed per month is fixed, at 100 points per resident.
   Those points are distributed continuously over the course of the month. In a 10-person house and a 30-day month, that works out to about **33 points per day** in total.
