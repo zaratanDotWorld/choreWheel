@@ -111,9 +111,9 @@ exports.choresHomeView = function (choreChannel, choreStats, numActive) {
     actions.push(common.blockButton('chores-break', ':camping: Take a break'));
     actions.push(common.blockButton('chores-gift', ':gift: Gift your points'));
     actions.push(common.blockButton('chores-special', ':bulb: Add special chore'));
+    actions.push(common.blockButton('chores-rank', ':scales: Set priorities'));
     actions.push(common.blockButton('chores-propose', ':notebook: Edit chores list'));
   }
-  actions.push(common.blockButton('chores-rank', ':scales: Set priorities'));
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
