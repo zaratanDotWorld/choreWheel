@@ -273,11 +273,17 @@ exports.getInputBlock = function (body, blockIdx) {
   return body.view.state.values[blockId];
 };
 
-exports.feedbackLink = '<mailto:support@zaratan.world|Submit Feedback>';
+exports.makeLink = function (url, text) {
+  return `<${url}|${text}>`;
+};
+
+exports.feedbackLink = exports.makeLink('mailto:support@zaratan.world', 'Submit Feedback');
 
 exports.ADMIN_ONLY = ':warning: This function is admin-only :warning:';
-exports.MISSING_SCOPE = ':cd: Please <https://www.zaratan.world/chorewheel/start|reinstall the app> ' +
-  'for the latest features :cd:';
+
+exports.MISSING_SCOPE = ':cd: Please ' +
+  exports.makeLink('https://www.zaratan.world/chorewheel/start', 'reinstall the app') +
+  ' for the latest features :cd:';
 
 // Vote processing
 

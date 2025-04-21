@@ -589,6 +589,8 @@ exports.choresGiftView = function (currentBalance) {
 // Chore proposals
 
 exports.choresProposeView = function (minVotes, isAdmin) {
+  const docsUrl = 'https://docs.chorewheel.zaratan.world/en/latest/tools/chores.html#core-concepts';
+
   const header = 'Edit chores list';
   const mainText = 'Chores are not set in stone. ' +
     'If you believe things could be flowing better, consider *adding, removing, or changing* some chores. ' +
@@ -596,7 +598,8 @@ exports.choresProposeView = function (minVotes, isAdmin) {
     'When defining chores, a key challenge is finding the right "size". ' +
     'Bigger chores are harder to do, but easier to prioritize and verify. ' +
     'Smaller chores are the opposite.\n\n' +
-    'Ultimately, finding the right balance is an ongoing discovery process.';
+    'Ultimately, finding the right balance is an ongoing discovery process. ' +
+    `If you want some examples of good chores, *check out the ${common.makeLink(docsUrl, 'docs')}*.`;
 
   const blocks = [];
   blocks.push(common.blockHeader(header));

@@ -11,7 +11,7 @@ Quickstart
 1. Set an app events channel
 2. Activate all participating users
 3. Make a list of 3-5 starter chores/descriptions: dishes, sweeping, etc
-4. Enter the chores using ``Edit Chores List``, and upvote them in the app  channel
+4. Enter the chores using ``Edit Chores List``, and upvote them in the app channel
 5. Wait 1-2 days for the chores to accumulate points
 6. Encourage people to check current chore values and to ``Claim a Chore`` which is fairly-valued
 7. Encourage people to ``Set Priorities`` if they feel that a chore is being over/under valued
@@ -66,21 +66,34 @@ Chores
 
   .. note::
 
-    Here is an example of a well-defined chore:
-
-    Dishes
-      - Put away all clean dishes from the drying rack or washing machine
-      - Put any dirty dishes in the washing machine
-      - Clean any large pots or pans by hand and put in the drying rack
-      - Run the washing machine if full
-
-  .. tip::
-
     Chores don't *have* to be limited to literal chores like doing dishes or sweeping floors.
     Rather, they can include any type of task which folks want to be encouraged to do.
 
     Groups have used Chores to encourage things like food prep and house dinners, as well as movement classes and studio time.
     It all comes down to what your group wants to collectively prioritize, and the trade-offs it wants to make.
+
+    **If you want more examples of potential chores, check out `this spreadsheet <https://docs.google.com/spreadsheets/d/1e5vQ7JFIPl50Grc97bLkgGBV4tbhh-VOZcKkThWNqa8/edit?gid=0#gid=0>`_.**
+
+  .. warning::
+
+    When defining chores, it is easy to either go **too micro** (e.g. "Wipe off the dinner table") or **too macro** (e.g. "Deep clean the whole kitchen").
+    If too micro, people will resent having to officially "claim" the chore.
+    If too macro, the chore will never get done, despite being worth a lot of points.
+
+    **Don't be afraid to experiment and add, remove, or edit chores.**
+    Consider meeting weekly in the first month or two to discuss what's working and what isn't.
+
+  .. tip::
+
+    Here is a comparison of two sets of chores, one from a house which continues to use the app, and one which stopped using it.
+
+    The **successful house** defined a comprehensive and complementary set of chores focused on the kitchen area.
+    The **unsuccessful house** defined chores in a way that created gaps and overlaps, such that important tasks went undone or were done without recognition.
+
+    .. csv-table:: Successful and Unsuccessful Chore Examples
+      :file: chore-examples.csv
+      :header-rows: 1
+      :widths: auto
 
 Points
   Everyone owes **100 points** per month.
@@ -139,47 +152,21 @@ The app home is also the entryway into the basic functionality, described below:
   Anyone who goes out of town for at least **3 days** can take a break, and they'll owe less points for that month (also, points will accumulate more slowly on the days that they're gone).
 
 :guilabel:`Gift your points`
-  Not every useful piece of work around the house can be expressed as a recurring chore.
-  Things happen randomly, and spontaneously, and it's valuable to be able to recognize those things.
-  As mentioned above, the total amount of points per month is fixed, but there's no reason folks can't give away points that *they themselves have earned*.
-
   After someone has claimed a chore and gotten points, they can gift those points to someone else in recognition of a useful contribution that they've made.
   It's their choice who to gift and why and how much, since they're the one who earned those points in the first place.
 
-:guilabel:`Edit chores list`
-  Before anyone can claim a chore, the chore needs to be defined.
-  Chores can be added, edited, or deleted.
+  .. tip::
 
-  Chore edits start as proposals and go to the house for a vote.
-  If the vote passes, the chore is created and begins accumulating points.
+    Gifting points makes it easy to tag-team a chore.
+
+:guilabel:`Add special chore`
+  Not every useful piece of work around the house can be expressed as a recurring chore.
+  Things happen randomly, and spontaneously, and it's valuable to be able to recognize those things.
+  **Special chores** are one-off chores that are voted on by the house, with the points value set in advance.
 
   .. note::
 
-    Admins can "force" changes, bypassing the proposal process.
-    This can be useful when just getting started.
-
-  .. warning::
-
-    When defining chores, it is easy to either go **too micro** (e.g. "Wipe off the dinner table") or **too macro** (e.g. "Deep clean the whole kitchen").
-    If too micro, people will resent having to officially "claim" the chore.
-    If too macro, the chore will never get done, despite being worth a lot of points.
-
-    **Don't be afraid to experiment and add, remove, or edit chores.**
-    Consider meeting weekly in the first month or two to discuss what's working and what isn't.
-
-  .. tip::
-
-    Here is a comparison of two sets of chores, one from a house which continues to use the app, and one which stopped using it.
-
-    The **successful house** defined a comprehensive and complementary set of chores focused on the kitchen area.
-    The **unsuccessful house** defined chores in a way that created gaps and overlaps, such that important tasks went undone or were done without recognition.
-
-    .. csv-table:: Successful and Unsuccessful Chore Examples
-      :file: chore-examples.csv
-      :header-rows: 1
-      :widths: auto
-
-    If you want **more examples** of potential chores, check out `this spreadsheet <https://docs.google.com/spreadsheets/d/1e5vQ7JFIPl50Grc97bLkgGBV4tbhh-VOZcKkThWNqa8/edit?gid=0#gid=0>`_.
+    Once a special chore has been approved, you'll still need to claim it.
 
 :guilabel:`Set priorities`
   The **total amount** of points distributed per month is fixed, at 100 points per resident.
@@ -193,7 +180,7 @@ The app home is also the entryway into the basic functionality, described below:
   So, the kitchen-related chores should be higher-priority than the yard chores, getting perhaps 5 points per day instead of 2.
   The only rule is that for one chore to gain priority, another one has to lose it -- since the total amount of points is fixed, priorities are fundamentally relative.
 
-  Chore priorities are determined collectively, but independently, using a novel valuing system.
+  Chore priorities are determined collectively, but independently, using an innovative valuing system.
   Anyone in the house can, within limits, unilaterally increase the priority of one chore and decrease the priority of another.
   The idea is that priorities don't need to be set in advance at a meeting, but rather are "discovered" organically as people notice chores being over- or under-valued.
 
@@ -205,6 +192,18 @@ The app home is also the entryway into the basic functionality, described below:
 
     There's more happening under the hood, but it's not important for your day-to-day.
     If you want to get into the nuts and bolts, go `here <https://colony.io/budgetbox.pdf>`_.
+
+:guilabel:`Edit chores list`
+  Before anyone can claim a chore, the chore needs to be defined.
+  Chores can be added, edited, or deleted.
+
+  Chore edits start as proposals and go to the house for a vote.
+  If the vote passes, the chore is created and begins accumulating points.
+
+  .. note::
+
+    Admins can "force" changes, bypassing the proposal process.
+    This can be useful when just getting started.
 
 Slash Commands
 --------------
