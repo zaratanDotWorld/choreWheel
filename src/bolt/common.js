@@ -196,7 +196,7 @@ exports.setChannel = async function (app, oauth, confName, command, respond) {
 
     if (joined) {
       await Admin.updateHouseConf(houseId, confName, { channel: channelId });
-      text = `App events channel set to <#${channelId}> :fire:`;
+      text = `App events channel set to <#${channelId}> :tada:`;
     } else {
       text = 'Could not set the channel. ' +
         'If this is a private channel, invite the app manually first, *then* set the channel.';

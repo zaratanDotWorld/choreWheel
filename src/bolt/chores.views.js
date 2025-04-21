@@ -105,14 +105,18 @@ exports.choresHomeView = function (choreChannel, choreStats, numActive) {
 
   const actions = [];
 
-  if (Number(pointsEarned) < Number(pointsOwed) + pointsBuffer) {
-    actions.push(common.blockButton('chores-claim', ':hand::skin-tone-4: Claim a chore'));
+  if (pointsOwed > 0) {
+    if (Number(pointsEarned) < Number(pointsOwed) + pointsBuffer) {
+      actions.push(common.blockButton('chores-claim', ':hand::skin-tone-4: Claim a chore'));
+    }
+    actions.push(common.blockButton('chores-break', ':camping: Take a break'));
+    actions.push(common.blockButton('chores-gift', ':gift: Gift your points'));
+    actions.push(common.blockButton('chores-special', ':bulb: Add special chore'));
+    actions.push(common.blockButton('chores-rank', ':scales: Set priorities'));
+    actions.push(common.blockButton('chores-propose', ':notebook: Edit chores list'));
+  } else {
+    actions.push(common.blockButton('chores-activate-solo', ':fire: Activate yourself'));
   }
-  actions.push(common.blockButton('chores-break', ':camping: Take a break'));
-  actions.push(common.blockButton('chores-gift', ':gift: Gift your points'));
-  actions.push(common.blockButton('chores-special', ':bulb: Add special chore'));
-  actions.push(common.blockButton('chores-rank', ':scales: Set priorities'));
-  actions.push(common.blockButton('chores-propose', ':notebook: Edit chores list'));
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
@@ -122,10 +126,7 @@ exports.choresHomeView = function (choreChannel, choreStats, numActive) {
   blocks.push(common.blockSection(pointsText));
   blocks.push(common.blockSection(activeText));
   blocks.push(common.blockSection(channelText));
-
-  if (pointsOwed > 0) {
-    blocks.push(common.blockActions(actions));
-  }
+  blocks.push(common.blockActions(actions));
 
   return {
     type: 'home',
@@ -215,6 +216,26 @@ exports.choresActivateView = function (residents) {
   return {
     type: 'modal',
     callback_id: 'chores-activate-callback',
+    title: TITLE,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
+    blocks,
+  };
+};
+
+exports.choresActivateSoloView = function () {
+  const header = 'Activate yourself';
+  const mainText = 'By activating yourself, you agree to participate in the chores system.\n\n' +
+    'You will be responsible for earning *~100 points per month* by doing chores. ' +
+    'You can claim chores, vote on claims, take breaks, gift points to others, set chore priorities, and propose new chores.';
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-activate-solo-callback',
     title: TITLE,
     close: common.CLOSE,
     submit: common.SUBMIT,

@@ -222,7 +222,7 @@ app.view('chores-activate-callback', async ({ ack, body }) => {
   await ack();
 
   const actionName = 'chores-activate-callback';
-  const { now, houseId, residentId } = common.beginAction(actionName, body);
+  const { now, houseId } = common.beginAction(actionName, body);
 
   const activate = common.getInputBlock(body, -3).action.selected_option.value === 'true';
   const selectAll = common.getInputBlock(body, -2).select_all.selected_options.length > 0;
@@ -257,7 +257,7 @@ app.view('chores-activate-callback', async ({ ack, body }) => {
     text = `Deactivated ${residentsText || 'nobody'} :ice_cube:`;
   }
 
-  await postEphemeral(residentId, text);
+  await postMessage(text);
 });
 
 app.command('/chores-reset', async ({ ack, command, respond }) => {
@@ -283,6 +283,28 @@ app.view('chores-reset-callback', async ({ ack, body }) => {
   await Chores.resetChorePoints(houseId, now);
 
   await postMessage(`<@${residentId}> just reset all chore points :volcano:`);
+});
+
+// Solo activate flow
+
+app.action('chores-activate-solo', async ({ ack, body }) => {
+  await ack();
+
+  const actionName = 'chores-activate-solo';
+  common.beginAction(actionName, body);
+
+  const view = views.choresActivateSoloView();
+  await common.openView(app, choresConf.oauth, body.trigger_id, view);
+});
+
+app.view('chores-activate-solo-callback', async ({ ack, body }) => {
+  await ack();
+
+  const actionName = 'chores-activate-solo-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
+
+  await common.activateResident(houseId, residentId, now);
+  await postMessage(`<@${residentId}> is now active :fire:`);
 });
 
 // Claim flow

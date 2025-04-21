@@ -72,7 +72,7 @@ Chores
     Groups have used Chores to encourage things like food prep and house dinners, as well as movement classes and studio time.
     It all comes down to what your group wants to collectively prioritize, and the trade-offs it wants to make.
 
-    **If you want more examples of potential chores, check out `this spreadsheet <https://docs.google.com/spreadsheets/d/1e5vQ7JFIPl50Grc97bLkgGBV4tbhh-VOZcKkThWNqa8/edit?gid=0#gid=0>`_.**
+    **If you want more examples of potential chores**, check out `this spreadsheet <https://docs.google.com/spreadsheets/d/1e5vQ7JFIPl50Grc97bLkgGBV4tbhh-VOZcKkThWNqa8/edit?gid=0#gid=0>`_.
 
   .. warning::
 
