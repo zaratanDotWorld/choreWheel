@@ -1180,11 +1180,11 @@ describe('Chores', async () => {
 
       let penalty;
       const penaltyTime = new Date(getNextMonthStart(now).getTime() + penaltyDelay);
-      penalty = await Chores.calculatePenalty(RESIDENT1, penaltyTime);
+      penalty = await Chores.calculatePenalty(HOUSE, RESIDENT1, penaltyTime);
       expect(penalty).to.equal(0.25);
-      penalty = await Chores.calculatePenalty(RESIDENT2, penaltyTime);
+      penalty = await Chores.calculatePenalty(HOUSE, RESIDENT2, penaltyTime);
       expect(penalty).to.equal(1);
-      penalty = await Chores.calculatePenalty(RESIDENT3, penaltyTime);
+      penalty = await Chores.calculatePenalty(HOUSE, RESIDENT3, penaltyTime);
       expect(penalty).to.equal(1.5);
     });
 
@@ -1208,11 +1208,11 @@ describe('Chores', async () => {
 
       let penalty;
       const penaltyTime = new Date(getNextMonthStart(feb1).getTime() + penaltyDelay);
-      penalty = await Chores.calculatePenalty(RESIDENT1, penaltyTime);
+      penalty = await Chores.calculatePenalty(HOUSE, RESIDENT1, penaltyTime);
       expect(penalty).to.equal(-0.5);
-      penalty = await Chores.calculatePenalty(RESIDENT2, penaltyTime);
+      penalty = await Chores.calculatePenalty(HOUSE, RESIDENT2, penaltyTime);
       expect(penalty).to.equal(-0.5);
-      penalty = await Chores.calculatePenalty(RESIDENT3, penaltyTime);
+      penalty = await Chores.calculatePenalty(HOUSE, RESIDENT3, penaltyTime);
       expect(penalty).to.equal(0.5);
     });
 
@@ -1297,25 +1297,32 @@ describe('Chores', async () => {
       const feb15 = new Date(feb1.getTime() + 14 * DAY);
       const mar1 = new Date(feb1.getTime() + 28 * DAY);
 
-      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: feb1, value: 10 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: feb1, value: 11 } ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, feb1, 0);
 
       let choreStats;
 
-      choreStats = await Chores.getChoreStats(RESIDENT1, feb1, feb15);
-      expect(choreStats.pointsEarned).to.equal(10);
+      choreStats = await Chores.getChoreStats(HOUSE, RESIDENT1, feb1, feb15);
+      expect(choreStats.pointsEarned).to.equal(11);
       expect(choreStats.pointsOwed).to.equal(100);
+      expect(choreStats.completionPct).to.equal(0.11);
+
+      await Chores.addSpecialChoreValue(HOUSE, 'Special', '', 40, feb1);
+
+      choreStats = await Chores.getChoreStats(HOUSE, RESIDENT1, feb1, feb15);
+      expect(choreStats.pointsEarned).to.equal(11);
+      expect(choreStats.pointsOwed).to.equal(110); // Split among 4 residents
       expect(choreStats.completionPct).to.equal(0.1);
 
       await Chores.addChoreBreak(HOUSE, RESIDENT1, feb1, mar1, '');
 
-      choreStats = await Chores.getChoreStats(RESIDENT1, feb1, feb15);
-      expect(choreStats.pointsEarned).to.equal(10);
+      choreStats = await Chores.getChoreStats(HOUSE, RESIDENT1, feb1, feb15);
+      expect(choreStats.pointsEarned).to.equal(11);
       expect(choreStats.pointsOwed).to.equal(0);
       expect(choreStats.completionPct).to.equal(1);
 
       // Returns default values for non-existent resident
-      choreStats = await Chores.getChoreStats('', feb1, mar1);
+      choreStats = await Chores.getChoreStats(HOUSE, '', feb1, mar1);
       expect(choreStats.pointsEarned).to.equal(0);
       expect(choreStats.pointsOwed).to.equal(0);
       expect(choreStats.completionPct).to.equal(1);
