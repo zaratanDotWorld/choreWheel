@@ -26,6 +26,7 @@ const {
   choresPollLength,
   dampingFactor,
   choresProposalPollLength,
+  specialChoreProposalPollLength,
   choreProposalPct,
   choreSpecialPctMin,
   choreSpecialPctMax,
@@ -757,7 +758,7 @@ exports.createSpecialChoreProposal = async function (houseId, proposedBy, name, 
   assert(value <= availablePoints * specialChoreMaxValueProportion, 'Value too large!');
 
   const minVotes = await exports.getSpecialChoreProposalMinVotes(houseId, value, now);
-  const [ poll ] = await Polls.createPoll(houseId, now, choresProposalPollLength, minVotes);
+  const [ poll ] = await Polls.createPoll(houseId, now, specialChoreProposalPollLength, minVotes);
 
   const metadata = { description, value };
 
