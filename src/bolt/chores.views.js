@@ -3,6 +3,7 @@ const {
   achievementBase,
   choresPollLength,
   choresProposalPollLength,
+  specialChoreProposalPollLength,
   specialChoreMaxValueProportion,
   penaltyIncrement,
   pointsBuffer,
@@ -900,7 +901,7 @@ exports.choresSpecialCallbackView = function (proposal, minVotes) {
     blocks.push(common.blockSection(proposal.metadata.description));
   }
 
-  blocks.push(common.blockSection(common.makeVoteText(minVotes, choresProposalPollLength)));
+  blocks.push(common.blockSection(common.makeVoteText(minVotes, specialChoreProposalPollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(proposal.pollId, 1, 0)));
   return blocks;
 };

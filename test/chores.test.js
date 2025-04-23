@@ -16,6 +16,7 @@ const {
   penaltyDelay,
   choresPollLength,
   choresProposalPollLength,
+  specialChoreProposalPollLength,
   specialChoreMaxValueProportion,
 } = require('../src/config');
 
@@ -40,6 +41,7 @@ describe('Chores', async () => {
   let tomorrow;
   let challengeEnd;
   let proposalEnd;
+  let specialChoreProposalEnd;
   let monthEnd;
 
   async function setChorePreference (houseId, residentId, targetChoreId, sourceChoreId, preference) {
@@ -59,6 +61,7 @@ describe('Chores', async () => {
     tomorrow = new Date(now.getTime() + DAY);
     challengeEnd = new Date(now.getTime() + choresPollLength);
     proposalEnd = new Date(now.getTime() + choresProposalPollLength);
+    specialChoreProposalEnd = new Date(now.getTime() + specialChoreProposalPollLength);
     monthEnd = getMonthEnd(now);
   });
 
@@ -1869,9 +1872,9 @@ describe('Chores', async () => {
       await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
       await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
 
-      await Chores.resolveChoreProposal(proposal.id, proposalEnd);
+      await Chores.resolveChoreProposal(proposal.id, specialChoreProposalEnd);
 
-      [ choreValue ] = await Chores.getSpecialChoreValues(HOUSE, proposalEnd);
+      [ choreValue ] = await Chores.getSpecialChoreValues(HOUSE, specialChoreProposalEnd);
       expect(choreValue.metadata.name).to.equal(name);
       expect(choreValue.metadata.description).to.equal(description);
       expect(choreValue.value).to.be.almost(value, 1e-5);
@@ -1895,11 +1898,11 @@ describe('Chores', async () => {
 
       let minVotes;
 
-      minVotes = await Chores.getSpecialChoreProposalMinVotes(HOUSE, 50, now);
+      minVotes = await Chores.getSpecialChoreProposalMinVotes(HOUSE, 10, now);
       expect(minVotes).to.equal(3); // Minimum 30%
 
-      minVotes = await Chores.getSpecialChoreProposalMinVotes(HOUSE, 100, now);
-      expect(minVotes).to.equal(4); // 1 person per 25 points
+      minVotes = await Chores.getSpecialChoreProposalMinVotes(HOUSE, 45, now);
+      expect(minVotes).to.equal(5); // 1 person per 10 points
 
       minVotes = await Chores.getSpecialChoreProposalMinVotes(HOUSE, 200, now);
       expect(minVotes).to.equal(6); // Maximum 60%
