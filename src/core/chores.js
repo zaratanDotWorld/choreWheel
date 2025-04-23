@@ -681,7 +681,7 @@ exports.addChorePenalty = async function (houseId, residentId, currentTime) {
     const hearts = await Hearts.getHearts(residentId, penaltyTime);
     if (hearts === null) { return []; } // Don't penalize if not initialized
 
-    const penaltyAmount = await exports.calculatePenalty(residentId, penaltyTime);
+    const penaltyAmount = await exports.calculatePenalty(houseId, residentId, penaltyTime);
     return Hearts.generateHearts(houseId, residentId, HEART_CHORE, penaltyTime, -penaltyAmount);
   } else {
     return [];
@@ -690,10 +690,16 @@ exports.addChorePenalty = async function (houseId, residentId, currentTime) {
 
 // Chore Stats
 
-exports.getChoreStats = async function (residentId, startTime, endTime) {
+exports.getChoreStats = async function (houseId, residentId, startTime, endTime) {
   const pointsEarned = await exports.getAllChorePoints(residentId, startTime, endTime);
   const workingPercentage = await exports.getWorkingResidentPercentage(residentId, endTime);
-  const pointsOwed = pointsPerResident * workingPercentage;
+
+  const numResidents = (await Admin.getResidents(houseId, endTime)).length;
+  const specialChoreTotal = (await exports.getSpecialChoreValues(houseId, startTime, endTime))
+    .reduce((sum, scv) => sum + scv.value, 0);
+
+  // Note: specialChoreValues are not re-allocated based on workingPercentage; so are mildly inflationary
+  const pointsOwed = (pointsPerResident + (specialChoreTotal / numResidents)) * workingPercentage;
   const completionPct = (pointsOwed) ? pointsEarned / pointsOwed : 1;
 
   return { pointsEarned, pointsOwed, completionPct };
@@ -702,16 +708,16 @@ exports.getChoreStats = async function (residentId, startTime, endTime) {
 exports.getHouseChoreStats = async function (houseId, startTime, endTime) {
   const residents = await Admin.getResidents(houseId, endTime);
   const choreStats = await Promise.all(residents.map(async (r) => {
-    const choreStats = await exports.getChoreStats(r.slackId, startTime, endTime);
+    const choreStats = await exports.getChoreStats(houseId, r.slackId, startTime, endTime);
     return { residentId: r.slackId, ...choreStats };
   }));
   return choreStats.sort((a, b) => b.completionPct - a.completionPct); // Descending order
 };
 
-exports.calculatePenalty = async function (residentId, penaltyTime) {
+exports.calculatePenalty = async function (houseId, residentId, penaltyTime) {
   const prevMonthEnd = getPrevMonthEnd(penaltyTime);
   const prevMonthStart = getMonthStart(prevMonthEnd);
-  const choreStats = await exports.getChoreStats(residentId, prevMonthStart, prevMonthEnd);
+  const choreStats = await exports.getChoreStats(houseId, residentId, prevMonthStart, prevMonthEnd);
 
   const deficiency = choreStats.pointsOwed - choreStats.pointsEarned;
 
