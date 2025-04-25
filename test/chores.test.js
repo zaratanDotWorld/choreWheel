@@ -17,7 +17,6 @@ const {
   choresPollLength,
   choresProposalPollLength,
   specialChoreProposalPollLength,
-  specialChoreMaxValueProportion,
 } = require('../src/config');
 
 const { getMonthStart, getMonthEnd, getNextMonthStart, getPrevMonthEnd } = require('../src/utils');
@@ -42,7 +41,6 @@ describe('Chores', async () => {
   let challengeEnd;
   let proposalEnd;
   let specialChoreProposalEnd;
-  let monthEnd;
 
   async function setChorePreference (houseId, residentId, targetChoreId, sourceChoreId, preference) {
     const normalizedPref = Chores.normalizeChorePreference({ targetChoreId, sourceChoreId, preference });
@@ -62,7 +60,6 @@ describe('Chores', async () => {
     challengeEnd = new Date(now.getTime() + choresPollLength);
     proposalEnd = new Date(now.getTime() + choresProposalPollLength);
     specialChoreProposalEnd = new Date(now.getTime() + specialChoreProposalPollLength);
-    monthEnd = getMonthEnd(now);
   });
 
   afterEach(async () => {
@@ -717,7 +714,7 @@ describe('Chores', async () => {
       const [ name, description, value ] = [ 'Special Chore', 'Complicated task', 10 ];
       await Chores.addSpecialChoreValue(HOUSE, name, description, value, now);
 
-      const [ choreValue ] = await Chores.getSpecialChoreValues(HOUSE, now);
+      const [ choreValue ] = await Chores.getUnclaimedSpecialChoreValues(HOUSE, now);
       expect(choreValue.metadata.name).to.equal(name);
       expect(choreValue.metadata.description).to.equal(description);
       expect(choreValue.value).to.equal(value);
@@ -883,7 +880,7 @@ describe('Chores', async () => {
       await Chores.addSpecialChoreValue(HOUSE, name, description, value, now);
 
       let choreValues;
-      choreValues = await Chores.getSpecialChoreValues(HOUSE, now);
+      choreValues = await Chores.getUnclaimedSpecialChoreValues(HOUSE, now);
       expect(choreValues.length).to.equal(1);
 
       await Chores.claimSpecialChore(HOUSE, choreValues[0].id, RESIDENT1, now, 20);
@@ -895,7 +892,7 @@ describe('Chores', async () => {
       expect(choreClaims[0].value).to.equal(value);
       expect(choreClaims[0].metadata.timeSpent).to.equal(20);
 
-      choreValues = await Chores.getSpecialChoreValues(HOUSE, now);
+      choreValues = await Chores.getUnclaimedSpecialChoreValues(HOUSE, now);
       expect(choreValues.length).to.equal(0);
     });
 
@@ -903,7 +900,7 @@ describe('Chores', async () => {
       const [ name, description, value ] = [ 'Special Chore', 'Complicated task', 15 ];
       await Chores.addSpecialChoreValue(HOUSE, name, description, value, now);
 
-      const [ choreValue ] = await Chores.getSpecialChoreValues(HOUSE, now);
+      const [ choreValue ] = await Chores.getUnclaimedSpecialChoreValues(HOUSE, now);
       const [ choreClaim ] = await Chores.claimSpecialChore(HOUSE, choreValue.id, RESIDENT1, now, 20);
 
       await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
@@ -1111,12 +1108,12 @@ describe('Chores', async () => {
       await Chores.addSpecialChoreValue(HOUSE, name, description, value, now);
 
       let choreValues;
-      choreValues = await Chores.getSpecialChoreValues(HOUSE, now);
+      choreValues = await Chores.getUnclaimedSpecialChoreValues(HOUSE, now);
       expect(choreValues.length).to.equal(1);
 
       const [ choreClaim ] = await Chores.claimSpecialChore(HOUSE, choreValues[0].id, RESIDENT1, now, 0);
 
-      choreValues = await Chores.getSpecialChoreValues(HOUSE, now);
+      choreValues = await Chores.getUnclaimedSpecialChoreValues(HOUSE, now);
       expect(choreValues.length).to.equal(0);
 
       // Deny the claim
@@ -1126,7 +1123,7 @@ describe('Chores', async () => {
       const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, proposalEnd);
       expect(resolvedClaim.valid).to.be.false;
 
-      choreValues = await Chores.getSpecialChoreValues(HOUSE, proposalEnd);
+      choreValues = await Chores.getUnclaimedSpecialChoreValues(HOUSE, proposalEnd);
       expect(choreValues.length).to.equal(1);
     });
 
@@ -1307,7 +1304,7 @@ describe('Chores', async () => {
       expect(choreStats.pointsOwed).to.equal(100);
       expect(choreStats.completionPct).to.equal(0.11);
 
-      await Chores.addSpecialChoreValue(HOUSE, 'Special', '', 40, feb1);
+      await Chores.addSpecialChoreValue(HOUSE, 'Special', '', 40, feb15);
 
       choreStats = await Chores.getChoreStats(HOUSE, RESIDENT1, feb1, feb15);
       expect(choreStats.pointsEarned).to.equal(11);
@@ -1864,14 +1861,11 @@ describe('Chores', async () => {
     });
 
     it('can create a special chore proposal', async () => {
-      const [ name, description ] = [ 'Special Chore', 'Complicated task' ];
-
-      const availablePoints = await Chores.getTotalAvailablePoints(HOUSE, now, monthEnd);
-      const value = availablePoints * specialChoreMaxValueProportion;
+      const [ name, description, value ] = [ 'Special Chore', 'Complicated task', 100 ];
 
       let choreValue;
 
-      [ choreValue ] = await Chores.getSpecialChoreValues(HOUSE, now);
+      [ choreValue ] = await Chores.getUnclaimedSpecialChoreValues(HOUSE, now);
       expect(choreValue).to.be.undefined;
 
       const [ proposal ] = await Chores.createSpecialChoreProposal(HOUSE, RESIDENT1, name, description, value, now);
@@ -1881,20 +1875,10 @@ describe('Chores', async () => {
 
       await Chores.resolveChoreProposal(proposal.id, specialChoreProposalEnd);
 
-      [ choreValue ] = await Chores.getSpecialChoreValues(HOUSE, specialChoreProposalEnd);
+      [ choreValue ] = await Chores.getUnclaimedSpecialChoreValues(HOUSE, specialChoreProposalEnd);
       expect(choreValue.metadata.name).to.equal(name);
       expect(choreValue.metadata.description).to.equal(description);
-      expect(choreValue.value).to.be.almost(value, 1e-5);
-    });
-
-    it('cannot create a special chore proposal with a too-large value', async () => {
-      const [ name, description ] = [ 'Special Chore', 'Complicated task' ];
-
-      const availablePoints = await Chores.getTotalAvailablePoints(HOUSE, now, monthEnd);
-      const value = availablePoints * specialChoreMaxValueProportion + 1;
-
-      await expect(Chores.createSpecialChoreProposal(HOUSE, RESIDENT1, name, description, value, now))
-        .to.be.rejectedWith('Value too large!');
+      expect(choreValue.value).to.equal(value);
     });
 
     it('can return the minimum votes for a special chore proposal', async () => {

@@ -11,7 +11,7 @@ const { App, LogLevel } = require('@slack/bolt');
 const { Admin, Polls, Chores } = require('../core/index');
 const { displayThreshold, breakMinDays, achievementWindow } = require('../config');
 const { YAY, DAY, CHORES_CONF, CHORES_IDX } = require('../constants');
-const { getMonthStart, getMonthEnd, shiftDate, getPrevMonthEnd, sleep } = require('../utils');
+const { getMonthStart, shiftDate, getPrevMonthEnd, sleep } = require('../utils');
 
 const common = require('./common');
 const views = require('./chores.views');
@@ -698,15 +698,8 @@ app.action('chores-special', async ({ ack, body }) => {
   const actionName = 'chores-special';
   const { now, houseId } = common.beginAction(actionName, body);
 
-  const availablePoints = await Chores.getTotalAvailablePoints(houseId, now, getMonthEnd(now));
-
-  let view;
-  if (availablePoints > 0) {
-    const minVotes = await Chores.getSpecialChoreProposalMinVotes(houseId, 0, now);
-    view = views.choresSpecialView(availablePoints, minVotes);
-  } else {
-    view = views.choresSpecialNoPointsView();
-  }
+  const minVotes = await Chores.getSpecialChoreProposalMinVotes(houseId, 0, now);
+  const view = views.choresSpecialView(minVotes);
 
   await common.openView(app, choresConf.oauth, body.trigger_id, view);
 
