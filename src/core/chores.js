@@ -366,15 +366,12 @@ exports.getAvailablePoints = async function (houseId, startTime, endTime) {
     // pps = mp / (t_m - t_0)
     const pointsPerSecond = monthlyPoints / (monthEnd - monthStart);
 
-    // pd = sum_i{scv_i / (t_m - t_i)}
-    const pointsDiscount = await exports.getPointsDiscount(houseId, monthEnd);
-
     // ui = t_n - t_l
     const updateInterval = Math.min(monthEnd, endTime) - Math.max(monthStart, startTime);
 
     availablePoints.push({
-      // p_a = (pps - pd) * wr * ui
-      value: (pointsPerSecond - pointsDiscount) * workingRatio * updateInterval,
+      // p_a = pps * wr * ui
+      value: pointsPerSecond * workingRatio * updateInterval,
       // Assign p_a to the correct period
       date: new Date(Math.min(monthEnd, endTime)),
     });
@@ -389,20 +386,6 @@ exports.getAvailablePoints = async function (houseId, startTime, endTime) {
 exports.getTotalAvailablePoints = async function (houseId, startTime, endTime) {
   const availablePoints = await exports.getAvailablePoints(houseId, startTime, endTime);
   return availablePoints.reduce((sum, ap) => sum + ap.value, 0);
-};
-
-exports.getPointsDiscount = async function (houseId, now) {
-  const monthStart = getMonthStart(now);
-  const monthEnd = getMonthEnd(now);
-
-  const specialChoreValues = await db('ChoreValue')
-    .where({ houseId })
-    .whereNull('choreId')
-    .whereBetween('valuedAt', [ monthStart, now ])
-    .select('*');
-
-  return specialChoreValues
-    .reduce((sum, scv) => sum + scv.value / (monthEnd - scv.valuedAt), 0);
 };
 
 // Chore Values III (TODO: move this section)
