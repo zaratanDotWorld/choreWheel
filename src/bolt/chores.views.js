@@ -4,7 +4,6 @@ const {
   choresPollLength,
   choresProposalPollLength,
   specialChoreProposalPollLength,
-  specialChoreMaxValueProportion,
   penaltyIncrement,
   pointsBuffer,
 } = require('../config');
@@ -819,31 +818,11 @@ exports.choresProposeCallbackViewForce = function (metadata, residentId, name, d
 
 // Special chore flow
 
-exports.choresSpecialNoPointsView = function () {
-  const header = 'Add special chore';
-  const mainText = 'There are no points available for special chores. ' +
-    'Try again next month.';
-
-  const blocks = [];
-  blocks.push(common.blockHeader(header));
-  blocks.push(common.blockSection(mainText));
-
-  return {
-    type: 'modal',
-    title: TITLE,
-    close: common.CLOSE,
-    blocks,
-  };
-};
-
-exports.choresSpecialView = function (availablePoints, minVotes) {
-  const maxPoints = availablePoints * specialChoreMaxValueProportion;
-
+exports.choresSpecialView = function (minVotes) {
   const header = 'Add special chore';
   const mainText = 'Sometimes there are big one-off tasks that need to be done. ' +
     'These can be seen as *special chores*.\n\n' +
-    `Creating special chores requires *one upvote per 25 points*, and a *minimum of ${minVotes} upvotes*.\n\n` +
-    `There are *${maxPoints.toFixed(0)} points* available for special chores.`;
+    `Creating special chores requires *one upvote per 25 points*, and a *minimum of ${minVotes} upvotes*.`;
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
@@ -873,7 +852,6 @@ exports.choresSpecialView = function (availablePoints, minVotes) {
       action_id: 'points',
       type: 'number_input',
       min_value: '1',
-      max_value: maxPoints.toFixed(0),
       is_decimal_allowed: false,
       placeholder: common.blockPlaintext('Number of points the chore is worth'),
     },

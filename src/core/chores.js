@@ -31,7 +31,6 @@ const {
   choreSpecialPctMin,
   choreSpecialPctMax,
   pingInterval,
-  specialChoreMaxValueProportion,
   specialChoreVoteIncrement,
 } = require('../config');
 
@@ -243,16 +242,26 @@ exports.getSpecialChoreValue = async function (choreValueId) {
     .first();
 };
 
-exports.getSpecialChoreValues = async function (houseId, now) {
+// Returns all specialChoreValues within a range
+exports.getSpecialChoreValues = async function (houseId, startTime, endTime) {
+  return db('ChoreValue')
+    .leftJoin('ChoreClaim', 'ChoreValue.id', 'ChoreClaim.choreValueId')
+    .where('ChoreValue.houseId', houseId)
+    .where('ChoreValue.valuedAt', '>', startTime)
+    .where('ChoreValue.valuedAt', '<=', endTime)
+    .whereNull('ChoreValue.choreId')
+    .select('ChoreValue.*');
+};
+
+// Returns all unclaimed specialChoreValues
+exports.getUnclaimedSpecialChoreValues = async function (houseId, now) {
   return db('ChoreValue')
     .leftJoin('ChoreClaim', 'ChoreValue.id', 'ChoreClaim.choreValueId')
     .where('ChoreValue.houseId', houseId)
     .where('ChoreValue.valuedAt', '<=', now)
     .whereNull('ChoreValue.choreId')
-    .where(function () {
-      this.where('ChoreClaim.valid', false)
-        .orWhereNull('ChoreClaim.valid');
-    })
+    .groupBy('ChoreValue.id')
+    .havingRaw('COUNT(CASE WHEN "ChoreClaim"."valid" = TRUE THEN 1 END) = 0')
     .select('ChoreValue.*');
 };
 
@@ -268,7 +277,7 @@ exports.getCurrentChoreValues = async function (houseId, now) {
     });
   }
 
-  for (const choreValue of await exports.getSpecialChoreValues(houseId, now)) {
+  for (const choreValue of await exports.getUnclaimedSpecialChoreValues(houseId, now)) {
     choreValues.push({
       choreValueId: choreValue.id,
       name: choreValue.name,
@@ -486,14 +495,9 @@ exports.getLatestChoreClaim = async function (choreId, currentTime, excludedClai
 
 exports.claimChore = async function (houseId, choreId, claimedBy, claimedAt, timeSpent) {
   const choreValue = await exports.getCurrentChoreValue(choreId, claimedAt);
-
   assert(choreValue, 'Cannot claim a zero-value chore!');
 
-  const minVotes = (choreValue >= choreMinVotesThreshold)
-    ? Math.min(choresMinVotes, (await Admin.getResidents(houseId, claimedAt)).length) // Hacky, but efficient
-    : 1;
-
-  const [ poll ] = await Polls.createPoll(houseId, claimedAt, choresPollLength, minVotes);
+  const [ poll ] = await exports.createChoresPoll(houseId, choreValue, claimedAt);
 
   return db('ChoreClaim')
     .insert({
@@ -511,8 +515,7 @@ exports.claimChore = async function (houseId, choreId, claimedBy, claimedAt, tim
 exports.claimSpecialChore = async function (houseId, choreValueId, claimedBy, claimedAt, timeSpent) {
   const choreValue = await exports.getSpecialChoreValue(choreValueId);
 
-  const minVotes = (choreValue.value >= choreMinVotesThreshold) ? choresMinVotes : 1;
-  const [ poll ] = await Polls.createPoll(houseId, claimedAt, choresPollLength, minVotes);
+  const [ poll ] = await exports.createChoresPoll(houseId, choreValue.value, claimedAt);
 
   return db('ChoreClaim')
     .insert({
@@ -525,6 +528,15 @@ exports.claimSpecialChore = async function (houseId, choreValueId, claimedBy, cl
       metadata: { ...choreValue.metadata, timeSpent },
     })
     .returning('*');
+};
+
+exports.createChoresPoll = async function (houseId, choreValue, claimedAt) {
+  const numResidents = (await Admin.getResidents(houseId, claimedAt)).length;
+  const minVotes = (choreValue >= choreMinVotesThreshold)
+    ? Math.min(choresMinVotes, numResidents)
+    : 1;
+
+  return Polls.createPoll(houseId, claimedAt, choresPollLength, minVotes);
 };
 
 exports.resolveChoreClaim = async function (claimId, resolvedAt) {
@@ -759,10 +771,6 @@ exports.createChoreProposal = async function (houseId, proposedBy, choreId, name
 };
 
 exports.createSpecialChoreProposal = async function (houseId, proposedBy, name, description, value, now) {
-  const availablePoints = await exports.getTotalAvailablePoints(houseId, now, getMonthEnd(now));
-
-  assert(value <= availablePoints * specialChoreMaxValueProportion, 'Value too large!');
-
   const minVotes = await exports.getSpecialChoreProposalMinVotes(houseId, value, now);
   const [ poll ] = await Polls.createPoll(houseId, now, specialChoreProposalPollLength, minVotes);
 
