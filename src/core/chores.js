@@ -261,7 +261,7 @@ exports.getUnclaimedSpecialChoreValues = async function (houseId, now) {
     .where('ChoreValue.valuedAt', '<=', now)
     .whereNull('ChoreValue.choreId')
     .groupBy('ChoreValue.id')
-    .havingRaw('COUNT(CASE WHEN "ChoreClaim"."valid" = TRUE THEN 1 END) = 0')
+    .havingRaw('COUNT(CASE WHEN "ChoreClaim"."valid" = TRUE THEN 1 END) = 0') // No valid claims
     .select('ChoreValue.*');
 };
 
