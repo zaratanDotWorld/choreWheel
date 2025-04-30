@@ -242,18 +242,19 @@ exports.getSpecialChoreValue = async function (choreValueId) {
     .first();
 };
 
-// Returns all specialChoreValues within a range
-exports.getSpecialChoreValues = async function (houseId, startTime, endTime) {
-  return db('ChoreValue')
+exports.getSpecialChoreTotal = async function (houseId, startTime, endTime) {
+  const choreValues = await db('ChoreValue')
     .leftJoin('ChoreClaim', 'ChoreValue.id', 'ChoreClaim.choreValueId')
     .where('ChoreValue.houseId', houseId)
     .where('ChoreValue.valuedAt', '>', startTime)
     .where('ChoreValue.valuedAt', '<=', endTime)
     .whereNull('ChoreValue.choreId')
-    .select('ChoreValue.*');
+    .sum('ChoreValue.value')
+    .first();
+
+  return choreValues.sum || 0;
 };
 
-// Returns all unclaimed specialChoreValues
 exports.getUnclaimedSpecialChoreValues = async function (houseId, now) {
   return db('ChoreValue')
     .leftJoin('ChoreClaim', 'ChoreValue.id', 'ChoreClaim.choreValueId')
@@ -690,8 +691,7 @@ exports.getChoreStats = async function (houseId, residentId, startTime, endTime)
   const workingPercentage = await exports.getWorkingResidentPercentage(residentId, endTime);
 
   const numResidents = (await Admin.getResidents(houseId, endTime)).length;
-  const specialChoreTotal = (await exports.getSpecialChoreValues(houseId, startTime, endTime))
-    .reduce((sum, scv) => sum + scv.value, 0);
+  const specialChoreTotal = await exports.getSpecialChoreTotal(houseId, startTime, endTime);
 
   // Note: specialChoreValues are not re-allocated based on workingPercentage; so are mildly inflationary
   const pointsOwed = (pointsPerResident + (specialChoreTotal / numResidents)) * workingPercentage;
