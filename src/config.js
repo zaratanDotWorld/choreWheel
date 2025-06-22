@@ -43,7 +43,7 @@ exports.heartsVoteScalar = 0.2;
 
 // Things
 exports.thingsPollLength = 6 * HOUR;
-exports.thingsSpecialPollLength = 2 * DAY;
+exports.thingsSpecialPollLength = 1 * DAY;
 exports.thingsMinVotesScalar = 50; // One vote per $50
 exports.thingsMinPctSpecial = 0.3; // Minimum threshold for special buys
 exports.thingsMaxPct = 0.6; // Maximum approval threshold
