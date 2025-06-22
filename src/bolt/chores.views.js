@@ -404,7 +404,7 @@ exports.choresRankView = function (choreRankings) {
     'by',
     {
       action_id: 'preference',
-      type: 'static_select',
+      type: 'radio_buttons',
       initial_option: preferenceOptions[0],
       options: preferenceOptions,
     },

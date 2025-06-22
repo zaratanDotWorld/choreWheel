@@ -484,7 +484,7 @@ app.view('chores-rank-callback', async ({ ack, body }) => {
   const numResidents = (await Admin.getResidents(houseId, now)).length;
 
   if (change > 0) {
-    const text = `Someone *prioritized ${targetChore.name}* by *${change} pptt*, to *${newPriority}* :rocket:\n\n` +
+    const text = `Someone *prioritized ${targetChore.name}* by *${change} ppt*, to *${newPriority}* :rocket:\n\n` +
       `That's about *${views.formatPointsPerDay(targetChoreRanking.ranking, numResidents)} points per day*.`;
     await postMessage(text);
   } else if (change < 0) {
