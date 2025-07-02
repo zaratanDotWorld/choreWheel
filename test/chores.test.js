@@ -1219,7 +1219,7 @@ describe('Chores', async () => {
       const feb8 = new Date(feb1.getTime() + 7 * DAY);
       const feb15 = new Date(feb1.getTime() + 14 * DAY);
       const feb22 = new Date(feb1.getTime() + 21 * DAY);
-      const ppc = pointsPerResident * 4 / 3; // Monthly points per chore
+      const ppc = pointsPerResident * inflationFactor * 4 / 3; // Monthly points per chore
 
       let choreValues;
       let choreStats;
