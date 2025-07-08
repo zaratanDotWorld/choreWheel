@@ -312,13 +312,20 @@ exports.choresClaimView = function (chores) {
   };
 };
 
-exports.choresClaimView2 = function (chore) {
+exports.choresClaimView2 = function (chore, choreValue, choreStats) {
+  const pointsEarned = (choreValue + choreStats.pointsEarned).toFixed(0);
+  const pointsOwed = choreStats.pointsOwed.toFixed(0);
+  const sparkles = exports.getSparkles(pointsEarned);
+
   const header = 'Claim a chore';
+  const statsText = `After claiming this chore, you'll have *${pointsEarned}* of *${pointsOwed}* points ${sparkles} `;
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(`*${chore.name || chore.metadata.name}*`));
   blocks.push(common.blockSection(chore.metadata.description || ''));
+  blocks.push(common.blockDivider());
+  blocks.push(common.blockSection(statsText));
 
   return {
     type: 'modal',

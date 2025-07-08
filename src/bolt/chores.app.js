@@ -329,7 +329,7 @@ app.action('chores-claim', async ({ ack, body }) => {
 
 app.view('chores-claim-2', async ({ ack, body }) => {
   const actionName = 'chores-claim-2';
-  common.beginAction(actionName, body);
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
 
   const { choreId, choreValueId } = JSON.parse(common.getInputBlock(body, -1).chore.selected_option.value);
 
@@ -339,7 +339,14 @@ app.view('chores-claim-2', async ({ ack, body }) => {
     ? await Chores.getChore(choreId)
     : await Chores.getSpecialChoreValue(choreValueId);
 
-  const view = views.choresClaimView2(chore);
+  const choreValue = (choreId)
+    ? await Chores.getCurrentChoreValue(choreId, now)
+    : chore.value;
+
+  const monthStart = getMonthStart(now);
+  const choreStats = await Chores.getChoreStats(houseId, residentId, monthStart, now);
+
+  const view = views.choresClaimView2(chore, choreValue, choreStats);
   await ack({ response_action: 'push', view });
 });
 
