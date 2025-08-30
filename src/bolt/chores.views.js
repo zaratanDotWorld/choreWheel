@@ -25,7 +25,7 @@ exports.formatStats = function (stats) {
     emoji = ':broken_heart:';
   }
 
-  return `<@${residentId}> - ${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} (${(completionPct * 100).toFixed(0)}%) ${emoji}`;
+  return `<@${residentId}> - ${pointsEarned} / ${pointsOwed} (${(completionPct * 100).toFixed(0)}%) ${emoji}`;
 };
 
 exports.formatTotalStats = function (stats) {
@@ -33,7 +33,7 @@ exports.formatTotalStats = function (stats) {
   const pointsOwed = stats.reduce((sum, stat) => sum + stat.pointsOwed, 0);
   const completionPct = pointsEarned / pointsOwed;
 
-  return `*Total - ${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} (${(completionPct * 100).toFixed(0)}%)*`;
+  return `*Total - ${pointsEarned} / ${pointsOwed} (${(completionPct * 100).toFixed(0)}%)*`;
 };
 
 exports.formatPointsPerDay = function (ranking, numResidents) {
@@ -83,8 +83,7 @@ _For more tips and tricks for using *Chores*, read the <${DOCS_URL}|manual>._
 };
 
 exports.choresHomeView = function (choreChannel, choreStats, numActive) {
-  const pointsEarned = choreStats.pointsEarned.toFixed(0);
-  const pointsOwed = choreStats.pointsOwed.toFixed(0);
+  const { pointsEarned, pointsOwed } = choreStats;
   const progressEmoji = (pointsOwed - pointsEarned < penaltyIncrement)
     ? ':white_check_mark:'
     : ':muscle::skin-tone-4:';
@@ -313,8 +312,8 @@ exports.choresClaimView = function (chores) {
 };
 
 exports.choresClaimView2 = function (chore, choreValue, choreStats) {
-  const pointsEarned = (choreValue + choreStats.pointsEarned).toFixed(0);
-  const pointsOwed = choreStats.pointsOwed.toFixed(0);
+  const pointsEarned = (choreValue.toFixed(0) + choreStats.pointsEarned);
+  const pointsOwed = choreStats.pointsOwed;
   const sparkles = exports.getSparkles(pointsEarned);
 
   const header = 'Claim a chore';
@@ -360,7 +359,7 @@ exports.choresClaimCallbackView = function (claim, name, minVotes, achivementPoi
   const sparkles = exports.getSparkles(monthlyPoints);
 
   const mainText = `*<@${claim.claimedBy}>* did *${name}* for ` +
-    `*${claim.value.toFixed(0)} points* ${achievement}${sparkles}`;
+    `*${claim.value} points* ${achievement}${sparkles}`;
 
   const blocks = [];
   blocks.push(common.blockSection(mainText));
@@ -570,7 +569,7 @@ exports.choresBreakView = function (currentTime) {
 exports.choresGiftView = function (currentBalance) {
   const header = 'Gift chore points';
   const mainText = 'Gift someone points from your balance. ' +
-    `You have *${currentBalance.toFixed(0)} points* to gift.`;
+    `You have *${currentBalance} points* to gift.`;
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
