@@ -735,7 +735,7 @@ describe('Chores', async () => {
 
     it('can claim a chore', async () => {
       await db('ChoreValue').insert([
-        { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 },
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 9.5 },
         { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 5 },
         { houseId: HOUSE, choreId: sweeping.id, valuedAt: now, value: 20 },
       ]);

@@ -489,7 +489,8 @@ exports.claimChore = async function (houseId, choreId, claimedBy, claimedAt, tim
       choreId,
       claimedBy,
       claimedAt,
-      value: choreValue,
+      // We round claims to the nearest integer
+      value: Math.round(choreValue),
       pollId: poll.id,
       metadata: { timeSpent },
     })
@@ -694,7 +695,7 @@ exports.getChoreStats = async function (houseId, residentId, startTime, endTime)
   const specialChoreTotal = await exports.getSpecialChoreTotal(houseId, startTime, endTime);
 
   // Note: specialChoreValues are not re-allocated based on workingPercentage; so are mildly inflationary
-  const pointsOwed = (pointsPerResident + (specialChoreTotal / numResidents)) * workingPercentage;
+  const pointsOwed = Math.round((pointsPerResident + (specialChoreTotal / numResidents)) * workingPercentage);
   const completionPct = (pointsOwed) ? pointsEarned / pointsOwed : 1;
 
   return { pointsEarned, pointsOwed, completionPct };
