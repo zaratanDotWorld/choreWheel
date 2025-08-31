@@ -489,7 +489,7 @@ exports.claimChore = async function (houseId, choreId, claimedBy, claimedAt, tim
       choreId,
       claimedBy,
       claimedAt,
-      value: choreValue,
+      value: Math.round(choreValue),
       pollId: poll.id,
       metadata: { timeSpent },
     })
@@ -528,13 +528,13 @@ exports.resolveChoreClaim = async function (claimId, resolvedAt) {
   const valid = await Polls.isPollValid(choreClaim.pollId, resolvedAt);
 
   // If a special chore, no need to recalculate the value
-  const value = (choreClaim.choreId)
+  const choreValue = (choreClaim.choreId)
     ? await exports.getCurrentChoreValue(choreClaim.choreId, choreClaim.claimedAt, claimId)
     : choreClaim.value;
 
   return db('ChoreClaim')
     .where({ id: claimId, resolvedAt: null }) // Cannot resolve twice
-    .update({ resolvedAt, valid, value })
+    .update({ resolvedAt, valid, value: Math.round(choreValue) })
     .returning('*');
 };
 
@@ -687,14 +687,15 @@ exports.addChorePenalty = async function (houseId, residentId, currentTime) {
 // Chore Stats
 
 exports.getChoreStats = async function (houseId, residentId, startTime, endTime) {
-  const pointsEarned = await exports.getAllChorePoints(residentId, startTime, endTime);
+  // TODO: Remove this Math.round 2 months after releasing github.com/zaratanDotWorld/choreWheel/pull/263
+  const pointsEarned = Math.round(await exports.getAllChorePoints(residentId, startTime, endTime));
   const workingPercentage = await exports.getWorkingResidentPercentage(residentId, endTime);
 
   const numResidents = (await Admin.getResidents(houseId, endTime)).length;
   const specialChoreTotal = await exports.getSpecialChoreTotal(houseId, startTime, endTime);
 
   // Note: specialChoreValues are not re-allocated based on workingPercentage; so are mildly inflationary
-  const pointsOwed = (pointsPerResident + (specialChoreTotal / numResidents)) * workingPercentage;
+  const pointsOwed = Math.round((pointsPerResident + (specialChoreTotal / numResidents)) * workingPercentage);
   const completionPct = (pointsOwed) ? pointsEarned / pointsOwed : 1;
 
   return { pointsEarned, pointsOwed, completionPct };

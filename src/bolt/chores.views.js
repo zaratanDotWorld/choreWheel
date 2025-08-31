@@ -25,6 +25,7 @@ exports.formatStats = function (stats) {
     emoji = ':broken_heart:';
   }
 
+  // TODO: Remove these toFixed(0) 2 months after releasing github.com/zaratanDotWorld/choreWheel/pull/263
   return `<@${residentId}> - ${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} (${(completionPct * 100).toFixed(0)}%) ${emoji}`;
 };
 
@@ -33,6 +34,7 @@ exports.formatTotalStats = function (stats) {
   const pointsOwed = stats.reduce((sum, stat) => sum + stat.pointsOwed, 0);
   const completionPct = pointsEarned / pointsOwed;
 
+  // TODO: Remove these toFixed(0) 2 months after releasing github.com/zaratanDotWorld/choreWheel/pull/263
   return `*Total - ${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} (${(completionPct * 100).toFixed(0)}%)*`;
 };
 
@@ -83,8 +85,7 @@ _For more tips and tricks for using *Chores*, read the <${DOCS_URL}|manual>._
 };
 
 exports.choresHomeView = function (choreChannel, choreStats, numActive) {
-  const pointsEarned = choreStats.pointsEarned.toFixed(0);
-  const pointsOwed = choreStats.pointsOwed.toFixed(0);
+  const { pointsEarned, pointsOwed } = choreStats;
   const progressEmoji = (pointsOwed - pointsEarned < penaltyIncrement)
     ? ':white_check_mark:'
     : ':muscle::skin-tone-4:';
@@ -141,7 +142,7 @@ exports.choresStatsView = function (choreClaims, choreBreaks, choreStats) {
   const mainText = 'Extra information about monthly chores.';
 
   const claimText = '*Your claimed chores:*\n' +
-  choreClaims.map(cc => `\n${cc.claimedAt.toDateString()} - ${cc.name} - ${cc.value.toFixed(1)} points`)
+  choreClaims.map(cc => `\n${cc.claimedAt.toDateString()} - ${cc.name} - ${cc.value} points`)
     .join('');
 
   const breakText = '*Current chore breaks:*\n' +
@@ -314,7 +315,7 @@ exports.choresClaimView = function (chores) {
 
 exports.choresClaimView2 = function (chore, choreValue, choreStats) {
   const pointsEarned = (choreValue + choreStats.pointsEarned).toFixed(0);
-  const pointsOwed = choreStats.pointsOwed.toFixed(0);
+  const pointsOwed = choreStats.pointsOwed;
   const sparkles = exports.getSparkles(pointsEarned);
 
   const header = 'Claim a chore';
@@ -360,7 +361,7 @@ exports.choresClaimCallbackView = function (claim, name, minVotes, achivementPoi
   const sparkles = exports.getSparkles(monthlyPoints);
 
   const mainText = `*<@${claim.claimedBy}>* did *${name}* for ` +
-    `*${claim.value.toFixed(0)} points* ${achievement}${sparkles}`;
+    `*${claim.value} points* ${achievement}${sparkles}`;
 
   const blocks = [];
   blocks.push(common.blockSection(mainText));
@@ -570,6 +571,7 @@ exports.choresBreakView = function (currentTime) {
 exports.choresGiftView = function (currentBalance) {
   const header = 'Gift chore points';
   const mainText = 'Gift someone points from your balance. ' +
+    // TODO: Remove this toFixed(0) 2 months after releasing github.com/zaratanDotWorld/choreWheel/pull/263
     `You have *${currentBalance.toFixed(0)} points* to gift.`;
 
   const blocks = [];

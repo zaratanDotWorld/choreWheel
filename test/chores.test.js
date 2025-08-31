@@ -735,7 +735,7 @@ describe('Chores', async () => {
 
     it('can claim a chore', async () => {
       await db('ChoreValue').insert([
-        { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 },
+        { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 9.5 },
         { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 5 },
         { houseId: HOUSE, choreId: sweeping.id, valuedAt: now, value: 20 },
       ]);
@@ -826,7 +826,7 @@ describe('Chores', async () => {
     });
 
     it('can successfully resolve a claim', async () => {
-      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 } ]);
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 9.5 } ]);
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now, 0);
 
       await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
