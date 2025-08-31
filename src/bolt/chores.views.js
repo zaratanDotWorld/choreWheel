@@ -25,7 +25,8 @@ exports.formatStats = function (stats) {
     emoji = ':broken_heart:';
   }
 
-  return `<@${residentId}> - ${pointsEarned} / ${pointsOwed} (${(completionPct * 100).toFixed(0)}%) ${emoji}`;
+  // TODO: Remove these toFixed(0) 2 months after releasing github.com/zaratanDotWorld/choreWheel/pull/263
+  return `<@${residentId}> - ${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} (${(completionPct * 100).toFixed(0)}%) ${emoji}`;
 };
 
 exports.formatTotalStats = function (stats) {
@@ -33,7 +34,8 @@ exports.formatTotalStats = function (stats) {
   const pointsOwed = stats.reduce((sum, stat) => sum + stat.pointsOwed, 0);
   const completionPct = pointsEarned / pointsOwed;
 
-  return `*Total - ${pointsEarned} / ${pointsOwed} (${(completionPct * 100).toFixed(0)}%)*`;
+  // TODO: Remove these toFixed(0) 2 months after releasing github.com/zaratanDotWorld/choreWheel/pull/263
+  return `*Total - ${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} (${(completionPct * 100).toFixed(0)}%)*`;
 };
 
 exports.formatPointsPerDay = function (ranking, numResidents) {
@@ -140,7 +142,7 @@ exports.choresStatsView = function (choreClaims, choreBreaks, choreStats) {
   const mainText = 'Extra information about monthly chores.';
 
   const claimText = '*Your claimed chores:*\n' +
-  choreClaims.map(cc => `\n${cc.claimedAt.toDateString()} - ${cc.name} - ${cc.value.toFixed(1)} points`)
+  choreClaims.map(cc => `\n${cc.claimedAt.toDateString()} - ${cc.name} - ${cc.value} points`)
     .join('');
 
   const breakText = '*Current chore breaks:*\n' +
@@ -312,7 +314,7 @@ exports.choresClaimView = function (chores) {
 };
 
 exports.choresClaimView2 = function (chore, choreValue, choreStats) {
-  const pointsEarned = (choreValue.toFixed(0) + choreStats.pointsEarned);
+  const pointsEarned = (choreValue + choreStats.pointsEarned).toFixed(0);
   const pointsOwed = choreStats.pointsOwed;
   const sparkles = exports.getSparkles(pointsEarned);
 
@@ -569,7 +571,8 @@ exports.choresBreakView = function (currentTime) {
 exports.choresGiftView = function (currentBalance) {
   const header = 'Gift chore points';
   const mainText = 'Gift someone points from your balance. ' +
-    `You have *${currentBalance} points* to gift.`;
+    // TODO: Remove this toFixed(0) 2 months after releasing github.com/zaratanDotWorld/choreWheel/pull/263
+    `You have *${currentBalance.toFixed(0)} points* to gift.`;
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
