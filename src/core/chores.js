@@ -18,8 +18,8 @@ const {
   pointsPerResident,
   inflationFactor,
   bootstrapValue,
-  choresMinVotes,
-  choreMinVotesThreshold,
+  choresValueThreshold,
+  choresNumResidentsThreshold,
   penaltyIncrement,
   penaltyUnit,
   penaltyDelay,
@@ -516,9 +516,8 @@ exports.claimSpecialChore = async function (houseId, choreValueId, claimedBy, cl
 
 exports.createChoresPoll = async function (houseId, choreValue, claimedAt) {
   const numResidents = (await Admin.getResidents(houseId, claimedAt)).length;
-  const minVotes = (choreValue >= choreMinVotesThreshold)
-    ? Math.min(choresMinVotes, numResidents)
-    : 1;
+  const approvalNeeded = (choreValue >= choresValueThreshold) && (numResidents >= choresNumResidentsThreshold);
+  const minVotes = approvalNeeded ? 2 : 1;
 
   return Polls.createPoll(houseId, claimedAt, choresPollLength, minVotes);
 };

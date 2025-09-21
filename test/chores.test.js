@@ -772,6 +772,23 @@ describe('Chores', async () => {
       expect(choreValues.length).to.equal(0);
     });
 
+    it('can correctly calculate the minimum votes for a claim', async () => {
+      let proposal;
+
+      // < 10 points -> one vote needed
+      [ proposal ] = await Chores.createChoresPoll(HOUSE, 9, now);
+      expect(proposal.minVotes).to.equal(1);
+
+      [ proposal ] = await Chores.createChoresPoll(HOUSE, 10, now);
+      expect(proposal.minVotes).to.equal(2);
+
+      await Admin.deactivateResident(HOUSE, RESIDENT4);
+
+      // < 4 residents -> one vote needed
+      [ proposal ] = await Chores.createChoresPoll(HOUSE, 10, now);
+      expect(proposal.minVotes).to.equal(1);
+    });
+
     it('can resolve a special chore claim', async () => {
       const [ name, description, value ] = [ 'Special Chore', 'Complicated task', 15 ];
       await Chores.addSpecialChoreValue(HOUSE, name, description, value, now);

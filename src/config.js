@@ -3,8 +3,8 @@ const { HOUR, DAY } = require('./constants');
 // Chores
 exports.choresHourPrecision = 3;
 exports.choresPollLength = DAY;
-exports.choresMinVotes = 2;
-exports.choreMinVotesThreshold = 10;
+exports.choresValueThreshold = 10;
+exports.choresNumResidentsThreshold = 4;
 exports.pointsPerResident = 100;
 exports.pointsBuffer = 200;
 exports.bootstrapValue = 10;
