@@ -45,44 +45,71 @@ exports.formatPointsPerDay = function (ranking, numResidents) {
 
 // Home views
 
-exports.choresIntroView = function () {
+exports.choresOnboardView = function () {
   const header = ':wave::skin-tone-4: Thanks for installing Chores!';
 
-  const instructions = `
-*Follow these steps* to get set up (must be a workspace admin).
-
-*1.* *Invite* all participants to the Slack.
-
-*2.* Make a list of *3-5 starter chores*. Good chores:
-  • Take between *5-30 minutes* to do.
-  • Are things that folks *usually won't do* on their own.
-  • Can be done *anytime* (i.e. not on fixed schedule).
-  • Don't overlap with other chores.
-
-*3.* Set an events channel by calling \`/chores-channel\`, which *unlocks the app*.
-  • If using a *public* channel, you can just call the command in the channel.
-  • If using a *private* channel, manually invite the app to the channel first.
-
-*4.* Use *\`Edit chores list\`* to add the chores you came up with.
-  • Adding a few bullet points as a description will help folks stay consistent.
-  • As an admin, you can "force" the proposal and create the chores immediately.
-
-*5.* *Activate* all the participants by calling \`/chores-activate\`.
-
-Then just sit back and watch the magic happen...
-
-_For more tips and tricks for using *Chores*, read the <${DOCS_URL}|manual>._
-`;
+  const instructions = 'To get started, choose an *events channel*. ' +
+  'Chores will use this channel to post updates, hold votes, and communicate with the group.\n\n' +
+  'You can change this channel later using the `/chores-channel` slash command.';
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(instructions));
+  blocks.push(common.blockActions([
+    common.blockButton('chores-onboard', ':mailbox_with_mail: Choose a channel'),
+  ]));
 
   return {
     type: 'home',
     blocks,
   };
 };
+
+exports.choresOnboardView2 = function () {
+  const header = 'Set app channel';
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockInput(
+    'Choose a channel for app updates',
+    {
+      action_id: 'channel',
+      type: 'channels_select',
+      placeholder: common.blockPlaintext('Choose a channel'),
+    },
+  ));
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-onboard-callback',
+    title: TITLE,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
+    blocks,
+  };
+};
+
+exports.choresOnboardMessage = `
+*Follow these steps* to get set up.
+
+*1.* *Invite* everyone to the Slack.
+
+*2.* *Activate* everyone by calling \`/chores-activate\`.
+
+*3.* Make a list of *3-5 starter chores*. Good chores:
+  • Take between *5-30 minutes* to do.
+  • Are things that folks *usually won't do* on their own.
+  • Can be done *anytime* (i.e. not on fixed schedule).
+  • Don't overlap with other chores.
+
+*4.* Use *\`Edit chores list\`* to add the chores you came up with.
+  • Adding a few bullet points as a description will help folks stay consistent.
+  • Admins can "force" the proposal to create chores immediately.
+
+Then just sit back and watch the magic happen...
+
+_For more tips and tricks for using *Chores*, read the <${DOCS_URL}|manual>._
+`;
 
 exports.choresHomeView = function (choreChannel, choreStats, numActive) {
   const { pointsEarned, pointsOwed } = choreStats;
