@@ -7,7 +7,6 @@ exports.choresValueThreshold = 10;
 exports.choresNumResidentsThreshold = 4;
 exports.pointsPerResident = 100;
 exports.pointsBuffer = 200;
-exports.bootstrapValue = 10;
 exports.inflationFactor = 1.02;
 exports.displayThreshold = 0.5;
 exports.penaltyDelay = exports.choresPollLength + 6 * HOUR; // TODO: make robust

@@ -12,7 +12,6 @@ const { YAY, NAY, DAY, HOUR, MINUTE } = require('../src/constants');
 const {
   pointsPerResident,
   inflationFactor,
-  bootstrapValue,
   penaltyDelay,
   choresPollLength,
   choresProposalPollLength,
@@ -1660,8 +1659,9 @@ describe('Chores', async () => {
       expect(chores.length).to.equal(1);
       expect(chores[0].metadata.description).to.equal(description);
 
+      // Boostrap value equal to number of residents
       const choreValue = await Chores.getCurrentChoreValue(chores[0].id, proposalEnd);
-      expect(choreValue).to.equal(bootstrapValue);
+      expect(choreValue).to.equal(2);
     });
 
     it('can overwrite an existing chore', async () => {

@@ -17,7 +17,6 @@ const {
   choresHourPrecision,
   pointsPerResident,
   inflationFactor,
-  bootstrapValue,
   choresValueThreshold,
   choresNumResidentsThreshold,
   penaltyIncrement,
@@ -786,6 +785,8 @@ exports.getSpecialChoreProposalMinVotes = async function (houseId, value, now) {
 };
 
 exports.executeChoreProposal = async function (houseId, choreId, name, metadata, active, now) {
+  const numResidents = (await Admin.getResidents(houseId, now)).length;
+
   if (metadata.value) {
     // Add a special chore
     const { description, value } = metadata;
@@ -793,7 +794,7 @@ exports.executeChoreProposal = async function (houseId, choreId, name, metadata,
   } else if (!choreId) {
     // Add a regular chore
     const [ chore ] = await exports.addChore(houseId, name, metadata);
-    const choreValue = { houseId, choreId: chore.id, valuedAt: now, value: bootstrapValue };
+    const choreValue = { houseId, choreId: chore.id, valuedAt: now, value: numResidents };
     await exports.addChoreValues(choreValue);
   } else {
     // Edit/deactivate a regular chore
