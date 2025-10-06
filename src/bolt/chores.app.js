@@ -103,7 +103,7 @@ app.event('app_home_opened', async ({ body, event }) => {
 
     view = views.choresHomeView(choresConf.channel, choreStats, workingResidentCount);
   } else {
-    view = views.choresIntroView();
+    view = views.choresOnboardView();
   }
 
   await common.publishHome(app, choresConf.oauth, residentId, view);
@@ -283,6 +283,50 @@ app.view('chores-reset-callback', async ({ ack, body }) => {
   await Chores.resetChorePoints(houseId, now);
 
   await postMessage(`<@${residentId}> just reset all chore points :volcano:`);
+});
+
+// Onboarding flow
+
+app.action('chores-onboard', async ({ ack, body }) => {
+  await ack();
+
+  const actionName = 'chores-onboard';
+  common.beginAction(actionName, body);
+
+  const view = views.choresOnboardView2();
+  await common.openView(app, choresConf.oauth, body.trigger_id, view);
+});
+
+app.view('chores-onboard-callback', async ({ ack, body }) => {
+  await ack();
+
+  const actionName = 'chores-onboard-callback';
+  const { now, houseId, residentId } = common.beginAction(actionName, body);
+
+  const channel = common.getInputBlock(body, -1).channel.selected_channel;
+
+  // Set app channel
+  await app.client.conversations.join({ token: choresConf.oauth.bot.token, channel });
+  await Admin.updateHouseConf(houseId, CHORES_CONF, { channel });
+  choresConf.channel = channel;
+
+  // Activate calling resident
+  await common.activateResident(houseId, residentId, now);
+
+  // Setup initial chores
+  const [ chore1 ] = await Chores.addChore(houseId, 'Dishes', {});
+  const [ chore2 ] = await Chores.addChore(houseId, 'Trash Takeout', {});
+  await Chores.addChoreValues([
+    { houseId, choreId: chore1.id, valuedAt: now, value: 1 },
+    { houseId, choreId: chore2.id, valuedAt: now, value: 1 },
+  ]);
+
+  // Setup initial preference
+  const [ alphaChoreId, betaChoreId ] = [ chore1.id, chore2.id ];
+  const pref = { residentId, alphaChoreId, betaChoreId, preference: 0.7 };
+  await Chores.setChorePreferences(houseId, [ pref ]);
+
+  await postMessage('Welcome to Chores!', views.choresOnboardMessage(choresConf.oauth));
 });
 
 // Solo activate flow
@@ -678,7 +722,7 @@ app.view('chores-propose-callback', async ({ ack, body }) => {
   const metadata = { description };
 
   if (privateMetadata.force) {
-    await Chores.executeChoreProposal(houseId, choreId, name, metadata, active);
+    await Chores.executeChoreProposal(houseId, choreId, name, metadata, active, now);
 
     const text = 'An admin just edited a chore';
     const blocks = views.choresProposeCallbackViewForce(privateMetadata, residentId, name, description);

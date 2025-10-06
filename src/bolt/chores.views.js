@@ -45,43 +45,93 @@ exports.formatPointsPerDay = function (ranking, numResidents) {
 
 // Home views
 
-exports.choresIntroView = function () {
+exports.choresOnboardView = function () {
   const header = ':wave::skin-tone-4: Thanks for installing Chores!';
 
-  const instructions = `
-*Follow these steps* to get set up (must be a workspace admin).
-
-*1.* *Invite* all participants to the Slack.
-
-*2.* Make a list of *3-5 starter chores*. Good chores:
-  • Take between *5-30 minutes* to do.
-  • Are things that folks *usually won't do* on their own.
-  • Can be done *anytime* (i.e. not on fixed schedule).
-  • Don't overlap with other chores.
-
-*3.* Set an events channel by calling \`/chores-channel\`, which *unlocks the app*.
-  • If using a *public* channel, you can just call the command in the channel.
-  • If using a *private* channel, manually invite the app to the channel first.
-
-*4.* Use *\`Edit chores list\`* to add the chores you came up with.
-  • Adding a few bullet points as a description will help folks stay consistent.
-  • As an admin, you can "force" the proposal and create the chores immediately.
-
-*5.* *Activate* all the participants by calling \`/chores-activate\`.
-
-Then just sit back and watch the magic happen...
-
-_For more tips and tricks for using *Chores*, read the <${DOCS_URL}|manual>._
-`;
+  const instructions = 'To get started, choose an *events channel*. ' +
+  'Chores will use this channel to post updates, hold votes, and communicate with the group.\n\n' +
+  'You can change this channel later using the `/chores-channel` slash command.';
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(instructions));
+  blocks.push(common.blockActions([
+    common.blockButton('chores-onboard', ':mailbox_with_mail: Choose a channel'),
+  ]));
 
   return {
     type: 'home',
     blocks,
   };
+};
+
+exports.choresOnboardView2 = function () {
+  const header = 'Set app channel';
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockInput(
+    'Choose a channel for app updates',
+    {
+      action_id: 'channel',
+      type: 'channels_select',
+      placeholder: common.blockPlaintext('Choose a channel'),
+    },
+  ));
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-onboard-callback',
+    title: TITLE,
+    close: common.CLOSE,
+    submit: common.SUBMIT,
+    blocks,
+  };
+};
+
+exports.choresOnboardMessage = function (oauth) {
+  const imageUrl = 'https://raw.githubusercontent.com/zaratanDotWorld/choreWheel/' +
+    'ecd9996619567febdf62edcc20f9617e4414f866/assets/chores-home.png';
+
+  const blocks = [];
+
+  blocks.push(common.blockHeader('Welcome to Chores!'));
+
+  blocks.push(common.blockSection(
+    'Chores is a powerful tool for helping groups share recurring tasks.',
+  ));
+
+  blocks.push(common.blockDivider());
+
+  blocks.push(common.blockSection(
+    'Everyone can access Chores functionality through the app home screen:',
+  ));
+
+  blocks.push(common.blockImage(imageUrl, 'Chore Wheel App Home'));
+
+  blocks.push(common.blockSection(
+    `If you don't see the app home, you can reach it by clicking on <@${oauth.bot.userId}>.`,
+  ));
+
+  blocks.push(common.blockDivider());
+
+  blocks.push(common.blockSection(
+    'Your group has been set up with two starter chores: _Dishes_ and _Trash Takeout_. ' +
+    'Next steps are to *activate the rest of your group* and *add a few more chores* to the list. ' +
+    'Then sit back and let the magic happen. :sparkles:',
+  ));
+
+  blocks.push(common.blockSection(
+    'Folks can activate themselves through the app home, ' +
+    'and admins activate others with the `/chores-activate` command. ' +
+    'Adding and claiming chores can be done by anybody through the app home.',
+  ));
+
+  blocks.push(common.blockSection(
+    `_Tip: pin this message to the channel. To learn more about Chores, read the <${DOCS_URL}|docs>._`,
+  ));
+
+  return blocks;
 };
 
 exports.choresHomeView = function (choreChannel, choreStats, numActive) {
@@ -324,7 +374,11 @@ exports.choresClaimView2 = function (chore, choreValue, choreStats) {
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(`*${chore.name || chore.metadata.name}*`));
-  blocks.push(common.blockSection(chore.metadata.description || ''));
+
+  if (chore.metadata.description) {
+    blocks.push(common.blockSection(chore.metadata.description));
+  }
+
   blocks.push(common.blockDivider());
   blocks.push(common.blockSection(statsText));
 
@@ -716,7 +770,7 @@ exports.choresProposeAddView = function (force, chore) {
       placeholder: common.blockPlaintext('Name of the chore'),
     },
   ));
-  blocks.push(common.blockInput(
+  blocks.push(common.blockInputOptional(
     'Description',
     {
       action_id: 'description',
@@ -845,7 +899,7 @@ exports.choresSpecialView = function (minVotes) {
       placeholder: common.blockPlaintext('Name of the chore'),
     },
   ));
-  blocks.push(common.blockInput(
+  blocks.push(common.blockInputOptional(
     'Description',
     {
       action_id: 'description',

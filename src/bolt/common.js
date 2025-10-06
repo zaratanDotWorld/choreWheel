@@ -367,11 +367,11 @@ exports.makeForceInput = function () {
   ];
 
   return exports.blockInput(
-    '[Admin only] Would you like to force this change?',
+    '[ADMIN ONLY] Would you like to force this change?',
     {
       type: 'radio_buttons',
       action_id: 'force',
-      initial_option: options[1],
+      initial_option: options[0],
       options,
     },
   );
@@ -398,6 +398,10 @@ exports.blockMarkdown = function (text) {
 
 exports.blockHeader = function (text) {
   return { type: 'header', text: exports.blockPlaintext(text) };
+};
+
+exports.blockImage = function (imageUrl, altText) {
+  return { type: 'image', image_url: imageUrl, alt_text: altText };
 };
 
 exports.blockSection = function (text) {
