@@ -400,6 +400,10 @@ exports.blockHeader = function (text) {
   return { type: 'header', text: exports.blockPlaintext(text) };
 };
 
+exports.blockImage = function (imageUrl, altText) {
+  return { type: 'image', image_url: imageUrl, alt_text: altText };
+};
+
 exports.blockSection = function (text) {
   return { type: 'section', text: exports.blockMarkdown(text) };
 };

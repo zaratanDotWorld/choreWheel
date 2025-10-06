@@ -89,27 +89,50 @@ exports.choresOnboardView2 = function () {
   };
 };
 
-exports.choresOnboardMessage = `
-*Follow these steps* to get set up.
+exports.choresOnboardMessage = function (oauth) {
+  const imageUrl = 'https://raw.githubusercontent.com/zaratanDotWorld/choreWheel/' +
+    'ecd9996619567febdf62edcc20f9617e4414f866/assets/chores-home.png';
 
-*1.* *Invite* everyone to the Slack.
+  const blocks = [];
 
-*2.* *Activate* everyone by calling \`/chores-activate\`.
+  blocks.push(common.blockHeader('Welcome to Chores!'));
 
-*3.* Make a list of *3-5 starter chores*. Good chores:
-  • Take between *5-30 minutes* to do.
-  • Are things that folks *usually won't do* on their own.
-  • Can be done *anytime* (i.e. not on fixed schedule).
-  • Don't overlap with other chores.
+  blocks.push(common.blockSection(
+    'Chores is a powerful tool for helping groups share recurring tasks.',
+  ));
 
-*4.* Use *\`Edit chores list\`* to add the chores you came up with.
-  • Adding a few bullet points as a description will help folks stay consistent.
-  • Admins can "force" the proposal to create chores immediately.
+  blocks.push(common.blockDivider());
 
-Then just sit back and watch the magic happen...
+  blocks.push(common.blockSection(
+    'Everyone can access Chores functionality through the app home screen:',
+  ));
 
-_For more tips and tricks for using *Chores*, read the <${DOCS_URL}|manual>._
-`;
+  blocks.push(common.blockImage(imageUrl, 'Chore Wheel App Home'));
+
+  blocks.push(common.blockSection(
+    `If you don't see the app home, you can reach it by clicking on <@${oauth.bot.userId}>.`,
+  ));
+
+  blocks.push(common.blockDivider());
+
+  blocks.push(common.blockSection(
+    'Your group has been set up with two starter chores: _Dishes_ and _Trash Takeout_. ' +
+    'Next steps are to *activate the rest of your group* and *add a few more chores* to the list. ' +
+    'Then sit back and let the magic happen. :sparkles:',
+  ));
+
+  blocks.push(common.blockSection(
+    'Folks can activate themselves through the app home, ' +
+    'and admins activate others with the `/chores-activate` command. ' +
+    'Adding and claiming chores can be done by anybody through the app home.',
+  ));
+
+  blocks.push(common.blockSection(
+    `_Tip: pin this message to the channel. To learn more about Chores, read the <${DOCS_URL}|docs>._`,
+  ));
+
+  return blocks;
+};
 
 exports.choresHomeView = function (choreChannel, choreStats, numActive) {
   const { pointsEarned, pointsOwed } = choreStats;

@@ -326,7 +326,7 @@ app.view('chores-onboard-callback', async ({ ack, body }) => {
   const pref = { residentId, alphaChoreId, betaChoreId, preference: 0.7 };
   await Chores.setChorePreferences(houseId, [ pref ]);
 
-  await postMessage(views.choresOnboardMessage);
+  await postMessage('Welcome to Chores!', views.choresOnboardMessage(choresConf.oauth));
 });
 
 // Solo activate flow
