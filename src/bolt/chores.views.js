@@ -374,7 +374,11 @@ exports.choresClaimView2 = function (chore, choreValue, choreStats) {
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(`*${chore.name || chore.metadata.name}*`));
-  blocks.push(common.blockSection(chore.metadata.description || ''));
+
+  if (chore.metadata.description) {
+    blocks.push(common.blockSection(chore.metadata.description));
+  }
+
   blocks.push(common.blockDivider());
   blocks.push(common.blockSection(statsText));
 
@@ -766,7 +770,7 @@ exports.choresProposeAddView = function (force, chore) {
       placeholder: common.blockPlaintext('Name of the chore'),
     },
   ));
-  blocks.push(common.blockInput(
+  blocks.push(common.blockInputOptional(
     'Description',
     {
       action_id: 'description',
@@ -895,7 +899,7 @@ exports.choresSpecialView = function (minVotes) {
       placeholder: common.blockPlaintext('Name of the chore'),
     },
   ));
-  blocks.push(common.blockInput(
+  blocks.push(common.blockInputOptional(
     'Description',
     {
       action_id: 'description',
