@@ -367,11 +367,11 @@ exports.makeForceInput = function () {
   ];
 
   return exports.blockInput(
-    '[Admin only] Would you like to force this change?',
+    '[ADMIN ONLY] Would you like to force this change?',
     {
       type: 'radio_buttons',
       action_id: 'force',
-      initial_option: options[1],
+      initial_option: options[0],
       options,
     },
   );
