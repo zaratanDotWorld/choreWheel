@@ -259,7 +259,7 @@ exports.joinChannel = async function (app, oauth, channelId) {
 };
 
 exports.parseTitlecase = function (text) {
-  return voca(text).trim().lowerCase().titleCase().value();
+  return voca(text).trim().lowerCase().titleCase([ "'" ]).value();
 };
 
 exports.parseLowercase = function (text) {
