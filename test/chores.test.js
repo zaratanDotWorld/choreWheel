@@ -883,7 +883,7 @@ describe('Chores', async () => {
       // This claim was not resolved as poll is not yet closed
       const resolvedClaim3 = await Chores.getChoreClaim(choreClaim3.id);
       expect(resolvedClaim3.valid).to.be.true;
-      expect(resolvedClaim3.resolvedAt).to.equal(null);
+      expect(resolvedClaim3.resolvedAt).to.be.null;
     });
 
     it('cannot resolve a claim before the poll closes ', async () => {

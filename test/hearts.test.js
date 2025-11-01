@@ -5,8 +5,8 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
 const { Hearts, Polls, Admin } = require('../src/core/index');
-const { NAY, YAY, HOUR, DAY, HEART_UNKNOWN, HEART_KARMA, HEART_CHALLENGE, HEART_REVIVE } = require('../src/constants');
-const { heartsPollLength, heartsBaselineAmount, heartsReviveAmount, heartsMaxBase, karmaDelay } = require('../src/config');
+const { NAY, YAY, HOUR, DAY, HEART_UNKNOWN, HEART_KARMA, HEART_CHALLENGE } = require('../src/constants');
+const { heartsPollLength, heartsBaselineAmount, heartsMaxBase, karmaDelay } = require('../src/config');
 const { getNextMonthStart } = require('../src/utils');
 const testHelpers = require('./helpers');
 
@@ -58,7 +58,7 @@ describe('Hearts', async () => {
 
       expect(hearts1).to.equal(2);
       expect(hearts2).to.equal(1);
-      expect(hearts3).to.equal(null);
+      expect(hearts3).to.be.null;
     });
 
     it('can query for specific hearts', async () => {
@@ -126,36 +126,25 @@ describe('Hearts', async () => {
       hearts = await Hearts.getHearts(RESIDENT1, now);
       expect(hearts).to.equal(heartsBaselineAmount);
 
-      // Even if they go back to zero
-      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, -heartsBaselineAmount);
+      // Resets after going past zero
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, -(heartsBaselineAmount + 1));
 
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
 
       hearts = await Hearts.getHearts(RESIDENT1, now);
-      expect(hearts).to.equal(0);
+      expect(hearts).to.equal(heartsBaselineAmount);
     });
 
-    it('can revive a resident', async () => {
+    it('can retire a resident', async () => {
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
-
-      let heart;
-      let hearts;
-
       await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, -heartsBaselineAmount);
 
-      // Will revive at 0 hearts
-      [ heart ] = await Hearts.reviveResidents(HOUSE, now);
-      expect(heart.type).to.equal(HEART_REVIVE);
+      // Will retire at 0 hearts
+      const [ residentId ] = await Hearts.retireResidents(HOUSE, now);
+      expect(residentId).to.equal(RESIDENT1);
 
-      hearts = await Hearts.getHearts(RESIDENT1, now);
-      expect(hearts).to.equal(heartsReviveAmount);
-
-      // But not twice
-      [ heart ] = await Hearts.reviveResidents(HOUSE, now);
-      expect(heart).to.be.undefined;
-
-      hearts = await Hearts.getHearts(RESIDENT1, now);
-      expect(hearts).to.equal(heartsReviveAmount);
+      const resident = await Admin.getResident(RESIDENT1);
+      expect(resident.activeAt).to.be.null;
     });
 
     it('can reset a resident', async () => {
@@ -231,7 +220,7 @@ describe('Hearts', async () => {
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, nextMonth);
 
       hearts = await Hearts.getHearts(RESIDENT1, nextMonth);
-      expect(hearts).to.equal(null);
+      expect(hearts).to.be.null;
 
       // Generate a heart, now regeneration works
       await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, 1);

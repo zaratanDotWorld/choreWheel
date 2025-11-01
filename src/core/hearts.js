@@ -3,13 +3,12 @@ const assert = require('assert');
 const { db } = require('./db');
 
 const { getMonthStart, getPrevMonthEnd } = require('../utils');
-const { HEART_REGEN, HEART_CHALLENGE, HEART_KARMA, HEART_REVIVE, HEART_RESET } = require('../constants');
+const { HEART_REGEN, HEART_CHALLENGE, HEART_KARMA, HEART_RESET } = require('../constants');
 
 const {
   heartsMinPctInitial,
   heartsMinPctCritical,
   heartsBaselineAmount,
-  heartsReviveAmount,
   heartsRegenAmount,
   heartsFadeAmount,
   heartsPollLength,
@@ -67,24 +66,26 @@ exports.generateHearts = async function (houseId, residentId, type, generatedAt,
 };
 
 exports.initialiseResident = async function (houseId, residentId, now) {
-  const hearts = await exports.getHearts(residentId, now);
-  if (hearts === null) {
-    return exports.generateHearts(houseId, residentId, HEART_REGEN, now, heartsBaselineAmount);
+  const hearts = (await exports.getHearts(residentId, now)) || 0;
+  if (hearts <= 0) {
+    const amount = heartsBaselineAmount - hearts;
+    return exports.generateHearts(houseId, residentId, HEART_REGEN, now, amount);
   } else { return []; }
 };
 
-exports.reviveResident = async function (houseId, residentId, now) {
+exports.retireResident = async function (houseId, residentId, now) {
   const hearts = await exports.getHearts(residentId, now);
   if (hearts <= 0) {
-    return exports.generateHearts(houseId, residentId, HEART_REVIVE, now, heartsReviveAmount - hearts);
+    await Admin.deactivateResident(houseId, residentId);
+    return [ residentId ];
   } else { return []; }
 };
 
-exports.reviveResidents = async function (houseId, now) {
-  const revivedResidents = (await Admin.getResidents(houseId, now))
-    .map(resident => exports.reviveResident(houseId, resident.slackId, now));
+exports.retireResidents = async function (houseId, now) {
+  const retiredResidents = (await Admin.getResidents(houseId, now))
+    .map(resident => exports.retireResident(houseId, resident.slackId, now));
 
-  return (await Promise.all(revivedResidents)).flat();
+  return (await Promise.all(retiredResidents)).flat();
 };
 
 exports.resetResident = async function (houseId, residentId, now) {
