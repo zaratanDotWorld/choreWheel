@@ -270,7 +270,7 @@ describe('Things', async () => {
       // This buy was not resolved as poll is not yet closed
       const resolvedBuy3 = await Things.getThingBuy(thingBuy3.id);
       expect(resolvedBuy3.valid).to.be.true;
-      expect(resolvedBuy3.resolvedAt).to.equal(null);
+      expect(resolvedBuy3.resolvedAt).to.be.null;
     });
 
     it('can get a list of unfulfilled buys', async () => {

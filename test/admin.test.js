@@ -153,7 +153,7 @@ describe('Admin', async () => {
       expect(residents.length).to.equal(0);
 
       const resident = await Admin.getResident(RESIDENT1);
-      expect(resident.activeAt).to.equal(null);
+      expect(resident.activeAt).to.be.null;
     });
 
     it('can return inactive for a non-existent resident', async () => {
