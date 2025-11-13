@@ -31,6 +31,7 @@ const {
   choreSpecialPctMax,
   pingInterval,
   specialChoreVoteIncrement,
+  choresHeartBonus,
 } = require('../config');
 
 const Admin = require('./admin');
@@ -716,7 +717,7 @@ exports.calculatePenalty = async function (houseId, residentId, penaltyTime) {
   const deficiency = choreStats.pointsOwed - choreStats.pointsEarned;
 
   if (deficiency <= 0) {
-    return -0.5;
+    return -choresHeartBonus; // TODO: don't give more than maximum hearts
   } else {
     return Math.floor(deficiency / penaltyIncrement) * penaltyUnit;
   }

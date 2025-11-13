@@ -14,9 +14,7 @@ const {
   heartsPollLength,
   karmaDelay,
   karmaProportion,
-  heartsMaxBase,
-  heartsMaxLimit,
-  heartsKarmaGrowthRate,
+  heartsMax,
   heartsCriticalNum,
   heartsVoteScalar,
 } = require('../config');
@@ -278,9 +276,8 @@ exports.generateKarmaHearts = async function (houseId, now) {
       const type = HEART_KARMA;
       const metadata = { ranking: winner.ranking };
 
-      const maxHearts = await exports.getResidentMaxHearts(residentId, generatedAt);
       const hearts = await exports.getHearts(residentId, generatedAt);
-      const value = Math.min(1, Math.max(0, maxHearts - hearts)); // Bring to maximum
+      const value = Math.min(1, Math.max(0, heartsMax - hearts));
 
       karmaHearts.push({ houseId, residentId, type, generatedAt, value, metadata });
     }
@@ -300,14 +297,6 @@ exports.getKarmaHearts = async function (residentId, now) {
     .where({ residentId, type: HEART_KARMA })
     .where('generatedAt', '<=', now)
     .returning('*');
-};
-
-exports.getResidentMaxHearts = async function (residentId, now) {
-  const karmaHearts = await exports.getKarmaHearts(residentId, now);
-  return Math.min(
-    heartsMaxBase + Math.floor(karmaHearts.length / heartsKarmaGrowthRate),
-    heartsMaxLimit,
-  );
 };
 
 // Utilities

@@ -23,20 +23,19 @@ exports.pingInterval = 50;
 exports.specialChoreVoteIncrement = 10;
 exports.choreSpecialPctMin = 0.3; // Minimum threshold for special chores
 exports.choreSpecialPctMax = 0.6; // Maximum threshold for special chores
+exports.choresHeartBonus = 0.5;
 
 // Hearts
 exports.heartsPollLength = 3 * DAY;
 exports.heartsBaselineAmount = 5;
-exports.heartsRegenAmount = 0.25;
-exports.heartsFadeAmount = 0.25;
+exports.heartsRegenAmount = 0.5;
+exports.heartsFadeAmount = 0.5;
 exports.heartsMinPctInitial = 0.4; // For removing initial hearts
 exports.heartsMinPctCritical = 0.7; // For removing the final two hearts
 exports.heartsCriticalNum = 2;
 exports.karmaDelay = 3 * HOUR;
 exports.karmaProportion = 3;
-exports.heartsMaxBase = 7;
-exports.heartsMaxLimit = 10;
-exports.heartsKarmaGrowthRate = 4;
+exports.heartsMax = 10;
 exports.heartsVoteScalar = 0.2;
 
 // Things
