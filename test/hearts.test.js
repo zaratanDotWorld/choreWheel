@@ -206,11 +206,11 @@ describe('Hearts', async () => {
 
   describe('regenerating hearts', async () => {
     it('can calculate the regen amount', async () => {
-      expect(Hearts.getRegenAmount(1.0)).to.almost.equal(0.25);
+      expect(Hearts.getRegenAmount(1.0)).to.almost.equal(0.5);
       expect(Hearts.getRegenAmount(4.9)).to.almost.equal(0.1);
       expect(Hearts.getRegenAmount(5.0)).to.almost.equal(0.0);
       expect(Hearts.getRegenAmount(5.1)).to.almost.equal(-0.1);
-      expect(Hearts.getRegenAmount(7.0)).to.almost.equal(-0.25);
+      expect(Hearts.getRegenAmount(7.0)).to.almost.equal(-0.5);
     });
 
     it('can regenerate hearts', async () => {
@@ -228,19 +228,19 @@ describe('Hearts', async () => {
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, nextMonth);
 
       hearts = await Hearts.getHearts(RESIDENT1, nextMonth);
-      expect(hearts).to.equal(1.25);
+      expect(hearts).to.equal(1.5);
 
       // But not in the same month
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, nextMonth);
 
       hearts = await Hearts.getHearts(RESIDENT1, nextMonth);
-      expect(hearts).to.equal(1.25);
+      expect(hearts).to.equal(1.5);
 
       // But yes in another month
       await Hearts.regenerateHearts(HOUSE, RESIDENT1, twoMonths);
 
       hearts = await Hearts.getHearts(RESIDENT1, twoMonths);
-      expect(hearts).to.equal(1.5);
+      expect(hearts).to.equal(2);
     });
 
     it('cannot regenerate hearts if full', async () => {
@@ -275,15 +275,15 @@ describe('Hearts', async () => {
       let hearts;
       hearts = await Hearts.regenerateHouseHearts(HOUSE, nextMonth);
       expect(hearts.length).to.equal(2);
-      expect(hearts.find(x => x.residentId === RESIDENT1).value).to.equal(0.25);
-      expect(hearts.find(x => x.residentId === RESIDENT2).value).to.equal(-0.25);
+      expect(hearts.find(x => x.residentId === RESIDENT1).value).to.equal(0.5);
+      expect(hearts.find(x => x.residentId === RESIDENT2).value).to.equal(-0.5);
 
       // Bulk regeneration is robust to network failures
       await Hearts.generateHearts(HOUSE, RESIDENT3, HEART_UNKNOWN, now, 3);
 
       hearts = await Hearts.regenerateHouseHearts(HOUSE, nextMonth);
       expect(hearts.length).to.equal(1);
-      expect(hearts[0].value).to.equal(0.25);
+      expect(hearts[0].value).to.equal(0.5);
     });
   });
 
