@@ -50,14 +50,14 @@ _For more details on *Hearts* functionality, read the <${DOCS_URL}|manual>._
   };
 };
 
-exports.heartsHomeView = function (heartsChannel, isActive, numHearts, maxHearts) {
+exports.heartsHomeView = function (heartsChannel, isActive, numHearts) {
   const header = 'Welcome to Hearts';
   const mainText = `We use *<${DOCS_URL}|Hearts>* to keep each other accountable.\n\n` +
     'Everyone starts with *5 hearts*. ' +
     'We lose hearts when we fail to uphold our commitments, ' +
     'and we regain hearts *over time* or by earning *karma*.';
   const activeText = (isActive)
-    ? `You have *${numHearts} / ${maxHearts}* hearts: ${exports.heartEmoji(numHearts)}`
+    ? `You have *${numHearts}* hearts ${exports.heartEmoji(numHearts)}`
     : '*You are exempt from hearts!* :balloon:';
   const channelText = `Events will be posted in <#${heartsChannel}> :mailbox_with_mail:`;
 
@@ -183,8 +183,8 @@ exports.heartsChallengeCallbackView = function (challenge, minVotes, circumstanc
 exports.heartsBoardView = function (hearts) {
   const header = 'Current hearts';
   const mainText = 'The baseline is *five hearts*. ' +
-    'Anyone with *less* will regenerate at a rate of *¼ per month*, ' +
-    'and anyone with *more* will fade at *¼ per month*, ' +
+    'Anyone with *less* will regenerate at a rate of *½ per month*, ' +
+    'and anyone with *more* will fade at *½ per month*, ' +
     'until they reach five.';
 
   const blocks = [];

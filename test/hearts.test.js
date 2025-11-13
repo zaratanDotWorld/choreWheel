@@ -6,7 +6,7 @@ chai.use(chaiAsPromised);
 
 const { Hearts, Polls, Admin } = require('../src/core/index');
 const { NAY, YAY, HOUR, DAY, HEART_UNKNOWN, HEART_KARMA, HEART_CHALLENGE } = require('../src/constants');
-const { heartsPollLength, heartsBaselineAmount, heartsMaxBase, karmaDelay } = require('../src/config');
+const { heartsPollLength, heartsBaselineAmount, heartsMax, karmaDelay } = require('../src/config');
 const { getNextMonthStart } = require('../src/utils');
 const testHelpers = require('./helpers');
 
@@ -579,8 +579,8 @@ describe('Hearts', async () => {
       karmaHearts = await Hearts.generateKarmaHearts(HOUSE, nextMonthKarma);
       expect(karmaHearts.length).to.equal(0);
 
-      // If they're at the limit, they get less
-      const numToGenerate = (heartsMaxBase - heartsBaselineAmount) - 0.5;
+      // If they're near the limit, they get less
+      const numToGenerate = (heartsMax - heartsBaselineAmount) - 0.5;
       await Hearts.generateHearts(HOUSE, RESIDENT4, HEART_UNKNOWN, nextMonthKarma, numToGenerate);
       await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT4, nextMonthKarma);
 
@@ -600,41 +600,6 @@ describe('Hearts', async () => {
       expect(karmaHearts.length).to.equal(2);
       expect(karmaHearts[0].residentId).to.equal(RESIDENT3);
       expect(karmaHearts[1].residentId).to.equal(RESIDENT2);
-    });
-
-    it('can increase maximum hearts by earning karma', async () => {
-      // Value of the hearts does not matter
-      const karmaHeart = { houseId: HOUSE, residentId: RESIDENT1, type: HEART_KARMA, generatedAt: now, value: 0 };
-
-      let maxHearts;
-      maxHearts = await Hearts.getResidentMaxHearts(RESIDENT1, now);
-      expect(maxHearts).to.equal(7);
-
-      await Hearts.insertKarmaHearts([ karmaHeart ]);
-      await Hearts.insertKarmaHearts([ karmaHeart ]);
-      await Hearts.insertKarmaHearts([ karmaHeart ]);
-
-      maxHearts = await Hearts.getResidentMaxHearts(RESIDENT1, now);
-      expect(maxHearts).to.equal(7);
-
-      await Hearts.insertKarmaHearts([ karmaHeart ]);
-
-      maxHearts = await Hearts.getResidentMaxHearts(RESIDENT1, now);
-      expect(maxHearts).to.equal(8);
-
-      for (let i = 0; i < 8; i++) {
-        await Hearts.insertKarmaHearts([ karmaHeart ]);
-      }
-
-      maxHearts = await Hearts.getResidentMaxHearts(RESIDENT1, now);
-      expect(maxHearts).to.equal(10);
-
-      for (let i = 0; i < 4; i++) {
-        await Hearts.insertKarmaHearts([ karmaHeart ]);
-      }
-
-      maxHearts = await Hearts.getResidentMaxHearts(RESIDENT1, now);
-      expect(maxHearts).to.equal(10);
     });
   });
 });

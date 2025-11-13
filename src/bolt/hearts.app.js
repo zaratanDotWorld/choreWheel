@@ -128,9 +128,8 @@ app.event('app_home_opened', async ({ body, event }) => {
   if (heartsConf.channel) {
     const isActive = await Admin.isActive(residentId, now);
     const hearts = await Hearts.getHearts(residentId, now);
-    const maxHearts = await Hearts.getResidentMaxHearts(residentId, now);
 
-    view = views.heartsHomeView(heartsConf.channel, isActive, hearts || 0, maxHearts);
+    view = views.heartsHomeView(heartsConf.channel, isActive, (hearts || 0));
   } else {
     view = views.heartsIntroView();
   }
