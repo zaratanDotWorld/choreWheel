@@ -1203,7 +1203,7 @@ describe('Chores', async () => {
       expect(choreStats.pointsOwed).to.equal(100);
       expect(choreStats.completionPct).to.equal(0.11);
 
-      await Chores.addSpecialChoreValue(HOUSE, 'Special', '', 40, feb15);
+      await Chores.addSpecialChoreValue(HOUSE, 'Special', '', 55, feb15);
 
       choreStats = await Chores.getChoreStats(HOUSE, RESIDENT1, feb1, feb15);
       expect(choreStats.pointsEarned).to.equal(11);

@@ -771,10 +771,13 @@ app.view('chores-special-callback', async ({ ack, body }) => {
   await Polls.submitVote(proposal.pollId, residentId, now, YAY);
 
   const { minVotes } = await Polls.getPoll(proposal.pollId);
-  const numResidents = (await Admin.getResidents(houseId, now)).length;
+
+  const numResidents = await Admin.getNumResidents(houseId, now);
+  const balance = await Chores.getSpecialChoreBalance(houseId, now);
+  const obligation = Math.max(0, -(balance - points)) / numResidents;
 
   const text = 'Someone just proposed a special chore';
-  const blocks = views.choresSpecialCallbackView(proposal, minVotes, numResidents);
+  const blocks = views.choresSpecialCallbackView(proposal, minVotes, obligation);
   const { channel, ts } = await postMessage(text, blocks);
   await Polls.updateMetadata(proposal.pollId, { channel, ts });
 

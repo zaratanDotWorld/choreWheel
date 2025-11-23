@@ -886,7 +886,8 @@ exports.choresSpecialView = function (minVotes, remainder) {
   const mainText = 'Sometimes there are big one-off tasks that need to be done. ' +
     'These can be seen as *special chores*.\n\n' +
     `Creating special chores requires *one upvote per 10 points*, and a *minimum of ${minVotes} upvotes*.`;
-  const remainderText = `There are *${remainder.toFixed(0)} points* left for special chores this month.`;
+  const remainderText = `There are *${remainder.toFixed(0)} free points* left for special chores this month. ` +
+    'Past this limit, everyone will owe extra points.';
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
@@ -932,11 +933,11 @@ exports.choresSpecialView = function (minVotes, remainder) {
   };
 };
 
-exports.choresSpecialCallbackView = function (proposal, minVotes, numResidents) {
+exports.choresSpecialCallbackView = function (proposal, minVotes, obligation) {
   const mainText = `*<@${proposal.proposedBy}>* wants to create a *special chore* ` +
     `worth *${proposal.metadata.value} points*:`;
-  const pointsText = 'Creating this special chore will add ' +
-    `*~${(proposal.metadata.value / numResidents).toFixed(0)} points* to everyone's requirement.`;
+  const obligationText = 'Creating this special chore will add ' +
+    `*~${obligation.toFixed(0)} points* to everyone's requirement :bangbang:`;
 
   const blocks = [];
   blocks.push(common.blockSection(mainText));
@@ -946,7 +947,9 @@ exports.choresSpecialCallbackView = function (proposal, minVotes, numResidents) 
     blocks.push(common.blockSection(proposal.metadata.description));
   }
 
-  blocks.push(common.blockSection(pointsText));
+  if (obligation > 0) {
+    blocks.push(common.blockSection(obligationText));
+  }
 
   blocks.push(common.blockSection(common.makeVoteText(minVotes, specialChoreProposalPollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(proposal.pollId, 1, 0)));

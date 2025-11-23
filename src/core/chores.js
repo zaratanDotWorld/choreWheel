@@ -708,11 +708,13 @@ exports.getChoreStats = async function (houseId, residentId, startTime, endTime)
   const pointsEarned = Math.round(await exports.getAllChorePoints(residentId, startTime, endTime));
   const workingPercentage = await exports.getWorkingResidentPercentage(residentId, endTime);
 
-  const numResidents = (await Admin.getResidents(houseId, endTime)).length;
-  const specialChoreTotal = await exports.getSpecialChoreTotal(houseId, startTime, endTime);
+  // Calculate special chore obligations
+  const numResidents = await Admin.getNumResidents(houseId, endTime);
+  const balance = await exports.getSpecialChoreBalance(houseId, endTime);
+  const obligation = Math.max(0, -balance) / numResidents;
 
-  // Note: specialChoreValues are not re-allocated based on workingPercentage; so are mildly inflationary
-  const pointsOwed = Math.round((pointsPerResident + (specialChoreTotal / numResidents)) * workingPercentage);
+  // Note: special chore obligations are not re-allocated by workingPercentage; so are mildly inflationary
+  const pointsOwed = Math.round((pointsPerResident + obligation) * workingPercentage);
   const completionPct = (pointsOwed) ? pointsEarned / pointsOwed : 1;
 
   return { pointsEarned, pointsOwed, completionPct };
