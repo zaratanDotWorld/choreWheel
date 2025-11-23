@@ -751,8 +751,15 @@ describe('Chores', async () => {
     });
 
     it('can claim a special chore', async () => {
+      let balance;
+      balance = await Chores.getSpecialChoreBalance(HOUSE, now);
+      expect(balance).to.equal(15); // 3 * 4, 5 increment
+
       const [ name, description, value ] = [ 'Special Chore', 'Complicated task', 15 ];
       await Chores.addSpecialChoreValue(HOUSE, name, description, value, now);
+
+      balance = await Chores.getSpecialChoreBalance(HOUSE, now);
+      expect(balance).to.equal(0);
 
       let choreValues;
       choreValues = await Chores.getUnclaimedSpecialChoreValues(HOUSE, now);

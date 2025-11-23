@@ -24,6 +24,8 @@ exports.specialChoreVoteIncrement = 10;
 exports.choreSpecialPctMin = 0.3; // Minimum threshold for special chores
 exports.choreSpecialPctMax = 0.6; // Maximum threshold for special chores
 exports.choresHeartBonus = 0.5;
+exports.choresSpecialAllowance = 3; // Per resident / month
+exports.choresSpecialIncrement = 5;
 
 // Hearts
 exports.heartsPollLength = 3 * DAY;

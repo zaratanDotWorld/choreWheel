@@ -881,15 +881,17 @@ exports.choresProposeCallbackViewForce = function (metadata, residentId, name, d
 
 // Special chore flow
 
-exports.choresSpecialView = function (minVotes) {
+exports.choresSpecialView = function (minVotes, remainder) {
   const header = 'Add special chore';
   const mainText = 'Sometimes there are big one-off tasks that need to be done. ' +
     'These can be seen as *special chores*.\n\n' +
     `Creating special chores requires *one upvote per 10 points*, and a *minimum of ${minVotes} upvotes*.`;
+  const remainderText = `There are *${remainder.toFixed(0)} points* left for special chores this month.`;
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockSection(remainderText));
   blocks.push(common.blockDivider());
   blocks.push(common.blockInput(
     'Name',
