@@ -109,48 +109,50 @@ describe('Admin', async () => {
     });
 
     it('can activate a resident', async () => {
-      let residents;
-      residents = await Admin.getResidents(HOUSE1, now);
-      expect(residents.length).to.equal(0);
+      let numResidents;
+      numResidents = await Admin.getNumResidents(HOUSE1, now);
+      expect(numResidents).to.equal(0);
 
       await Admin.activateResident(HOUSE1, RESIDENT1, now);
 
-      residents = await Admin.getResidents(HOUSE1, now);
-      expect(residents.length).to.equal(1);
+      numResidents = await Admin.getNumResidents(HOUSE1, now);
+      expect(numResidents).to.equal(1);
 
       await Admin.activateResident(HOUSE1, RESIDENT2, now);
 
-      residents = await Admin.getResidents(HOUSE1, now);
-      expect(residents.length).to.equal(2);
+      numResidents = await Admin.getNumResidents(HOUSE1, now);
+      expect(numResidents).to.equal(2);
 
       const resident1 = await Admin.getResident(RESIDENT1);
       expect(resident1.activeAt.getTime()).to.equal(truncateHour(now, 3).getTime());
     });
 
     it('can activate a resident idempotently', async () => {
-      let residents;
-      residents = await Admin.getResidents(HOUSE1, now);
-      expect(residents.length).to.equal(0);
+      let numResidents;
+      numResidents = await Admin.getNumResidents(HOUSE1, now);
+      expect(numResidents).to.equal(0);
 
       await Admin.activateResident(HOUSE1, RESIDENT1, now);
       await Admin.activateResident(HOUSE1, RESIDENT1, soon);
 
-      residents = await Admin.getResidents(HOUSE1, now);
-      expect(residents.length).to.equal(1);
-      expect(residents[0].activeAt.getTime()).to.equal(truncateHour(now, 3).getTime());
+      numResidents = await Admin.getNumResidents(HOUSE1, now);
+      expect(numResidents).to.equal(1);
+
+      const resident = await Admin.getResident(RESIDENT1);
+      expect(resident.activeAt.getTime()).to.equal(truncateHour(now, 3).getTime());
     });
 
     it('can deactivate a resident', async () => {
       await Admin.activateResident(HOUSE1, RESIDENT1, now);
 
-      let residents;
-      residents = await Admin.getResidents(HOUSE1, now);
-      expect(residents.length).to.equal(1);
+      let numResidents;
+      numResidents = await Admin.getNumResidents(HOUSE1, now);
+      expect(numResidents).to.equal(1);
 
       await Admin.deactivateResident(HOUSE1, RESIDENT1);
 
-      residents = await Admin.getResidents(HOUSE1, now);
-      expect(residents.length).to.equal(0);
+      numResidents = await Admin.getNumResidents(HOUSE1, now);
+      expect(numResidents).to.equal(0);
 
       const resident = await Admin.getResident(RESIDENT1);
       expect(resident.activeAt).to.be.null;
