@@ -32,6 +32,8 @@ const {
   pingInterval,
   specialChoreVoteIncrement,
   choresHeartBonus,
+  choresSpecialAllowance,
+  choresSpecialIncrement,
 } = require('../config');
 
 const Admin = require('./admin');
@@ -264,6 +266,22 @@ exports.getUnclaimedSpecialChoreValues = async function (houseId, now) {
     .groupBy('ChoreValue.id')
     .havingRaw('COUNT(CASE WHEN "ChoreClaim"."valid" = TRUE THEN 1 END) = 0') // No valid claims
     .select('ChoreValue.*');
+};
+
+exports.getSpecialChoreAllowance = async function (houseId, now) {
+  const inc = choresSpecialIncrement;
+  const numResidents = (await Admin.getResidents(houseId, now)).length;
+  return Math.ceil((choresSpecialAllowance * numResidents) / inc) * inc;
+};
+
+// Basis for special chore points remainder and obligation
+// Remainder: Math.max(0, balance)
+// Obligation: Math.max(0, -balance)
+exports.getSpecialChoreBalance = async function (houseId, now) {
+  const monthStart = getMonthStart(now);
+  const allowance = await exports.getSpecialChoreAllowance(houseId, now);
+  const totalUsed = await exports.getSpecialChoreTotal(houseId, monthStart, now);
+  return allowance - totalUsed;
 };
 
 exports.getCurrentChoreValues = async function (houseId, now) {
@@ -690,11 +708,13 @@ exports.getChoreStats = async function (houseId, residentId, startTime, endTime)
   const pointsEarned = Math.round(await exports.getAllChorePoints(residentId, startTime, endTime));
   const workingPercentage = await exports.getWorkingResidentPercentage(residentId, endTime);
 
-  const numResidents = (await Admin.getResidents(houseId, endTime)).length;
-  const specialChoreTotal = await exports.getSpecialChoreTotal(houseId, startTime, endTime);
+  // Calculate special chore obligations
+  const numResidents = await Admin.getNumResidents(houseId, endTime);
+  const balance = await exports.getSpecialChoreBalance(houseId, endTime);
+  const obligation = Math.max(0, -balance) / numResidents;
 
-  // Note: specialChoreValues are not re-allocated based on workingPercentage; so are mildly inflationary
-  const pointsOwed = Math.round((pointsPerResident + (specialChoreTotal / numResidents)) * workingPercentage);
+  // Note: special chore obligations are not re-allocated by workingPercentage; so are mildly inflationary
+  const pointsOwed = Math.round((pointsPerResident + obligation) * workingPercentage);
   const completionPct = (pointsOwed) ? pointsEarned / pointsOwed : 1;
 
   return { pointsEarned, pointsOwed, completionPct };

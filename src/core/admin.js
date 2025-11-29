@@ -80,6 +80,10 @@ exports.getResident = async function (residentId) {
     .first();
 };
 
+exports.getNumResidents = async function (houseId, now) {
+  return (await exports.getResidents(houseId, now)).length;
+};
+
 exports.isActive = async function (residentId, now) {
   const resident = await exports.getResident(residentId);
   return (resident && resident.activeAt && resident.activeAt <= now);

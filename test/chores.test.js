@@ -751,8 +751,15 @@ describe('Chores', async () => {
     });
 
     it('can claim a special chore', async () => {
+      let balance;
+      balance = await Chores.getSpecialChoreBalance(HOUSE, now);
+      expect(balance).to.equal(15); // 3 * 4, 5 increment
+
       const [ name, description, value ] = [ 'Special Chore', 'Complicated task', 15 ];
       await Chores.addSpecialChoreValue(HOUSE, name, description, value, now);
+
+      balance = await Chores.getSpecialChoreBalance(HOUSE, now);
+      expect(balance).to.equal(0);
 
       let choreValues;
       choreValues = await Chores.getUnclaimedSpecialChoreValues(HOUSE, now);
@@ -1196,7 +1203,7 @@ describe('Chores', async () => {
       expect(choreStats.pointsOwed).to.equal(100);
       expect(choreStats.completionPct).to.equal(0.11);
 
-      await Chores.addSpecialChoreValue(HOUSE, 'Special', '', 40, feb15);
+      await Chores.addSpecialChoreValue(HOUSE, 'Special', '', 55, feb15);
 
       choreStats = await Chores.getChoreStats(HOUSE, RESIDENT1, feb1, feb15);
       expect(choreStats.pointsEarned).to.equal(11);
