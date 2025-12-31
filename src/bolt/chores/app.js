@@ -7,11 +7,10 @@ if (process.env.NODE_ENV === 'production') {
 const { App, LogLevel } = require('@slack/bolt');
 const cron = require('node-cron');
 
-const { Admin } = require('../../core/index');
 const { CHORES_CONF } = require('../../constants');
 
 const common = require('../common');
-const { setChoresConf, pingChores } = require('./handlers/common');
+const { pingChores } = require('./handlers/common');
 
 // Create the app
 
@@ -32,22 +31,7 @@ const app = new App({
     'groups:read',
     'users:read',
   ],
-  installationStore: {
-    storeInstallation: async (installation) => {
-      await Admin.addHouse(installation.team.id, installation.team.name);
-      await Admin.updateHouseConf(installation.team.id, CHORES_CONF, { oauth: installation });
-      console.log(`chores installed @ ${installation.team.id}`);
-    },
-    fetchInstallation: async (installQuery) => {
-      const { choresConf } = (await Admin.getHouse(installQuery.teamId));
-      setChoresConf(choresConf);
-      return choresConf.oauth;
-    },
-    deleteInstallation: async (installQuery) => {
-      await Admin.updateHouseConf(installQuery.teamId, CHORES_CONF, { oauth: null, channel: null });
-      console.log(`chores uninstalled @ ${installQuery.teamId}`);
-    },
-  },
+  installationStore: common.createInstallationStore('chores', CHORES_CONF),
   installerOptions: { directInstall: true },
 });
 
