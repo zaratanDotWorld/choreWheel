@@ -1,5 +1,6 @@
-const { Admin, Chores } = require('../../../core/index');
 const { DAY } = require('../../../constants');
+
+const { Admin, Chores } = require('../../../core/index');
 
 const common = require('../../common');
 

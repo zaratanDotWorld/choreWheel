@@ -1,10 +1,11 @@
-const { Admin, Chores } = require('../../../core/index');
 const { CHORES_CONF } = require('../../../constants');
 const { getMonthStart, getPrevMonthEnd } = require('../../../utils');
 
+const { Admin, Chores } = require('../../../core/index');
+
 const common = require('../../common');
-const { postMessage } = require('./common');
 const views = require('../views/commands');
+const { postMessage } = require('./common');
 
 module.exports = (app) => {
   // Slash command: /chores-prune

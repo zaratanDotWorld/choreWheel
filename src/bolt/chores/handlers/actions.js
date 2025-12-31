@@ -1,13 +1,14 @@
 const assert = require('assert');
 
-const { Admin, Polls, Chores } = require('../../../core/index');
-const { CHORES_CONF } = require('../../../constants');
-const { YAY, DAY, displayThreshold, breakMinDays } = require('../../../constants');
+const { YAY, DAY, CHORES_CONF } = require('../../../constants');
+const { displayThreshold, breakMinDays } = require('../../../config');
 const { getMonthStart, shiftDate } = require('../../../utils');
 
+const { Admin, Polls, Chores } = require('../../../core/index');
+
 const common = require('../../common');
-const { postMessage, postEphemeral } = require('./common');
 const views = require('../views/actions');
+const { postMessage, postEphemeral } = require('./common');
 
 module.exports = (app) => {
   // Onboarding flow

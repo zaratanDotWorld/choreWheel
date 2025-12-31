@@ -1,10 +1,11 @@
-const { Admin, Chores } = require('../../../core/index');
 const { CHORES_IDX } = require('../../../constants');
 const { getMonthStart, getPrevMonthEnd, sleep } = require('../../../utils');
 
+const { Admin, Chores } = require('../../../core/index');
+
 const common = require('../../common');
-const { postMessage, postEphemeral, houseActive } = require('./common');
 const views = require('../views/events');
+const { postMessage, postEphemeral, houseActive } = require('./common');
 
 module.exports = (app) => {
   // App uninstalled
