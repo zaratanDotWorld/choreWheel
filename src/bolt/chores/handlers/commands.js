@@ -3,7 +3,7 @@ const { CHORES_CONF } = require('../../../constants');
 const { getMonthStart, getPrevMonthEnd } = require('../../../utils');
 
 const common = require('../../common');
-const { getChoresConf, postMessage } = require('./common');
+const { postMessage } = require('./common');
 const views = require('../views/commands');
 
 module.exports = (app) => {
@@ -13,7 +13,7 @@ module.exports = (app) => {
 
     const commandName = '/chores-prune';
     const { now, houseId } = common.beginCommand(commandName, command);
-    const choresConf = getChoresConf();
+    const { choresConf } = await Admin.getHouse(houseId);
 
     const text = await common.pruneWorkspaceMembers(app, choresConf.oauth, houseId, now);
     await respond({ response_type: 'ephemeral', text });
@@ -24,8 +24,8 @@ module.exports = (app) => {
     await ack();
 
     const commandName = '/chores-channel';
-    common.beginCommand(commandName, command);
-    const choresConf = getChoresConf();
+    const { houseId } = common.beginCommand(commandName, command);
+    const { choresConf } = await Admin.getHouse(houseId);
 
     await common.setChannel(app, choresConf.oauth, CHORES_CONF, command, respond);
   });
@@ -36,7 +36,7 @@ module.exports = (app) => {
 
     const commandName = '/chores-stats';
     const { now, houseId, residentId } = common.beginCommand(commandName, command);
-    const choresConf = getChoresConf();
+    const { choresConf } = await Admin.getHouse(houseId);
 
     const monthStart = getMonthStart(now);
     const prevMonthEnd = getPrevMonthEnd(now);
@@ -58,7 +58,7 @@ module.exports = (app) => {
 
     const commandName = '/chores-activate';
     const { now, houseId } = common.beginCommand(commandName, command);
-    const choresConf = getChoresConf();
+    const { choresConf } = await Admin.getHouse(houseId);
 
     if (!(await common.isAdmin(app, choresConf.oauth, command.user_id))) {
       await respond({ response_type: 'ephemeral', text: common.ADMIN_ONLY });
@@ -76,7 +76,7 @@ module.exports = (app) => {
 
     const actionName = 'chores-activate-callback';
     const { now, houseId } = common.beginAction(actionName, body);
-    const choresConf = getChoresConf();
+    const { choresConf } = await Admin.getHouse(houseId);
 
     const activate = common.getInputBlock(body, -3).action.selected_option.value === 'true';
     const selectAll = common.getInputBlock(body, -2).select_all.selected_options.length > 0;
@@ -111,7 +111,7 @@ module.exports = (app) => {
       text = `Deactivated ${residentsText || 'nobody'} :ice_cube:`;
     }
 
-    await postMessage(app, text);
+    await postMessage(app, choresConf, text);
   });
 
   // Slash command: /chores-reset
@@ -119,8 +119,8 @@ module.exports = (app) => {
     await ack();
 
     const commandName = '/chores-reset';
-    common.beginCommand(commandName, command);
-    const choresConf = getChoresConf();
+    const { houseId } = common.beginCommand(commandName, command);
+    const { choresConf } = await Admin.getHouse(houseId);
 
     if (!(await common.isAdmin(app, choresConf.oauth, command.user_id))) {
       await respond({ response_type: 'ephemeral', text: common.ADMIN_ONLY });
@@ -136,9 +136,10 @@ module.exports = (app) => {
 
     const actionName = 'chores-reset-callback';
     const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { choresConf } = await Admin.getHouse(houseId);
 
     await Chores.resetChorePoints(houseId, now);
 
-    await postMessage(app, `<@${residentId}> just reset all chore points :volcano:`);
+    await postMessage(app, choresConf, `<@${residentId}> just reset all chore points :volcano:`);
   });
 };

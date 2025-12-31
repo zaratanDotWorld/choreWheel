@@ -6,7 +6,7 @@ const { YAY, DAY, displayThreshold, breakMinDays } = require('../../../constants
 const { getMonthStart, shiftDate } = require('../../../utils');
 
 const common = require('../../common');
-const { getChoresConf, postMessage, postEphemeral } = require('./common');
+const { postMessage, postEphemeral } = require('./common');
 const views = require('../views/actions');
 
 module.exports = (app) => {
@@ -16,8 +16,8 @@ module.exports = (app) => {
     await ack();
 
     const actionName = 'chores-onboard';
-    common.beginAction(actionName, body);
-    const choresConf = getChoresConf();
+    const { houseId } = common.beginAction(actionName, body);
+    const { choresConf } = await Admin.getHouse(houseId);
 
     const view = views.choresOnboardView2();
     await common.openView(app, choresConf.oauth, body.trigger_id, view);
@@ -28,7 +28,7 @@ module.exports = (app) => {
 
     const actionName = 'chores-onboard-callback';
     const { now, houseId, residentId } = common.beginAction(actionName, body);
-    const choresConf = getChoresConf();
+    const { choresConf } = await Admin.getHouse(houseId);
 
     const channel = common.getInputBlock(body, -1).channel.selected_channel;
 
@@ -53,7 +53,7 @@ module.exports = (app) => {
     const pref = { residentId, alphaChoreId, betaChoreId, preference: 0.7 };
     await Chores.setChorePreferences(houseId, [ pref ]);
 
-    await postMessage(app, 'Welcome to Chores!', views.choresOnboardMessage(choresConf.oauth));
+    await postMessage(app, choresConf, 'Welcome to Chores!', views.choresOnboardMessage(choresConf.oauth));
   });
 
   // Solo activate flow
@@ -62,8 +62,8 @@ module.exports = (app) => {
     await ack();
 
     const actionName = 'chores-activate-solo';
-    common.beginAction(actionName, body);
-    const choresConf = getChoresConf();
+    const { houseId } = common.beginAction(actionName, body);
+    const { choresConf } = await Admin.getHouse(houseId);
 
     const view = views.choresActivateSoloView();
     await common.openView(app, choresConf.oauth, body.trigger_id, view);
@@ -74,9 +74,10 @@ module.exports = (app) => {
 
     const actionName = 'chores-activate-solo-callback';
     const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { choresConf } = await Admin.getHouse(houseId);
 
     await common.activateResident(houseId, residentId, now);
-    await postMessage(app, `<@${residentId}> is now active :fire:`);
+    await postMessage(app, choresConf, `<@${residentId}> is now active :fire:`);
   });
 
   // Claim flow
@@ -84,7 +85,7 @@ module.exports = (app) => {
   app.action('chores-claim', async ({ ack, body }) => {
     const actionName = 'chores-claim';
     const { now, houseId } = common.beginAction(actionName, body);
-    const choresConf = getChoresConf();
+    const { choresConf } = await Admin.getHouse(houseId);
 
     const choreValues = await Chores.getUpdatedChoreValues(houseId, now);
     const filteredChoreValues = choreValues.filter(choreValue => choreValue.value >= displayThreshold);
@@ -128,6 +129,7 @@ module.exports = (app) => {
 
     const actionName = 'chores-claim-callback';
     const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { choresConf } = await Admin.getHouse(houseId);
 
     // Note that this could be either a regular or special chore
     const { chore } = JSON.parse(body.view.private_metadata);
@@ -168,13 +170,12 @@ module.exports = (app) => {
 
     const text = 'Someone just completed a chore';
     const blocks = views.choresClaimCallbackView(claim, name, minVotes, achivementPoints, monthlyPoints);
-    const { channel, ts } = await postMessage(app, text, blocks);
+    const { channel, ts } = await postMessage(app, choresConf, text, blocks);
     await Polls.updateMetadata(claim.pollId, { channel, ts });
 
     // Append the description
     if (chore.metadata && chore.metadata.description) {
       const text = `*Description:*\n${chore.metadata.description}`;
-      const choresConf = getChoresConf();
       await common.postReply(app, choresConf.oauth, channel, ts, text);
     }
   });
@@ -184,7 +185,7 @@ module.exports = (app) => {
   app.action('chores-rank', async ({ ack, body }) => {
     const actionName = 'chores-rank';
     const { now, houseId } = common.beginAction(actionName, body);
-    const choresConf = getChoresConf();
+    const { choresConf } = await Admin.getHouse(houseId);
 
     const choreRankings = await Chores.getCurrentChoreRankings(houseId, now);
 
@@ -249,6 +250,7 @@ module.exports = (app) => {
   app.view('chores-rank-callback', async ({ ack, body }) => {
     const actionName = 'chores-rank-callback';
     const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { choresConf } = await Admin.getHouse(houseId);
 
     const { targetChore, sourceChoreIds, preference } = JSON.parse(body.view.private_metadata);
 
@@ -272,11 +274,11 @@ module.exports = (app) => {
     if (change > 0) {
       const text = `Someone *prioritized ${targetChore.name}* by *${change} ppt*, to *${newPriority}* :rocket:\n\n` +
         `That's about *${viewsCommon.formatPointsPerDay(targetChoreRanking.ranking, numResidents)} points per day*.`;
-      await postMessage(app, text);
+      await postMessage(app, choresConf, text);
     } else if (change < 0) {
       const text = `Someone *deprioritized ${targetChore.name}* by *${Math.abs(change)} ppt*, to *${newPriority}* :snail:\n\n` +
         `That's about *${viewsCommon.formatPointsPerDay(targetChoreRanking.ranking, numResidents)} points per day*.`;
-      await postMessage(app, text);
+      await postMessage(app, choresConf, text);
     }
 
     await ack({ response_action: 'clear' });
@@ -286,8 +288,8 @@ module.exports = (app) => {
 
   app.action('chores-break', async ({ ack, body }) => {
     const actionName = 'chores-break';
-    common.beginAction(actionName, body);
-    const choresConf = getChoresConf();
+    const { houseId } = common.beginAction(actionName, body);
+    const { choresConf } = await Admin.getHouse(houseId);
 
     const view = views.choresBreakView(new Date());
     await common.openView(app, choresConf.oauth, body.trigger_id, view);
@@ -298,6 +300,7 @@ module.exports = (app) => {
   app.view('chores-break-callback', async ({ ack, body }) => {
     const actionName = 'chores-break-callback';
     const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { choresConf } = await Admin.getHouse(houseId);
 
     // Dates come in yyyy-mm-dd format
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -313,14 +316,14 @@ module.exports = (app) => {
 
     if (breakStart < todayStart || breakDays < breakMinDays) {
       const text = 'Not a valid chore break :slightly_frowning_face:';
-      await postEphemeral(app, residentId, text);
+      await postEphemeral(app, choresConf, residentId, text);
     } else {
       // Record the break
       await Chores.addChoreBreak(houseId, residentId, breakStart, breakEnd, circumstance);
       const text = `<@${residentId}> is taking a *${breakDays}-day* break ` +
           `starting ${breakStart.toDateString()} :beach_with_umbrella:\n` +
           `_${circumstance}_`;
-      await postMessage(app, text);
+      await postMessage(app, choresConf, text);
     }
 
     await ack();
@@ -330,8 +333,8 @@ module.exports = (app) => {
 
   app.action('chores-gift', async ({ ack, body }) => {
     const actionName = 'chores-gift';
-    const { now, residentId } = common.beginAction(actionName, body);
-    const choresConf = getChoresConf();
+    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { choresConf } = await Admin.getHouse(houseId);
 
     const monthStart = getMonthStart(now);
     const chorePoints = await Chores.getAllChorePoints(residentId, monthStart, now);
@@ -345,6 +348,7 @@ module.exports = (app) => {
   app.view('chores-gift-callback', async ({ ack, body }) => {
     const actionName = 'chores-gift-callback';
     const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { choresConf } = await Admin.getHouse(houseId);
 
     const currentBalance = Number(body.view.private_metadata);
     const recipientId = common.getInputBlock(body, 2).recipient.selected_conversation;
@@ -353,17 +357,17 @@ module.exports = (app) => {
 
     if (!(await Admin.isActive(recipientId, now))) {
       const text = `<@${recipientId}> is not active and cannot earn points :confused:`;
-      await postEphemeral(app, residentId, text);
+      await postEphemeral(app, choresConf, residentId, text);
     } else if (points > currentBalance) {
       const text = 'You can\'t gift more points than you have! :face_with_monocle:';
-      await postEphemeral(app, residentId, text);
+      await postEphemeral(app, choresConf, residentId, text);
     } else {
       // Make the gift
       await Chores.giftChorePoints(houseId, residentId, recipientId, now, points);
 
       const text = `<@${residentId}> just gifted <@${recipientId}> *${points} points* :gift:\n` +
         `_${circumstance}_`;
-      await postMessage(app, text);
+      await postMessage(app, choresConf, text);
     }
 
     await ack();
@@ -374,7 +378,7 @@ module.exports = (app) => {
   app.action('chores-propose', async ({ ack, body }) => {
     const actionName = 'chores-propose';
     const { now, houseId, residentId } = common.beginAction(actionName, body);
-    const choresConf = getChoresConf();
+    const { choresConf } = await Admin.getHouse(houseId);
 
     const isAdmin = await common.isAdmin(app, choresConf.oauth, residentId);
     const minVotes = await Chores.getChoreProposalMinVotes(houseId, now);
@@ -428,6 +432,7 @@ module.exports = (app) => {
   app.view('chores-propose-callback', async ({ ack, body }) => {
     const actionName = 'chores-propose-callback';
     const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { choresConf } = await Admin.getHouse(houseId);
 
     function parseSubmission (body) {
       name = common.parseTitlecase(common.getInputBlock(body, -2).name.value);
@@ -464,7 +469,7 @@ module.exports = (app) => {
 
       const text = 'An admin just edited a chore';
       const blocks = views.choresProposeCallbackViewForce(privateMetadata, residentId, name, description);
-      await postMessage(app, text, blocks);
+      await postMessage(app, choresConf, text, blocks);
     } else {
       // Create the chore proposal
       const [ proposal ] = await Chores.createChoreProposal(houseId, residentId, choreId, name, metadata, active, now);
@@ -474,7 +479,7 @@ module.exports = (app) => {
 
       const text = 'Someone just proposed a chore edit';
       const blocks = views.choresProposeCallbackView(privateMetadata, proposal, minVotes);
-      const { channel, ts } = await postMessage(app, text, blocks);
+      const { channel, ts } = await postMessage(app, choresConf, text, blocks);
       await Polls.updateMetadata(proposal.pollId, { channel, ts });
     }
 
@@ -486,7 +491,7 @@ module.exports = (app) => {
   app.action('chores-special', async ({ ack, body }) => {
     const actionName = 'chores-special';
     const { now, houseId } = common.beginAction(actionName, body);
-    const choresConf = getChoresConf();
+    const { choresConf } = await Admin.getHouse(houseId);
 
     const minVotes = await Chores.getSpecialChoreProposalMinVotes(houseId, 0, now);
     const remainder = Math.max(0, await Chores.getSpecialChoreBalance(houseId, now));
@@ -500,6 +505,7 @@ module.exports = (app) => {
   app.view('chores-special-callback', async ({ ack, body }) => {
     const actionName = 'chores-special-callback';
     const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { choresConf } = await Admin.getHouse(houseId);
 
     const name = common.parseTitlecase(common.getInputBlock(body, -3).name.value);
     const description = common.getInputBlock(body, -2).description.value;
@@ -517,7 +523,7 @@ module.exports = (app) => {
 
     const text = 'Someone just proposed a special chore';
     const blocks = views.choresSpecialCallbackView(proposal, minVotes, obligation);
-    const { channel, ts } = await postMessage(app, text, blocks);
+    const { channel, ts } = await postMessage(app, choresConf, text, blocks);
     await Polls.updateMetadata(proposal.pollId, { channel, ts });
 
     await ack({ response_action: 'clear' });
@@ -527,8 +533,8 @@ module.exports = (app) => {
 
   app.action(/poll-vote/, async ({ ack, body, action }) => {
     const actionName = 'chores poll-vote';
-    common.beginAction(actionName, body);
-    const choresConf = getChoresConf();
+    const { houseId } = common.beginAction(actionName, body);
+    const { choresConf } = await Admin.getHouse(houseId);
 
     await common.updateVoteCounts(app, choresConf.oauth, body, action);
 

@@ -3,7 +3,7 @@ const { CHORES_IDX } = require('../../../constants');
 const { getMonthStart, getPrevMonthEnd, sleep } = require('../../../utils');
 
 const common = require('../../common');
-const { getChoresConf, postMessage, postEphemeral, houseActive } = require('./common');
+const { postMessage, postEphemeral, houseActive } = require('./common');
 const views = require('../views/events');
 
 module.exports = (app) => {
@@ -30,7 +30,7 @@ module.exports = (app) => {
     if (event.tab !== 'home') { return; }
 
     const { now, houseId, residentId } = common.beginHome('chores', body, event);
-    const choresConf = getChoresConf();
+    const { choresConf } = await Admin.getHouse(houseId);
 
     let view;
     if (choresConf.channel) {
@@ -67,11 +67,11 @@ module.exports = (app) => {
         if (penaltyHeart.value < 0) {
           const text = 'You missed too many chores last month, ' +
             `and lost *${penaltyHeart.value.toFixed(1)}* hearts...`;
-          await postEphemeral(app, penaltyHeart.residentId, text);
+          await postEphemeral(app, choresConf, penaltyHeart.residentId, text);
         } else if (penaltyHeart.value > 0) {
           const text = 'You did all your chores last month, ' +
             `and earned *${penaltyHeart.value.toFixed(1)}* hearts!`;
-          await postEphemeral(app, penaltyHeart.residentId, text);
+          await postEphemeral(app, choresConf, penaltyHeart.residentId, text);
         }
       }
 
@@ -93,7 +93,7 @@ module.exports = (app) => {
           text += choreStats.map(cs => `\n${viewsCommon.formatStats(cs)}`).join('');
           text += `\n${viewsCommon.formatTotalStats(choreStats)}`;
           text += (!heartsConf) ? `\n\n:heart: Want month-to-month accountability? *Get <${HEARTS_URL}|Hearts>!* :heart:` : '';
-          await postMessage(app, text);
+          await postMessage(app, choresConf, text);
         }
       }
     }

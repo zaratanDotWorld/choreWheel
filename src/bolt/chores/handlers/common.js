@@ -3,20 +3,14 @@ const { DAY } = require('../../../constants');
 
 const common = require('../../common');
 
-// Module state
-let choresConf;
-
-function getChoresConf () { return choresConf; }
-function setChoresConf (conf) { choresConf = conf; }
-
 // Business logic helpers
 
-async function postMessage (app, text, blocks) {
-  return common.postMessage(app, choresConf.oauth, choresConf.channel, text, blocks);
+async function postMessage (app, config, text, blocks) {
+  return common.postMessage(app, config.oauth, config.channel, text, blocks);
 }
 
-async function postEphemeral (app, residentId, text) {
-  return common.postEphemeral(app, choresConf.oauth, choresConf.channel, residentId, text);
+async function postEphemeral (app, config, residentId, text) {
+  return common.postEphemeral(app, config.oauth, config.channel, residentId, text);
 }
 
 async function houseActive (houseId, now) {
@@ -45,8 +39,6 @@ async function pingChores (app) {
 }
 
 module.exports = {
-  getChoresConf,
-  setChoresConf,
   postMessage,
   postEphemeral,
   houseActive,

@@ -11,7 +11,7 @@ const { Admin } = require('../../core/index');
 const { CHORES_CONF } = require('../../constants');
 
 const common = require('../common');
-const { setChoresConf, pingChores } = require('./handlers/common');
+const { pingChores } = require('./handlers/common');
 
 // Create the app
 
@@ -40,7 +40,6 @@ const app = new App({
     },
     fetchInstallation: async (installQuery) => {
       const { choresConf } = (await Admin.getHouse(installQuery.teamId));
-      setChoresConf(choresConf);
       return choresConf.oauth;
     },
     deleteInstallation: async (installQuery) => {
