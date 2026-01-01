@@ -49,24 +49,18 @@ const { Admin } = require('../../../core/index');
 const common = require('../../common');
 
 // Business logic helpers
-async function postMessage (app, config, text, blocks) {
+exports.postMessage = async function (app, config, text, blocks) {
   return common.postMessage(app, config.oauth, config.channel, text, blocks);
-}
+};
 
-async function postEphemeral (app, config, residentId, text) {
+exports.postEphemeral = async function (app, config, residentId, text) {
   return common.postEphemeral(app, config.oauth, config.channel, residentId, text);
-}
+};
 
 // Cron functions
-async function scheduledTask (app) {
+exports.scheduledTask = async function (app) {
   const now = new Date();
   // Scheduled task logic
-}
-
-module.exports = {
-  postMessage,
-  postEphemeral,
-  scheduledTask,
 };
 ```
 
@@ -76,12 +70,12 @@ Create `views/common.js` with formatting and mapping functions:
 
 ```javascript
 // Formatting functions
-function formatData (data) {
+exports.formatData = function (data) {
   // Format data for display
   return `*${data.name}* - ${data.value}`;
-}
+};
 
-function getEmoji (value) {
+exports.getEmoji = function (value) {
   if (value >= 100) {
     return ':sparkles:';
   } else if (value >= 50) {
@@ -89,20 +83,14 @@ function getEmoji (value) {
   } else {
     return '';
   }
-}
+};
 
 // Mapping functions
-function mapItems (items) {
+exports.mapItems = function (items) {
   return items.map(item => ({
     value: JSON.stringify({ id: item.id }),
-    text: { type: 'plain_text', text: item.name },
+    text: common.blockPlaintext(item.name),
   }));
-}
-
-module.exports = {
-  formatData,
-  getEmoji,
-  mapItems,
 };
 ```
 
@@ -310,16 +298,14 @@ Create three view files that consolidate all view functions by type:
 
 const common = require('../../common');
 
-function homeView () {
+exports.homeView = function () {
   const blocks = [];
   // ...
   return {
     type: 'home',
     blocks,
   };
-}
-
-module.exports = { homeView };
+};
 ```
 
 **Command views:**
@@ -331,7 +317,7 @@ const { formatData } = require('./common');
 
 const TITLE = common.blockPlaintext('App Name');
 
-function statsView (data) {
+exports.statsView = function (data) {
   const blocks = [];
   blocks.push(common.blockSection(formatData(data)));
   // ...
@@ -341,9 +327,9 @@ function statsView (data) {
     close: common.CLOSE,
     blocks,
   };
-}
+};
 
-function activateView (data) {
+exports.activateView = function (data) {
   const blocks = [];
   // ...
   return {
@@ -354,9 +340,7 @@ function activateView (data) {
     submit: common.SUBMIT,
     blocks,
   };
-}
-
-module.exports = { statsView, activateView };
+};
 ```
 
 **Action views:**
@@ -368,7 +352,7 @@ const { formatData, getEmoji, mapItems } = require('./common');
 
 const TITLE = common.blockPlaintext('App Name');
 
-function onboardView () {
+exports.onboardView = function () {
   const blocks = [];
   // ...
   return {
@@ -377,9 +361,9 @@ function onboardView () {
     title: TITLE,
     blocks,
   };
-}
+};
 
-function claimView (items, value) {
+exports.claimView = function (items, value) {
   const emoji = getEmoji(value);
   const blocks = [];
   blocks.push(common.blockSection(`Claim complete ${emoji}`));
@@ -398,9 +382,7 @@ function claimView (items, value) {
     title: TITLE,
     blocks,
   };
-}
-
-module.exports = { onboardView, claimView };
+};
 ```
 
 ### 6. Update Entry Point
@@ -430,6 +412,7 @@ node src/bolt/{app}.app.js
 6. **Commands vs Actions**: Keep slash commands (user-facing, typed) separate from UI actions (button/modal-triggered workflows)
 7. **Cron Functions**: Cron job implementations in `handlers/common.js`, schedules in main `app.js`
 8. **Consolidated Files**: Eight total files (4 handler files + 4 view files) make navigation easy while maintaining clear separation of concerns
+9. **Individual Exports**: Use `exports.functionName` pattern for all functions instead of `module.exports = {}` for consistency with `bolt/common.js`
 
 ## File Size Guidelines
 
