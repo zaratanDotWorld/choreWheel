@@ -312,18 +312,14 @@ exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetada
 
   const header = 'Set chore priorities';
   const priorityText = 'After your update, ' +
-      `*${targetChore.name}* will have a priority of *${newPriority} ppt*, ` +
-      `${effect} of *${Math.abs(change)} ppt* ${emoji}\n\n` +
-      `That's about *${pointsPerDay} points per day*.`;
-  const saturationText = `Your preferences for *${targetChore.name}* are at *${(saturation * 100).toFixed(0)}%* of possible strength. ` +
-    'If you want a *bigger effect*, ' +
-    (saturation > 0.8 ? 'ask others to support your priorities.' : 'you can strengthen your preferences.');
-  const submitText = '*Submit* to confirm, or go *back* to change your update.';
+      `*${targetChore.name}* will have a priority of *${newPriority} ppt* ${effect} of *${Math.abs(change)} ppt*. ` +
+      `That's about *${pointsPerDay} points per day* ${emoji}`;
+  const submitText = `Your preferences for *${targetChore.name}* are at *${(saturation * 100).toFixed(0)}%* of possible strength. ` +
+    '*Submit* to confirm, or go *back* to change your update.';
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(priorityText));
-  blocks.push(common.blockSection(saturationText));
   blocks.push(common.blockSection(submitText));
 
   return {
