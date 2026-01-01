@@ -5,7 +5,9 @@ const { Admin, Chores } = require('../../../core/index');
 
 const common = require('../../common');
 const views = require('../views/events');
-const { houseActive } = require('./common');
+
+const { houseActive } = require('./utils');
+const { formatStats, formatTotalStats } = require('../views/utils');
 
 module.exports = (app) => {
   // App uninstalled
@@ -89,10 +91,9 @@ module.exports = (app) => {
           const HEARTS_URL = 'https://www.zaratan.world/chorewheel/hearts';
           const { heartsConf } = await Admin.getHouse(houseId);
 
-          const viewsCommon = require('../views/common');
           let text = ':scroll: *Last month\'s chore points* :scroll: \n';
-          text += choreStats.map(cs => `\n${viewsCommon.formatStats(cs)}`).join('');
-          text += `\n${viewsCommon.formatTotalStats(choreStats)}`;
+          text += choreStats.map(cs => `\n${formatStats(cs)}`).join('');
+          text += `\n${formatTotalStats(choreStats)}`;
           text += (!heartsConf) ? `\n\n:heart: Want month-to-month accountability? *Get <${HEARTS_URL}|Hearts>!* :heart:` : '';
           await common.postMessage(app, choresConf, text);
         }

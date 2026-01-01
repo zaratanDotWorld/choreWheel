@@ -2,7 +2,7 @@ const { penaltyIncrement, pointsBuffer } = require('../../../config');
 
 const common = require('../../common');
 
-const { DOCS_URL } = require('./common');
+const { DOCS_URL } = require('./utils');
 
 // Event views
 

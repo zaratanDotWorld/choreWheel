@@ -1,5 +1,5 @@
 const common = require('../../common');
-const viewsCommon = require('./common');
+const { formatBuy } = require('./utils');
 
 const TITLE = common.blockPlaintext('Things');
 
@@ -77,7 +77,7 @@ exports.thingsFulfillView = function (unfulfilledBuys) {
         .map((buy) => {
           return {
             value: JSON.stringify({ id: buy.id }),
-            text: common.blockPlaintext(viewsCommon.formatBuy(buy, false).slice(0, 75)),
+            text: common.blockPlaintext(formatBuy(buy, false).slice(0, 75)),
           };
         }),
     },

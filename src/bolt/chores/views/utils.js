@@ -6,6 +6,10 @@ const {
 
 const common = require('../../common');
 
+// Title
+
+exports.TITLE = common.blockPlaintext('Chores');
+
 // Docs
 
 exports.DOCS_URL = 'https://docs.chorewheel.zaratan.world/en/latest/tools/chores.html';

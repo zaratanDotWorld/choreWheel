@@ -5,7 +5,7 @@ const { Admin, Things } = require('../../../core/index');
 
 const common = require('../../common');
 const views = require('../views/events');
-const { houseActive } = require('./common');
+const { houseActive } = require('./utils');
 
 module.exports = (app) => {
   // App uninstalled

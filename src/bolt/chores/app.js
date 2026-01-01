@@ -10,7 +10,7 @@ const { App, LogLevel } = require('@slack/bolt');
 const { CHORES_CONF } = require('../../constants');
 
 const common = require('../common');
-const { pingChores } = require('./handlers/common');
+const { pingChores } = require('./handlers/utils');
 
 // Create the app
 

@@ -1,7 +1,7 @@
 const { heartsPollLength, heartsCriticalNum, heartsMinPctInitial, heartsMinPctCritical } = require('../../../config');
 
 const common = require('../../common');
-const { heartEmoji } = require('./common');
+const { heartEmoji } = require('./utils');
 
 const TITLE = common.blockPlaintext('Hearts');
 

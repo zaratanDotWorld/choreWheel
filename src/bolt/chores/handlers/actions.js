@@ -1,13 +1,15 @@
 const assert = require('assert');
 
 const { YAY, DAY, CHORES_CONF } = require('../../../constants');
-const { displayThreshold, breakMinDays } = require('../../../config');
+const { displayThreshold, breakMinDays, achievementWindow } = require('../../../config');
 const { getMonthStart, shiftDate } = require('../../../utils');
 
 const { Admin, Polls, Chores } = require('../../../core/index');
 
 const common = require('../../common');
 const views = require('../views/actions');
+
+const { formatPointsPerDay } = require('../views/utils');
 
 module.exports = (app) => {
   // Onboarding flow
@@ -141,8 +143,6 @@ module.exports = (app) => {
     let name;
     let claim;
 
-    const { achievementWindow } = require('../../../config');
-
     // HACK: Can we do better than conditioning on `name`?
     if (chore.name) {
       // Regular chore
@@ -269,15 +269,13 @@ module.exports = (app) => {
 
     const numResidents = (await Admin.getResidents(houseId, now)).length;
 
-    const viewsCommon = require('../views/common');
-
     if (change > 0) {
       const text = `Someone *prioritized ${targetChore.name}* by *${change} ppt*, to *${newPriority}* :rocket:\n\n` +
-        `That's about *${viewsCommon.formatPointsPerDay(targetChoreRanking.ranking, numResidents)} points per day*.`;
+        `That's about *${formatPointsPerDay(targetChoreRanking.ranking, numResidents)} points per day*.`;
       await common.postMessage(app, choresConf, text);
     } else if (change < 0) {
       const text = `Someone *deprioritized ${targetChore.name}* by *${Math.abs(change)} ppt*, to *${newPriority}* :snail:\n\n` +
-        `That's about *${viewsCommon.formatPointsPerDay(targetChoreRanking.ranking, numResidents)} points per day*.`;
+        `That's about *${formatPointsPerDay(targetChoreRanking.ranking, numResidents)} points per day*.`;
       await common.postMessage(app, choresConf, text);
     }
 

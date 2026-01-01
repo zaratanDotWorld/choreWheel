@@ -1,7 +1,5 @@
 const common = require('../../common');
-const { formatStats } = require('./common');
-
-const TITLE = common.blockPlaintext('Chores');
+const { TITLE, formatStats } = require('./utils');
 
 // Command views
 

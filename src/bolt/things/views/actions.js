@@ -7,7 +7,7 @@ const {
 } = require('../../../config');
 
 const common = require('../../common');
-const viewsCommon = require('./common');
+const { formatThing, formatBuy, urlCompare, mapThings } = require('./utils');
 
 const TITLE = common.blockPlaintext('Things');
 
@@ -36,7 +36,7 @@ exports.thingsBuyView = function (things, accounts) {
             .map((thing) => {
               return {
                 value: JSON.stringify({ id: thing.id }),
-                text: common.blockPlaintext(viewsCommon.formatThing(thing)),
+                text: common.blockPlaintext(formatThing(thing)),
               };
             }),
         ),
@@ -84,7 +84,7 @@ exports.thingsBuyCallbackView = function (buy, thing, balance, minVotes) {
   buy.type = thing.type;
   buy.name = thing.name;
   buy.thingMetadata = thing.metadata;
-  const formattedBuy = viewsCommon.formatBuy(buy);
+  const formattedBuy = formatBuy(buy);
 
   const mainText = `*<@${buy.boughtBy}>* bought *${formattedBuy}*. ` +
     `There's *$${balance}* left in the *${buy.account}* account :money_with_wings:`;
@@ -188,13 +188,13 @@ exports.thingsBoughtView = function (unfulfilledBuys, fulfilledBuys7, fulfilledB
 
   const pendingBuysText = unfulfilledBuys
     .filter(buy => buy.resolvedAt === null)
-    .map(buy => viewsCommon.formatBuy(buy))
+    .map(buy => formatBuy(buy))
     .join('\n');
 
   const confirmedBuysText = unfulfilledBuys
     .filter(buy => buy.resolvedAt !== null)
-    .sort((a, b) => viewsCommon.urlCompare(a, b))
-    .map(buy => viewsCommon.formatBuy(buy))
+    .sort((a, b) => urlCompare(a, b))
+    .map(buy => formatBuy(buy))
     .join('\n');
 
   const fulfilledBuys7Text = fulfilledBuys7
@@ -272,7 +272,7 @@ exports.thingsProposeEditView = function (things, branch = '') {
       type: 'static_select',
       action_id: 'thing',
       placeholder: common.blockPlaintext('Choose a thing'),
-      options: viewsCommon.mapThings(things),
+      options: mapThings(things),
     },
   ));
 
@@ -375,7 +375,7 @@ exports.thingsProposeDeleteView = function (things) {
       action_id: 'thing',
       type: 'static_select',
       placeholder: common.blockPlaintext('Choose a thing'),
-      options: viewsCommon.mapThings(things),
+      options: mapThings(things),
     },
   ));
 

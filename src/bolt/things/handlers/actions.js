@@ -4,7 +4,7 @@ const { Admin, Polls, Things } = require('../../../core/index');
 
 const common = require('../../common');
 const views = require('../views/actions');
-const { parseThingsEditSubmission } = require('./common');
+const { parseThingsEditSubmission } = require('./utils');
 
 module.exports = (app) => {
   // Buy flow

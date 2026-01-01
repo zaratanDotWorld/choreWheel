@@ -5,7 +5,7 @@ const { Admin, Things } = require('../../../core/index');
 const common = require('../../common');
 const views = require('../views/commands');
 const actionsViews = require('../views/actions');
-const { parseThingsEditSubmission } = require('./common');
+const { parseThingsEditSubmission } = require('./utils');
 
 module.exports = (app) => {
   // Channel command
