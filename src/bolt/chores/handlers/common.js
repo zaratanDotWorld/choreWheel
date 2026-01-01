@@ -33,7 +33,7 @@ async function pingChores (app) {
         console.log(`Pinging ${house.slackId}`);
         const { choresConf: config } = await Admin.getHouse(house.slackId);
         const text = `Heads up, *${pingableChore.name}* is worth *${pingableChore.value.toFixed(0)} points* :bangbang:`;
-        return common.postMessage(app, config.oauth, config.channel, text);
+        return postMessage(app, config, text);
       }
     }
   }

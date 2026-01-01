@@ -520,10 +520,10 @@ module.exports = (app) => {
 
     const numResidents = await Admin.getNumResidents(houseId, now);
     const balance = await Chores.getSpecialChoreBalance(houseId, now);
-    const obligation = Math.max(0, -(balance - points)) / numResidents;
+    const newObligation = Math.min(points, points - balance) / numResidents;
 
     const text = 'Someone just proposed a special chore';
-    const blocks = views.choresSpecialCallbackView(proposal, minVotes, obligation);
+    const blocks = views.choresSpecialCallbackView(proposal, minVotes, newObligation);
     const { channel, ts } = await postMessage(app, choresConf, text, blocks);
     await Polls.updateMetadata(proposal.pollId, { channel, ts });
 
