@@ -58,6 +58,7 @@ exports.getHouseHearts = async function (houseId, now) {
 };
 
 exports.generateHearts = async function (houseId, residentId, type, generatedAt, value) {
+  assert(!isNaN(value), 'Invalid heart value!');
   return db('Heart')
     .insert({ houseId, residentId, type, generatedAt, value })
     .returning('*');
