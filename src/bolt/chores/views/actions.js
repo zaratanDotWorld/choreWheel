@@ -5,13 +5,22 @@ const {
 } = require('../../../config');
 
 const common = require('../../common');
-const { getAchievement, getSparkles, mapChoresValues, mapChoreRankings } = require('./common');
+
+const {
+  DOCS_URL,
+  getAchievement,
+  getSparkles,
+  mapChores,
+  mapChoresValues,
+  mapChoreRankings,
+  formatPointsPerDay,
+} = require('./common');
 
 const TITLE = common.blockPlaintext('Chores');
 
 // Onboarding flow
 
-function choresOnboardView2 () {
+exports.choresOnboardView2 = function () {
   const header = 'Set app channel';
 
   const blocks = [];
@@ -33,9 +42,9 @@ function choresOnboardView2 () {
     submit: common.SUBMIT,
     blocks,
   };
-}
+};
 
-function choresOnboardMessage (oauth) {
+exports.choresOnboardMessage = function (oauth) {
   const imageUrl = 'https://raw.githubusercontent.com/zaratanDotWorld/choreWheel/' +
     'ecd9996619567febdf62edcc20f9617e4414f866/assets/chores-home.png';
 
@@ -73,17 +82,16 @@ function choresOnboardMessage (oauth) {
     'Adding and claiming chores can be done by anybody through the app home.',
   ));
 
-  const DOCS_URL = 'https://docs.chorewheel.zaratan.world/en/latest/tools/chores.html';
   blocks.push(common.blockSection(
     `_Tip: pin this message to the channel. To learn more about Chores, read the <${DOCS_URL}|docs>._`,
   ));
 
   return blocks;
-}
+};
 
 // Solo activate flow
 
-function choresActivateSoloView () {
+exports.choresActivateSoloView = function () {
   const header = 'Activate yourself';
   const mainText = 'By activating yourself, you agree to participate in the chores system.\n\n' +
     'You will be responsible for earning *~100 points per month* by doing chores. ' +
@@ -101,11 +109,11 @@ function choresActivateSoloView () {
     submit: common.SUBMIT,
     blocks,
   };
-}
+};
 
 // Claim flow
 
-function choresClaimViewZero () {
+exports.choresClaimViewZero = function () {
   const header = 'No chores available';
   const mainText = 'If no chores exist, create some using `Edit chores list`. ' +
     'Otherwise, come back a little bit later.';
@@ -120,9 +128,9 @@ function choresClaimViewZero () {
     close: common.CLOSE,
     blocks,
   };
-}
+};
 
-function choresClaimView (chores) {
+exports.choresClaimView = function (chores) {
   const header = 'Claim a chore';
   const mainText = 'Claims are verified by the group. ' +
     'Large claims (*10+ points*) require at least *2 upvotes*, including yours.';
@@ -149,9 +157,9 @@ function choresClaimView (chores) {
     submit: common.NEXT,
     blocks,
   };
-}
+};
 
-function choresClaimView2 (chore, choreValue, choreStats) {
+exports.choresClaimView2 = function (chore, choreValue, choreStats) {
   const pointsEarned = (choreValue + choreStats.pointsEarned).toFixed(0);
   const pointsOwed = choreStats.pointsOwed;
   const sparkles = getSparkles(pointsEarned);
@@ -179,9 +187,9 @@ function choresClaimView2 (chore, choreValue, choreStats) {
     submit: common.SUBMIT,
     blocks,
   };
-}
+};
 
-function choresClaimCallbackView (claim, name, minVotes, achivementPoints, monthlyPoints) {
+exports.choresClaimCallbackView = function (claim, name, minVotes, achivementPoints, monthlyPoints) {
   const achievement = getAchievement(achivementPoints);
   const sparkles = getSparkles(monthlyPoints);
 
@@ -193,11 +201,11 @@ function choresClaimCallbackView (claim, name, minVotes, achivementPoints, month
   blocks.push(common.blockSection(common.makeVoteText(minVotes, choresPollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(claim.pollId, 1, 0)));
   return blocks;
-}
+};
 
 // Ranking flow
 
-function choresRankView (choreRankings) {
+exports.choresRankView = function (choreRankings) {
   const header = 'Set chore priorities';
   const mainText = 'The higher a chore\'s priority, the more points it will be worth over time.\n\n' +
     'Chore priorities are measured in *points-per-thousand* (ppt), which always add up to *1000*. ' +
@@ -252,9 +260,9 @@ function choresRankView (choreRankings) {
     submit: common.NEXT,
     blocks,
   };
-}
+};
 
-function choresRankView2 (preference, targetChore, choreRankings) {
+exports.choresRankView2 = function (preference, targetChore, choreRankings) {
   const header = 'Set chore priorities';
   const mainText = 'Priority-setting is a *collaborative and ongoing* process, ' +
     'where people "take" priority from some chores and give it to others.\n\n' +
@@ -291,10 +299,9 @@ function choresRankView2 (preference, targetChore, choreRankings) {
     submit: common.NEXT,
     blocks,
   };
-}
+};
 
-function choresRankView3 (targetChore, targetChoreRanking, prefsMetadata, prefSaturation, numResidents) {
-  const { formatPointsPerDay } = require('./common');
+exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetadata, prefSaturation, numResidents) {
   const newPriority = Math.round(targetChoreRanking.ranking * 1000);
   const change = newPriority - targetChore.priority;
   const pointsPerDay = formatPointsPerDay(targetChoreRanking.ranking, numResidents);
@@ -328,9 +335,9 @@ function choresRankView3 (targetChore, targetChoreRanking, prefsMetadata, prefSa
     submit: common.SUBMIT,
     blocks,
   };
-}
+};
 
-function choresRankViewZero (preference) {
+exports.choresRankViewZero = function (preference) {
   const header = 'Set chore priorities';
   const mainText = `No chores available to *${(preference >= 0.5) ? 'deprioritize' : 'prioritize'}*, ` +
     'most likely because you\'ve put in these preferences already.\n\n' +
@@ -346,11 +353,11 @@ function choresRankViewZero (preference) {
     close: common.BACK,
     blocks,
   };
-}
+};
 
 // Break flow
 
-function choresBreakView (currentTime) {
+exports.choresBreakView = function (currentTime) {
   const formattedTime = `${currentTime.getFullYear()}-${currentTime.getMonth() + 1}-${currentTime.getDate()}`;
 
   const header = 'Take a break';
@@ -396,11 +403,11 @@ function choresBreakView (currentTime) {
     submit: common.SUBMIT,
     blocks,
   };
-}
+};
 
 // Gift flow
 
-function choresGiftView (currentBalance) {
+exports.choresGiftView = function (currentBalance) {
   const header = 'Gift chore points';
   const mainText = 'Gift someone points from your balance. ' +
     // TODO: Remove this toFixed(0) 2 months after releasing github.com/zaratanDotWorld/choreWheel/pull/263
@@ -446,11 +453,11 @@ function choresGiftView (currentBalance) {
     submit: common.SUBMIT,
     blocks,
   };
-}
+};
 
 // Chore proposals
 
-function choresProposeView (minVotes, isAdmin) {
+exports.choresProposeView = function (minVotes, isAdmin) {
   const docsUrl = 'https://docs.chorewheel.zaratan.world/en/latest/tools/chores.html#core-concepts';
 
   const header = 'Edit chores list';
@@ -491,10 +498,9 @@ function choresProposeView (minVotes, isAdmin) {
     submit: common.NEXT,
     blocks,
   };
-}
+};
 
-function choresProposeEditView (force, chores) {
-  const { mapChores } = require('./common');
+exports.choresProposeEditView = function (force, chores) {
   const header = 'Edit chores list';
   const mainText = 'Change an existing chore.';
 
@@ -521,10 +527,10 @@ function choresProposeEditView (force, chores) {
     submit: common.NEXT,
     blocks,
   };
-}
+};
 
 // NOTE: used for both add and edit flows
-function choresProposeAddView (force, chore) {
+exports.choresProposeAddView = function (force, chore) {
   const header = 'Edit chores list';
   let metadata, mainText;
 
@@ -570,9 +576,9 @@ function choresProposeAddView (force, chore) {
     submit: common.SUBMIT,
     blocks,
   };
-}
+};
 
-function choresProposeDeleteView (force, chores) {
+exports.choresProposeDeleteView = function (force, chores) {
   const header = 'Edit chores list';
   const mainText = 'Remove an existing chore.';
 
@@ -604,9 +610,9 @@ function choresProposeDeleteView (force, chores) {
     submit: common.SUBMIT,
     blocks,
   };
-}
+};
 
-function choresProposeCallbackView (metadata, proposal, minVotes) {
+exports.choresProposeCallbackView = function (metadata, proposal, minVotes) {
   let mainText;
   switch (metadata.change) {
     case 'add':
@@ -631,9 +637,9 @@ function choresProposeCallbackView (metadata, proposal, minVotes) {
   blocks.push(common.blockSection(common.makeVoteText(minVotes, choresProposalPollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(proposal.pollId, 1, 0)));
   return blocks;
-}
+};
 
-function choresProposeCallbackViewForce (metadata, residentId, name, description) {
+exports.choresProposeCallbackViewForce = function (metadata, residentId, name, description) {
   let mainText;
   switch (metadata.change) {
     case 'add':
@@ -656,11 +662,11 @@ function choresProposeCallbackViewForce (metadata, residentId, name, description
   }
 
   return blocks;
-}
+};
 
 // Special chore flow
 
-function choresSpecialView (minVotes, remainder) {
+exports.choresSpecialView = function (minVotes, remainder) {
   const header = 'Add special chore';
   const mainText = 'Sometimes there are big one-off tasks that need to be done. ' +
     'These can be seen as *special chores*.\n\n' +
@@ -710,9 +716,9 @@ function choresSpecialView (minVotes, remainder) {
     submit: common.SUBMIT,
     blocks,
   };
-}
+};
 
-function choresSpecialCallbackView (proposal, minVotes, obligation) {
+exports.choresSpecialCallbackView = function (proposal, minVotes, obligation) {
   const mainText = `*<@${proposal.proposedBy}>* wants to create a *special chore* ` +
     `worth *${proposal.metadata.value} points*:`;
   const obligationText = 'Creating this special chore will add ' +
@@ -733,28 +739,4 @@ function choresSpecialCallbackView (proposal, minVotes, obligation) {
   blocks.push(common.blockSection(common.makeVoteText(minVotes, specialChoreProposalPollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(proposal.pollId, 1, 0)));
   return blocks;
-}
-
-module.exports = {
-  choresOnboardView2,
-  choresOnboardMessage,
-  choresActivateSoloView,
-  choresClaimViewZero,
-  choresClaimView,
-  choresClaimView2,
-  choresClaimCallbackView,
-  choresRankView,
-  choresRankView2,
-  choresRankView3,
-  choresRankViewZero,
-  choresBreakView,
-  choresGiftView,
-  choresProposeView,
-  choresProposeEditView,
-  choresProposeAddView,
-  choresProposeDeleteView,
-  choresProposeCallbackView,
-  choresProposeCallbackViewForce,
-  choresSpecialView,
-  choresSpecialCallbackView,
 };

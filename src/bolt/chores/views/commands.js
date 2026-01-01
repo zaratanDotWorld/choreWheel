@@ -5,7 +5,7 @@ const TITLE = common.blockPlaintext('Chores');
 
 // Command views
 
-function choresStatsView (choreClaims, choreBreaks, choreStats) {
+exports.choresStatsView = function (choreClaims, choreBreaks, choreStats) {
   const header = 'See chore stats';
   const mainText = 'Extra information about monthly chores.';
 
@@ -35,9 +35,9 @@ function choresStatsView (choreClaims, choreBreaks, choreStats) {
     close: common.CLOSE,
     blocks,
   };
-}
+};
 
-function choresActivateView (residents) {
+exports.choresActivateView = function (residents) {
   const header = 'Update activation status';
   const mainText = 'Activated residents *owe chores*, and can *create or vote on polls*.\n\n' +
     'Choose some residents to update. ' +
@@ -90,9 +90,9 @@ function choresActivateView (residents) {
     submit: common.SUBMIT,
     blocks,
   };
-}
+};
 
-function choresResetView () {
+exports.choresResetView = function () {
   const header = 'Reset chore points';
   const mainText = 'Reset chore points for the workspace. ' +
   'All chores will be worth 0 points and all residents will have 0 points. ' +
@@ -111,6 +111,4 @@ function choresResetView () {
     submit: common.SUBMIT,
     blocks,
   };
-}
-
-module.exports = { choresStatsView, choresActivateView, choresResetView };
+};

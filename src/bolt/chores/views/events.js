@@ -2,11 +2,11 @@ const { penaltyIncrement, pointsBuffer } = require('../../../config');
 
 const common = require('../../common');
 
-const DOCS_URL = 'https://docs.chorewheel.zaratan.world/en/latest/tools/chores.html';
+const { DOCS_URL } = require('./common');
 
 // Event views
 
-function choresOnboardView () {
+exports.choresOnboardView = function () {
   const header = ':wave::skin-tone-4: Thanks for installing Chores!';
 
   const instructions = 'To get started, choose an *events channel*. ' +
@@ -24,9 +24,9 @@ function choresOnboardView () {
     type: 'home',
     blocks,
   };
-}
+};
 
-function choresHomeView (choreChannel, choreStats, numActive) {
+exports.choresHomeView = function (choreChannel, choreStats, numActive) {
   const { pointsEarned, pointsOwed } = choreStats;
   const progressEmoji = (pointsOwed - pointsEarned < penaltyIncrement)
     ? ':white_check_mark:'
@@ -75,6 +75,4 @@ function choresHomeView (choreChannel, choreStats, numActive) {
     type: 'home',
     blocks,
   };
-}
-
-module.exports = { choresOnboardView, choresHomeView };
+};

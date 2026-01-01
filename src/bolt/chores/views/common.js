@@ -6,9 +6,13 @@ const {
 
 const common = require('../../common');
 
+// Docs
+
+exports.DOCS_URL = 'https://docs.chorewheel.zaratan.world/en/latest/tools/chores.html';
+
 // Formatting functions
 
-function formatStats (stats) {
+exports.formatStats = function (stats) {
   const { residentId, pointsEarned, pointsOwed, completionPct } = stats;
 
   let emoji = '';
@@ -20,23 +24,23 @@ function formatStats (stats) {
 
   // TODO: Remove these toFixed(0) 2 months after releasing github.com/zaratanDotWorld/choreWheel/pull/263
   return `<@${residentId}> - ${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} (${(completionPct * 100).toFixed(0)}%) ${emoji}`;
-}
+};
 
-function formatTotalStats (stats) {
+exports.formatTotalStats = function (stats) {
   const pointsEarned = stats.reduce((sum, stat) => sum + stat.pointsEarned, 0);
   const pointsOwed = stats.reduce((sum, stat) => sum + stat.pointsOwed, 0);
   const completionPct = pointsEarned / pointsOwed;
 
   // TODO: Remove these toFixed(0) 2 months after releasing github.com/zaratanDotWorld/choreWheel/pull/263
   return `*Total - ${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} (${(completionPct * 100).toFixed(0)}%)*`;
-}
+};
 
-function formatPointsPerDay (ranking, numResidents) {
+exports.formatPointsPerDay = function (ranking, numResidents) {
   const pointsPerDay = ranking * (pointsPerResident / 30) * numResidents;
   return (pointsPerDay > 5) ? pointsPerDay.toFixed(0) : pointsPerDay.toFixed(1);
-}
+};
 
-function getAchievement (totalPoints) {
+exports.getAchievement = function (totalPoints) {
   if (totalPoints >= achievementBase * 5 * 5) {
     return ':first_place_medal:';
   } else if (totalPoints >= achievementBase * 5) {
@@ -46,25 +50,25 @@ function getAchievement (totalPoints) {
   } else {
     return '';
   }
-}
+};
 
-function getSparkles (monthlyPoints) {
+exports.getSparkles = function (monthlyPoints) {
   const numSparkles = Math.floor(monthlyPoints / (pointsPerResident / 4));
   return ':sparkles:'.repeat(Math.max(numSparkles, 0)); // Handle negative points
-}
+};
 
 // Mapping functions
 
-function mapChores (chores) {
+exports.mapChores = function (chores) {
   return chores.map((chore) => {
     return {
       value: JSON.stringify({ id: chore.id }),
       text: common.blockPlaintext(chore.name.slice(0, 60)),
     };
   });
-}
+};
 
-function mapChoresValues (chores) {
+exports.mapChoresValues = function (chores) {
   return chores.map((chore) => {
     const name = chore.name || chore.metadata.name;
     return {
@@ -72,9 +76,9 @@ function mapChoresValues (chores) {
       text: common.blockPlaintext(`${name.slice(0, 60)} - ${chore.value.toFixed(0)} points`),
     };
   });
-}
+};
 
-function mapChoreRankings (choreRankings) {
+exports.mapChoreRankings = function (choreRankings) {
   return choreRankings.map((chore) => {
     const priority = Math.round(chore.ranking * 1000);
     return {
@@ -82,15 +86,4 @@ function mapChoreRankings (choreRankings) {
       text: common.blockPlaintext(`${chore.name.slice(0, 60)} - ${priority} ppt`),
     };
   });
-}
-
-module.exports = {
-  formatStats,
-  formatTotalStats,
-  formatPointsPerDay,
-  getAchievement,
-  getSparkles,
-  mapChores,
-  mapChoresValues,
-  mapChoreRankings,
 };
