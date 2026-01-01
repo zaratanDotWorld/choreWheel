@@ -4,7 +4,6 @@ const { Admin, Polls, Hearts } = require('../../../core/index');
 
 const common = require('../../common');
 const views = require('../views/actions');
-const { postMessage, postEphemeral } = require('./common');
 
 module.exports = (app) => {
   // Challenge flow
@@ -36,10 +35,10 @@ module.exports = (app) => {
 
     if (!(await Admin.isActive(challengeeId, now))) {
       const text = `<@${challengeeId}> is not active and cannot be challenged :weary:`;
-      await postEphemeral(app, heartsConf, residentId, text);
+      await common.postEphemeral(app, heartsConf, residentId, text);
     } else if (unresolvedChallenges.length) {
       const text = `<@${challengeeId}> is already being challenged!`;
-      await postEphemeral(app, heartsConf, residentId, text);
+      await common.postEphemeral(app, heartsConf, residentId, text);
     } else {
       // Initiate the challenge
       const [ challenge ] = await Hearts.issueChallenge(houseId, residentId, challengeeId, numHearts, now, circumstance);
@@ -49,7 +48,7 @@ module.exports = (app) => {
 
       const text = 'Someone just issued a hearts challenge';
       const blocks = views.heartsChallengeCallbackView(challenge, minVotes, circumstance);
-      const { channel, ts } = await postMessage(app, heartsConf, text, blocks);
+      const { channel, ts } = await common.postMessage(app, heartsConf, text, blocks);
       await Polls.updateMetadata(challenge.pollId, { channel, ts });
     }
   });
@@ -80,7 +79,7 @@ module.exports = (app) => {
 
     const text = `<@${residentId}> just gave <@${recipientId}> ++ good karma :sparkles: \n` +
       `_${circumstance}_`;
-    await postMessage(app, heartsConf, text);
+    await common.postMessage(app, heartsConf, text);
   });
 
   // Board flow

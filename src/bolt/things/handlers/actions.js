@@ -4,7 +4,7 @@ const { Admin, Polls, Things } = require('../../../core/index');
 
 const common = require('../../common');
 const views = require('../views/actions');
-const { postMessage, parseThingsEditSubmission } = require('./common');
+const { parseThingsEditSubmission } = require('./common');
 
 module.exports = (app) => {
   // Buy flow
@@ -43,7 +43,7 @@ module.exports = (app) => {
 
     const text = 'Someone just bought a thing';
     const blocks = views.thingsBuyCallbackView(buy, thing, balance, minVotes);
-    const { channel, ts } = await postMessage(app, thingsConf, text, blocks);
+    const { channel, ts } = await common.postMessage(app, thingsConf, text, blocks);
     await Polls.updateMetadata(buy.pollId, { channel, ts });
   });
 
@@ -83,7 +83,7 @@ module.exports = (app) => {
 
     const text = 'Someone just bought a thing';
     const blocks = views.thingsSpecialBuyCallbackView(buy, balance, minVotes);
-    const { channel, ts } = await postMessage(app, thingsConf, text, blocks);
+    const { channel, ts } = await common.postMessage(app, thingsConf, text, blocks);
     await Polls.updateMetadata(buy.pollId, { channel, ts });
   });
 
@@ -193,7 +193,7 @@ module.exports = (app) => {
 
     const text = 'Someone just proposed a thing edit';
     const blocks = views.thingsProposeCallbackView(privateMetadata, proposal, minVotes);
-    const { channel, ts } = await postMessage(app, thingsConf, text, blocks);
+    const { channel, ts } = await common.postMessage(app, thingsConf, text, blocks);
     await Polls.updateMetadata(proposal.pollId, { channel, ts });
 
     await ack({ response_action: 'clear' });

@@ -90,28 +90,28 @@ exports.beginCommand = function (commandName, command) {
 
 // Publishing
 
-exports.postEphemeral = async function (app, oauth, channelId, residentId, text) {
+exports.postEphemeral = async function (app, config, residentId, text) {
   return app.client.chat.postEphemeral({
-    token: oauth.bot.token,
-    channel: channelId,
+    token: config.oauth.bot.token,
+    channel: config.channel,
     user: residentId,
     text,
   });
 };
 
-exports.postMessage = async function (app, oauth, channelId, text, blocks) {
+exports.postMessage = async function (app, config, text, blocks) {
   return app.client.chat.postMessage({
-    token: oauth.bot.token,
-    channel: channelId,
+    token: config.oauth.bot.token,
+    channel: config.channel,
     text,
     blocks,
   });
 };
 
-exports.postReply = async function (app, oauth, channelId, ts, text, blocks) {
+exports.postReply = async function (app, config, ts, text, blocks) {
   return app.client.chat.postMessage({
-    token: oauth.bot.token,
-    channel: channelId,
+    token: config.oauth.bot.token,
+    channel: config.channel,
     thread_ts: ts,
     text,
     blocks,
@@ -314,7 +314,7 @@ exports.updateVoteCounts = async function (app, oauth, body, action) {
 
   if (!(await Admin.isActive(residentId, now))) {
     const text = ':warning: Inactive residents are not allowed to vote :warning:';
-    await exports.postEphemeral(app, oauth, channelId, residentId, text);
+    await exports.postEphemeral(app, { oauth, channel: channelId }, residentId, text);
     return;
   }
 

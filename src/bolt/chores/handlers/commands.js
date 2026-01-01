@@ -5,7 +5,6 @@ const { Admin, Chores } = require('../../../core/index');
 
 const common = require('../../common');
 const views = require('../views/commands');
-const { postMessage } = require('./common');
 
 module.exports = (app) => {
   // Slash command: /chores-prune
@@ -112,7 +111,7 @@ module.exports = (app) => {
       text = `Deactivated ${residentsText || 'nobody'} :ice_cube:`;
     }
 
-    await postMessage(app, choresConf, text);
+    await common.postMessage(app, choresConf, text);
   });
 
   // Slash command: /chores-reset
@@ -141,6 +140,6 @@ module.exports = (app) => {
 
     await Chores.resetChorePoints(houseId, now);
 
-    await postMessage(app, choresConf, `<@${residentId}> just reset all chore points :volcano:`);
+    await common.postMessage(app, choresConf, `<@${residentId}> just reset all chore points :volcano:`);
   });
 };

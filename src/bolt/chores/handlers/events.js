@@ -5,7 +5,7 @@ const { Admin, Chores } = require('../../../core/index');
 
 const common = require('../../common');
 const views = require('../views/events');
-const { postMessage, postEphemeral, houseActive } = require('./common');
+const { houseActive } = require('./common');
 
 module.exports = (app) => {
   // App uninstalled
@@ -68,11 +68,11 @@ module.exports = (app) => {
         if (penaltyHeart.value < 0) {
           const text = 'You missed too many chores last month, ' +
             `and lost *${penaltyHeart.value.toFixed(1)}* hearts...`;
-          await postEphemeral(app, choresConf, penaltyHeart.residentId, text);
+          await common.postEphemeral(app, choresConf, penaltyHeart.residentId, text);
         } else if (penaltyHeart.value > 0) {
           const text = 'You did all your chores last month, ' +
             `and earned *${penaltyHeart.value.toFixed(1)}* hearts!`;
-          await postEphemeral(app, choresConf, penaltyHeart.residentId, text);
+          await common.postEphemeral(app, choresConf, penaltyHeart.residentId, text);
         }
       }
 
@@ -94,7 +94,7 @@ module.exports = (app) => {
           text += choreStats.map(cs => `\n${viewsCommon.formatStats(cs)}`).join('');
           text += `\n${viewsCommon.formatTotalStats(choreStats)}`;
           text += (!heartsConf) ? `\n\n:heart: Want month-to-month accountability? *Get <${HEARTS_URL}|Hearts>!* :heart:` : '';
-          await postMessage(app, choresConf, text);
+          await common.postMessage(app, choresConf, text);
         }
       }
     }

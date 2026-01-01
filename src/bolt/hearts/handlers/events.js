@@ -5,7 +5,7 @@ const { Admin, Hearts } = require('../../../core/index');
 
 const common = require('../../common');
 const views = require('../views/events');
-const { postMessage, postEphemeral, houseActive } = require('./common');
+const { houseActive } = require('./common');
 
 module.exports = (app) => {
   // App uninstalled
@@ -94,7 +94,7 @@ module.exports = (app) => {
     for (const challengeHeart of (await Hearts.getAgnosticHearts(houseId, now))) {
       const text = `<@${challengeHeart.residentId}> lost a challenge, ` +
         `and *${(-challengeHeart.value).toFixed(0)}* heart(s)...`;
-      await postMessage(app, heartsConf, text);
+      await common.postMessage(app, heartsConf, text);
     }
 
     // Regenerate lost hearts // fade karma hearts
@@ -103,7 +103,7 @@ module.exports = (app) => {
         const text = (regenHeart.value > 0)
           ? `You regenerated *${regenHeart.value.toFixed(2)}* heart(s)!`
           : `Your karma faded by *${(-regenHeart.value).toFixed(2)}* heart(s)!`;
-        await postEphemeral(app, heartsConf, regenHeart.residentId, text);
+        await common.postEphemeral(app, heartsConf, regenHeart.residentId, text);
       }
     }
 
@@ -115,13 +115,13 @@ module.exports = (app) => {
         ? `${karmaWinners} get last month's karma hearts :heart_on_fire:`
         : `${karmaWinners} gets last month's karma heart :heart_on_fire:`;
 
-      await postMessage(app, heartsConf, text);
+      await common.postMessage(app, heartsConf, text);
     }
 
     // Retire any residents
     for (const residentId of (await Hearts.retireResidents(houseId, now))) {
       const text = `*<@${residentId}> lost all their hearts* and is deactivated. :sleeping:`;
-      await postMessage(app, heartsConf, text);
+      await common.postMessage(app, heartsConf, text);
     }
   });
 };

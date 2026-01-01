@@ -4,7 +4,6 @@ const { Admin, Hearts } = require('../../../core/index');
 
 const common = require('../../common');
 const views = require('../views/commands');
-const { postMessage } = require('./common');
 
 module.exports = (app) => {
   // Sync command
@@ -68,6 +67,6 @@ module.exports = (app) => {
 
     await Hearts.resetResidents(houseId, now);
 
-    await postMessage(app, heartsConf, `<@${residentId}> just reset all hearts :heartpulse:`);
+    await common.postMessage(app, heartsConf, `<@${residentId}> just reset all hearts :heartpulse:`);
   });
 };

@@ -5,7 +5,7 @@ const { Admin, Things } = require('../../../core/index');
 const common = require('../../common');
 const views = require('../views/commands');
 const actionsViews = require('../views/actions');
-const { postMessage, postEphemeral, parseThingsEditSubmission } = require('./common');
+const { parseThingsEditSubmission } = require('./common');
 
 module.exports = (app) => {
   // Channel command
@@ -60,7 +60,7 @@ module.exports = (app) => {
     const [ thing ] = await Things.loadAccount(houseId, account, residentId, now, amount);
 
     const text = `<@${thing.boughtBy}> just loaded *$${thing.value}* into the *${thing.account}* account :chart_with_upwards_trend:`;
-    await postMessage(app, thingsConf, text);
+    await common.postMessage(app, thingsConf, text);
   });
 
   // Fulfill command
@@ -102,7 +102,7 @@ module.exports = (app) => {
     }
 
     const text = 'Fulfillment succeeded :shopping_bags:';
-    await postEphemeral(app, thingsConf, residentId, text);
+    await common.postEphemeral(app, thingsConf, residentId, text);
   });
 
   // Update command
@@ -148,7 +148,7 @@ module.exports = (app) => {
     await Things.editThing(thing.id, type, name, value, metadata, true);
 
     const text = 'Update succeeded :floppy_disk:';
-    await postEphemeral(app, thingsConf, residentId, text);
+    await common.postEphemeral(app, thingsConf, residentId, text);
 
     await ack({ response_action: 'clear' });
   });

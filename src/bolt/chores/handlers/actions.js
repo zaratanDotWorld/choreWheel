@@ -8,7 +8,6 @@ const { Admin, Polls, Chores } = require('../../../core/index');
 
 const common = require('../../common');
 const views = require('../views/actions');
-const { postMessage, postEphemeral } = require('./common');
 
 module.exports = (app) => {
   // Onboarding flow
@@ -54,7 +53,7 @@ module.exports = (app) => {
     const pref = { residentId, alphaChoreId, betaChoreId, preference: 0.7 };
     await Chores.setChorePreferences(houseId, [ pref ]);
 
-    await postMessage(app, choresConf, 'Welcome to Chores!', views.choresOnboardMessage(choresConf.oauth));
+    await common.postMessage(app, choresConf, 'Welcome to Chores!', views.choresOnboardMessage(choresConf.oauth));
   });
 
   // Solo activate flow
@@ -78,7 +77,7 @@ module.exports = (app) => {
     const { choresConf } = await Admin.getHouse(houseId);
 
     await common.activateResident(houseId, residentId, now);
-    await postMessage(app, choresConf, `<@${residentId}> is now active :fire:`);
+    await common.postMessage(app, choresConf, `<@${residentId}> is now active :fire:`);
   });
 
   // Claim flow
@@ -171,13 +170,13 @@ module.exports = (app) => {
 
     const text = 'Someone just completed a chore';
     const blocks = views.choresClaimCallbackView(claim, name, minVotes, achivementPoints, monthlyPoints);
-    const { channel, ts } = await postMessage(app, choresConf, text, blocks);
+    const { channel, ts } = await common.postMessage(app, choresConf, text, blocks);
     await Polls.updateMetadata(claim.pollId, { channel, ts });
 
     // Append the description
     if (chore.metadata && chore.metadata.description) {
       const text = `*Description:*\n${chore.metadata.description}`;
-      await common.postReply(app, choresConf.oauth, channel, ts, text);
+      await common.postReply(app, choresConf, ts, text);
     }
   });
 
@@ -275,11 +274,11 @@ module.exports = (app) => {
     if (change > 0) {
       const text = `Someone *prioritized ${targetChore.name}* by *${change} ppt*, to *${newPriority}* :rocket:\n\n` +
         `That's about *${viewsCommon.formatPointsPerDay(targetChoreRanking.ranking, numResidents)} points per day*.`;
-      await postMessage(app, choresConf, text);
+      await common.postMessage(app, choresConf, text);
     } else if (change < 0) {
       const text = `Someone *deprioritized ${targetChore.name}* by *${Math.abs(change)} ppt*, to *${newPriority}* :snail:\n\n` +
         `That's about *${viewsCommon.formatPointsPerDay(targetChoreRanking.ranking, numResidents)} points per day*.`;
-      await postMessage(app, choresConf, text);
+      await common.postMessage(app, choresConf, text);
     }
 
     await ack({ response_action: 'clear' });
@@ -317,14 +316,14 @@ module.exports = (app) => {
 
     if (breakStart < todayStart || breakDays < breakMinDays) {
       const text = 'Not a valid chore break :slightly_frowning_face:';
-      await postEphemeral(app, choresConf, residentId, text);
+      await common.postEphemeral(app, choresConf, residentId, text);
     } else {
       // Record the break
       await Chores.addChoreBreak(houseId, residentId, breakStart, breakEnd, circumstance);
       const text = `<@${residentId}> is taking a *${breakDays}-day* break ` +
           `starting ${breakStart.toDateString()} :beach_with_umbrella:\n` +
           `_${circumstance}_`;
-      await postMessage(app, choresConf, text);
+      await common.postMessage(app, choresConf, text);
     }
 
     await ack();
@@ -358,17 +357,17 @@ module.exports = (app) => {
 
     if (!(await Admin.isActive(recipientId, now))) {
       const text = `<@${recipientId}> is not active and cannot earn points :confused:`;
-      await postEphemeral(app, choresConf, residentId, text);
+      await common.postEphemeral(app, choresConf, residentId, text);
     } else if (points > currentBalance) {
       const text = 'You can\'t gift more points than you have! :face_with_monocle:';
-      await postEphemeral(app, choresConf, residentId, text);
+      await common.postEphemeral(app, choresConf, residentId, text);
     } else {
       // Make the gift
       await Chores.giftChorePoints(houseId, residentId, recipientId, now, points);
 
       const text = `<@${residentId}> just gifted <@${recipientId}> *${points} points* :gift:\n` +
         `_${circumstance}_`;
-      await postMessage(app, choresConf, text);
+      await common.postMessage(app, choresConf, text);
     }
 
     await ack();
@@ -470,7 +469,7 @@ module.exports = (app) => {
 
       const text = 'An admin just edited a chore';
       const blocks = views.choresProposeCallbackViewForce(privateMetadata, residentId, name, description);
-      await postMessage(app, choresConf, text, blocks);
+      await common.postMessage(app, choresConf, text, blocks);
     } else {
       // Create the chore proposal
       const [ proposal ] = await Chores.createChoreProposal(houseId, residentId, choreId, name, metadata, active, now);
@@ -480,7 +479,7 @@ module.exports = (app) => {
 
       const text = 'Someone just proposed a chore edit';
       const blocks = views.choresProposeCallbackView(privateMetadata, proposal, minVotes);
-      const { channel, ts } = await postMessage(app, choresConf, text, blocks);
+      const { channel, ts } = await common.postMessage(app, choresConf, text, blocks);
       await Polls.updateMetadata(proposal.pollId, { channel, ts });
     }
 
@@ -524,7 +523,7 @@ module.exports = (app) => {
 
     const text = 'Someone just proposed a special chore';
     const blocks = views.choresSpecialCallbackView(proposal, minVotes, newObligation);
-    const { channel, ts } = await postMessage(app, choresConf, text, blocks);
+    const { channel, ts } = await common.postMessage(app, choresConf, text, blocks);
     await Polls.updateMetadata(proposal.pollId, { channel, ts });
 
     await ack({ response_action: 'clear' });
