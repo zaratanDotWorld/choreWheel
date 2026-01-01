@@ -22,8 +22,7 @@ exports.formatStats = function (stats) {
     emoji = ':broken_heart:';
   }
 
-  // TODO: Remove these toFixed(0) 2 months after releasing github.com/zaratanDotWorld/choreWheel/pull/263
-  return `<@${residentId}> - ${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} (${(completionPct * 100).toFixed(0)}%) ${emoji}`;
+  return `<@${residentId}> - ${pointsEarned} / ${pointsOwed} (${completionPct * 100}%) ${emoji}`;
 };
 
 exports.formatTotalStats = function (stats) {
@@ -31,8 +30,7 @@ exports.formatTotalStats = function (stats) {
   const pointsOwed = stats.reduce((sum, stat) => sum + stat.pointsOwed, 0);
   const completionPct = pointsEarned / pointsOwed;
 
-  // TODO: Remove these toFixed(0) 2 months after releasing github.com/zaratanDotWorld/choreWheel/pull/263
-  return `*Total - ${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} (${(completionPct * 100).toFixed(0)}%)*`;
+  return `*Total - ${pointsEarned} / ${pointsOwed} (${completionPct * 100}%)*`;
 };
 
 exports.formatPointsPerDay = function (ranking, numResidents) {

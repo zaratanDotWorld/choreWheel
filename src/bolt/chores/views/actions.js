@@ -410,8 +410,7 @@ exports.choresBreakView = function (currentTime) {
 exports.choresGiftView = function (currentBalance) {
   const header = 'Gift chore points';
   const mainText = 'Gift someone points from your balance. ' +
-    // TODO: Remove this toFixed(0) 2 months after releasing github.com/zaratanDotWorld/choreWheel/pull/263
-    `You have *${currentBalance.toFixed(0)} points* to gift.`;
+    `You have *${currentBalance} points* to gift.`;
 
   const blocks = [];
   blocks.push(common.blockHeader(header));

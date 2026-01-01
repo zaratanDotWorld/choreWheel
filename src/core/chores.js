@@ -704,8 +704,7 @@ exports.addChorePenalty = async function (houseId, residentId, currentTime) {
 // Chore Stats
 
 exports.getChoreStats = async function (houseId, residentId, startTime, endTime) {
-  // TODO: Remove this Math.round 2 months after releasing github.com/zaratanDotWorld/choreWheel/pull/263
-  const pointsEarned = Math.round(await exports.getAllChorePoints(residentId, startTime, endTime));
+  const pointsEarned = await exports.getAllChorePoints(residentId, startTime, endTime);
   const workingPercentage = await exports.getWorkingResidentPercentage(residentId, endTime);
 
   // Calculate special chore obligations
