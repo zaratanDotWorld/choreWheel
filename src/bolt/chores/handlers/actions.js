@@ -17,8 +17,7 @@ module.exports = (app) => {
   app.action('chores-onboard', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'chores-onboard';
-    const { houseId } = common.beginAction(actionName, body);
+    const { houseId } = common.beginAction('chores-onboard', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     const view = views.choresOnboardView2();
@@ -28,8 +27,7 @@ module.exports = (app) => {
   app.view('chores-onboard-callback', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'chores-onboard-callback';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('chores-onboard-callback', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     const channel = common.getInputBlock(body, -1).channel.selected_channel;
@@ -63,8 +61,7 @@ module.exports = (app) => {
   app.action('chores-activate-solo', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'chores-activate-solo';
-    const { houseId } = common.beginAction(actionName, body);
+    const { houseId } = common.beginAction('chores-activate-solo', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     const view = views.choresActivateSoloView();
@@ -74,8 +71,7 @@ module.exports = (app) => {
   app.view('chores-activate-solo-callback', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'chores-activate-solo-callback';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('chores-activate-solo-callback', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     await common.activateResident(houseId, residentId, now);
@@ -85,8 +81,7 @@ module.exports = (app) => {
   // Claim flow
 
   app.action('chores-claim', async ({ ack, body }) => {
-    const actionName = 'chores-claim';
-    const { now, houseId } = common.beginAction(actionName, body);
+    const { now, houseId } = common.beginAction('chores-claim', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     const choreValues = await Chores.getUpdatedChoreValues(houseId, now);
@@ -104,8 +99,7 @@ module.exports = (app) => {
   });
 
   app.view('chores-claim-2', async ({ ack, body }) => {
-    const actionName = 'chores-claim-2';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('chores-claim-2', body);
 
     const { choreId, choreValueId } = JSON.parse(common.getInputBlock(body, -1).chore.selected_option.value);
 
@@ -129,8 +123,7 @@ module.exports = (app) => {
   app.view('chores-claim-callback', async ({ ack, body }) => {
     await ack({ response_action: 'clear' });
 
-    const actionName = 'chores-claim-callback';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('chores-claim-callback', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     // Note that this could be either a regular or special chore
@@ -183,8 +176,7 @@ module.exports = (app) => {
   // Ranking flow
 
   app.action('chores-rank', async ({ ack, body }) => {
-    const actionName = 'chores-rank';
-    const { now, houseId } = common.beginAction(actionName, body);
+    const { now, houseId } = common.beginAction('chores-rank', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     const choreRankings = await Chores.getCurrentChoreRankings(houseId, now);
@@ -196,8 +188,7 @@ module.exports = (app) => {
   });
 
   app.view('chores-rank-2', async ({ ack, body }) => {
-    const actionName = 'chores-rank-2';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('chores-rank-2', body);
 
     const action = JSON.parse(common.getInputBlock(body, -3).action.selected_option.value);
     const targetChore = JSON.parse(common.getInputBlock(body, -2).chore.selected_option.value);
@@ -221,8 +212,7 @@ module.exports = (app) => {
   });
 
   app.view('chores-rank-3', async ({ ack, body }) => {
-    const actionName = 'chores-rank-3';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('chores-rank-3', body);
 
     const { preference, targetChore } = JSON.parse(body.view.private_metadata);
     const sourceChoreIds = common.getInputBlock(body, -1).chores.selected_options
@@ -248,8 +238,7 @@ module.exports = (app) => {
   });
 
   app.view('chores-rank-callback', async ({ ack, body }) => {
-    const actionName = 'chores-rank-callback';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('chores-rank-callback', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     const { targetChore, sourceChoreIds, preference } = JSON.parse(body.view.private_metadata);
@@ -285,8 +274,7 @@ module.exports = (app) => {
   // Break flow
 
   app.action('chores-break', async ({ ack, body }) => {
-    const actionName = 'chores-break';
-    const { houseId } = common.beginAction(actionName, body);
+    const { houseId } = common.beginAction('chores-break', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     const view = views.choresBreakView(new Date());
@@ -296,8 +284,7 @@ module.exports = (app) => {
   });
 
   app.view('chores-break-callback', async ({ ack, body }) => {
-    const actionName = 'chores-break-callback';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('chores-break-callback', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     // Dates come in yyyy-mm-dd format
@@ -330,8 +317,7 @@ module.exports = (app) => {
   // Gift flow
 
   app.action('chores-gift', async ({ ack, body }) => {
-    const actionName = 'chores-gift';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('chores-gift', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     const monthStart = getMonthStart(now);
@@ -344,8 +330,7 @@ module.exports = (app) => {
   });
 
   app.view('chores-gift-callback', async ({ ack, body }) => {
-    const actionName = 'chores-gift-callback';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('chores-gift-callback', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     const currentBalance = Number(body.view.private_metadata);
@@ -374,8 +359,7 @@ module.exports = (app) => {
   // Edit flow
 
   app.action('chores-propose', async ({ ack, body }) => {
-    const actionName = 'chores-propose';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('chores-propose', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     const isAdmin = await common.isAdmin(app, choresConf.oauth, residentId);
@@ -388,8 +372,7 @@ module.exports = (app) => {
   });
 
   app.view('chores-propose-2', async ({ ack, body }) => {
-    const actionName = 'chores-propose-2';
-    const { houseId } = common.beginAction(actionName, body);
+    const { houseId } = common.beginAction('chores-propose-2', body);
 
     const force = common.getForceInput(common.getInputBlock(body, -2));
     const change = common.getInputBlock(body, -1).change.selected_option.value;
@@ -416,8 +399,7 @@ module.exports = (app) => {
   });
 
   app.view('chores-propose-edit', async ({ ack, body }) => {
-    const actionName = 'chores-propose-edit';
-    common.beginAction(actionName, body);
+    common.beginAction('chores-propose-edit', body);
 
     const { force } = JSON.parse(body.view.private_metadata);
     const { id: choreId } = JSON.parse(common.getInputBlock(body, -1).chore.selected_option.value);
@@ -428,8 +410,7 @@ module.exports = (app) => {
   });
 
   app.view('chores-propose-callback', async ({ ack, body }) => {
-    const actionName = 'chores-propose-callback';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('chores-propose-callback', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     function parseSubmission (body) {
@@ -487,8 +468,7 @@ module.exports = (app) => {
   // Special chore flow
 
   app.action('chores-special', async ({ ack, body }) => {
-    const actionName = 'chores-special';
-    const { now, houseId } = common.beginAction(actionName, body);
+    const { now, houseId } = common.beginAction('chores-special', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     const minVotes = await Chores.getSpecialChoreProposalMinVotes(houseId, 0, now);
@@ -501,8 +481,7 @@ module.exports = (app) => {
   });
 
   app.view('chores-special-callback', async ({ ack, body }) => {
-    const actionName = 'chores-special-callback';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('chores-special-callback', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     const name = common.parseTitlecase(common.getInputBlock(body, -3).name.value);
@@ -530,8 +509,7 @@ module.exports = (app) => {
   // Voting flow
 
   app.action(/poll-vote/, async ({ ack, body, action }) => {
-    const actionName = 'chores poll-vote';
-    const { houseId } = common.beginAction(actionName, body);
+    const { houseId } = common.beginAction('chores poll-vote', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     await common.updateVoteCounts(app, choresConf.oauth, body, action);

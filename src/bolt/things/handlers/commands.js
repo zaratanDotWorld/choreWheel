@@ -12,8 +12,7 @@ module.exports = (app) => {
   app.command('/things-channel', async ({ ack, command, respond }) => {
     await ack();
 
-    const commandName = '/things-channel';
-    const { houseId } = common.beginCommand(commandName, command);
+    const { houseId } = common.beginCommand('/things-channel', command);
     const { thingsConf } = await Admin.getHouse(houseId);
 
     await common.setChannel(app, thingsConf.oauth, THINGS_CONF, command, respond);
@@ -23,8 +22,7 @@ module.exports = (app) => {
   app.command('/things-load', async ({ ack, command, respond }) => {
     await ack();
 
-    const commandName = '/things-load';
-    const { houseId } = common.beginCommand(commandName, command);
+    const { houseId } = common.beginCommand('/things-load', command);
     const { thingsConf } = await Admin.getHouse(houseId);
 
     if (!(await common.isAdmin(app, thingsConf.oauth, command.user_id))) {
@@ -36,8 +34,7 @@ module.exports = (app) => {
   });
 
   app.view('things-load-2', async ({ ack, body }) => {
-    const actionName = 'things-load-2';
-    const { now, houseId } = common.beginAction(actionName, body);
+    const { now, houseId } = common.beginAction('things-load-2', body);
 
     const account = common.parseTitlecase(common.getInputBlock(body, -2).account.value);
     const amount = Number(common.getInputBlock(body, -1).amount.value);
@@ -51,8 +48,7 @@ module.exports = (app) => {
   app.view('things-load-callback', async ({ ack, body }) => {
     await ack({ response_action: 'clear' });
 
-    const actionName = 'things-load-callback';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('things-load-callback', body);
     const { thingsConf } = await Admin.getHouse(houseId);
 
     const { account, amount } = JSON.parse(body.view.private_metadata);
@@ -67,8 +63,7 @@ module.exports = (app) => {
   app.command('/things-fulfill', async ({ ack, command, respond }) => {
     await ack();
 
-    const commandName = '/things-fulfill';
-    const { now, houseId } = common.beginCommand(commandName, command);
+    const { now, houseId } = common.beginCommand('/things-fulfill', command);
     const { thingsConf } = await Admin.getHouse(houseId);
 
     if (!(await common.isAdmin(app, thingsConf.oauth, command.user_id))) {
@@ -90,8 +85,7 @@ module.exports = (app) => {
   app.view('things-fulfill-callback', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'things-fulfill-callback';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('things-fulfill-callback', body);
     const { thingsConf } = await Admin.getHouse(houseId);
 
     const buys = common.getInputBlock(body, -1).buys.selected_options
@@ -109,8 +103,7 @@ module.exports = (app) => {
   app.command('/things-update', async ({ ack, command, respond }) => {
     await ack();
 
-    const commandName = '/things-update';
-    const { houseId } = common.beginCommand(commandName, command);
+    const { houseId } = common.beginCommand('/things-update', command);
     const { thingsConf } = await Admin.getHouse(houseId);
 
     if (!(await common.isAdmin(app, thingsConf.oauth, command.user_id))) {
@@ -125,8 +118,7 @@ module.exports = (app) => {
   });
 
   app.view('things-propose-edit-admin', async ({ ack, body }) => {
-    const actionName = 'things-update-2';
-    common.beginAction(actionName, body);
+    common.beginAction('things-update-2', body);
 
     const { id: thingId } = JSON.parse(common.getInputBlock(body, -1).thing.selected_option.value);
     const thing = await Things.getThing(thingId);
@@ -136,8 +128,7 @@ module.exports = (app) => {
   });
 
   app.view('things-propose-callback-admin', async ({ ack, body }) => {
-    const actionName = 'things-update-callback';
-    const { houseId, residentId } = common.beginAction(actionName, body);
+    const { houseId, residentId } = common.beginAction('things-update-callback', body);
     const { thingsConf } = await Admin.getHouse(houseId);
 
     const { thing } = JSON.parse(body.view.private_metadata);

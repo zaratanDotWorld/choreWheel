@@ -10,8 +10,7 @@ module.exports = (app) => {
   app.action('hearts-challenge', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'hearts-challenge';
-    const { now, houseId } = common.beginAction(actionName, body);
+    const { now, houseId } = common.beginAction('hearts-challenge', body);
     const { heartsConf } = await Admin.getHouse(houseId);
 
     const residents = await Admin.getResidents(houseId, now);
@@ -23,8 +22,7 @@ module.exports = (app) => {
   app.view('hearts-challenge-callback', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'hearts-challenge-callback';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('hearts-challenge-callback', body);
     const { heartsConf } = await Admin.getHouse(houseId);
 
     const challengeeId = common.getInputBlock(body, 2).challengee.selected_conversation;
@@ -57,8 +55,7 @@ module.exports = (app) => {
   app.action('hearts-karma', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'hearts-karma';
-    const { houseId } = common.beginAction(actionName, body);
+    const { houseId } = common.beginAction('hearts-karma', body);
     const { heartsConf } = await Admin.getHouse(houseId);
 
     const view = views.heartsKarmaView();
@@ -68,8 +65,7 @@ module.exports = (app) => {
   app.view('hearts-karma-callback', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'hearts-karma-callback';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('hearts-karma-callback', body);
     const { heartsConf } = await Admin.getHouse(houseId);
 
     const recipientId = common.getInputBlock(body, -2).recipient.selected_conversation;
@@ -86,8 +82,7 @@ module.exports = (app) => {
   app.action('hearts-board', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'hearts-board';
-    const { now, houseId } = common.beginAction(actionName, body);
+    const { now, houseId } = common.beginAction('hearts-board', body);
     const { heartsConf } = await Admin.getHouse(houseId);
 
     const hearts = await Hearts.getHouseHearts(houseId, now);
@@ -100,8 +95,7 @@ module.exports = (app) => {
   app.action(/poll-vote/, async ({ ack, body, action }) => {
     await ack();
 
-    const actionName = 'hearts poll-vote';
-    const { houseId } = common.beginAction(actionName, body);
+    const { houseId } = common.beginAction('hearts poll-vote', body);
     const { heartsConf } = await Admin.getHouse(houseId);
 
     await common.updateVoteCounts(app, heartsConf.oauth, body, action);

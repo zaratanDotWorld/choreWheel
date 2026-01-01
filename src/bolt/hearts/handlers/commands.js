@@ -10,8 +10,7 @@ module.exports = (app) => {
   app.command('/hearts-sync', async ({ ack, command, respond }) => {
     await ack();
 
-    const commandName = '/hearts-sync';
-    const { houseId } = common.beginCommand(commandName, command);
+    const { houseId } = common.beginCommand('/hearts-sync', command);
     const { heartsConf } = await Admin.getHouse(houseId);
 
     const text = await common.syncWorkspaceChannels(app, heartsConf.oauth);
@@ -22,8 +21,7 @@ module.exports = (app) => {
   app.command('/hearts-prune', async ({ ack, command, respond }) => {
     await ack();
 
-    const commandName = '/hearts-prune';
-    const { now, houseId } = common.beginCommand(commandName, command);
+    const { now, houseId } = common.beginCommand('/hearts-prune', command);
     const { heartsConf } = await Admin.getHouse(houseId);
 
     const text = await common.pruneWorkspaceMembers(app, heartsConf.oauth, houseId, now);
@@ -34,8 +32,7 @@ module.exports = (app) => {
   app.command('/hearts-channel', async ({ ack, command, respond }) => {
     await ack();
 
-    const commandName = '/hearts-channel';
-    const { houseId } = common.beginCommand(commandName, command);
+    const { houseId } = common.beginCommand('/hearts-channel', command);
     const { heartsConf } = await Admin.getHouse(houseId);
 
     await common.setChannel(app, heartsConf.oauth, HEARTS_CONF, command, respond);
@@ -45,8 +42,7 @@ module.exports = (app) => {
   app.command('/hearts-reset', async ({ ack, command, respond }) => {
     await ack();
 
-    const commandName = '/hearts-reset';
-    const { houseId } = common.beginCommand(commandName, command);
+    const { houseId } = common.beginCommand('/hearts-reset', command);
     const { heartsConf } = await Admin.getHouse(houseId);
 
     if (!(await common.isAdmin(app, heartsConf.oauth, command.user_id))) {
@@ -61,8 +57,7 @@ module.exports = (app) => {
   app.view('hearts-reset-callback', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'hearts-reset-callback';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('hearts-reset-callback', body);
     const { heartsConf } = await Admin.getHouse(houseId);
 
     await Hearts.resetResidents(houseId, now);

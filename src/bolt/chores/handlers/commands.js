@@ -11,8 +11,7 @@ module.exports = (app) => {
   app.command('/chores-prune', async ({ ack, command, respond }) => {
     await ack();
 
-    const commandName = '/chores-prune';
-    const { now, houseId } = common.beginCommand(commandName, command);
+    const { now, houseId } = common.beginCommand('/chores-prune', command);
     const { choresConf } = await Admin.getHouse(houseId);
 
     const text = await common.pruneWorkspaceMembers(app, choresConf.oauth, houseId, now);
@@ -23,8 +22,7 @@ module.exports = (app) => {
   app.command('/chores-channel', async ({ ack, command, respond }) => {
     await ack();
 
-    const commandName = '/chores-channel';
-    const { houseId } = common.beginCommand(commandName, command);
+    const { houseId } = common.beginCommand('/chores-channel', command);
     const { choresConf } = await Admin.getHouse(houseId);
 
     await common.setChannel(app, choresConf.oauth, CHORES_CONF, command, respond);
@@ -34,8 +32,7 @@ module.exports = (app) => {
   app.command('/chores-stats', async ({ ack, command }) => {
     await ack();
 
-    const commandName = '/chores-stats';
-    const { now, houseId, residentId } = common.beginCommand(commandName, command);
+    const { now, houseId, residentId } = common.beginCommand('/chores-stats', command);
     const { choresConf } = await Admin.getHouse(houseId);
 
     const monthStart = getMonthStart(now);
@@ -56,8 +53,7 @@ module.exports = (app) => {
   app.command('/chores-activate', async ({ ack, command, respond }) => {
     await ack();
 
-    const commandName = '/chores-activate';
-    const { now, houseId } = common.beginCommand(commandName, command);
+    const { now, houseId } = common.beginCommand('/chores-activate', command);
     const { choresConf } = await Admin.getHouse(houseId);
 
     if (!(await common.isAdmin(app, choresConf.oauth, command.user_id))) {
@@ -74,8 +70,7 @@ module.exports = (app) => {
   app.view('chores-activate-callback', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'chores-activate-callback';
-    const { now, houseId } = common.beginAction(actionName, body);
+    const { now, houseId } = common.beginAction('chores-activate-callback', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     const activate = common.getInputBlock(body, -3).action.selected_option.value === 'true';
@@ -118,8 +113,7 @@ module.exports = (app) => {
   app.command('/chores-reset', async ({ ack, command, respond }) => {
     await ack();
 
-    const commandName = '/chores-reset';
-    const { houseId } = common.beginCommand(commandName, command);
+    const { houseId } = common.beginCommand('/chores-reset', command);
     const { choresConf } = await Admin.getHouse(houseId);
 
     if (!(await common.isAdmin(app, choresConf.oauth, command.user_id))) {
@@ -134,8 +128,7 @@ module.exports = (app) => {
   app.view('chores-reset-callback', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'chores-reset-callback';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('chores-reset-callback', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     await Chores.resetChorePoints(houseId, now);

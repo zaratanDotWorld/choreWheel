@@ -11,8 +11,7 @@ module.exports = (app) => {
   app.action('things-buy', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'things-buy';
-    const { now, houseId } = common.beginAction(actionName, body);
+    const { now, houseId } = common.beginAction('things-buy', body);
     const { thingsConf } = await Admin.getHouse(houseId);
 
     const things = await Things.getThings(houseId);
@@ -25,8 +24,7 @@ module.exports = (app) => {
   app.view('things-buy-callback', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'things-buy-callback';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('things-buy-callback', body);
     const { thingsConf } = await Admin.getHouse(houseId);
 
     const { id: thingId } = JSON.parse(common.getInputBlock(body, -3).things.selected_option.value);
@@ -51,8 +49,7 @@ module.exports = (app) => {
   app.action('things-special', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'things-special';
-    const { now, houseId } = common.beginAction(actionName, body);
+    const { now, houseId } = common.beginAction('things-special', body);
     const { thingsConf } = await Admin.getHouse(houseId);
 
     const residents = await Admin.getResidents(houseId, now);
@@ -65,8 +62,7 @@ module.exports = (app) => {
   app.view('things-special-callback', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'things-special-callback';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('things-special-callback', body);
     const { thingsConf } = await Admin.getHouse(houseId);
 
     const title = common.getInputBlock(body, -4).title.value;
@@ -91,8 +87,7 @@ module.exports = (app) => {
   app.action('things-bought', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'things-bought';
-    const { now, houseId } = common.beginAction(actionName, body);
+    const { now, houseId } = common.beginAction('things-bought', body);
     const { thingsConf } = await Admin.getHouse(houseId);
 
     const oneWeekAgo = new Date(now.getTime() - 7 * DAY);
@@ -109,8 +104,7 @@ module.exports = (app) => {
   app.action('things-propose', async ({ ack, body }) => {
     await ack();
 
-    const actionName = 'things-propose';
-    const { now, houseId } = common.beginAction(actionName, body);
+    const { now, houseId } = common.beginAction('things-propose', body);
     const { thingsConf } = await Admin.getHouse(houseId);
 
     const minVotes = await Things.getThingProposalMinVotes(houseId, now);
@@ -120,8 +114,7 @@ module.exports = (app) => {
   });
 
   app.view('things-propose-2', async ({ ack, body }) => {
-    const actionName = 'things-propose-2';
-    const { houseId } = common.beginAction(actionName, body);
+    const { houseId } = common.beginAction('things-propose-2', body);
 
     const change = common.getInputBlock(body, -1).change.selected_option.value;
 
@@ -147,8 +140,7 @@ module.exports = (app) => {
   });
 
   app.view('things-propose-edit', async ({ ack, body }) => {
-    const actionName = 'things-propose-edit';
-    common.beginAction(actionName, body);
+    common.beginAction('things-propose-edit', body);
 
     const { id: thingId } = JSON.parse(common.getInputBlock(body, -1).thing.selected_option.value);
     const thing = await Things.getThing(thingId);
@@ -158,8 +150,7 @@ module.exports = (app) => {
   });
 
   app.view('things-propose-callback', async ({ ack, body }) => {
-    const actionName = 'things-propose-callback';
-    const { now, houseId, residentId } = common.beginAction(actionName, body);
+    const { now, houseId, residentId } = common.beginAction('things-propose-callback', body);
     const { thingsConf } = await Admin.getHouse(houseId);
 
     let thingId, type, name, value, unit, url, active;
@@ -203,8 +194,7 @@ module.exports = (app) => {
   app.action(/poll-vote/, async ({ ack, body, action }) => {
     await ack();
 
-    const actionName = 'things poll-vote';
-    const { houseId } = common.beginAction(actionName, body);
+    const { houseId } = common.beginAction('things poll-vote', body);
     const { thingsConf } = await Admin.getHouse(houseId);
 
     await common.updateVoteCounts(app, thingsConf.oauth, body, action);
