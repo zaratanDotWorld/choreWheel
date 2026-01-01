@@ -36,6 +36,26 @@ exports.parseUrl = function (url) {
   } catch {}
 };
 
+// Installation store factory
+
+exports.createInstallationStore = function (confName, appName) {
+  return {
+    storeInstallation: async (installation) => {
+      await Admin.addHouse(installation.team.id, installation.team.name);
+      await Admin.updateHouseConf(installation.team.id, confName, { oauth: installation });
+      console.log(`${appName} installed @ ${installation.team.id}`);
+    },
+    fetchInstallation: async (installQuery) => {
+      const house = await Admin.getHouse(installQuery.teamId);
+      return house[confName].oauth;
+    },
+    deleteInstallation: async (installQuery) => {
+      await Admin.updateHouseConf(installQuery.teamId, confName, { oauth: null, channel: null });
+      console.log(`${appName} uninstalled @ ${installQuery.teamId}`);
+    },
+  };
+};
+
 // Entry points
 
 exports.beginHome = function (appName, body, event) {

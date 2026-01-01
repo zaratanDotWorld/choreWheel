@@ -42,7 +42,7 @@ const app = new App({
     },
     fetchInstallation: async (installQuery) => {
       ({ thingsConf } = (await Admin.getHouse(installQuery.teamId)));
-      return thingsConf;
+      return thingsConf.oauth;
     },
     deleteInstallation: async (installQuery) => {
       await Admin.updateHouseConf(installQuery.teamId, THINGS_CONF, { oauth: null, channel: null });

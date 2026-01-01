@@ -1,69 +1,24 @@
 const {
-  pointsPerResident,
-  achievementBase,
   choresPollLength,
   choresProposalPollLength,
   specialChoreProposalPollLength,
-  penaltyIncrement,
-  pointsBuffer,
-} = require('../config');
+} = require('../../../config');
 
-const common = require('./common');
+const common = require('../../common');
 
-// Chores views
+const {
+  DOCS_URL,
+  getAchievement,
+  getSparkles,
+  mapChores,
+  mapChoresValues,
+  mapChoreRankings,
+  formatPointsPerDay,
+} = require('./common');
 
 const TITLE = common.blockPlaintext('Chores');
-const DOCS_URL = 'https://docs.chorewheel.zaratan.world/en/latest/tools/chores.html';
 
-exports.formatStats = function (stats) {
-  const { residentId, pointsEarned, pointsOwed, completionPct } = stats;
-
-  let emoji = '';
-  if (pointsEarned >= pointsOwed) {
-    emoji = ':star:';
-  } else if (pointsOwed - pointsEarned >= penaltyIncrement) {
-    emoji = ':broken_heart:';
-  }
-
-  // TODO: Remove these toFixed(0) 2 months after releasing github.com/zaratanDotWorld/choreWheel/pull/263
-  return `<@${residentId}> - ${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} (${(completionPct * 100).toFixed(0)}%) ${emoji}`;
-};
-
-exports.formatTotalStats = function (stats) {
-  const pointsEarned = stats.reduce((sum, stat) => sum + stat.pointsEarned, 0);
-  const pointsOwed = stats.reduce((sum, stat) => sum + stat.pointsOwed, 0);
-  const completionPct = pointsEarned / pointsOwed;
-
-  // TODO: Remove these toFixed(0) 2 months after releasing github.com/zaratanDotWorld/choreWheel/pull/263
-  return `*Total - ${pointsEarned.toFixed(0)} / ${pointsOwed.toFixed(0)} (${(completionPct * 100).toFixed(0)}%)*`;
-};
-
-exports.formatPointsPerDay = function (ranking, numResidents) {
-  const pointsPerDay = ranking * (pointsPerResident / 30) * numResidents;
-  return (pointsPerDay > 5) ? pointsPerDay.toFixed(0) : pointsPerDay.toFixed(1);
-};
-
-// Home views
-
-exports.choresOnboardView = function () {
-  const header = ':wave::skin-tone-4: Thanks for installing Chores!';
-
-  const instructions = 'To get started, choose an *events channel*. ' +
-  'Chores will use this channel to post updates, hold votes, and communicate with the group.\n\n' +
-  'You can change this channel later using the `/chores-channel` slash command.';
-
-  const blocks = [];
-  blocks.push(common.blockHeader(header));
-  blocks.push(common.blockSection(instructions));
-  blocks.push(common.blockActions([
-    common.blockButton('chores-onboard', ':mailbox_with_mail: Choose a channel'),
-  ]));
-
-  return {
-    type: 'home',
-    blocks,
-  };
-};
+// Onboarding flow
 
 exports.choresOnboardView2 = function () {
   const header = 'Set app channel';
@@ -134,145 +89,7 @@ exports.choresOnboardMessage = function (oauth) {
   return blocks;
 };
 
-exports.choresHomeView = function (choreChannel, choreStats, numActive) {
-  const { pointsEarned, pointsOwed } = choreStats;
-  const progressEmoji = (pointsOwed - pointsEarned < penaltyIncrement)
-    ? ':white_check_mark:'
-    : ':muscle::skin-tone-4:';
-
-  const header = 'Welcome to Chores';
-  const mainText = `We use *<${DOCS_URL}|Chores>* to keep the house a nice place to live.\n\n` +
-    'Instead of a simple chore wheel or schedule, everyone owes *100 points* per month (UTC). ' +
-    'You earn points by doing chores you want, on your terms — ' +
-    'the point value for a chore _keeps going up_ until someone claims it.\n\n' +
-    'If you feel a chore should be worth more (or less) over time, you can change it\'s *priority*. ' +
-    'If you think a chore should be *added*, *changed*, or *removed*, you can propose that too.';
-
-  const pointsText = (pointsOwed > 0)
-    ? `You've earned *${pointsEarned} / ${pointsOwed} points* this month ${progressEmoji}`
-    : '*You are exempt from chores!* :tada:';
-  const activeText = `There are *${numActive} people* around today :sunny:`;
-  const channelText = `Events will be posted in <#${choreChannel}> :mailbox_with_mail:`;
-
-  const actions = [];
-
-  if (pointsOwed > 0) {
-    if (Number(pointsEarned) < Number(pointsOwed) + pointsBuffer) {
-      actions.push(common.blockButton('chores-claim', ':hand::skin-tone-4: Claim a chore'));
-    }
-    actions.push(common.blockButton('chores-break', ':camping: Take a break'));
-    actions.push(common.blockButton('chores-gift', ':gift: Gift your points'));
-    actions.push(common.blockButton('chores-special', ':bulb: Add special chore'));
-    actions.push(common.blockButton('chores-rank', ':scales: Set priorities'));
-    actions.push(common.blockButton('chores-propose', ':notebook: Edit chores list'));
-  } else {
-    actions.push(common.blockButton('chores-activate-solo', ':fire: Activate yourself'));
-  }
-
-  const blocks = [];
-  blocks.push(common.blockHeader(header));
-  blocks.push(common.blockSection(mainText));
-  blocks.push(common.blockSection(common.feedbackLink));
-  blocks.push(common.blockDivider());
-  blocks.push(common.blockSection(pointsText));
-  blocks.push(common.blockSection(activeText));
-  blocks.push(common.blockSection(channelText));
-  blocks.push(common.blockActions(actions));
-
-  return {
-    type: 'home',
-    blocks,
-  };
-};
-
-// Slash commands
-
-exports.choresStatsView = function (choreClaims, choreBreaks, choreStats) {
-  const header = 'See chore stats';
-  const mainText = 'Extra information about monthly chores.';
-
-  const claimText = '*Your claimed chores:*\n' +
-  choreClaims.map(cc => `\n${cc.claimedAt.toDateString()} - ${cc.name} - ${cc.value} points`)
-    .join('');
-
-  const breakText = '*Current chore breaks:*\n' +
-    choreBreaks.map(cb => `\n${cb.startDate.toDateString()} - ${cb.endDate.toDateString()} - <@${cb.residentId}>`)
-      .join('');
-
-  const pointsText = '*Last month\'s chore points:*\n' +
-    choreStats.map(cs => `\n${exports.formatStats(cs)}`)
-      .join('');
-
-  const blocks = [];
-  blocks.push(common.blockHeader(header));
-  blocks.push(common.blockSection(mainText));
-  blocks.push(common.blockDivider());
-  blocks.push(common.blockSection(claimText));
-  blocks.push(common.blockSection(breakText));
-  blocks.push(common.blockSection(pointsText));
-
-  return {
-    type: 'modal',
-    title: TITLE,
-    close: common.CLOSE,
-    blocks,
-  };
-};
-
-exports.choresActivateView = function (residents) {
-  const header = 'Update activation status';
-  const mainText = 'Activated residents *owe chores*, and can *create or vote on polls*.\n\n' +
-    'Choose some residents to update. ' +
-    'You can update *all* residents in the workspace, or only *a few*.';
-  const residentsText = `*Currently active residents* (${residents.length}): ` +
-    residents.slice(0, 100).map(r => `<@${r.slackId}>`).join(', ');
-
-  const options = [
-    { value: 'true', text: common.blockMarkdown('*Activate* some residents') },
-    { value: 'false', text: common.blockMarkdown('*Deactivate* some residents') },
-  ];
-
-  const blocks = [];
-  blocks.push(common.blockHeader(header));
-  blocks.push(common.blockSection(mainText));
-  blocks.push(common.blockSection(residentsText));
-  blocks.push(common.blockDivider());
-  blocks.push(common.blockInput(
-    'Update action',
-    {
-      type: 'radio_buttons',
-      action_id: 'action',
-      initial_option: options[0],
-      options,
-    },
-  ));
-  blocks.push(common.blockInputOptional(
-    'Update ~all~ residents',
-    {
-      type: 'checkboxes',
-      action_id: 'select_all',
-      options: [ { value: 'true', text: common.blockPlaintext('Yes') } ],
-    },
-  ));
-  blocks.push(common.blockInputOptional(
-    'or, Update ~selected~ residents',
-    {
-      action_id: 'residents',
-      type: 'multi_conversations_select',
-      filter: common.userFilter,
-      placeholder: common.blockPlaintext('Choose some residents'),
-    },
-  ));
-
-  return {
-    type: 'modal',
-    callback_id: 'chores-activate-callback',
-    title: TITLE,
-    close: common.CLOSE,
-    submit: common.SUBMIT,
-    blocks,
-  };
-};
+// Solo activate flow
 
 exports.choresActivateSoloView = function () {
   const header = 'Activate yourself';
@@ -294,28 +111,7 @@ exports.choresActivateSoloView = function () {
   };
 };
 
-exports.choresResetView = function () {
-  const header = 'Reset chore points';
-  const mainText = 'Reset chore points for the workspace. ' +
-  'All chores will be worth 0 points and all residents will have 0 points. ' +
-  'Residents will only owe points for the rest of the month.\n\n' +
-  ':warning: *This action cannot be undone!* :warning:';
-
-  const blocks = [];
-  blocks.push(common.blockHeader(header));
-  blocks.push(common.blockSection(mainText));
-
-  return {
-    type: 'modal',
-    callback_id: 'chores-reset-callback',
-    title: TITLE,
-    close: common.CLOSE,
-    submit: common.SUBMIT,
-    blocks,
-  };
-};
-
-// Main actions
+// Claim flow
 
 exports.choresClaimViewZero = function () {
   const header = 'No chores available';
@@ -366,7 +162,7 @@ exports.choresClaimView = function (chores) {
 exports.choresClaimView2 = function (chore, choreValue, choreStats) {
   const pointsEarned = (choreValue + choreStats.pointsEarned).toFixed(0);
   const pointsOwed = choreStats.pointsOwed;
-  const sparkles = exports.getSparkles(pointsEarned);
+  const sparkles = getSparkles(pointsEarned);
 
   const header = 'Claim a chore';
   const statsText = `After claiming this chore, you'll have *${pointsEarned}* of *${pointsOwed}* points ${sparkles} `;
@@ -393,26 +189,9 @@ exports.choresClaimView2 = function (chore, choreValue, choreStats) {
   };
 };
 
-exports.getAchievement = function (totalPoints) {
-  if (totalPoints >= achievementBase * 5 * 5) {
-    return ':first_place_medal:';
-  } else if (totalPoints >= achievementBase * 5) {
-    return ':second_place_medal:';
-  } else if (totalPoints >= achievementBase) {
-    return ':third_place_medal:';
-  } else {
-    return '';
-  }
-};
-
-exports.getSparkles = function (monthlyPoints) {
-  const numSparkles = Math.floor(monthlyPoints / (pointsPerResident / 4));
-  return ':sparkles:'.repeat(Math.max(numSparkles, 0)); // Handle negative points
-};
-
 exports.choresClaimCallbackView = function (claim, name, minVotes, achivementPoints, monthlyPoints) {
-  const achievement = exports.getAchievement(achivementPoints);
-  const sparkles = exports.getSparkles(monthlyPoints);
+  const achievement = getAchievement(achivementPoints);
+  const sparkles = getSparkles(monthlyPoints);
 
   const mainText = `*<@${claim.claimedBy}>* did *${name}* for ` +
     `*${claim.value} points* ${achievement}${sparkles}`;
@@ -423,6 +202,8 @@ exports.choresClaimCallbackView = function (claim, name, minVotes, achivementPoi
   blocks.push(common.blockActions(common.makeVoteButtons(claim.pollId, 1, 0)));
   return blocks;
 };
+
+// Ranking flow
 
 exports.choresRankView = function (choreRankings) {
   const header = 'Set chore priorities';
@@ -523,7 +304,7 @@ exports.choresRankView2 = function (preference, targetChore, choreRankings) {
 exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetadata, prefSaturation, numResidents) {
   const newPriority = Math.round(targetChoreRanking.ranking * 1000);
   const change = newPriority - targetChore.priority;
-  const pointsPerDay = exports.formatPointsPerDay(targetChoreRanking.ranking, numResidents);
+  const pointsPerDay = formatPointsPerDay(targetChoreRanking.ranking, numResidents);
 
   const effect = change >= 0 ? 'an *increase*' : 'a *decrease*';
   const emoji = change >= 0 ? ':rocket:' : ':snail:';
@@ -574,6 +355,8 @@ exports.choresRankViewZero = function (preference) {
   };
 };
 
+// Break flow
+
 exports.choresBreakView = function (currentTime) {
   const formattedTime = `${currentTime.getFullYear()}-${currentTime.getMonth() + 1}-${currentTime.getDate()}`;
 
@@ -621,6 +404,8 @@ exports.choresBreakView = function (currentTime) {
     blocks,
   };
 };
+
+// Gift flow
 
 exports.choresGiftView = function (currentBalance) {
   const header = 'Gift chore points';
@@ -955,34 +740,3 @@ exports.choresSpecialCallbackView = function (proposal, minVotes, obligation) {
   blocks.push(common.blockActions(common.makeVoteButtons(proposal.pollId, 1, 0)));
   return blocks;
 };
-
-// Internal
-
-function mapChores (chores) {
-  return chores.map((chore) => {
-    return {
-      value: JSON.stringify({ id: chore.id }),
-      text: common.blockPlaintext(chore.name.slice(0, 60)),
-    };
-  });
-}
-
-function mapChoresValues (chores) {
-  return chores.map((chore) => {
-    const name = chore.name || chore.metadata.name;
-    return {
-      value: JSON.stringify({ choreId: chore.choreId, choreValueId: chore.choreValueId }),
-      text: common.blockPlaintext(`${name.slice(0, 60)} - ${chore.value.toFixed(0)} points`),
-    };
-  });
-}
-
-function mapChoreRankings (choreRankings) {
-  return choreRankings.map((chore) => {
-    const priority = Math.round(chore.ranking * 1000);
-    return {
-      value: JSON.stringify({ id: chore.id, name: chore.name, priority }),
-      text: common.blockPlaintext(`${chore.name.slice(0, 60)} - ${priority} ppt`),
-    };
-  });
-}
