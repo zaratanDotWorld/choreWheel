@@ -42,25 +42,19 @@ mkdir -p src/bolt/{app}/views
 
 ### 2. Create Handler Helpers
 
-Create `handlers/common.js` with module state, business logic helpers, and cron functions:
+Create `handlers/common.js` with business logic helpers and cron functions:
 
 ```javascript
 const { Admin } = require('../../../core/index');
 const common = require('../../common');
 
-// Module state
-let appConf;
-
-function getAppConf () { return appConf; }
-function setAppConf (conf) { appConf = conf; }
-
 // Business logic helpers
-async function postMessage (app, text, blocks) {
-  return common.postMessage(app, appConf.oauth, appConf.channel, text, blocks);
+async function postMessage (app, config, text, blocks) {
+  return common.postMessage(app, config.oauth, config.channel, text, blocks);
 }
 
-async function postEphemeral (app, residentId, text) {
-  return common.postEphemeral(app, appConf.oauth, appConf.channel, residentId, text);
+async function postEphemeral (app, config, residentId, text) {
+  return common.postEphemeral(app, config.oauth, config.channel, residentId, text);
 }
 
 // Cron functions
@@ -70,8 +64,6 @@ async function scheduledTask (app) {
 }
 
 module.exports = {
-  getAppConf,
-  setAppConf,
   postMessage,
   postEphemeral,
   scheduledTask,
@@ -121,47 +113,67 @@ Create `app.js` to initialize and register everything:
 ```javascript
 // src/bolt/{app}/app.js
 
+require('dotenv').config();
+
 const cron = require('node-cron');
 
-const { setAppConf, scheduledTask } = require('./handlers/common');
+const { App, LogLevel } = require('@slack/bolt');
 
-module.exports = async (app) => {
-  // Initialize config
-  const appConf = {
-    oauth: process.env.OAUTH_TOKEN,
-    channel: null,
-  };
-  setAppConf(appConf);
+const { APP_CONF } = require('../../constants');
 
-  // Register event listeners
-  require('./handlers/events')(app);
+const common = require('../common');
+const { scheduledTask } = require('./handlers/common');
 
-  // Register slash commands
-  require('./handlers/commands')(app);
+const APP_NAME = 'AppName';
 
-  // Register actions
-  require('./handlers/actions')(app);
+const app = new App({
+  // .. other setup
+  logLevel: LogLevel.WARN,
+  customRoutes: [ common.homeEndpoint(APP_NAME) ],
+  installationStore: common.createInstallationStore(APP_CONF, APP_NAME),
+  scopes: [
+    'channels:read',
+    'chat:write',
+    'commands',
+    // ... other scopes
+  ],
+});
 
-  // Schedule cron jobs
-  cron.schedule('0 12 * * *', async () => {
-    console.log('Running scheduled task...');
-    await scheduledTask(app);
-  });
+// Register event listeners
+require('./handlers/events')(app);
 
-  // Installation handlers
-  // ...
-};
+// Register slash commands
+require('./handlers/commands')(app);
+
+// Register actions
+require('./handlers/actions')(app);
+
+// Schedule cron jobs
+cron.schedule('0 12 * * *', async () => {
+  console.log('Running scheduled task...');
+  await scheduledTask(app);
+});
+
+// Launch the app
+(async () => {
+  const port = process.env.APP_PORT || 3000;
+  await app.start(port);
+  console.log(`⚡️ ${APP_NAME} app is running on port ${port}`);
+})();
 ```
 
-### 4. Create Consolidated Event Handlers
+### 4a. Create Consolidated Event Handlers
 
 Create `handlers/events.js` containing all event listeners:
 
 ```javascript
 // src/bolt/{app}/handlers/events.js
 
+const { Admin } = require('../../../core/index');
+
 const common = require('../../common');
-const { getAppConf, postMessage } = require('./common');
+
+const { postMessage } = require('./common');
 const { homeView } = require('../views/events');
 
 module.exports = (app) => {
@@ -182,7 +194,7 @@ module.exports = (app) => {
     if (event.tab !== 'home') { return; }
 
     const { now, houseId, residentId } = common.beginHome('{app}', body, event);
-    const appConf = getAppConf();
+    const { appConf } = await Admin.getHouse(houseId);
 
     const view = homeView();
     await common.publishHome(app, appConf.oauth, residentId, view);
@@ -192,15 +204,18 @@ module.exports = (app) => {
 };
 ```
 
-### 4a. Create Consolidated Command Handlers
+### 4b. Create Consolidated Command Handlers
 
 Create `handlers/commands.js` containing all slash commands and their callbacks:
 
 ```javascript
 // src/bolt/{app}/handlers/commands.js
 
+const { Admin } = require('../../../core/index');
+
 const common = require('../../common');
-const { getAppConf, postMessage } = require('./common');
+
+const { postMessage } = require('./common');
 const { simpleView, complexView } = require('../views/commands');
 
 module.exports = (app) => {
@@ -209,8 +224,7 @@ module.exports = (app) => {
     await ack();
 
     const commandName = '/app-simple';
-    const { now, houseId } = common.beginCommand(commandName, command);
-    const appConf = getAppConf();
+    common.beginCommand(commandName, command);
 
     // Command logic
     await respond({ response_type: 'ephemeral', text: 'Done!' });
@@ -219,7 +233,11 @@ module.exports = (app) => {
   // Complex command (with modal)
   app.command('/app-complex', async ({ ack, command }) => {
     await ack();
-    const appConf = getAppConf();
+
+    const commandName = '/app-complex';
+    const { houseId } = common.beginCommand(commandName, command);
+    const { appConf } = await Admin.getHouse(houseId);
+
     const view = complexView();
     await common.openView(app, appConf.oauth, command.trigger_id, view);
   });
@@ -232,15 +250,18 @@ module.exports = (app) => {
 };
 ```
 
-### 5. Create Consolidated Action Handlers
+### 4c. Create Consolidated Action Handlers
 
 Create `handlers/actions.js` containing all workflows (onboard, claim, vote, etc.):
 
 ```javascript
 // src/bolt/{app}/handlers/actions.js
 
+const { Admin } = require('../../../core/index');
+
 const common = require('../../common');
-const { getAppConf, postMessage } = require('./common');
+
+const { postMessage } = require('./common');
 const { onboardView, claimView, voteView } = require('../views/actions');
 
 module.exports = (app) => {
@@ -279,7 +300,7 @@ module.exports = (app) => {
 };
 ```
 
-### 6. Create Consolidated View Files
+### 5. Create Consolidated View Files
 
 Create three view files that consolidate all view functions by type:
 
@@ -382,7 +403,7 @@ function claimView (items, value) {
 module.exports = { onboardView, claimView };
 ```
 
-### 7. Update Entry Point
+### 6. Update Entry Point
 
 Simplify the original app file:
 
@@ -404,15 +425,16 @@ node src/bolt/{app}.app.js
 1. **Separation of Concerns**: Keep handlers separate from view functions to avoid mixing business logic dependencies with UI dependencies
 2. **Parallel Structure**: Both handlers/ and views/ are organized by type with matching file names (events.js, commands.js, actions.js, common.js)
 3. **Domain-Specific Helpers**: Business logic helpers live in `handlers/common.js`, view/formatting helpers live in `views/common.js`
-4. **Module State**: Use getters/setters in `handlers/common.js` for shared state
-5. **Commands vs Actions**: Keep slash commands (user-facing, typed) separate from UI actions (button/modal-triggered workflows)
-6. **Cron Functions**: Cron job implementations in `handlers/common.js`, schedules in main `index.js`
-7. **Consolidated Files**: Eight total files (4 handler files + 4 view files) make navigation easy while maintaining clear separation of concerns
+4. **Database-Driven Configuration**: Fetch configuration from the database in each handler using `Admin.getHouse(houseId)` to avoid race conditions with concurrent teams
+5. **Configuration Passing**: Pass config objects to helper functions rather than storing them in module state
+6. **Commands vs Actions**: Keep slash commands (user-facing, typed) separate from UI actions (button/modal-triggered workflows)
+7. **Cron Functions**: Cron job implementations in `handlers/common.js`, schedules in main `app.js`
+8. **Consolidated Files**: Eight total files (4 handler files + 4 view files) make navigation easy while maintaining clear separation of concerns
 
 ## File Size Guidelines
 
 After migration:
-- handlers/common.js: ~50-70 lines (module state, business logic helpers, cron functions)
+- handlers/common.js: ~40-50 lines (business logic helpers, cron functions)
 - handlers/events.js: ~100-150 lines (all event handlers)
 - handlers/commands.js: ~150-200 lines (all command handlers + callbacks)
 - handlers/actions.js: ~550-600 lines (all action workflows)
