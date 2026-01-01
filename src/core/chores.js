@@ -711,7 +711,7 @@ exports.getChoreStats = async function (houseId, residentId, startTime, endTime)
   // Calculate special chore obligations
   const numResidents = await Admin.getNumResidents(houseId, endTime);
   const balance = await exports.getSpecialChoreBalance(houseId, endTime);
-  const obligation = Math.max(0, -balance) / numResidents;
+  const obligation = Math.max(0, -balance) / Math.max(1, numResidents); // Avoid divide-by-zero
 
   // Note: special chore obligations are not re-allocated by workingPercentage; so are mildly inflationary
   const pointsOwed = Math.round((pointsPerResident + obligation) * workingPercentage);

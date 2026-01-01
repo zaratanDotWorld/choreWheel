@@ -59,6 +59,10 @@ describe('Hearts', async () => {
       expect(hearts1).to.equal(2);
       expect(hearts2).to.equal(1);
       expect(hearts3).to.be.null;
+
+      // Cannot generate NaN values
+      await expect(Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, NaN))
+        .to.be.rejectedWith('Invalid heart value!');
     });
 
     it('can query for specific hearts', async () => {

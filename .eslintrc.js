@@ -26,6 +26,8 @@ module.exports = {
     'no-fallthrough': [ ERROR ],
     'no-bitwise': [ ERROR ],
     'no-only-tests/no-only-tests': [ ERROR, { fix: true } ],
+    'camelcase': OFF,
+    'quote-props': [ ERROR, 'consistent' ],
   },
   ignorePatterns: [
     'migrations',
