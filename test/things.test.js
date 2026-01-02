@@ -6,7 +6,6 @@ chai.use(chaiAsPromised);
 
 const { Things, Hearts, Polls, Admin } = require('../src/core/index');
 const { HOUR, DAY } = require('../src/time');
-const { thingsPollLength, thingsSpecialPollLength, thingsProposalPollLength } = require('../src/params');
 const testHelpers = require('./helpers');
 
 describe('Things', async () => {
@@ -37,9 +36,9 @@ describe('Things', async () => {
     now = new Date();
     soon = new Date(now.getTime() + HOUR);
     tomorrow = new Date(now.getTime() + DAY);
-    challengeEnd = new Date(now.getTime() + thingsPollLength);
-    challengeEndSpecial = new Date(now.getTime() + thingsSpecialPollLength);
-    proposalEnd = new Date(now.getTime() + thingsProposalPollLength);
+    challengeEnd = new Date(now.getTime() + Things.params.pollLength);
+    challengeEndSpecial = new Date(now.getTime() + Things.params.specialPollLength);
+    proposalEnd = new Date(now.getTime() + Things.params.proposalPollLength);
 
     await Admin.addHouse(HOUSE);
     await Admin.activateResident(HOUSE, RESIDENT1, now);
@@ -322,8 +321,8 @@ describe('Things', async () => {
       await Polls.submitVote(thingBuy2.pollId, RESIDENT1, nextWeek, YAY);
       await Polls.submitVote(thingBuy3.pollId, RESIDENT1, nextMonth, YAY);
 
-      const nextWeekChallengeEnd = new Date(nextWeek.getTime() + thingsPollLength);
-      const nextMonthChallengeEnd = new Date(nextMonth.getTime() + thingsPollLength);
+      const nextWeekChallengeEnd = new Date(nextWeek.getTime() + Things.params.pollLength);
+      const nextMonthChallengeEnd = new Date(nextMonth.getTime() + Things.params.pollLength);
 
       await Things.resolveThingBuy(thingBuy1.id, challengeEnd);
       await Things.resolveThingBuy(thingBuy2.id, nextWeekChallengeEnd);

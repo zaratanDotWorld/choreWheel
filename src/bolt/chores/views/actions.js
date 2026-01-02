@@ -1,8 +1,4 @@
-const {
-  choresPollLength,
-  choresProposalPollLength,
-  specialChoreProposalPollLength,
-} = require('../../../params');
+const { Chores } = require('../../../core/index');
 
 const common = require('../../common');
 
@@ -197,7 +193,7 @@ exports.choresClaimCallbackView = function (claim, name, minVotes, achivementPoi
 
   const blocks = [];
   blocks.push(common.blockSection(mainText));
-  blocks.push(common.blockSection(common.makeVoteText(minVotes, choresPollLength)));
+  blocks.push(common.blockSection(common.makeVoteText(minVotes, Chores.params.pollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(claim.pollId, 1, 0)));
   return blocks;
 };
@@ -628,7 +624,7 @@ exports.choresProposeCallbackView = function (metadata, proposal, minVotes) {
     blocks.push(common.blockSection(proposal.metadata.description));
   }
 
-  blocks.push(common.blockSection(common.makeVoteText(minVotes, choresProposalPollLength)));
+  blocks.push(common.blockSection(common.makeVoteText(minVotes, Chores.params.proposalPollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(proposal.pollId, 1, 0)));
   return blocks;
 };
@@ -730,7 +726,7 @@ exports.choresSpecialCallbackView = function (proposal, minVotes, obligation) {
     blocks.push(common.blockSection(obligationText));
   }
 
-  blocks.push(common.blockSection(common.makeVoteText(minVotes, specialChoreProposalPollLength)));
+  blocks.push(common.blockSection(common.makeVoteText(minVotes, Chores.params.specialProposalPollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(proposal.pollId, 1, 0)));
   return blocks;
 };

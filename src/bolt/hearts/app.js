@@ -6,7 +6,7 @@ if (process.env.NODE_ENV === 'production') {
 
 const { App, LogLevel } = require('@slack/bolt');
 
-const { Admin } = require('../../../core/index');
+const { Admin } = require('../../core/index');
 const common = require('../common');
 
 // Create the app

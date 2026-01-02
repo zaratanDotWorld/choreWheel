@@ -1,10 +1,4 @@
-const {
-  thingsMinPctSpecial,
-  thingsMaxPct,
-  thingsPollLength,
-  thingsSpecialPollLength,
-  thingsProposalPollLength,
-} = require('../../../params');
+const { Things } = require('../../../core/index');
 
 const common = require('../../common');
 const { TITLE, formatThing, formatBuy, urlCompare, mapThings } = require('./utils');
@@ -89,14 +83,14 @@ exports.thingsBuyCallbackView = function (buy, thing, balance, minVotes) {
 
   const blocks = [];
   blocks.push(common.blockSection(mainText));
-  blocks.push(common.blockSection(common.makeVoteText(minVotes, thingsPollLength)));
+  blocks.push(common.blockSection(common.makeVoteText(minVotes, Things.params.pollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(buy.pollId, 1, 0)));
   return blocks;
 };
 
 exports.thingsSpecialBuyView = function (numResidents, accounts) {
-  const minVotes = Math.ceil(thingsMinPctSpecial * numResidents);
-  const maxVotes = Math.ceil(thingsMaxPct * numResidents);
+  const minVotes = Math.ceil(Things.params.minPctSpecial * numResidents);
+  const maxVotes = Math.ceil(Things.params.maxPct * numResidents);
 
   const header = 'Buy special thing';
   const mainText = 'Propose a special buy. ' +
@@ -171,7 +165,7 @@ exports.thingsSpecialBuyCallbackView = function (buy, balance, minVotes) {
     blocks.push(common.blockSection(buy.metadata.details));
   }
   blocks.push(common.blockSection(textB));
-  blocks.push(common.blockSection(common.makeVoteText(minVotes, thingsSpecialPollLength)));
+  blocks.push(common.blockSection(common.makeVoteText(minVotes, Things.params.specialPollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(buy.pollId, 1, 0)));
   return blocks;
 };
@@ -414,7 +408,7 @@ exports.thingsProposeCallbackView = function (metadata, proposal, minVotes) {
     blocks.push(common.blockSection(`<${proposal.metadata.url}|Link>`));
   }
 
-  blocks.push(common.blockSection(common.makeVoteText(minVotes, thingsProposalPollLength)));
+  blocks.push(common.blockSection(common.makeVoteText(minVotes, Things.params.proposalPollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(proposal.pollId, 1, 0)));
   return blocks;
 };

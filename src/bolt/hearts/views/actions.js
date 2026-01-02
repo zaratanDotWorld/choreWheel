@@ -1,4 +1,4 @@
-const { heartsPollLength, heartsCriticalNum, heartsMinPctInitial, heartsMinPctCritical } = require('../../../params');
+const { Hearts } = require('../../../core/index');
 
 const common = require('../../common');
 const { TITLE, heartEmoji } = require('./utils');
@@ -6,8 +6,8 @@ const { TITLE, heartEmoji } = require('./utils');
 // Challenge flow
 
 exports.heartsChallengeView = function (numResidents) {
-  const initialQuorum = Math.ceil(numResidents * heartsMinPctInitial);
-  const criticalQuorum = Math.ceil(numResidents * heartsMinPctCritical);
+  const initialQuorum = Math.ceil(numResidents * Hearts.params.minPctInitial);
+  const criticalQuorum = Math.ceil(numResidents * Hearts.params.minPctCritical);
   const resolutionUrl = 'https://docs.chorewheel.zaratan.world/en/latest/practices/conflict-resolution.html';
 
   const header = 'Resolve a dispute';
@@ -15,7 +15,7 @@ exports.heartsChallengeView = function (numResidents) {
     'Choose someone to challenge, a number of hearts to take away, and explain the circumstance. ' +
     'The dispute will go to a house vote, and the loser (potentially you) will lose hearts.\n\n' +
     `To succeed, you will need a minimum of *${initialQuorum} upvotes*. ` +
-    `If the challengee will end up with less than *${heartsCriticalNum} hearts*, ` +
+    `If the challengee will end up with less than *${Hearts.params.criticalNum} hearts*, ` +
     `you will need a minimum of *${criticalQuorum} upvotes*. ` +
     'So please make sure you\'ve spoken to others about the issue before raising a dispute.\n\n' +
     `*<${resolutionUrl}|See here>* for more information about conflict resolution.`;
@@ -73,7 +73,7 @@ exports.heartsChallengeCallbackView = function (challenge, minVotes, circumstanc
   const blocks = [];
   blocks.push(common.blockSection(mainText));
   blocks.push(common.blockSection(circumstance));
-  blocks.push(common.blockSection(common.makeVoteText(minVotes, heartsPollLength)));
+  blocks.push(common.blockSection(common.makeVoteText(minVotes, Hearts.params.pollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(challenge.pollId, 1, 0)));
   return blocks;
 };

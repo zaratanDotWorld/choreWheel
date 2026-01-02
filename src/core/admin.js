@@ -2,7 +2,13 @@ const { db } = require('./db');
 
 const { truncateHour } = require('../time');
 
-const { choresHourPrecision } = require('../params');
+// Params
+
+exports.params = {
+  hourPrecision: 3,
+};
+
+const params = exports.params;
 
 // Constants
 
@@ -59,7 +65,7 @@ exports.activateResident = async function (houseId, slackId, now) {
   if (resident && resident.activeAt) { return; }
 
   // Avoid issuing points before residents are active
-  const activeAt = truncateHour(now, choresHourPrecision);
+  const activeAt = truncateHour(now, params.hourPrecision);
 
   return db('Resident')
     .insert({ houseId, slackId, activeAt, exemptAt: null })

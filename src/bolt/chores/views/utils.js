@@ -1,8 +1,4 @@
-const {
-  pointsPerResident,
-  achievementBase,
-  penaltyIncrement,
-} = require('../../../params');
+const { Chores } = require('../../../core/index');
 
 const common = require('../../common');
 
@@ -19,7 +15,7 @@ exports.formatStats = function (stats) {
   let emoji = '';
   if (pointsEarned >= pointsOwed) {
     emoji = ':star:';
-  } else if (pointsOwed - pointsEarned >= penaltyIncrement) {
+  } else if (pointsOwed - pointsEarned >= Chores.params.penaltyIncrement) {
     emoji = ':broken_heart:';
   }
 
@@ -35,16 +31,16 @@ exports.formatTotalStats = function (stats) {
 };
 
 exports.formatPointsPerDay = function (ranking, numResidents) {
-  const pointsPerDay = ranking * (pointsPerResident / 30) * numResidents;
+  const pointsPerDay = ranking * (Chores.params.pointsPerResident / 30) * numResidents;
   return (pointsPerDay > 5) ? pointsPerDay.toFixed(0) : pointsPerDay.toFixed(1);
 };
 
 exports.getAchievement = function (totalPoints) {
-  if (totalPoints >= achievementBase * 5 * 5) {
+  if (totalPoints >= Chores.params.achievementBase * 5 * 5) {
     return ':first_place_medal:';
-  } else if (totalPoints >= achievementBase * 5) {
+  } else if (totalPoints >= Chores.params.achievementBase * 5) {
     return ':second_place_medal:';
-  } else if (totalPoints >= achievementBase) {
+  } else if (totalPoints >= Chores.params.achievementBase) {
     return ':third_place_medal:';
   } else {
     return '';
@@ -52,7 +48,7 @@ exports.getAchievement = function (totalPoints) {
 };
 
 exports.getSparkles = function (monthlyPoints) {
-  const numSparkles = Math.floor(monthlyPoints / (pointsPerResident / 4));
+  const numSparkles = Math.floor(monthlyPoints / (Chores.params.pointsPerResident / 4));
   return ':sparkles:'.repeat(Math.max(numSparkles, 0)); // Handle negative points
 };
 

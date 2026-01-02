@@ -1,25 +1,30 @@
 const assert = require('assert');
 
 const { db } = require('./db');
+const { HOUR, DAY } = require('../time');
 
 const { getMonthStart, getPrevMonthEnd } = require('../time');
 
-const {
-  heartsMinPctInitial,
-  heartsMinPctCritical,
-  heartsBaselineAmount,
-  heartsRegenAmount,
-  heartsFadeAmount,
-  heartsPollLength,
-  karmaDelay,
-  karmaProportion,
-  heartsMax,
-  heartsCriticalNum,
-  heartsVoteScalar,
-} = require('../params');
-
 const Admin = require('./admin');
 const Polls = require('./polls');
+
+// Params
+
+exports.params = {
+  pollLength: 3 * DAY,
+  baselineAmount: 5,
+  regenAmount: 0.5,
+  fadeAmount: 0.5,
+  minPctInitial: 0.4, // For removing initial hearts
+  minPctCritical: 0.7, // For removing the final two hearts
+  criticalNum: 2,
+  karmaDelay: 3 * HOUR,
+  karmaProportion: 3,
+  max: 10,
+  voteScalar: 0.2,
+};
+
+const params = exports.params;
 
 // Constants
 
@@ -76,7 +81,7 @@ exports.generateHearts = async function (houseId, residentId, type, generatedAt,
 exports.initialiseResident = async function (houseId, residentId, now) {
   const hearts = (await exports.getHearts(residentId, now)) || 0;
   if (hearts <= 0) {
-    const amount = heartsBaselineAmount - hearts;
+    const amount = params.baselineAmount - hearts;
     return exports.generateHearts(houseId, residentId, exports.HEART_REGEN, now, amount);
   } else { return []; }
 };
@@ -98,7 +103,7 @@ exports.retireResidents = async function (houseId, now) {
 
 exports.resetResident = async function (houseId, residentId, now) {
   const hearts = await exports.getHearts(residentId, now);
-  return exports.generateHearts(houseId, residentId, exports.HEART_RESET, now, heartsBaselineAmount - hearts);
+  return exports.generateHearts(houseId, residentId, exports.HEART_RESET, now, params.baselineAmount - hearts);
 };
 
 exports.resetResidents = async function (houseId, now) {
@@ -123,12 +128,12 @@ exports.regenerateHearts = async function (houseId, residentId, now) {
 };
 
 exports.getRegenAmount = function (currentHearts) {
-  // Want to move `heartsRegenAmount` up towards `heartsBaselineAmount`
-  //   and `heartsFadeAmount` down towards `heartsBaselineAmount`
-  const baselineGap = heartsBaselineAmount - currentHearts;
+  // Want to move `regenAmount` up towards `baselineAmount`
+  //   and `fadeAmount` down towards `baselineAmount`
+  const baselineGap = params.baselineAmount - currentHearts;
   return (baselineGap >= 0)
-    ? Math.min(heartsRegenAmount, baselineGap)
-    : Math.max(-heartsFadeAmount, baselineGap);
+    ? Math.min(params.regenAmount, baselineGap)
+    : Math.max(-params.fadeAmount, baselineGap);
 };
 
 exports.regenerateHouseHearts = async function (houseId, now) {
@@ -146,7 +151,7 @@ exports.issueChallenge = async function (houseId, challengerId, challengeeId, va
   assert(!unresolvedChallenges.length, 'Active challenge exists!');
 
   const minVotes = await exports.getChallengeMinVotes(houseId, challengeeId, value, challengedAt);
-  const [ poll ] = await Polls.createPoll(houseId, challengedAt, heartsPollLength, minVotes);
+  const [ poll ] = await Polls.createPoll(houseId, challengedAt, params.pollLength, minVotes);
 
   return db('HeartChallenge')
     .insert({ houseId, challengerId, challengeeId, challengedAt, value, pollId: poll.id, metadata: { circumstance } })
@@ -169,9 +174,9 @@ exports.getUnresolvedChallenges = async function (houseId, challengeeId) {
 exports.getChallengeMinVotes = async function (houseId, challengeeId, value, challengedAt) {
   const residents = await Admin.getResidents(houseId, challengedAt);
   const challengeeHearts = await exports.getHearts(challengeeId, challengedAt);
-  return (challengeeHearts - value <= heartsCriticalNum)
-    ? Math.ceil(residents.length * heartsMinPctCritical)
-    : Math.ceil(residents.length * heartsMinPctInitial);
+  return (challengeeHearts - value <= params.criticalNum)
+    ? Math.ceil(residents.length * params.minPctCritical)
+    : Math.ceil(residents.length * params.minPctInitial);
 };
 
 exports.resolveChallenge = async function (challengeId, resolvedAt) {
@@ -259,7 +264,7 @@ exports.getKarmaRankings = async function (houseId, startTime, endTime) {
 
 exports.getNumKarmaWinners = async function (houseId, startTime, endTime) {
   const residents = await Admin.getResidents(houseId, endTime);
-  const maxWinners = Math.floor(residents.length / karmaProportion);
+  const maxWinners = Math.floor(residents.length / params.karmaProportion);
 
   const karma = await exports.getKarma(houseId, startTime, endTime);
   const uniqueReceivers = (new Set(karma.map(k => k.receiverId))).size;
@@ -269,7 +274,7 @@ exports.getNumKarmaWinners = async function (houseId, startTime, endTime) {
 
 exports.generateKarmaHearts = async function (houseId, now) {
   const monthStart = getMonthStart(now);
-  const generatedAt = new Date(monthStart.getTime() + karmaDelay);
+  const generatedAt = new Date(monthStart.getTime() + params.karmaDelay);
   if (now < generatedAt) { return []; }
 
   const prevMonthEnd = getPrevMonthEnd(now);
@@ -287,7 +292,7 @@ exports.generateKarmaHearts = async function (houseId, now) {
       const metadata = { ranking: winner.ranking };
 
       const hearts = await exports.getHearts(residentId, generatedAt);
-      const value = Math.min(1, Math.max(0, heartsMax - hearts));
+      const value = Math.min(1, Math.max(0, params.max - hearts));
 
       karmaHearts.push({ houseId, residentId, type, generatedAt, value, metadata });
     }
@@ -313,6 +318,6 @@ exports.getKarmaHearts = async function (residentId, now) {
 
 exports.getHeartsVoteScalar = async function (residentId, now) {
   const hearts = await exports.getHearts(residentId, now);
-  const heartsValue = (hearts === null) ? heartsBaselineAmount : hearts;
-  return 1 - ((heartsValue - heartsBaselineAmount) * heartsVoteScalar);
+  const heartsValue = (hearts === null) ? params.baselineAmount : hearts;
+  return 1 - ((heartsValue - params.baselineAmount) * params.voteScalar);
 };

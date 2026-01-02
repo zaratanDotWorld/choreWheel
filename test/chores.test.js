@@ -8,14 +8,6 @@ chai.use(chaiAsPromised);
 
 const { db } = require('../src/core/db');
 const { Chores, Hearts, Polls, Admin } = require('../src/core/index');
-const {
-  pointsPerResident,
-  inflationFactor,
-  penaltyDelay,
-  choresPollLength,
-  choresProposalPollLength,
-  specialChoreProposalPollLength,
-} = require('../src/params');
 
 const {
   DAY,
@@ -38,7 +30,7 @@ describe('Chores', async () => {
   const RESIDENT3 = testHelpers.generateSlackId();
   const RESIDENT4 = testHelpers.generateSlackId();
 
-  const PPR = pointsPerResident * inflationFactor;
+  const PPR = Chores.params.pointsPerResident * Chores.params.inflationFactor;
 
   let dishes;
   let sweeping;
@@ -66,9 +58,9 @@ describe('Chores', async () => {
     now = new Date();
     soon = new Date(now.getTime() + MINUTE);
     tomorrow = new Date(now.getTime() + DAY);
-    challengeEnd = new Date(now.getTime() + choresPollLength);
-    proposalEnd = new Date(now.getTime() + choresProposalPollLength);
-    specialChoreProposalEnd = new Date(now.getTime() + specialChoreProposalPollLength);
+    challengeEnd = new Date(now.getTime() + Chores.params.pollLength);
+    proposalEnd = new Date(now.getTime() + Chores.params.proposalPollLength);
+    specialChoreProposalEnd = new Date(now.getTime() + Chores.params.specialProposalPollLength);
   });
 
   afterEach(async () => {
@@ -494,15 +486,15 @@ describe('Chores', async () => {
 
       // Half month
       availablePoints = await Chores.getTotalAvailablePoints(HOUSE, t0, t1);
-      expect(availablePoints).to.almost.equal(3 * pointsPerResident * inflationFactor / 2);
+      expect(availablePoints).to.almost.equal(3 * PPR / 2);
 
       // Whole month
       availablePoints = await Chores.getTotalAvailablePoints(HOUSE, t0, t2);
-      expect(availablePoints).to.almost.equal(3 * pointsPerResident * inflationFactor);
+      expect(availablePoints).to.almost.equal(3 * PPR);
 
       // Three months
       availablePoints = await Chores.getTotalAvailablePoints(HOUSE, t0, t3);
-      expect(availablePoints).to.almost.equal(3 * pointsPerResident * inflationFactor * 3);
+      expect(availablePoints).to.almost.equal(3 * PPR * 3);
     });
 
     it('can update chore values on an 3-hourly basis', async () => {
@@ -527,15 +519,13 @@ describe('Chores', async () => {
       choreValues = await Chores.updateChoreValues(HOUSE, t3);
       expect(choreValues.length).to.equal(3);
       expect(choreValues[0].metadata.ranking).to.almost.equal(1 / 3);
-      expect(choreValues[0].metadata.availablePoints)
-        .to.almost.equal(3 * pointsPerResident * inflationFactor * 3 / 720);
+      expect(choreValues[0].metadata.availablePoints).to.almost.equal(3 * PPR * 3 / 720);
 
       // This update succeeds since the previous update was truncated
       choreValues = await Chores.updateChoreValues(HOUSE, t4);
       expect(choreValues.length).to.equal(3);
       expect(choreValues[0].metadata.ranking).to.almost.equal(1 / 3);
-      expect(choreValues[0].metadata.availablePoints)
-        .to.almost.equal(3 * pointsPerResident * inflationFactor * 3 / 720);
+      expect(choreValues[0].metadata.availablePoints).to.almost.equal(3 * PPR * 3 / 720);
     });
 
     it('can update chore values sensibly after a bootstrap', async () => {
@@ -550,10 +540,8 @@ describe('Chores', async () => {
       // Only adds 2 hours of value
       const choreValues = await Chores.getUpdatedChoreValues(HOUSE, t2);
       expect(choreValues.length).to.equal(3);
-      expect(choreValues[0].value)
-        .to.almost.equal(pointsPerResident * inflationFactor * 2 / 720 + 10);
-      expect(choreValues[1].value)
-        .to.almost.equal(pointsPerResident * inflationFactor * 2 / 720);
+      expect(choreValues[0].value).to.almost.equal(PPR * 2 / 720 + 10);
+      expect(choreValues[1].value).to.almost.equal(PPR * 2 / 720);
     });
 
     it('can do an end-to-end update of chore values', async () => {
@@ -579,22 +567,20 @@ describe('Chores', async () => {
       expect(lastUpdateTime.getTime()).to.equal(t0.getTime());
 
       availablePoints = await Chores.getTotalAvailablePoints(HOUSE, t0, t3);
-      expect(availablePoints).to.almost.equal(3 * pointsPerResident * inflationFactor);
+      expect(availablePoints).to.almost.equal(3 * PPR);
 
       choreValues = await Chores.updateChoreValues(HOUSE, t1);
-      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0))
-        .to.almost.equal(3 * pointsPerResident * inflationFactor / 3);
+      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0)).to.almost.equal(3 * PPR / 3);
 
       // t2, 10 days later
       lastUpdateTime = await Chores.getLastChoreValueUpdateTime(HOUSE, t2);
       expect(lastUpdateTime.getTime()).to.equal(t1.getTime());
 
       availablePoints = await Chores.getTotalAvailablePoints(HOUSE, t1, t3);
-      expect(availablePoints).to.almost.equal(3 * pointsPerResident * inflationFactor * 2 / 3);
+      expect(availablePoints).to.almost.equal(3 * PPR * 2 / 3);
 
       choreValues = await Chores.updateChoreValues(HOUSE, t2);
-      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0))
-        .to.almost.equal(3 * pointsPerResident * inflationFactor / 3);
+      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0)).to.almost.equal(3 * PPR / 3);
     });
 
     it('can get the current, updated chore values', async () => {
@@ -605,8 +591,7 @@ describe('Chores', async () => {
 
       // Calculate the initial 72 hour update (3 days)
       const choreValues = await Chores.getUpdatedChoreValues(HOUSE, t1);
-      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0))
-        .to.almost.equal(3 * pointsPerResident * inflationFactor * 3 / 30);
+      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0)).to.almost.equal(3 * PPR * 3 / 30);
     });
 
     it('can incorporate chore breaks when calculating chore values', async () => {
@@ -653,8 +638,7 @@ describe('Chores', async () => {
 
       // Calculate the next 10 days
       const choreValues = await Chores.getUpdatedChoreValues(HOUSE, t2);
-      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0))
-        .to.be.almost(3 * pointsPerResident * inflationFactor * 10 / 30, 1e-5);
+      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0)).to.be.almost(3 * PPR * 10 / 30, 1e-5);
     });
 
     it('can return sensible chore values when updating across the month boundary', async () => {
@@ -671,18 +655,15 @@ describe('Chores', async () => {
 
       // 20 days, within a single month
       choreValues = await Chores.getUpdatedChoreValues(HOUSE, t1);
-      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0))
-        .to.be.almost(3 * pointsPerResident * inflationFactor * 2 / 3, 1e-5);
+      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0)).to.be.almost(3 * PPR * 2 / 3, 1e-5);
 
       // 41 days, crossing one month boundary and completing the next month
       choreValues = await Chores.getUpdatedChoreValues(HOUSE, t2);
-      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0))
-        .to.be.almost(3 * pointsPerResident * inflationFactor * 2, 1e-4);
+      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0)).to.be.almost(3 * PPR * 2, 1e-4);
 
       // 61 days, crossing two month boundaries and completing the next two months
       choreValues = await Chores.getUpdatedChoreValues(HOUSE, t3);
-      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0))
-        .to.be.almost(3 * pointsPerResident * inflationFactor * 4);
+      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0)).to.be.almost(3 * PPR * 4);
     });
 
     it('sets ping to true when the value crosses the ping interval', async () => {
@@ -958,8 +939,8 @@ describe('Chores', async () => {
       const t0 = new Date();
       const t1 = new Date(t0.getTime() + MINUTE);
       const t2 = new Date(t1.getTime() + HOUR);
-      const t3 = new Date(t0.getTime() + choresPollLength);
-      const t4 = new Date(t1.getTime() + choresPollLength);
+      const t3 = new Date(t0.getTime() + Chores.params.pollLength);
+      const t4 = new Date(t1.getTime() + Chores.params.pollLength);
 
       await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: t0, value: 10 } ]);
       const [ choreClaim1 ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, t0, 0);
@@ -986,8 +967,8 @@ describe('Chores', async () => {
       const t0 = new Date();
       const t1 = new Date(t0.getTime() + MINUTE);
       const t2 = new Date(t1.getTime() + HOUR);
-      const t3 = new Date(t0.getTime() + choresPollLength);
-      const t4 = new Date(t1.getTime() + choresPollLength);
+      const t3 = new Date(t0.getTime() + Chores.params.pollLength);
+      const t4 = new Date(t1.getTime() + Chores.params.pollLength);
 
       await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: t0, value: 10 } ]);
       const [ choreClaim1 ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, t0, 0);
@@ -1085,7 +1066,7 @@ describe('Chores', async () => {
       await Chores.claimChore(HOUSE, restock.id, RESIDENT3, now, 0);
 
       let penalty;
-      const penaltyTime = new Date(getNextMonthStart(now).getTime() + penaltyDelay);
+      const penaltyTime = new Date(getNextMonthStart(now).getTime() + Chores.params.penaltyDelay);
       penalty = await Chores.calculatePenalty(HOUSE, RESIDENT1, penaltyTime);
       expect(penalty).to.equal(0.25);
       penalty = await Chores.calculatePenalty(HOUSE, RESIDENT2, penaltyTime);
@@ -1113,7 +1094,7 @@ describe('Chores', async () => {
       await Chores.addChoreBreak(HOUSE, RESIDENT3, feb1, feb15, '');
 
       let penalty;
-      const penaltyTime = new Date(getNextMonthStart(feb1).getTime() + penaltyDelay);
+      const penaltyTime = new Date(getNextMonthStart(feb1).getTime() + Chores.params.penaltyDelay);
       penalty = await Chores.calculatePenalty(HOUSE, RESIDENT1, penaltyTime);
       expect(penalty).to.equal(-0.5);
       penalty = await Chores.calculatePenalty(HOUSE, RESIDENT2, penaltyTime);
@@ -1129,7 +1110,7 @@ describe('Chores', async () => {
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now, 0);
 
       let penaltyHeart;
-      const penaltyTime = new Date(getNextMonthStart(now).getTime() + penaltyDelay);
+      const penaltyTime = new Date(getNextMonthStart(now).getTime() + Chores.params.penaltyDelay);
       const beforeTime = new Date(penaltyTime.getTime() - 1);
 
       [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, beforeTime);
@@ -1152,7 +1133,7 @@ describe('Chores', async () => {
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now, 0);
       await Chores.claimChore(HOUSE, restock.id, RESIDENT2, now, 0);
 
-      const penaltyTime = new Date(getNextMonthStart(now).getTime() + penaltyDelay);
+      const penaltyTime = new Date(getNextMonthStart(now).getTime() + Chores.params.penaltyDelay);
 
       let penaltyHearts;
       penaltyHearts = await Chores.addChorePenalties(HOUSE, penaltyTime);
@@ -1173,7 +1154,7 @@ describe('Chores', async () => {
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now, 0);
 
       let penaltyHeart;
-      const penaltyTime = new Date(getNextMonthStart(now).getTime() + penaltyDelay);
+      const penaltyTime = new Date(getNextMonthStart(now).getTime() + Chores.params.penaltyDelay);
 
       // No penalty before initialized
       [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
@@ -1252,7 +1233,8 @@ describe('Chores', async () => {
       const feb8 = new Date(feb1.getTime() + 7 * DAY);
       const feb15 = new Date(feb1.getTime() + 14 * DAY);
       const feb22 = new Date(feb1.getTime() + 21 * DAY);
-      const ppc = pointsPerResident * inflationFactor * 4 / 3; // Monthly points per chore
+      const ppc = PPR * 4 / 3; // Monthly points per chore
+      const ppr = Chores.params.pointsPerResident;
 
       let choreValues;
       let choreStats;
@@ -1277,9 +1259,9 @@ describe('Chores', async () => {
       expect(choreStats.find(cs => cs.residentId === RESIDENT1).pointsEarned).to.be.almost(ppc * 0.25, 1e-5);
       expect(choreStats.find(cs => cs.residentId === RESIDENT2).pointsEarned).to.be.almost(ppc * 0.5, 1e-5);
       expect(choreStats.find(cs => cs.residentId === RESIDENT3).pointsEarned).to.be.almost(ppc * 0, 1e-5);
-      expect(choreStats.find(cs => cs.residentId === RESIDENT1).pointsOwed).to.equal(pointsPerResident);
-      expect(choreStats.find(cs => cs.residentId === RESIDENT2).pointsOwed).to.equal(pointsPerResident);
-      expect(choreStats.find(cs => cs.residentId === RESIDENT3).pointsOwed).to.equal(pointsPerResident);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT1).pointsOwed).to.equal(ppr);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT2).pointsOwed).to.equal(ppr);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT3).pointsOwed).to.equal(ppr);
 
       // Reset chore points
       await Chores.resetChorePoints(HOUSE, feb15);
@@ -1294,9 +1276,9 @@ describe('Chores', async () => {
       expect(choreStats.find(cs => cs.residentId === RESIDENT1).pointsEarned).to.equal(0);
       expect(choreStats.find(cs => cs.residentId === RESIDENT2).pointsEarned).to.equal(0);
       expect(choreStats.find(cs => cs.residentId === RESIDENT3).pointsEarned).to.equal(0);
-      expect(choreStats.find(cs => cs.residentId === RESIDENT1).pointsOwed).to.equal(pointsPerResident * 0.5);
-      expect(choreStats.find(cs => cs.residentId === RESIDENT2).pointsOwed).to.equal(pointsPerResident * 0.5);
-      expect(choreStats.find(cs => cs.residentId === RESIDENT3).pointsOwed).to.equal(pointsPerResident * 0.5);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT1).pointsOwed).to.equal(ppr * 0.5);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT2).pointsOwed).to.equal(ppr * 0.5);
+      expect(choreStats.find(cs => cs.residentId === RESIDENT3).pointsOwed).to.equal(ppr * 0.5);
 
       await Chores.updateChoreValues(HOUSE, feb22);
       await Chores.claimChore(HOUSE, restock.id, RESIDENT3, feb22, 0);

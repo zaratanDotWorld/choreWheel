@@ -1,7 +1,6 @@
 const assert = require('assert');
 
 const { Admin, Polls, Chores } = require('../../../core/index');
-const { displayThreshold, breakMinDays, achievementWindow } = require('../../../params');
 const { DAY, getMonthStart, shiftDate } = require('../../../time');
 
 const common = require('../../common');
@@ -83,7 +82,7 @@ module.exports = (app) => {
     const { choresConf } = await Admin.getHouse(houseId);
 
     const choreValues = await Chores.getUpdatedChoreValues(houseId, now);
-    const filteredChoreValues = choreValues.filter(choreValue => choreValue.value >= displayThreshold);
+    const filteredChoreValues = choreValues.filter(choreValue => choreValue.value >= Chores.params.displayThreshold);
 
     if (!filteredChoreValues.length) {
       const view = views.choresClaimViewZero();
@@ -139,7 +138,7 @@ module.exports = (app) => {
       // Regular chore
       name = chore.name;
 
-      const achievementStart = new Date(now.getTime() - achievementWindow);
+      const achievementStart = new Date(now.getTime() - Chores.params.achievementWindow);
       achivementPoints = await Chores.getChorePoints(residentId, chore.id, achievementStart, now);
 
       // Perform the regular claim, skipping timeSpent for now
@@ -297,7 +296,7 @@ module.exports = (app) => {
     const breakEnd = shiftDate(breakEndUtc, now.getTimezoneOffset());
     const breakDays = parseInt((breakEnd - breakStart) / DAY);
 
-    if (breakStart < todayStart || breakDays < breakMinDays) {
+    if (breakStart < todayStart || breakDays < Chores.params.breakMinDays) {
       const text = 'Not a valid chore break :slightly_frowning_face:';
       await common.postEphemeral(app, choresConf, residentId, text);
     } else {
