@@ -1,10 +1,8 @@
 const assert = require('assert');
 
-const { YAY, DAY, CHORES_CONF } = require('../../../constants');
-const { displayThreshold, breakMinDays, achievementWindow } = require('../../../config');
-const { getMonthStart, shiftDate } = require('../../../utils');
-
 const { Admin, Polls, Chores } = require('../../../core/index');
+const { displayThreshold, breakMinDays, achievementWindow } = require('../../../params');
+const { DAY, getMonthStart, shiftDate } = require('../../../time');
 
 const common = require('../../common');
 const views = require('../views/actions');
@@ -34,7 +32,7 @@ module.exports = (app) => {
 
     // Set app channel
     await app.client.conversations.join({ token: choresConf.oauth.bot.token, channel });
-    await Admin.updateHouseConf(houseId, CHORES_CONF, { channel });
+    await Admin.updateHouseConf(houseId, Admin.CHORES_CONF, { channel });
     choresConf.channel = channel;
 
     // Activate calling resident
@@ -158,7 +156,7 @@ module.exports = (app) => {
 
     monthlyPoints = monthlyPoints + claim.value;
 
-    await Polls.submitVote(claim.pollId, residentId, now, YAY);
+    await Polls.submitVote(claim.pollId, residentId, now, Polls.YAY);
     const { minVotes } = await Polls.getPoll(claim.pollId);
 
     const text = 'Someone just completed a chore';
@@ -452,7 +450,7 @@ module.exports = (app) => {
     } else {
       // Create the chore proposal
       const [ proposal ] = await Chores.createChoreProposal(houseId, residentId, choreId, name, metadata, active, now);
-      await Polls.submitVote(proposal.pollId, residentId, now, YAY);
+      await Polls.submitVote(proposal.pollId, residentId, now, Polls.YAY);
 
       const { minVotes } = await Polls.getPoll(proposal.pollId);
 
@@ -490,7 +488,7 @@ module.exports = (app) => {
 
     // Create the special chore proposal
     const [ proposal ] = await Chores.createSpecialChoreProposal(houseId, residentId, name, description, points, now);
-    await Polls.submitVote(proposal.pollId, residentId, now, YAY);
+    await Polls.submitVote(proposal.pollId, residentId, now, Polls.YAY);
 
     const { minVotes } = await Polls.getPoll(proposal.pollId);
 

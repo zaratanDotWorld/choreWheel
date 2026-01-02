@@ -5,20 +5,23 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
 const { Admin } = require('../src/core/index');
-const { HOUR, DAY, CHORES_CONF, THINGS_CONF } = require('../src/constants');
 
 const {
+  HOUR,
+  DAY,
   getMonthStart,
   getMonthEnd,
   getNextMonthStart,
   getPrevMonthEnd,
   getDateStart,
   truncateHour,
-} = require('../src/utils');
+} = require('../src/time');
 
 const testHelpers = require('./helpers');
 
 describe('Admin', async () => {
+  const { CHORES_CONF, THINGS_CONF } = Admin;
+
   const HOUSE1 = testHelpers.generateSlackId();
   const HOUSE2 = testHelpers.generateSlackId();
   const RESIDENT1 = testHelpers.generateSlackId();

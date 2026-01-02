@@ -1,14 +1,6 @@
-const { DAY } = require('../../../constants');
-const { Admin } = require('../../../core/index');
-
 const common = require('../../common');
 
 // Helper functions
-
-exports.houseActive = async function (houseId, now) {
-  const windowStart = new Date(now.getTime() - 30 * DAY);
-  return Admin.houseActive(houseId, 'ThingBuy', 'boughtAt', windowStart, now);
-};
 
 exports.parseThingsEditSubmission = function (body) {
   const type = common.parseTitlecase(common.getInputBlock(body, -5).type.value);

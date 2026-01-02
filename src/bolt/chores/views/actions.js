@@ -2,7 +2,7 @@ const {
   choresPollLength,
   choresProposalPollLength,
   specialChoreProposalPollLength,
-} = require('../../../config');
+} = require('../../../params');
 
 const common = require('../../common');
 

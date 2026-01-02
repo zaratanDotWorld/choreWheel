@@ -1,7 +1,5 @@
 const common = require('../../common');
-const { formatBuy } = require('./utils');
-
-const TITLE = common.blockPlaintext('Things');
+const { TITLE, formatBuy } = require('./utils');
 
 // Slash command views
 

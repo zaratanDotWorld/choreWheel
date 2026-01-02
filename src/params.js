@@ -1,4 +1,4 @@
-const { HOUR, DAY } = require('./constants');
+const { HOUR, DAY } = require('./time');
 
 // Chores
 exports.choresHourPrecision = 3;

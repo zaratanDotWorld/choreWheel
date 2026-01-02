@@ -10,7 +10,7 @@ const {
   thingsMaxPct,
   thingsProposalPct,
   thingsProposalPollLength,
-} = require('../config');
+} = require('../params');
 
 const Admin = require('./admin');
 const Hearts = require('./hearts');

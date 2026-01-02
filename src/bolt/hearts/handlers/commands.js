@@ -1,5 +1,3 @@
-const { HEARTS_CONF } = require('../../../constants');
-
 const { Admin, Hearts } = require('../../../core/index');
 
 const common = require('../../common');
@@ -35,7 +33,7 @@ module.exports = (app) => {
     const { houseId } = common.beginCommand('/hearts-channel', command);
     const { heartsConf } = await Admin.getHouse(houseId);
 
-    await common.setChannel(app, heartsConf.oauth, HEARTS_CONF, command, respond);
+    await common.setChannel(app, heartsConf.oauth, Admin.HEARTS_CONF, command, respond);
   });
 
   // Reset command

@@ -2,16 +2,13 @@ const {
   pointsPerResident,
   achievementBase,
   penaltyIncrement,
-} = require('../../../config');
+} = require('../../../params');
 
 const common = require('../../common');
 
-// Title
+// Constants
 
 exports.TITLE = common.blockPlaintext('Chores');
-
-// Docs
-
 exports.DOCS_URL = 'https://docs.chorewheel.zaratan.world/en/latest/tools/chores.html';
 
 // Formatting functions

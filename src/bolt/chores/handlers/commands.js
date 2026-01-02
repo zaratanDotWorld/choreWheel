@@ -1,7 +1,5 @@
-const { CHORES_CONF } = require('../../../constants');
-const { getMonthStart, getPrevMonthEnd } = require('../../../utils');
-
 const { Admin, Chores } = require('../../../core/index');
+const { getMonthStart, getPrevMonthEnd } = require('../../../time');
 
 const common = require('../../common');
 const views = require('../views/commands');
@@ -25,7 +23,7 @@ module.exports = (app) => {
     const { houseId } = common.beginCommand('/chores-channel', command);
     const { choresConf } = await Admin.getHouse(houseId);
 
-    await common.setChannel(app, choresConf.oauth, CHORES_CONF, command, respond);
+    await common.setChannel(app, choresConf.oauth, Admin.CHORES_CONF, command, respond);
   });
 
   // Slash command: /chores-stats

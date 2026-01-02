@@ -1,7 +1,5 @@
 const common = require('../../common');
-const { heartEmoji } = require('./utils');
-
-const DOCS_URL = 'https://docs.chorewheel.zaratan.world/en/latest/tools/hearts.html';
+const { DOCS_URL, heartEmoji } = require('./utils');
 
 // Home views
 

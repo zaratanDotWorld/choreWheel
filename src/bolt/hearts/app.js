@@ -6,8 +6,7 @@ if (process.env.NODE_ENV === 'production') {
 
 const { App, LogLevel } = require('@slack/bolt');
 
-const { HEARTS_CONF } = require('../../constants');
-
+const { Admin } = require('../../../core/index');
 const common = require('../common');
 
 // Create the app
@@ -33,7 +32,7 @@ const app = new App({
   signingSecret: process.env.HEARTS_SIGNING_SECRET,
   stateSecret: process.env.STATE_SECRET,
   customRoutes: [ common.homeEndpoint(APP_NAME) ],
-  installationStore: common.createInstallationStore(HEARTS_CONF, APP_NAME),
+  installationStore: common.createInstallationStore(Admin.HEARTS_CONF, APP_NAME),
   installerOptions: { directInstall: true },
   scopes,
 });

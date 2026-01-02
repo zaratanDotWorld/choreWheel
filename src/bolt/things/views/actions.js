@@ -4,12 +4,10 @@ const {
   thingsPollLength,
   thingsSpecialPollLength,
   thingsProposalPollLength,
-} = require('../../../config');
+} = require('../../../params');
 
 const common = require('../../common');
-const { formatThing, formatBuy, urlCompare, mapThings } = require('./utils');
-
-const TITLE = common.blockPlaintext('Things');
+const { TITLE, formatThing, formatBuy, urlCompare, mapThings } = require('./utils');
 
 // Core actions
 

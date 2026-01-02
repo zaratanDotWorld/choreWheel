@@ -1,9 +1,7 @@
-const { heartsPollLength, heartsCriticalNum, heartsMinPctInitial, heartsMinPctCritical } = require('../../../config');
+const { heartsPollLength, heartsCriticalNum, heartsMinPctInitial, heartsMinPctCritical } = require('../../../params');
 
 const common = require('../../common');
-const { heartEmoji } = require('./utils');
-
-const TITLE = common.blockPlaintext('Hearts');
+const { TITLE, heartEmoji } = require('./utils');
 
 // Challenge flow
 

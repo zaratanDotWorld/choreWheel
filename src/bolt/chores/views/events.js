@@ -1,4 +1,4 @@
-const { penaltyIncrement, pointsBuffer } = require('../../../config');
+const { penaltyIncrement, pointsBuffer } = require('../../../params');
 
 const common = require('../../common');
 

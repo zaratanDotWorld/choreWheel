@@ -5,11 +5,14 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
 const { Things, Hearts, Polls, Admin } = require('../src/core/index');
-const { NAY, YAY, HOUR, DAY, HEART_UNKNOWN } = require('../src/constants');
-const { thingsPollLength, thingsSpecialPollLength, thingsProposalPollLength } = require('../src/config');
+const { HOUR, DAY } = require('../src/time');
+const { thingsPollLength, thingsSpecialPollLength, thingsProposalPollLength } = require('../src/params');
 const testHelpers = require('./helpers');
 
 describe('Things', async () => {
+  const { YAY, NAY } = Polls;
+  const { HEART_UNKNOWN } = Hearts;
+
   const HOUSE = testHelpers.generateSlackId();
   const RESIDENT1 = testHelpers.generateSlackId();
   const RESIDENT2 = testHelpers.generateSlackId();

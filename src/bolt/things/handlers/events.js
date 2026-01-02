@@ -1,11 +1,13 @@
-const { THINGS_IDX } = require('../../../constants');
-const { sleep } = require('../../../utils');
-
+const { DAY, sleep } = require('../../../time');
 const { Admin, Things } = require('../../../core/index');
 
 const common = require('../../common');
 const views = require('../views/events');
-const { houseActive } = require('./utils');
+
+function houseActive (houseId, now) {
+  const windowStart = new Date(now.getTime() - 30 * DAY);
+  return Admin.houseActive(houseId, 'ThingBuy', 'boughtAt', windowStart, now);
+}
 
 module.exports = (app) => {
   // App uninstalled
@@ -21,7 +23,7 @@ module.exports = (app) => {
 
     console.log(`things user_change - ${user.team_id} x ${user.id}`);
 
-    await sleep(THINGS_IDX * 1000);
+    await sleep(common.THINGS_IDX * 1000);
     await common.pruneWorkspaceMember(user.team_id, user);
   });
 

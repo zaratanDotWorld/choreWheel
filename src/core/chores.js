@@ -1,8 +1,7 @@
 const assert = require('assert');
 
 const { db } = require('./db');
-
-const { DAY, HEART_CHORE } = require('../constants');
+const { DAY } = require('../time');
 
 const {
   getMonthStart,
@@ -11,7 +10,7 @@ const {
   getNextMonthStart,
   getDateStart,
   truncateHour,
-} = require('../utils');
+} = require('../time');
 
 const {
   choresHourPrecision,
@@ -34,7 +33,7 @@ const {
   choresHeartBonus,
   choresSpecialAllowance,
   choresSpecialIncrement,
-} = require('../config');
+} = require('../params');
 
 const Admin = require('./admin');
 const Hearts = require('./hearts');
@@ -695,7 +694,7 @@ exports.addChorePenalty = async function (houseId, residentId, currentTime) {
     if (hearts === null) { return []; } // Don't penalize if not initialized
 
     const penaltyAmount = await exports.calculatePenalty(houseId, residentId, penaltyTime);
-    return Hearts.generateHearts(houseId, residentId, HEART_CHORE, penaltyTime, -penaltyAmount);
+    return Hearts.generateHearts(houseId, residentId, Hearts.HEART_CHORE, penaltyTime, -penaltyAmount);
   } else {
     return [];
   }

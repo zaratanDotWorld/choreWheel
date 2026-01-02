@@ -1,6 +1,5 @@
 const common = require('../../common');
-
-const DOCS_URL = 'https://docs.chorewheel.zaratan.world/en/latest/tools/things.html';
+const { DOCS_URL } = require('./utils');
 
 // Home views
 

@@ -1,8 +1,14 @@
 const { db } = require('./db');
 
-const { truncateHour } = require('../utils');
+const { truncateHour } = require('../time');
 
-const { choresHourPrecision } = require('../config');
+const { choresHourPrecision } = require('../params');
+
+// Constants
+
+exports.CHORES_CONF = 'choresConf';
+exports.HEARTS_CONF = 'heartsConf';
+exports.THINGS_CONF = 'thingsConf';
 
 // Houses
 

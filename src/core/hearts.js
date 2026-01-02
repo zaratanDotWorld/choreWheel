@@ -2,8 +2,7 @@ const assert = require('assert');
 
 const { db } = require('./db');
 
-const { getMonthStart, getPrevMonthEnd } = require('../utils');
-const { HEART_REGEN, HEART_CHALLENGE, HEART_KARMA, HEART_RESET } = require('../constants');
+const { getMonthStart, getPrevMonthEnd } = require('../time');
 
 const {
   heartsMinPctInitial,
@@ -17,10 +16,20 @@ const {
   heartsMax,
   heartsCriticalNum,
   heartsVoteScalar,
-} = require('../config');
+} = require('../params');
 
 const Admin = require('./admin');
 const Polls = require('./polls');
+
+// Constants
+
+exports.HEART_UNKNOWN = 0;
+exports.HEART_REGEN = 1;
+exports.HEART_CHALLENGE = 2;
+exports.HEART_KARMA = 3;
+exports.HEART_CHORE = 4;
+exports.HEART_REVIVE = 5;
+exports.HEART_RESET = 6;
 
 // Hearts
 
@@ -68,7 +77,7 @@ exports.initialiseResident = async function (houseId, residentId, now) {
   const hearts = (await exports.getHearts(residentId, now)) || 0;
   if (hearts <= 0) {
     const amount = heartsBaselineAmount - hearts;
-    return exports.generateHearts(houseId, residentId, HEART_REGEN, now, amount);
+    return exports.generateHearts(houseId, residentId, exports.HEART_REGEN, now, amount);
   } else { return []; }
 };
 
@@ -89,7 +98,7 @@ exports.retireResidents = async function (houseId, now) {
 
 exports.resetResident = async function (houseId, residentId, now) {
   const hearts = await exports.getHearts(residentId, now);
-  return exports.generateHearts(houseId, residentId, HEART_RESET, now, heartsBaselineAmount - hearts);
+  return exports.generateHearts(houseId, residentId, exports.HEART_RESET, now, heartsBaselineAmount - hearts);
 };
 
 exports.resetResidents = async function (houseId, now) {
@@ -109,7 +118,7 @@ exports.regenerateHearts = async function (houseId, residentId, now) {
     if (hearts === null) { return []; } // Don't regenerate if not initialized
 
     const regenAmount = exports.getRegenAmount(hearts);
-    return exports.generateHearts(houseId, residentId, HEART_REGEN, regenTime, regenAmount);
+    return exports.generateHearts(houseId, residentId, exports.HEART_REGEN, regenTime, regenAmount);
   } else { return []; }
 };
 
@@ -174,7 +183,7 @@ exports.resolveChallenge = async function (challengeId, resolvedAt) {
   const valid = await Polls.isPollValid(challenge.pollId, resolvedAt);
   const loser = (valid) ? challengeeId : challengerId;
 
-  const [ heart ] = await exports.generateHearts(houseId, loser, HEART_CHALLENGE, resolvedAt, -value);
+  const [ heart ] = await exports.generateHearts(houseId, loser, exports.HEART_CHALLENGE, resolvedAt, -value);
 
   return db('HeartChallenge')
     .where({ id: challengeId })
@@ -274,7 +283,7 @@ exports.generateKarmaHearts = async function (houseId, now) {
 
     for (const winner of karmaRankings.slice(0, numWinners)) {
       const residentId = winner.slackId;
-      const type = HEART_KARMA;
+      const type = exports.HEART_KARMA;
       const metadata = { ranking: winner.ranking };
 
       const hearts = await exports.getHearts(residentId, generatedAt);
@@ -295,7 +304,7 @@ exports.insertKarmaHearts = async function (karmaHearts) {
 
 exports.getKarmaHearts = async function (residentId, now) {
   return db('Heart')
-    .where({ residentId, type: HEART_KARMA })
+    .where({ residentId, type: exports.HEART_KARMA })
     .where('generatedAt', '<=', now)
     .returning('*');
 };

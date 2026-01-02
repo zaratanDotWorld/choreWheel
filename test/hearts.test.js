@@ -5,12 +5,15 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
 const { Hearts, Polls, Admin } = require('../src/core/index');
-const { NAY, YAY, HOUR, DAY, HEART_UNKNOWN, HEART_KARMA, HEART_CHALLENGE } = require('../src/constants');
-const { heartsPollLength, heartsBaselineAmount, heartsMax, karmaDelay } = require('../src/config');
-const { getNextMonthStart } = require('../src/utils');
+const { HOUR, DAY, getNextMonthStart } = require('../src/time');
+const { heartsPollLength, heartsBaselineAmount, heartsMax, karmaDelay } = require('../src/params');
+
 const testHelpers = require('./helpers');
 
 describe('Hearts', async () => {
+  const { YAY, NAY } = Polls;
+  const { HEART_UNKNOWN, HEART_CHALLENGE, HEART_KARMA } = Hearts;
+
   const HOUSE = testHelpers.generateSlackId();
   const RESIDENT1 = testHelpers.generateSlackId();
   const RESIDENT2 = testHelpers.generateSlackId();

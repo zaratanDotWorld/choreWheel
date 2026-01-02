@@ -8,7 +8,6 @@ chai.use(chaiAsPromised);
 
 const { db } = require('../src/core/db');
 const { Chores, Hearts, Polls, Admin } = require('../src/core/index');
-const { YAY, NAY, DAY, HOUR, MINUTE } = require('../src/constants');
 const {
   pointsPerResident,
   inflationFactor,
@@ -16,12 +15,23 @@ const {
   choresPollLength,
   choresProposalPollLength,
   specialChoreProposalPollLength,
-} = require('../src/config');
+} = require('../src/params');
 
-const { getMonthStart, getMonthEnd, getNextMonthStart, getPrevMonthEnd } = require('../src/utils');
+const {
+  DAY,
+  HOUR,
+  MINUTE,
+  getMonthStart,
+  getMonthEnd,
+  getNextMonthStart,
+  getPrevMonthEnd,
+} = require('../src/time');
+
 const testHelpers = require('./helpers');
 
 describe('Chores', async () => {
+  const { YAY, NAY } = Polls;
+
   const HOUSE = testHelpers.generateSlackId();
   const RESIDENT1 = testHelpers.generateSlackId();
   const RESIDENT2 = testHelpers.generateSlackId();
