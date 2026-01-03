@@ -10,9 +10,9 @@
     "pnpm": "^10.16.0"
   },
   "scripts": {
-    "app:chores": "node src/bolt/chores.app.js",
-    "app:things": "node src/bolt/things.app.js",
-    "app:hearts": "node src/bolt/hearts.app.js",
+    "app:chores": "node src/bolt/chores/app.js",
+    "app:things": "node src/bolt/things/app.js",
+    "app:hearts": "node src/bolt/hearts/app.js",
     "ngrok": "ngrok http --region=us --hostname=zaratan.ngrok.io 3000",
     "prepare": "husky install",
     "pretest": "npx knex migrate:rollback --all --env test; npx knex migrate:latest --env test",
