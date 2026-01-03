@@ -1,6 +1,5 @@
 const common = require('../../common');
-
-const TITLE = common.blockPlaintext('Hearts');
+const { TITLE } = require('./utils');
 
 // Slash commands
 

@@ -1,9 +1,9 @@
-const { YAY, DAY } = require('../../../constants');
-
+const { DAY } = require('../../../time');
 const { Admin, Polls, Things } = require('../../../core/index');
 
 const common = require('../../common');
 const views = require('../views/actions');
+
 const { parseThingsEditSubmission } = require('./utils');
 
 module.exports = (app) => {
@@ -34,7 +34,7 @@ module.exports = (app) => {
     // Perform the buy
     const thing = await Things.getThing(thingId);
     const [ buy ] = await Things.buyThing(houseId, thing.id, residentId, now, account, thing.value, quantity);
-    await Polls.submitVote(buy.pollId, residentId, now, YAY);
+    await Polls.submitVote(buy.pollId, residentId, now, Polls.YAY);
 
     const { minVotes } = await Polls.getPoll(buy.pollId);
     const balance = await Things.getAccountBalance(houseId, account, now);
@@ -72,7 +72,7 @@ module.exports = (app) => {
 
     // Perform the buy
     const [ buy ] = await Things.buySpecialThing(houseId, residentId, now, account, cost, title, details);
-    await Polls.submitVote(buy.pollId, residentId, now, YAY);
+    await Polls.submitVote(buy.pollId, residentId, now, Polls.YAY);
 
     const { minVotes } = await Polls.getPoll(buy.pollId);
     const balance = await Things.getAccountBalance(houseId, account, now);
@@ -178,7 +178,7 @@ module.exports = (app) => {
     // Create the thing proposal
     const metadata = { unit, url };
     const [ proposal ] = await Things.createThingProposal(houseId, residentId, thingId, type, name, value, metadata, active, now);
-    await Polls.submitVote(proposal.pollId, residentId, now, YAY);
+    await Polls.submitVote(proposal.pollId, residentId, now, Polls.YAY);
 
     const { minVotes } = await Polls.getPoll(proposal.pollId);
 

@@ -6,8 +6,7 @@ if (process.env.NODE_ENV === 'production') {
 
 const { App, LogLevel } = require('@slack/bolt');
 
-const { THINGS_CONF } = require('../../constants');
-
+const { Admin } = require('../../core/index');
 const common = require('../common');
 
 const APP_NAME = 'Things';
@@ -32,7 +31,7 @@ const app = new App({
   signingSecret: process.env.THINGS_SIGNING_SECRET,
   stateSecret: process.env.STATE_SECRET,
   customRoutes: [ common.homeEndpoint(APP_NAME) ],
-  installationStore: common.createInstallationStore(THINGS_CONF, APP_NAME),
+  installationStore: common.createInstallationStore(Admin.THINGS_CONF, APP_NAME),
   installerOptions: { directInstall: true },
   scopes,
 });

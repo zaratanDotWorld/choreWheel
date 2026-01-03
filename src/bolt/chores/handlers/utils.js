@@ -1,12 +1,4 @@
-const { DAY } = require('../../../constants');
 const { Admin, Chores } = require('../../../core/index');
-
-// Business logic helpers
-
-exports.houseActive = async function (houseId, now) {
-  const windowStart = new Date(now.getTime() - 30 * DAY);
-  return Admin.houseActive(houseId, 'ChoreClaim', 'claimedAt', windowStart, now);
-};
 
 // Cron functions
 

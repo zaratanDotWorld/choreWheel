@@ -7,7 +7,7 @@ if (process.env.NODE_ENV === 'production') {
 const cron = require('node-cron');
 const { App, LogLevel } = require('@slack/bolt');
 
-const { CHORES_CONF } = require('../../constants');
+const { Admin } = require('../../core/index');
 
 const common = require('../common');
 const { pingChores } = require('./handlers/utils');
@@ -34,7 +34,7 @@ const app = new App({
   clientSecret: process.env.CHORES_CLIENT_SECRET,
   stateSecret: process.env.STATE_SECRET,
   customRoutes: [ common.homeEndpoint(APP_NAME) ],
-  installationStore: common.createInstallationStore(CHORES_CONF, APP_NAME),
+  installationStore: common.createInstallationStore(Admin.CHORES_CONF, APP_NAME),
   installerOptions: { directInstall: true },
   scopes,
 });

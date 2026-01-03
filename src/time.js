@@ -1,4 +1,7 @@
-const { MINUTE } = require('./constants');
+exports.SECOND = 1000;
+exports.MINUTE = 60 * exports.SECOND;
+exports.HOUR = 60 * exports.MINUTE;
+exports.DAY = 24 * exports.HOUR;
 
 exports.getDateStart = function (date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -21,7 +24,7 @@ exports.getNextMonthStart = function (date) {
 };
 
 exports.shiftDate = function (date, minutes) {
-  return new Date(date.getTime() + minutes * MINUTE);
+  return new Date(date.getTime() + minutes * exports.MINUTE);
 };
 
 exports.truncateHour = function (date, precision) {

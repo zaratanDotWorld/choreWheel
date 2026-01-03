@@ -5,6 +5,14 @@ const { db } = require('./db');
 
 const Admin = require('./admin');
 
+// Constants
+
+exports.NAY = 0;
+exports.YAY = 1;
+exports.CANCEL = undefined;
+
+// Polls
+
 exports.createPoll = async function (houseId, startTime, duration, minVotes) {
   const endTime = new Date(startTime.getTime() + duration);
   return db('Poll')

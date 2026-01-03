@@ -1,10 +1,7 @@
 const assert = require('assert');
 
-const { YAY, DAY, CHORES_CONF } = require('../../../constants');
-const { displayThreshold, breakMinDays, achievementWindow } = require('../../../config');
-const { getMonthStart, shiftDate } = require('../../../utils');
-
 const { Admin, Polls, Chores } = require('../../../core/index');
+const { DAY, getMonthStart, shiftDate } = require('../../../time');
 
 const common = require('../../common');
 const views = require('../views/actions');
@@ -34,7 +31,7 @@ module.exports = (app) => {
 
     // Set app channel
     await app.client.conversations.join({ token: choresConf.oauth.bot.token, channel });
-    await Admin.updateHouseConf(houseId, CHORES_CONF, { channel });
+    await Admin.updateHouseConf(houseId, Admin.CHORES_CONF, { channel });
     choresConf.channel = channel;
 
     // Activate calling resident
@@ -85,7 +82,7 @@ module.exports = (app) => {
     const { choresConf } = await Admin.getHouse(houseId);
 
     const choreValues = await Chores.getUpdatedChoreValues(houseId, now);
-    const filteredChoreValues = choreValues.filter(choreValue => choreValue.value >= displayThreshold);
+    const filteredChoreValues = choreValues.filter(choreValue => choreValue.value >= Chores.params.displayThreshold);
 
     if (!filteredChoreValues.length) {
       const view = views.choresClaimViewZero();
@@ -141,7 +138,7 @@ module.exports = (app) => {
       // Regular chore
       name = chore.name;
 
-      const achievementStart = new Date(now.getTime() - achievementWindow);
+      const achievementStart = new Date(now.getTime() - Chores.params.achievementWindow);
       achivementPoints = await Chores.getChorePoints(residentId, chore.id, achievementStart, now);
 
       // Perform the regular claim, skipping timeSpent for now
@@ -158,7 +155,7 @@ module.exports = (app) => {
 
     monthlyPoints = monthlyPoints + claim.value;
 
-    await Polls.submitVote(claim.pollId, residentId, now, YAY);
+    await Polls.submitVote(claim.pollId, residentId, now, Polls.YAY);
     const { minVotes } = await Polls.getPoll(claim.pollId);
 
     const text = 'Someone just completed a chore';
@@ -299,7 +296,7 @@ module.exports = (app) => {
     const breakEnd = shiftDate(breakEndUtc, now.getTimezoneOffset());
     const breakDays = parseInt((breakEnd - breakStart) / DAY);
 
-    if (breakStart < todayStart || breakDays < breakMinDays) {
+    if (breakStart < todayStart || breakDays < Chores.params.breakMinDays) {
       const text = 'Not a valid chore break :slightly_frowning_face:';
       await common.postEphemeral(app, choresConf, residentId, text);
     } else {
@@ -452,7 +449,7 @@ module.exports = (app) => {
     } else {
       // Create the chore proposal
       const [ proposal ] = await Chores.createChoreProposal(houseId, residentId, choreId, name, metadata, active, now);
-      await Polls.submitVote(proposal.pollId, residentId, now, YAY);
+      await Polls.submitVote(proposal.pollId, residentId, now, Polls.YAY);
 
       const { minVotes } = await Polls.getPoll(proposal.pollId);
 
@@ -490,7 +487,7 @@ module.exports = (app) => {
 
     // Create the special chore proposal
     const [ proposal ] = await Chores.createSpecialChoreProposal(houseId, residentId, name, description, points, now);
-    await Polls.submitVote(proposal.pollId, residentId, now, YAY);
+    await Polls.submitVote(proposal.pollId, residentId, now, Polls.YAY);
 
     const { minVotes } = await Polls.getPoll(proposal.pollId);
 

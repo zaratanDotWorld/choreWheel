@@ -1,3 +1,10 @@
+const common = require('../../common');
+
+// Constants
+
+exports.TITLE = common.blockPlaintext('Hearts');
+exports.DOCS_URL = 'https://docs.chorewheel.zaratan.world/en/latest/tools/hearts.html';
+
 // Formatting functions
 
 exports.heartEmoji = function (numHearts) {

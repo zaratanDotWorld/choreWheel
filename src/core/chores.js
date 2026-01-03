@@ -1,8 +1,7 @@
 const assert = require('assert');
 
 const { db } = require('./db');
-
-const { DAY, HEART_CHORE } = require('../constants');
+const { DAY, HOUR } = require('../time');
 
 const {
   getMonthStart,
@@ -11,36 +10,44 @@ const {
   getNextMonthStart,
   getDateStart,
   truncateHour,
-} = require('../utils');
-
-const {
-  choresHourPrecision,
-  pointsPerResident,
-  inflationFactor,
-  choresValueThreshold,
-  choresNumResidentsThreshold,
-  penaltyIncrement,
-  penaltyUnit,
-  penaltyDelay,
-  choresPollLength,
-  dampingFactor,
-  choresProposalPollLength,
-  specialChoreProposalPollLength,
-  choreProposalPct,
-  choreSpecialPctMin,
-  choreSpecialPctMax,
-  pingInterval,
-  specialChoreVoteIncrement,
-  choresHeartBonus,
-  choresSpecialAllowance,
-  choresSpecialIncrement,
-} = require('../config');
+} = require('../time');
 
 const Admin = require('./admin');
 const Hearts = require('./hearts');
 const Polls = require('./polls');
 
 const { PowerRanker } = require('power-ranker');
+
+// Params
+
+exports.params = {
+  pollLength: DAY,
+  valueThreshold: 10,
+  numResidentsThreshold: 4,
+  pointsPerResident: 100,
+  pointsBuffer: 200,
+  inflationFactor: 1.02,
+  displayThreshold: 0.5,
+  penaltyDelay: DAY + 6 * HOUR, // TODO: make robust
+  penaltyIncrement: 5,
+  penaltyUnit: 0.25,
+  achievementBase: 20,
+  achievementWindow: 18 * 30 * DAY,
+  dampingFactor: 0.99,
+  proposalPollLength: 2 * DAY,
+  specialProposalPollLength: DAY,
+  proposalPct: 0.4,
+  breakMinDays: 3,
+  pingInterval: 50,
+  specialVoteIncrement: 10,
+  specialPctMin: 0.3, // Minimum threshold for special chores
+  specialPctMax: 0.6, // Maximum threshold for special chores
+  heartBonus: 0.5,
+  specialAllowance: 3, // Per resident / month
+  specialIncrement: 5,
+};
+
+const params = exports.params;
 
 // Chores
 
@@ -269,9 +276,9 @@ exports.getUnclaimedSpecialChoreValues = async function (houseId, now) {
 };
 
 exports.getSpecialChoreAllowance = async function (houseId, now) {
-  const inc = choresSpecialIncrement;
+  const inc = params.specialIncrement;
   const numResidents = (await Admin.getResidents(houseId, now)).length;
-  return Math.ceil((choresSpecialAllowance * numResidents) / inc) * inc;
+  return Math.ceil((params.specialAllowance * numResidents) / inc) * inc;
 };
 
 // Basis for special chore points remainder and obligation
@@ -340,7 +347,7 @@ exports.getChoreRankings = async function (houseId, now, preferences) {
     return { target: p.alphaChoreId, source: p.betaChoreId, value: p.preference };
   }));
 
-  const rankings = powerRanker.run({ d: dampingFactor });
+  const rankings = powerRanker.run({ d: params.dampingFactor });
 
   return chores.map((chore) => {
     return { id: chore.id, name: chore.name, ranking: rankings.get(chore.id) };
@@ -369,7 +376,7 @@ exports.getAvailablePoints = async function (houseId, startTime, endTime) {
   const residentCount = residents.length;
 
   // mp = (u_v * ppr * inf)
-  const monthlyPoints = residentCount * pointsPerResident * inflationFactor;
+  const monthlyPoints = residentCount * params.pointsPerResident * params.inflationFactor;
 
   // wr = u_w / u_v
   const workingResidentCount = await exports.getWorkingResidentCount(houseId, endTime);
@@ -410,8 +417,8 @@ exports.getTotalAvailablePoints = async function (houseId, startTime, endTime) {
 // Chore Values III (TODO: move this section)
 
 exports.updateChoreValues = async function (houseId, now) {
-  // Semantically, updateTime indicates a truncated value
-  const updateTime = truncateHour(now, choresHourPrecision);
+  // Semantically, updateTime indicates a truncated value (vs. now)
+  const updateTime = truncateHour(now, Admin.params.hourPrecision);
 
   const lastUpdateTime = await exports.getLastChoreValueUpdateTime(houseId, updateTime);
   // If we've updated in the last interval, short-circuit execution
@@ -453,7 +460,7 @@ exports.getUpdatedChoreValues = async function (houseId, updateTime) {
     choreValue.value += choreValueUpdates
       .filter(choreValueUpdate => choreValueUpdate.choreId === choreValue.choreId)
       .reduce((sum, choreValueUpdate) => sum + choreValueUpdate.value, 0);
-    choreValue.ping = Math.trunc(prevValue / pingInterval) < Math.trunc(choreValue.value / pingInterval);
+    choreValue.ping = Math.trunc(prevValue / params.pingInterval) < Math.trunc(choreValue.value / params.pingInterval);
   });
 
   return choreValues.sort((a, b) => b.value - a.value);
@@ -534,10 +541,10 @@ exports.claimSpecialChore = async function (houseId, choreValueId, claimedBy, cl
 
 exports.createChoresPoll = async function (houseId, choreValue, claimedAt) {
   const numResidents = (await Admin.getResidents(houseId, claimedAt)).length;
-  const approvalNeeded = (choreValue >= choresValueThreshold) && (numResidents >= choresNumResidentsThreshold);
+  const approvalNeeded = (choreValue >= params.valueThreshold) && (numResidents >= params.numResidentsThreshold);
   const minVotes = approvalNeeded ? 2 : 1;
 
-  return Polls.createPoll(houseId, claimedAt, choresPollLength, minVotes);
+  return Polls.createPoll(houseId, claimedAt, params.pollLength, minVotes);
 };
 
 exports.resolveChoreClaim = async function (claimId, resolvedAt) {
@@ -686,7 +693,7 @@ exports.addChorePenalties = async function (houseId, now) {
 
 exports.addChorePenalty = async function (houseId, residentId, currentTime) {
   const monthStart = getMonthStart(currentTime);
-  const penaltyTime = new Date(monthStart.getTime() + penaltyDelay);
+  const penaltyTime = new Date(monthStart.getTime() + params.penaltyDelay);
   if (currentTime < penaltyTime) { return []; }
 
   const penaltyHeart = await Hearts.getHeart(residentId, penaltyTime);
@@ -695,7 +702,7 @@ exports.addChorePenalty = async function (houseId, residentId, currentTime) {
     if (hearts === null) { return []; } // Don't penalize if not initialized
 
     const penaltyAmount = await exports.calculatePenalty(houseId, residentId, penaltyTime);
-    return Hearts.generateHearts(houseId, residentId, HEART_CHORE, penaltyTime, -penaltyAmount);
+    return Hearts.generateHearts(houseId, residentId, Hearts.HEART_CHORE, penaltyTime, -penaltyAmount);
   } else {
     return [];
   }
@@ -713,7 +720,7 @@ exports.getChoreStats = async function (houseId, residentId, startTime, endTime)
   const obligation = Math.max(0, -balance) / Math.max(1, numResidents); // Avoid divide-by-zero
 
   // Note: special chore obligations are not re-allocated by workingPercentage; so are mildly inflationary
-  const pointsOwed = Math.round((pointsPerResident + obligation) * workingPercentage);
+  const pointsOwed = Math.round((params.pointsPerResident + obligation) * workingPercentage);
   const completionPct = (pointsOwed) ? pointsEarned / pointsOwed : 1;
 
   return { pointsEarned, pointsOwed, completionPct };
@@ -736,9 +743,9 @@ exports.calculatePenalty = async function (houseId, residentId, penaltyTime) {
   const deficiency = choreStats.pointsOwed - choreStats.pointsEarned;
 
   if (deficiency <= 0) {
-    return -choresHeartBonus; // TODO: don't give more than maximum hearts
+    return -params.heartBonus; // TODO: don't give more than maximum hearts
   } else {
-    return Math.floor(deficiency / penaltyIncrement) * penaltyUnit;
+    return Math.floor(deficiency / params.penaltyIncrement) * params.penaltyUnit;
   }
 };
 
@@ -765,7 +772,7 @@ exports.createChoreProposal = async function (houseId, proposedBy, choreId, name
   assert(choreId || name, 'Proposal must include either choreId or name!');
 
   const minVotes = await exports.getChoreProposalMinVotes(houseId, now);
-  const [ poll ] = await Polls.createPoll(houseId, now, choresProposalPollLength, minVotes);
+  const [ poll ] = await Polls.createPoll(houseId, now, params.proposalPollLength, minVotes);
 
   return db('ChoreProposal')
     .insert({ houseId, proposedBy, choreId, name, metadata, active, pollId: poll.id })
@@ -774,7 +781,7 @@ exports.createChoreProposal = async function (houseId, proposedBy, choreId, name
 
 exports.createSpecialChoreProposal = async function (houseId, proposedBy, name, description, value, now) {
   const minVotes = await exports.getSpecialChoreProposalMinVotes(houseId, value, now);
-  const [ poll ] = await Polls.createPoll(houseId, now, specialChoreProposalPollLength, minVotes);
+  const [ poll ] = await Polls.createPoll(houseId, now, params.specialProposalPollLength, minVotes);
 
   const metadata = { description, value };
 
@@ -792,15 +799,15 @@ exports.getChoreProposal = async function (proposalId) {
 
 exports.getChoreProposalMinVotes = async function (houseId, now) {
   const residents = await Admin.getResidents(houseId, now);
-  return Math.ceil(choreProposalPct * residents.length);
+  return Math.ceil(params.proposalPct * residents.length);
 };
 
 exports.getSpecialChoreProposalMinVotes = async function (houseId, value, now) {
   const residents = await Admin.getResidents(houseId, now);
 
-  const numVotes = Math.ceil(value / specialChoreVoteIncrement);
-  const minVotes = Math.ceil(choreSpecialPctMin * residents.length);
-  const maxVotes = Math.ceil(choreSpecialPctMax * residents.length);
+  const numVotes = Math.ceil(value / params.specialVoteIncrement);
+  const minVotes = Math.ceil(params.specialPctMin * residents.length);
+  const maxVotes = Math.ceil(params.specialPctMax * residents.length);
   return Math.min(Math.max(numVotes, minVotes), maxVotes);
 };
 

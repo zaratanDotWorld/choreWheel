@@ -5,11 +5,13 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
 const { Polls, Admin } = require('../src/core/index');
-const { HOUR, DAY, NAY, YAY, CANCEL } = require('../src/constants');
+const { HOUR, DAY } = require('../src/time');
 const { db } = require('../src/core/db');
 const testHelpers = require('./helpers');
 
 describe('Polls', async () => {
+  const { YAY, NAY, CANCEL } = Polls;
+
   const HOUSE = testHelpers.generateSlackId();
   const RESIDENT1 = testHelpers.generateSlackId();
   const RESIDENT2 = testHelpers.generateSlackId();

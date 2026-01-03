@@ -1,13 +1,15 @@
-const { CHORES_IDX } = require('../../../constants');
-const { getMonthStart, getPrevMonthEnd, sleep } = require('../../../utils');
-
 const { Admin, Chores } = require('../../../core/index');
+const { DAY, getMonthStart, getPrevMonthEnd, sleep } = require('../../../time');
 
 const common = require('../../common');
 const views = require('../views/events');
 
-const { houseActive } = require('./utils');
 const { formatStats, formatTotalStats } = require('../views/utils');
+
+function houseActive (houseId, now) {
+  const windowStart = new Date(now.getTime() - 30 * DAY);
+  return Admin.houseActive(houseId, 'ChoreClaim', 'claimedAt', windowStart, now);
+}
 
 module.exports = (app) => {
   // App uninstalled
@@ -24,7 +26,7 @@ module.exports = (app) => {
 
     console.log(`chores user_change - ${user.team_id} x ${user.id}`);
 
-    await sleep(CHORES_IDX * 1000);
+    await sleep(common.CHORES_IDX * 1000);
     await common.pruneWorkspaceMember(user.team_id, user);
   });
 

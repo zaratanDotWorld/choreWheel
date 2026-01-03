@@ -1,5 +1,3 @@
-const { THINGS_CONF } = require('../../../constants');
-
 const { Admin, Things } = require('../../../core/index');
 
 const common = require('../../common');
@@ -15,7 +13,7 @@ module.exports = (app) => {
     const { houseId } = common.beginCommand('/things-channel', command);
     const { thingsConf } = await Admin.getHouse(houseId);
 
-    await common.setChannel(app, thingsConf.oauth, THINGS_CONF, command, respond);
+    await common.setChannel(app, thingsConf.oauth, Admin.THINGS_CONF, command, respond);
   });
 
   // Load command

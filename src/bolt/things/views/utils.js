@@ -1,5 +1,10 @@
 const common = require('../../common');
 
+// Constants
+
+exports.TITLE = common.blockPlaintext('Things');
+exports.DOCS_URL = 'https://docs.chorewheel.zaratan.world/en/latest/tools/things.html';
+
 // Formatting functions
 
 exports.formatThing = function (thing) {

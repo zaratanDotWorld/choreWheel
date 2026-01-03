@@ -1,4 +1,4 @@
-const { penaltyIncrement, pointsBuffer } = require('../../../config');
+const { Chores } = require('../../../core/index');
 
 const common = require('../../common');
 
@@ -28,7 +28,7 @@ exports.choresOnboardView = function () {
 
 exports.choresHomeView = function (choreChannel, choreStats, numActive) {
   const { pointsEarned, pointsOwed } = choreStats;
-  const progressEmoji = (pointsOwed - pointsEarned < penaltyIncrement)
+  const progressEmoji = (pointsOwed - pointsEarned < Chores.params.penaltyIncrement)
     ? ':white_check_mark:'
     : ':muscle::skin-tone-4:';
 
@@ -49,7 +49,7 @@ exports.choresHomeView = function (choreChannel, choreStats, numActive) {
   const actions = [];
 
   if (pointsOwed > 0) {
-    if (Number(pointsEarned) < Number(pointsOwed) + pointsBuffer) {
+    if (Number(pointsEarned) < Number(pointsOwed) + Chores.params.pointsBuffer) {
       actions.push(common.blockButton('chores-claim', ':hand::skin-tone-4: Claim a chore'));
     }
     actions.push(common.blockButton('chores-break', ':camping: Take a break'));

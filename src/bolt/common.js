@@ -2,7 +2,15 @@ const assert = require('assert');
 const voca = require('voca');
 
 const { Admin, Hearts, Polls } = require('../core/index');
-const { SLACKBOT, HOUR, YAY, NAY } = require('../constants');
+const { HOUR } = require('../time');
+
+// Constants
+
+exports.SLACKBOT = 'USLACKBOT';
+
+exports.CHORES_IDX = 0;
+exports.HEARTS_IDX = 1;
+exports.THINGS_IDX = 2;
 
 // Utilities
 
@@ -237,7 +245,7 @@ exports.deactivateResident = async function (houseId, residentId) {
 
 exports.getWorkspaceMembers = async function (app, oauth) {
   const { members } = await app.client.users.list({ token: oauth.bot.token });
-  return members.filter(member => !(member.is_bot || member.id === SLACKBOT));
+  return members.filter(member => !(member.is_bot || member.id === exports.SLACKBOT));
 };
 
 exports.pruneWorkspaceMembers = async function (app, oauth, houseId, now) {
@@ -369,13 +377,13 @@ exports.makeVoteButtons = function (pollId, yays, nays) {
       type: 'button',
       action_id: 'poll-vote-up',
       text: exports.blockPlaintext(`:+1: (${yays})`),
-      value: JSON.stringify({ pollId, yays, value: YAY }),
+      value: JSON.stringify({ pollId, yays, value: Polls.YAY }),
     },
     {
       type: 'button',
       action_id: 'poll-vote-down',
       text: exports.blockPlaintext(`:-1: (${nays})`),
-      value: JSON.stringify({ pollId, nays, value: NAY }),
+      value: JSON.stringify({ pollId, nays, value: Polls.NAY }),
     },
   ];
 };

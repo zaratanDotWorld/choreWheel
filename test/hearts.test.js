@@ -5,12 +5,14 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
 const { Hearts, Polls, Admin } = require('../src/core/index');
-const { NAY, YAY, HOUR, DAY, HEART_UNKNOWN, HEART_KARMA, HEART_CHALLENGE } = require('../src/constants');
-const { heartsPollLength, heartsBaselineAmount, heartsMax, karmaDelay } = require('../src/config');
-const { getNextMonthStart } = require('../src/utils');
+const { HOUR, DAY, getNextMonthStart } = require('../src/time');
+
 const testHelpers = require('./helpers');
 
 describe('Hearts', async () => {
+  const { YAY, NAY } = Polls;
+  const { HEART_UNKNOWN, HEART_CHALLENGE, HEART_KARMA } = Hearts;
+
   const HOUSE = testHelpers.generateSlackId();
   const RESIDENT1 = testHelpers.generateSlackId();
   const RESIDENT2 = testHelpers.generateSlackId();
@@ -30,7 +32,7 @@ describe('Hearts', async () => {
     now = new Date();
     soon = new Date(now.getTime() + HOUR);
     tomorrow = new Date(now.getTime() + DAY);
-    challengeEnd = new Date(now.getTime() + heartsPollLength);
+    challengeEnd = new Date(now.getTime() + Hearts.params.pollLength);
     nextMonth = getNextMonthStart(now);
     twoMonths = getNextMonthStart(nextMonth);
 
@@ -122,26 +124,26 @@ describe('Hearts', async () => {
 
       let hearts;
       hearts = await Hearts.getHearts(RESIDENT1, now);
-      expect(hearts).to.equal(heartsBaselineAmount);
+      expect(hearts).to.equal(Hearts.params.baselineAmount);
 
       // But only once
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
 
       hearts = await Hearts.getHearts(RESIDENT1, now);
-      expect(hearts).to.equal(heartsBaselineAmount);
+      expect(hearts).to.equal(Hearts.params.baselineAmount);
 
       // Resets after going past zero
-      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, -(heartsBaselineAmount + 1));
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, -(Hearts.params.baselineAmount + 1));
 
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
 
       hearts = await Hearts.getHearts(RESIDENT1, now);
-      expect(hearts).to.equal(heartsBaselineAmount);
+      expect(hearts).to.equal(Hearts.params.baselineAmount);
     });
 
     it('can retire a resident', async () => {
       await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
-      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, -heartsBaselineAmount);
+      await Hearts.generateHearts(HOUSE, RESIDENT1, HEART_UNKNOWN, now, -Hearts.params.baselineAmount);
 
       // Will retire at 0 hearts
       const [ residentId ] = await Hearts.retireResidents(HOUSE, now);
@@ -158,7 +160,7 @@ describe('Hearts', async () => {
       await Hearts.resetResident(HOUSE, RESIDENT1, now);
 
       const hearts = await Hearts.getHearts(RESIDENT1, now);
-      expect(hearts).to.equal(heartsBaselineAmount);
+      expect(hearts).to.equal(Hearts.params.baselineAmount);
     });
 
     it('can check if a house is active using hearts', async () => {
@@ -449,8 +451,8 @@ describe('Hearts', async () => {
       await Hearts.initialiseResident(HOUSE, RESIDENT5, now);
       await Hearts.initialiseResident(HOUSE, RESIDENT6, now);
 
-      nextMonthKarma = new Date(nextMonth.getTime() + karmaDelay);
-      twoMonthsKarma = new Date(twoMonths.getTime() + karmaDelay);
+      nextMonthKarma = new Date(nextMonth.getTime() + Hearts.params.karmaDelay);
+      twoMonthsKarma = new Date(twoMonths.getTime() + Hearts.params.karmaDelay);
     });
 
     it('can extract recipients from a message', async () => {
@@ -584,7 +586,7 @@ describe('Hearts', async () => {
       expect(karmaHearts.length).to.equal(0);
 
       // If they're near the limit, they get less
-      const numToGenerate = (heartsMax - heartsBaselineAmount) - 0.5;
+      const numToGenerate = (Hearts.params.max - Hearts.params.baselineAmount) - 0.5;
       await Hearts.generateHearts(HOUSE, RESIDENT4, HEART_UNKNOWN, nextMonthKarma, numToGenerate);
       await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT4, nextMonthKarma);
 

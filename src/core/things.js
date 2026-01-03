@@ -1,20 +1,25 @@
 const assert = require('assert');
 
 const { db } = require('./db');
-
-const {
-  thingsPollLength,
-  thingsSpecialPollLength,
-  thingsMinVotesScalar,
-  thingsMinPctSpecial,
-  thingsMaxPct,
-  thingsProposalPct,
-  thingsProposalPollLength,
-} = require('../config');
+const { HOUR, DAY } = require('../time');
 
 const Admin = require('./admin');
 const Hearts = require('./hearts');
 const Polls = require('./polls');
+
+// Params
+
+exports.params = {
+  pollLength: 6 * HOUR,
+  specialPollLength: 1 * DAY,
+  minVotesScalar: 50, // One vote per $50
+  minPctSpecial: 0.3, // Minimum threshold for special buys
+  maxPct: 0.6, // Maximum approval threshold
+  proposalPollLength: 2 * DAY,
+  proposalPct: 0.4,
+};
+
+const params = exports.params;
 
 // Things
 
@@ -84,7 +89,7 @@ exports.buyThing = async function (houseId, thingId, boughtBy, boughtAt, account
   assert(balance >= totalCost, 'Insufficient funds!');
 
   const minVotes = await exports.getThingBuyMinVotes(houseId, boughtBy, thingId, totalCost, boughtAt);
-  const [ poll ] = await Polls.createPoll(houseId, boughtAt, thingsPollLength, minVotes);
+  const [ poll ] = await Polls.createPoll(houseId, boughtAt, params.pollLength, minVotes);
 
   return db('ThingBuy')
     .insert({
@@ -106,7 +111,7 @@ exports.buySpecialThing = async function (houseId, boughtBy, boughtAt, account, 
   assert(balance >= price, 'Insufficient funds!');
 
   const minVotes = await exports.getThingBuyMinVotes(houseId, boughtBy, null, price, boughtAt);
-  const [ poll ] = await Polls.createPoll(houseId, boughtAt, thingsSpecialPollLength, minVotes);
+  const [ poll ] = await Polls.createPoll(houseId, boughtAt, params.specialPollLength, minVotes);
 
   return db('ThingBuy')
     .insert({
@@ -202,7 +207,7 @@ exports.createThingProposal = async function (houseId, proposedBy, thingId, type
   assert(thingId || (type && name), 'Proposal must include either thingId or type and name!');
 
   const minVotes = await exports.getThingProposalMinVotes(houseId, now);
-  const [ poll ] = await Polls.createPoll(houseId, now, thingsProposalPollLength, minVotes);
+  const [ poll ] = await Polls.createPoll(houseId, now, params.proposalPollLength, minVotes);
 
   return db('ThingProposal')
     .insert({ houseId, proposedBy, thingId, type, name, value, metadata, active, pollId: poll.id })
@@ -258,9 +263,9 @@ exports.resolveThingProposals = async function (houseId, now) {
 
 exports.getThingBuyMinVotes = async function (houseId, boughtBy, thingId, price, now) {
   const residents = await Admin.getResidents(houseId, now);
-  const maxVotes = Math.ceil(thingsMaxPct * residents.length);
-  const minVotesSpecial = Math.ceil(thingsMinPctSpecial * residents.length);
-  const minVotesScaled = Math.ceil(Math.abs(price) / thingsMinVotesScalar);
+  const maxVotes = Math.ceil(params.maxPct * residents.length);
+  const minVotesSpecial = Math.ceil(params.minPctSpecial * residents.length);
+  const minVotesScaled = Math.ceil(Math.abs(price) / params.minVotesScalar);
 
   const minVotes = (thingId)
     ? Math.min(maxVotes, minVotesScaled) // Regular buy
@@ -272,5 +277,5 @@ exports.getThingBuyMinVotes = async function (houseId, boughtBy, thingId, price,
 
 exports.getThingProposalMinVotes = async function (houseId, now) {
   const residents = await Admin.getResidents(houseId, now);
-  return Math.ceil(thingsProposalPct * residents.length);
+  return Math.ceil(params.proposalPct * residents.length);
 };

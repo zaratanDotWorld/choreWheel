@@ -1,5 +1,3 @@
-const { YAY } = require('../../../constants');
-
 const { Admin, Polls, Hearts } = require('../../../core/index');
 
 const common = require('../../common');
@@ -40,7 +38,7 @@ module.exports = (app) => {
     } else {
       // Initiate the challenge
       const [ challenge ] = await Hearts.issueChallenge(houseId, residentId, challengeeId, numHearts, now, circumstance);
-      await Polls.submitVote(challenge.pollId, residentId, now, YAY);
+      await Polls.submitVote(challenge.pollId, residentId, now, Polls.YAY);
 
       const { minVotes } = await Polls.getPoll(challenge.pollId);
 

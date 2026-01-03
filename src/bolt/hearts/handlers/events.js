@@ -1,11 +1,13 @@
-const { HEARTS_IDX } = require('../../../constants');
-const { sleep } = require('../../../utils');
-
+const { DAY, sleep } = require('../../../time');
 const { Admin, Hearts } = require('../../../core/index');
 
 const common = require('../../common');
 const views = require('../views/events');
-const { houseActive } = require('./utils');
+
+function houseActive (houseId, now) {
+  const windowStart = new Date(now.getTime() - 30 * DAY);
+  return Admin.houseActive(houseId, 'Heart', 'generatedAt', windowStart, now);
+}
 
 module.exports = (app) => {
   // App uninstalled
@@ -24,7 +26,7 @@ module.exports = (app) => {
 
     console.log(`hearts user_change - ${user.team_id} x ${user.id}`);
 
-    await sleep(HEARTS_IDX * 1000);
+    await sleep(common.HEARTS_IDX * 1000);
     await common.pruneWorkspaceMember(user.team_id, user);
   });
 
