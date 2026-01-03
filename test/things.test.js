@@ -9,7 +9,6 @@ const { HOUR, DAY } = require('../src/time');
 const testHelpers = require('./helpers');
 
 describe('Things', async () => {
-  const { YAY, NAY } = Polls;
   const { HEART_UNKNOWN } = Hearts;
 
   const HOUSE = testHelpers.generateSlackId();
@@ -184,7 +183,7 @@ describe('Things', async () => {
 
       let [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, GENERAL, 10, 1);
 
-      await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(buy.pollId, RESIDENT1, now, Polls.YAY);
 
       await Things.resolveThingBuy(buy.id, challengeEnd);
 
@@ -201,8 +200,8 @@ describe('Things', async () => {
 
       let [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, GENERAL, 10, 1);
 
-      await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(buy.pollId, RESIDENT2, now, NAY);
+      await Polls.submitVote(buy.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(buy.pollId, RESIDENT2, now, Polls.NAY);
 
       await Things.resolveThingBuy(buy.id, challengeEnd);
 
@@ -220,7 +219,7 @@ describe('Things', async () => {
       // Need 1 affirmative vote per $50
       let [ buy ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, now, GENERAL, 60, 1);
 
-      await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(buy.pollId, RESIDENT1, now, Polls.YAY);
 
       await Things.resolveThingBuy(buy.id, challengeEnd);
 
@@ -242,7 +241,7 @@ describe('Things', async () => {
 
       let [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, GENERAL, 10, 1);
 
-      await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(buy.pollId, RESIDENT1, now, Polls.YAY);
 
       await Things.resolveThingBuy(buy.id, challengeEnd);
 
@@ -257,7 +256,7 @@ describe('Things', async () => {
       const [ thingBuy2 ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, GENERAL, 10, 1);
       const [ thingBuy3 ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, soon, GENERAL, 10, 1);
 
-      await Polls.submitVote(thingBuy1.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(thingBuy1.pollId, RESIDENT1, now, Polls.YAY);
 
       await Things.resolveThingBuys(HOUSE, challengeEnd);
 
@@ -280,7 +279,7 @@ describe('Things', async () => {
 
       const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, GENERAL, 10, 1);
 
-      await Polls.submitVote(buy.pollId, RESIDENT1, now, NAY);
+      await Polls.submitVote(buy.pollId, RESIDENT1, now, Polls.NAY);
 
       let unfulfilledBuys;
       unfulfilledBuys = await Things.getUnfulfilledThingBuys(HOUSE, challengeEnd);
@@ -299,7 +298,7 @@ describe('Things', async () => {
 
       const [ buy ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, now, GENERAL, 10, 1);
 
-      await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(buy.pollId, RESIDENT1, now, Polls.YAY);
       await Things.resolveThingBuy(buy.id, challengeEnd);
 
       const [ fulfilledBuy ] = await Things.fulfillThingBuy(buy.id, RESIDENT2, challengeEnd);
@@ -317,9 +316,9 @@ describe('Things', async () => {
       const [ thingBuy2 ] = await Things.buyThing(HOUSE, soap.id, RESIDENT1, nextWeek, GENERAL, 15, 1);
       const [ thingBuy3 ] = await Things.buyThing(HOUSE, rice.id, RESIDENT1, nextMonth, GENERAL, 20, 1);
 
-      await Polls.submitVote(thingBuy1.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(thingBuy2.pollId, RESIDENT1, nextWeek, YAY);
-      await Polls.submitVote(thingBuy3.pollId, RESIDENT1, nextMonth, YAY);
+      await Polls.submitVote(thingBuy1.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(thingBuy2.pollId, RESIDENT1, nextWeek, Polls.YAY);
+      await Polls.submitVote(thingBuy3.pollId, RESIDENT1, nextMonth, Polls.YAY);
 
       const nextWeekChallengeEnd = new Date(nextWeek.getTime() + Things.params.pollLength);
       const nextMonthChallengeEnd = new Date(nextMonth.getTime() + Things.params.pollLength);
@@ -391,9 +390,9 @@ describe('Things', async () => {
 
       let [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, GENERAL, 200, 'special', 'details');
 
-      await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(buy.pollId, RESIDENT2, now, YAY);
-      await Polls.submitVote(buy.pollId, RESIDENT3, now, YAY);
+      await Polls.submitVote(buy.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(buy.pollId, RESIDENT2, now, Polls.YAY);
+      await Polls.submitVote(buy.pollId, RESIDENT3, now, Polls.YAY);
 
       // Special buys have a longer voting window
       await expect(Things.resolveThingBuy(buy.id, challengeEnd))
@@ -414,8 +413,8 @@ describe('Things', async () => {
 
       let [ buy ] = await Things.buySpecialThing(HOUSE, RESIDENT1, now, GENERAL, 200, 'special', 'details');
 
-      await Polls.submitVote(buy.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(buy.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(buy.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(buy.pollId, RESIDENT2, now, Polls.YAY);
 
       await Things.resolveThingBuy(buy.id, challengeEndSpecial);
 
@@ -467,8 +466,8 @@ describe('Things', async () => {
       const unit = '25 lbs';
       [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, PANTRY, RICE, 20, { unit }, true, now);
 
-      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
 
       await Things.resolveThingProposal(proposal.id, proposalEnd);
 
@@ -486,8 +485,8 @@ describe('Things', async () => {
       let unit = '25 lbs';
       [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, PANTRY, RICE, 20, { unit }, true, now);
 
-      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
 
       await Things.resolveThingProposal(proposal.id, proposalEnd);
 
@@ -501,8 +500,8 @@ describe('Things', async () => {
       unit = '50 lbs';
       [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, PANTRY, RICE, 30, { unit }, true, now);
 
-      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
 
       await Things.resolveThingProposal(proposal.id, proposalEnd);
       things = await Things.getThings(HOUSE);
@@ -519,8 +518,8 @@ describe('Things', async () => {
       let unit = '2 liters';
       [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, type, name, 20, { unit }, true, now);
 
-      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
 
       await Things.resolveThingProposal(proposal.id, proposalEnd);
 
@@ -537,8 +536,8 @@ describe('Things', async () => {
       unit = '48 oz';
       [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, thing.id, type, name, 25, { unit }, true, now);
 
-      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
 
       await Things.resolveThingProposal(proposal.id, proposalEnd);
 
@@ -554,8 +553,8 @@ describe('Things', async () => {
     it('can delete a thing', async () => {
       [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, PANTRY, RICE, 20, {}, true, now);
 
-      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
 
       await Things.resolveThingProposal(proposal.id, proposalEnd);
 
@@ -564,8 +563,8 @@ describe('Things', async () => {
 
       [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, things[0].id, PANTRY, RICE, 0, {}, false, now);
 
-      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
 
       await Things.resolveThingProposal(proposal.id, proposalEnd);
 
@@ -619,8 +618,8 @@ describe('Things', async () => {
       [ proposal ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, PANTRY, RICE, 20, {}, true, now);
 
       // 40% of 4 residents is 2 upvotes
-      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal.pollId, RESIDENT2, now, NAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.NAY);
 
       await Things.resolveThingProposal(proposal.id, proposalEnd);
 
@@ -628,7 +627,7 @@ describe('Things', async () => {
       expect(things.length).to.equal(0);
 
       // Cannot resolve again
-      await Polls.submitVote(proposal.pollId, RESIDENT3, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT3, now, Polls.YAY);
       await expect(Things.resolveThingProposal(proposal.id, proposalEnd))
         .to.be.rejectedWith('Proposal already resolved!');
     });
@@ -640,11 +639,11 @@ describe('Things', async () => {
       const [ proposal1 ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, 't1', 'n1', 0, {}, true, now);
       const [ proposal2 ] = await Things.createThingProposal(HOUSE, RESIDENT1, null, 't2', 'n2', 0, {}, true, now);
 
-      await Polls.submitVote(proposal1.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal1.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal1.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal1.pollId, RESIDENT2, now, Polls.YAY);
 
-      await Polls.submitVote(proposal2.pollId, RESIDENT2, now, YAY);
-      await Polls.submitVote(proposal2.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal2.pollId, RESIDENT2, now, Polls.YAY);
+      await Polls.submitVote(proposal2.pollId, RESIDENT1, now, Polls.YAY);
 
       // Not before the polls close
       await Things.resolveThingProposals(HOUSE, soon);

@@ -22,8 +22,6 @@ const {
 const testHelpers = require('./helpers');
 
 describe('Chores', async () => {
-  const { YAY, NAY } = Polls;
-
   const HOUSE = testHelpers.generateSlackId();
   const RESIDENT1 = testHelpers.generateSlackId();
   const RESIDENT2 = testHelpers.generateSlackId();
@@ -793,8 +791,8 @@ describe('Chores', async () => {
       const [ choreValue ] = await Chores.getUnclaimedSpecialChoreValues(HOUSE, now);
       const [ choreClaim ] = await Chores.claimSpecialChore(HOUSE, choreValue.id, RESIDENT1, now, 20);
 
-      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
-      await Polls.submitVote(choreClaim.pollId, RESIDENT2, soon, YAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, Polls.YAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT2, soon, Polls.YAY);
 
       const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, challengeEnd);
       expect(resolvedClaim.valid).to.be.true;
@@ -843,8 +841,8 @@ describe('Chores', async () => {
       await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 9.5 } ]);
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now, 0);
 
-      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
-      await Polls.submitVote(choreClaim.pollId, RESIDENT2, soon, YAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, Polls.YAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT2, soon, Polls.YAY);
 
       const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, challengeEnd);
       expect(resolvedClaim.valid).to.be.true;
@@ -863,10 +861,10 @@ describe('Chores', async () => {
       const [ choreClaim3 ] = await Chores.claimChore(HOUSE, restock.id, RESIDENT1, soon, 0);
 
       // First poll passes, second fails
-      await Polls.submitVote(choreClaim1.pollId, RESIDENT1, soon, YAY);
-      await Polls.submitVote(choreClaim1.pollId, RESIDENT2, soon, YAY);
-      await Polls.submitVote(choreClaim2.pollId, RESIDENT1, soon, YAY);
-      await Polls.submitVote(choreClaim2.pollId, RESIDENT2, soon, NAY);
+      await Polls.submitVote(choreClaim1.pollId, RESIDENT1, soon, Polls.YAY);
+      await Polls.submitVote(choreClaim1.pollId, RESIDENT2, soon, Polls.YAY);
+      await Polls.submitVote(choreClaim2.pollId, RESIDENT1, soon, Polls.YAY);
+      await Polls.submitVote(choreClaim2.pollId, RESIDENT2, soon, Polls.NAY);
 
       await Chores.resolveChoreClaims(HOUSE, challengeEnd);
 
@@ -906,7 +904,7 @@ describe('Chores', async () => {
       await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 9 } ]);
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now, 0);
 
-      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, Polls.YAY);
 
       const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, challengeEnd);
       expect(resolvedClaim.valid).to.be.true;
@@ -916,7 +914,7 @@ describe('Chores', async () => {
       await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 } ]);
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now, 0);
 
-      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, Polls.YAY);
 
       const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, challengeEnd);
       expect(resolvedClaim.valid).to.be.false;
@@ -926,10 +924,10 @@ describe('Chores', async () => {
       await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 } ]);
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now, 0);
 
-      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, YAY);
-      await Polls.submitVote(choreClaim.pollId, RESIDENT2, soon, YAY);
-      await Polls.submitVote(choreClaim.pollId, RESIDENT3, soon, NAY);
-      await Polls.submitVote(choreClaim.pollId, RESIDENT4, soon, NAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, Polls.YAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT2, soon, Polls.YAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT3, soon, Polls.NAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT4, soon, Polls.NAY);
 
       const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, challengeEnd);
       expect(resolvedClaim.valid).to.be.false;
@@ -949,10 +947,10 @@ describe('Chores', async () => {
       const [ choreClaim2 ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT2, t1, 0);
 
       // Both claims pass
-      await Polls.submitVote(choreClaim1.pollId, RESIDENT1, t2, YAY);
-      await Polls.submitVote(choreClaim1.pollId, RESIDENT2, t2, YAY);
-      await Polls.submitVote(choreClaim2.pollId, RESIDENT1, t2, YAY);
-      await Polls.submitVote(choreClaim2.pollId, RESIDENT2, t2, YAY);
+      await Polls.submitVote(choreClaim1.pollId, RESIDENT1, t2, Polls.YAY);
+      await Polls.submitVote(choreClaim1.pollId, RESIDENT2, t2, Polls.YAY);
+      await Polls.submitVote(choreClaim2.pollId, RESIDENT1, t2, Polls.YAY);
+      await Polls.submitVote(choreClaim2.pollId, RESIDENT2, t2, Polls.YAY);
 
       const [ resolvedClaim1 ] = await Chores.resolveChoreClaim(choreClaim1.id, t3);
       expect(resolvedClaim1.valid).to.be.true;
@@ -977,12 +975,12 @@ describe('Chores', async () => {
       const [ choreClaim2 ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT2, t1, 0);
 
       // First claim is rejected
-      await Polls.submitVote(choreClaim1.pollId, RESIDENT1, t2, YAY);
-      await Polls.submitVote(choreClaim1.pollId, RESIDENT2, t2, NAY);
+      await Polls.submitVote(choreClaim1.pollId, RESIDENT1, t2, Polls.YAY);
+      await Polls.submitVote(choreClaim1.pollId, RESIDENT2, t2, Polls.NAY);
 
       // Second claim is approved
-      await Polls.submitVote(choreClaim2.pollId, RESIDENT1, t2, YAY);
-      await Polls.submitVote(choreClaim2.pollId, RESIDENT2, t2, YAY);
+      await Polls.submitVote(choreClaim2.pollId, RESIDENT1, t2, Polls.YAY);
+      await Polls.submitVote(choreClaim2.pollId, RESIDENT2, t2, Polls.YAY);
 
       const [ resolvedClaim1 ] = await Chores.resolveChoreClaim(choreClaim1.id, t3);
       expect(resolvedClaim1.valid).to.be.false;
@@ -1007,8 +1005,8 @@ describe('Chores', async () => {
       expect(choreValues.length).to.equal(0);
 
       // Deny the claim
-      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, NAY);
-      await Polls.submitVote(choreClaim.pollId, RESIDENT2, soon, NAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, Polls.NAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT2, soon, Polls.NAY);
 
       const [ resolvedClaim ] = await Chores.resolveChoreClaim(choreClaim.id, proposalEnd);
       expect(resolvedClaim.valid).to.be.false;
@@ -1619,8 +1617,8 @@ describe('Chores', async () => {
       const [ choreClaim ] = await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now, 0);
       await Chores.giftChorePoints(HOUSE, RESIDENT1, RESIDENT2, now, 6);
 
-      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, NAY);
-      await Polls.submitVote(choreClaim.pollId, RESIDENT2, soon, NAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT1, soon, Polls.NAY);
+      await Polls.submitVote(choreClaim.pollId, RESIDENT2, soon, Polls.NAY);
       await Chores.resolveChoreClaims(HOUSE, challengeEnd);
 
       const monthStart = getMonthStart(now);
@@ -1649,8 +1647,8 @@ describe('Chores', async () => {
       const description = 'Rice & beans';
       [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, { description }, true, now);
 
-      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
 
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
@@ -1671,8 +1669,8 @@ describe('Chores', async () => {
       let description = 'Rice & beans';
       [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, { description }, true, now);
 
-      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
 
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
@@ -1684,8 +1682,8 @@ describe('Chores', async () => {
       description = 'Rice & beans with hot sauce';
       [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, { description }, true, now);
 
-      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
 
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
       chores = await Chores.getChores(HOUSE);
@@ -1699,8 +1697,8 @@ describe('Chores', async () => {
       let description = 'Wash clothes';
       [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, { description }, true, now);
 
-      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
 
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
@@ -1713,8 +1711,8 @@ describe('Chores', async () => {
       description = 'Wash and dry clothes';
       [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, chore.id, name, { description }, true, now);
 
-      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
 
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
@@ -1728,8 +1726,8 @@ describe('Chores', async () => {
       const name = 'cleaning';
       [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, {}, true, now);
 
-      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
 
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
@@ -1738,8 +1736,8 @@ describe('Chores', async () => {
 
       [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, chores[0].id, chores[0].name, {}, false, now);
 
-      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
 
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
@@ -1762,8 +1760,8 @@ describe('Chores', async () => {
 
       const [ proposal ] = await Chores.createSpecialChoreProposal(HOUSE, RESIDENT1, name, description, value, now);
 
-      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
 
       await Chores.resolveChoreProposal(proposal.id, specialChoreProposalEnd);
 
@@ -1833,8 +1831,8 @@ describe('Chores', async () => {
       const name = 'cooking';
       [ proposal ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, name, {}, true, now);
 
-      await Polls.submitVote(proposal.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal.pollId, RESIDENT2, now, NAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.NAY);
 
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
@@ -1842,7 +1840,7 @@ describe('Chores', async () => {
       expect(chores.length).to.equal(0);
 
       // Cannot resolve again
-      await Polls.submitVote(proposal.pollId, RESIDENT3, now, YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT3, now, Polls.YAY);
       await expect(Chores.resolveChoreProposal(proposal.id, proposalEnd))
         .to.be.rejectedWith('Proposal already resolved!');
     });
@@ -1856,11 +1854,11 @@ describe('Chores', async () => {
       const [ proposal1 ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, 'c1', {}, true, now);
       const [ proposal2 ] = await Chores.createChoreProposal(HOUSE, RESIDENT1, null, 'c2', {}, true, now);
 
-      await Polls.submitVote(proposal1.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(proposal1.pollId, RESIDENT2, now, YAY);
+      await Polls.submitVote(proposal1.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal1.pollId, RESIDENT2, now, Polls.YAY);
 
-      await Polls.submitVote(proposal2.pollId, RESIDENT2, now, YAY);
-      await Polls.submitVote(proposal2.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(proposal2.pollId, RESIDENT2, now, Polls.YAY);
+      await Polls.submitVote(proposal2.pollId, RESIDENT1, now, Polls.YAY);
 
       // Not before the polls close
       await Chores.resolveChoreProposals(HOUSE, soon);

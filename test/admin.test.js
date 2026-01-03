@@ -20,8 +20,6 @@ const {
 const testHelpers = require('./helpers');
 
 describe('Admin', async () => {
-  const { CHORES_CONF, THINGS_CONF } = Admin;
-
   const HOUSE1 = testHelpers.generateSlackId();
   const HOUSE2 = testHelpers.generateSlackId();
   const RESIDENT1 = testHelpers.generateSlackId();
@@ -83,8 +81,8 @@ describe('Admin', async () => {
       const choresChannel = 'choresChannel';
       const thingsChannel = 'thingsChannel';
 
-      await Admin.updateHouseConf(HOUSE1, CHORES_CONF, { channel: choresChannel, oauth: choresOauth });
-      await Admin.updateHouseConf(HOUSE1, THINGS_CONF, { channel: thingsChannel, oauth: thingsOauth });
+      await Admin.updateHouseConf(HOUSE1, Admin.CHORES_CONF, { channel: choresChannel, oauth: choresOauth });
+      await Admin.updateHouseConf(HOUSE1, Admin.THINGS_CONF, { channel: thingsChannel, oauth: thingsOauth });
 
       let house;
 
@@ -95,7 +93,7 @@ describe('Admin', async () => {
       expect(house.thingsConf.channel).to.equal(thingsChannel);
       expect(house.thingsConf.oauth).to.equal(thingsOauth);
 
-      await Admin.updateHouseConf(HOUSE1, THINGS_CONF, { channel: null });
+      await Admin.updateHouseConf(HOUSE1, Admin.THINGS_CONF, { channel: null });
 
       house = await Admin.getHouse(HOUSE1);
       expect(house.choresConf.channel).to.equal(choresChannel);

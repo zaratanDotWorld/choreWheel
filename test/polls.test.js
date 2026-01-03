@@ -10,8 +10,6 @@ const { db } = require('../src/core/db');
 const testHelpers = require('./helpers');
 
 describe('Polls', async () => {
-  const { YAY, NAY, CANCEL } = Polls;
-
   const HOUSE = testHelpers.generateSlackId();
   const RESIDENT1 = testHelpers.generateSlackId();
   const RESIDENT2 = testHelpers.generateSlackId();
@@ -51,7 +49,7 @@ describe('Polls', async () => {
     it('can vote in a poll', async () => {
       const [ poll ] = await Polls.createPoll(HOUSE, now, DAY, 1);
 
-      await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
+      await Polls.submitVote(poll.id, RESIDENT1, soon, Polls.YAY);
 
       const votes = await Polls.getPollResults(poll.id);
       expect(votes.length).to.equal(1);
@@ -61,17 +59,17 @@ describe('Polls', async () => {
     it('can update the vote in a poll', async () => {
       const [ poll ] = await Polls.createPoll(HOUSE, now, DAY, 1);
 
-      await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
+      await Polls.submitVote(poll.id, RESIDENT1, soon, Polls.YAY);
 
       let votes;
 
-      await Polls.submitVote(poll.id, RESIDENT1, soon, NAY);
+      await Polls.submitVote(poll.id, RESIDENT1, soon, Polls.NAY);
 
       votes = await Polls.getPollResults(poll.id);
       expect(votes.length).to.equal(1);
       expect(votes[0].vote).to.be.false;
 
-      await Polls.submitVote(poll.id, RESIDENT1, soon, CANCEL);
+      await Polls.submitVote(poll.id, RESIDENT1, soon, Polls.CANCEL);
 
       votes = await Polls.getPollResults(poll.id);
       expect(votes.length).to.equal(1);
@@ -84,23 +82,23 @@ describe('Polls', async () => {
 
       const [ poll ] = await Polls.createPoll(house2, now, DAY, 1);
 
-      await expect(Polls.submitVote(poll.id, RESIDENT1, soon, YAY))
+      await expect(Polls.submitVote(poll.id, RESIDENT1, soon, Polls.YAY))
         .to.be.rejectedWith('Invalid user for poll!');
     });
 
     it('cannot update the vote in a poll if the poll is closed', async () => {
       const [ poll ] = await Polls.createPoll(HOUSE, now, DAY, 1);
 
-      await expect(Polls.submitVote(poll.id, RESIDENT1, tomorrow, YAY))
+      await expect(Polls.submitVote(poll.id, RESIDENT1, tomorrow, Polls.YAY))
         .to.be.rejectedWith('Poll has closed');
     });
 
     it('can get the results of a vote', async () => {
       const [ poll ] = await Polls.createPoll(HOUSE, now, DAY, 1);
 
-      await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
-      await Polls.submitVote(poll.id, RESIDENT2, soon, YAY);
-      await Polls.submitVote(poll.id, RESIDENT3, soon, NAY);
+      await Polls.submitVote(poll.id, RESIDENT1, soon, Polls.YAY);
+      await Polls.submitVote(poll.id, RESIDENT2, soon, Polls.YAY);
+      await Polls.submitVote(poll.id, RESIDENT3, soon, Polls.NAY);
 
       const results = await Polls.getPollResults(poll.id);
       expect(results.length).to.equal(3);
@@ -115,17 +113,17 @@ describe('Polls', async () => {
 
       let endTime;
 
-      await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
+      await Polls.submitVote(poll.id, RESIDENT1, soon, Polls.YAY);
 
       ({ endTime } = await Polls.getPoll(poll.id));
       expect(endTime.getTime()).to.equal(tomorrow.getTime());
 
-      await Polls.submitVote(poll.id, RESIDENT2, soon, YAY);
+      await Polls.submitVote(poll.id, RESIDENT2, soon, Polls.YAY);
 
       ({ endTime } = await Polls.getPoll(poll.id));
       expect(endTime.getTime()).to.equal(tomorrow.getTime());
 
-      await Polls.submitVote(poll.id, RESIDENT3, soon, YAY);
+      await Polls.submitVote(poll.id, RESIDENT3, soon, Polls.YAY);
 
       ({ endTime } = await Polls.getPoll(poll.id));
       expect(endTime.getTime()).to.equal(soon.getTime());
@@ -140,24 +138,24 @@ describe('Polls', async () => {
       // Scenario 1: 2 YAY votes required, 2 observed - valid
       [ poll ] = await Polls.createPoll(HOUSE, now, DAY, 2);
 
-      await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
-      await Polls.submitVote(poll.id, RESIDENT3, soon, YAY);
+      await Polls.submitVote(poll.id, RESIDENT1, soon, Polls.YAY);
+      await Polls.submitVote(poll.id, RESIDENT3, soon, Polls.YAY);
 
       expect(await Polls.isPollValid(poll.id, tomorrow)).to.be.true;
 
       // Scenario 2: 3 YAY votes required, 2 observed - invalid
       [ poll ] = await Polls.createPoll(HOUSE, now, DAY, 3);
 
-      await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
-      await Polls.submitVote(poll.id, RESIDENT3, soon, YAY);
+      await Polls.submitVote(poll.id, RESIDENT1, soon, Polls.YAY);
+      await Polls.submitVote(poll.id, RESIDENT3, soon, Polls.YAY);
 
       expect(await Polls.isPollValid(poll.id, tomorrow)).to.be.false;
 
       // Scenario 3: 1 YAY vote required, 1 YAY 1 NAY - invalid
       [ poll ] = await Polls.createPoll(HOUSE, now, DAY, 1);
 
-      await Polls.submitVote(poll.id, RESIDENT1, soon, YAY);
-      await Polls.submitVote(poll.id, RESIDENT3, soon, NAY);
+      await Polls.submitVote(poll.id, RESIDENT1, soon, Polls.YAY);
+      await Polls.submitVote(poll.id, RESIDENT3, soon, Polls.NAY);
 
       expect(await Polls.isPollValid(poll.id, tomorrow)).to.be.false;
     });

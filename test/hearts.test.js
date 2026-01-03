@@ -10,7 +10,6 @@ const { HOUR, DAY, getNextMonthStart } = require('../src/time');
 const testHelpers = require('./helpers');
 
 describe('Hearts', async () => {
-  const { YAY, NAY } = Polls;
   const { HEART_UNKNOWN, HEART_CHALLENGE, HEART_KARMA } = Hearts;
 
   const HOUSE = testHelpers.generateSlackId();
@@ -311,11 +310,11 @@ describe('Hearts', async () => {
     it('can resolve a challenge where the challenger wins', async () => {
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now, '');
 
-      await Polls.submitVote(challenge.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(challenge.pollId, RESIDENT2, now, NAY);
-      await Polls.submitVote(challenge.pollId, RESIDENT3, now, YAY);
-      await Polls.submitVote(challenge.pollId, RESIDENT4, now, YAY);
-      await Polls.submitVote(challenge.pollId, RESIDENT5, now, YAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT2, now, Polls.NAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT3, now, Polls.YAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT4, now, Polls.YAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT5, now, Polls.YAY);
 
       await Hearts.resolveChallenge(challenge.id, challengeEnd);
 
@@ -328,9 +327,9 @@ describe('Hearts', async () => {
     it('can resolve a challenge where the challenger loses', async () => {
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now, '');
 
-      await Polls.submitVote(challenge.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(challenge.pollId, RESIDENT2, now, NAY);
-      await Polls.submitVote(challenge.pollId, RESIDENT3, now, NAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT2, now, Polls.NAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT3, now, Polls.NAY);
 
       await Hearts.resolveChallenge(challenge.id, challengeEnd);
 
@@ -344,7 +343,7 @@ describe('Hearts', async () => {
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now, '');
 
       // Quorum is 2, only 1 vote is submitted
-      await Polls.submitVote(challenge.pollId, RESIDENT1, now, YAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT1, now, Polls.YAY);
 
       await Hearts.resolveChallenge(challenge.id, challengeEnd);
 
@@ -359,10 +358,10 @@ describe('Hearts', async () => {
       await Hearts.issueChallenge(HOUSE, RESIDENT3, RESIDENT1, 2, now, '');
       await Hearts.issueChallenge(HOUSE, RESIDENT2, RESIDENT3, 3, soon, '');
 
-      await Polls.submitVote(challenge.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(challenge.pollId, RESIDENT3, now, YAY);
-      await Polls.submitVote(challenge.pollId, RESIDENT4, now, YAY);
-      await Polls.submitVote(challenge.pollId, RESIDENT5, now, YAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT3, now, Polls.YAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT4, now, Polls.YAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT5, now, Polls.YAY);
 
       // Challenger 1 wins, challenger 2 loses, challenge 3 is not yet resolved
       await Hearts.resolveChallenges(HOUSE, challengeEnd);
@@ -378,9 +377,9 @@ describe('Hearts', async () => {
     it('cannot resolve a challenge before the poll is closed', async () => {
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now, '');
 
-      await Polls.submitVote(challenge.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(challenge.pollId, RESIDENT2, now, NAY);
-      await Polls.submitVote(challenge.pollId, RESIDENT3, now, YAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT2, now, Polls.NAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT3, now, Polls.YAY);
 
       await expect(Hearts.resolveChallenge(challenge.id, soon))
         .to.be.rejectedWith('Poll not closed!');
@@ -389,9 +388,9 @@ describe('Hearts', async () => {
     it('cannot resolve a challenge twice', async () => {
       const [ challenge ] = await Hearts.issueChallenge(HOUSE, RESIDENT1, RESIDENT2, 1, now, '');
 
-      await Polls.submitVote(challenge.pollId, RESIDENT1, now, YAY);
-      await Polls.submitVote(challenge.pollId, RESIDENT2, now, NAY);
-      await Polls.submitVote(challenge.pollId, RESIDENT3, now, YAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT2, now, Polls.NAY);
+      await Polls.submitVote(challenge.pollId, RESIDENT3, now, Polls.YAY);
 
       await Hearts.resolveChallenge(challenge.id, challengeEnd);
 
