@@ -3,6 +3,7 @@ const { Admin, Hearts } = require('../../../core/index');
 
 const common = require('../../common');
 const views = require('../views/events');
+const { renderValueText } = require('../views/utils');
 
 function houseActive (houseId, now) {
   const windowStart = new Date(now.getTime() - 30 * DAY);
@@ -103,8 +104,8 @@ module.exports = (app) => {
     for (const regenHeart of (await Hearts.regenerateHouseHearts(houseId, now))) {
       if (regenHeart.value !== 0) {
         const text = (regenHeart.value > 0)
-          ? `You regenerated *${regenHeart.value.toFixed(2)}* heart(s)!`
-          : `Your karma faded by *${(-regenHeart.value).toFixed(2)}* heart(s)!`;
+          ? `You regenerated *${renderValueText(regenHeart.value)}* heart(s)!`
+          : `Your karma faded by *${renderValueText(-regenHeart.value)}* heart(s)!`;
         await common.postEphemeral(app, heartsConf, regenHeart.residentId, text);
       }
     }

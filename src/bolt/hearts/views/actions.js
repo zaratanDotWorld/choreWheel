@@ -1,7 +1,36 @@
 const { Hearts } = require('../../../core/index');
 
 const common = require('../../common');
-const { TITLE, heartEmoji } = require('./utils');
+const { TITLE, heartEmoji, renderValueText } = require('./utils');
+
+// Board flow
+
+exports.heartsBoardView = function (hearts) {
+  const regenValueText = renderValueText(Hearts.params.regenAmount);
+  const fadeValueText = renderValueText(Hearts.params.fadeAmount);
+
+  const header = 'Current hearts';
+  const mainText = 'The baseline is *five hearts*. ' +
+    `Anyone with *less* will regenerate at a rate of *${regenValueText} per month*, ` +
+    `and anyone with *more* will fade at *${fadeValueText} per month*, ` +
+    'until they reach *five*.';
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockDivider());
+
+  hearts.forEach((heart) => {
+    blocks.push(common.blockSection(`${heartEmoji(heart.sum)} <@${heart.residentId}>`));
+  });
+
+  return {
+    type: 'modal',
+    title: TITLE,
+    close: common.CLOSE,
+    blocks,
+  };
+};
 
 // Challenge flow
 
@@ -76,30 +105,6 @@ exports.heartsChallengeCallbackView = function (challenge, minVotes, circumstanc
   blocks.push(common.blockSection(common.makeVoteText(minVotes, Hearts.params.pollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(challenge.pollId, 1, 0)));
   return blocks;
-};
-
-exports.heartsBoardView = function (hearts) {
-  const header = 'Current hearts';
-  const mainText = 'The baseline is *five hearts*. ' +
-    'Anyone with *less* will regenerate at a rate of *½ per month*, ' +
-    'and anyone with *more* will fade at *½ per month*, ' +
-    'until they reach five.';
-
-  const blocks = [];
-  blocks.push(common.blockHeader(header));
-  blocks.push(common.blockSection(mainText));
-  blocks.push(common.blockDivider());
-
-  hearts.forEach((heart) => {
-    blocks.push(common.blockSection(`${heartEmoji(heart.sum)} <@${heart.residentId}>`));
-  });
-
-  return {
-    type: 'modal',
-    title: TITLE,
-    close: common.CLOSE,
-    blocks,
-  };
 };
 
 // Karma flow
