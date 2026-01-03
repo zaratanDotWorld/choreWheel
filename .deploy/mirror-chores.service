@@ -7,7 +7,7 @@ After=network.target
 Type=simple
 User=ubuntu
 WorkingDirectory=/home/ubuntu/mirror
-ExecStart=/home/ubuntu/.nvm/versions/node/v20.11.0/bin/node --experimental-loader=newrelic/esm-loader.mjs src/bolt/chores.app.js
+ExecStart=/home/ubuntu/.nvm/versions/node/v22.18.0/bin/node --experimental-loader=newrelic/esm-loader.mjs src/bolt/chores/app.js
 Environment="NEW_RELIC_APP_NAME=Chores"
 StandardOutput=append:/home/ubuntu/mirror/logs/chores.log
 Restart=on-failure

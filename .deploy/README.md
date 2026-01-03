@@ -15,10 +15,10 @@ source ~/.bashrc
 
 # Set up the repository
 git clone https://github.com/zaratanDotWorld/choreWheel.git
-cd mirror
-nvm use
-npm i
+cd choreWheel
 mkdir logs
+nvm install
+npm install
 ```
 
 Now create a `.env` file with the necessary secret information,
@@ -30,8 +30,8 @@ or `cd` into this directory and run `sudo ./setup.sh`.
 The `systemd` config file for running the apps.
 
 Run `sudo cp .deploy/mirror-*.service /etc/systemd/system/` and then
-`systemctl daemon-reload` to load the configuration file. The service can then be
-managed using `systemctl {start, stop, restart, status} mirror-*` as needed.
+`systemctl daemon-reload` to load the configuration file. The service can then
+be managed using `systemctl {start, stop, restart, status} mirror-*` as needed.
 
 In order to run these commands, you must explicitly set a password for the
 user. This can be done using `sudo passwd <username>`.
