@@ -1,15 +1,11 @@
 const { Admin, Chores } = require('../../../core/index');
-const { DAY, getMonthStart, getPrevMonthEnd, sleep } = require('../../../time');
+const { getMonthStart, getPrevMonthEnd, sleep } = require('../../../time');
 
 const common = require('../../common');
 const views = require('../views/events');
 
 const { formatStats, formatTotalStats } = require('../views/utils');
-
-function houseActive (houseId, now) {
-  const windowStart = new Date(now.getTime() - 30 * DAY);
-  return Admin.houseActive(houseId, 'ChoreClaim', 'claimedAt', windowStart, now);
-}
+const { houseActive } = require('./utils');
 
 module.exports = (app) => {
   // App uninstalled

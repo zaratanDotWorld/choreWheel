@@ -1,4 +1,10 @@
 const { Admin, Chores } = require('../../../core/index');
+const { DAY } = require('../../../time');
+
+exports.houseActive = function (houseId, now) {
+  const windowStart = new Date(now.getTime() - 30 * DAY);
+  return Admin.houseActive(houseId, 'ChoreClaim', 'claimedAt', windowStart, now);
+};
 
 // Cron functions
 
