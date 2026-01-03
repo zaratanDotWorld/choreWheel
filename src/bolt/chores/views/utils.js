@@ -19,7 +19,7 @@ exports.formatStats = function (stats) {
     emoji = ':broken_heart:';
   }
 
-  return `<@${residentId}> - ${pointsEarned} / ${pointsOwed} (${completionPct * 100}%) ${emoji}`;
+  return `<@${residentId}> - ${pointsEarned} / ${pointsOwed} (${(completionPct * 100).toFixed(0)}%) ${emoji}`;
 };
 
 exports.formatTotalStats = function (stats) {
@@ -27,7 +27,7 @@ exports.formatTotalStats = function (stats) {
   const pointsOwed = stats.reduce((sum, stat) => sum + stat.pointsOwed, 0);
   const completionPct = pointsEarned / pointsOwed;
 
-  return `*Total - ${pointsEarned} / ${pointsOwed} (${completionPct * 100}%)*`;
+  return `*Total - ${pointsEarned} / ${pointsOwed} (${(completionPct * 100).toFixed(0)}%)*`;
 };
 
 exports.formatPointsPerDay = function (ranking, numResidents) {
