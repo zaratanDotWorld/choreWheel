@@ -276,6 +276,15 @@ exports.getUnclaimedSpecialChoreValues = async function (houseId, now) {
     .select('ChoreValue.*');
 };
 
+exports.getFutureSpecialChoreValues = async function (houseId, now) {
+  return db('ChoreValue')
+    .where('ChoreValue.houseId', houseId)
+    .where('ChoreValue.valuedAt', '>', now)
+    .whereNull('ChoreValue.choreId')
+    .orderBy('ChoreValue.valuedAt', 'asc')
+    .returning('*');
+};
+
 exports.getSpecialChoreAllowance = async function (houseId, now) {
   const inc = params.specialIncrement;
   const numResidents = (await Admin.getResidents(houseId, now)).length;
@@ -468,9 +477,9 @@ exports.getUpdatedChoreValues = async function (houseId, updateTime) {
 };
 
 // Special chore values have choreId = null
-exports.addSpecialChoreValue = async function (houseId, name, description, value, now) {
+exports.addSpecialChoreValue = async function (houseId, name, description, value, valuedAt) {
   const metadata = { name, description };
-  const choreValue = { houseId, value, valuedAt: now, metadata };
+  const choreValue = { houseId, value, valuedAt, metadata };
 
   return exports.addChoreValues(choreValue);
 };
@@ -780,11 +789,11 @@ exports.createChoreProposal = async function (houseId, proposedBy, choreId, name
     .returning('*');
 };
 
-exports.createSpecialChoreProposal = async function (houseId, proposedBy, name, description, value, now) {
+exports.createSpecialChoreProposal = async function (houseId, proposedBy, name, description, value, valuedAt, now) {
   const minVotes = await exports.getSpecialChoreProposalMinVotes(houseId, value, now);
   const [ poll ] = await Polls.createPoll(houseId, now, params.specialProposalPollLength, minVotes);
 
-  const metadata = { description, value };
+  const metadata = { description, value, valuedAt };
 
   return db('ChoreProposal')
     .insert({ houseId, proposedBy, name, metadata, pollId: poll.id })
@@ -815,8 +824,8 @@ exports.getSpecialChoreProposalMinVotes = async function (houseId, value, now) {
 exports.executeChoreProposal = async function (houseId, choreId, name, metadata, active, now) {
   if (metadata.value) {
     // Add a special chore
-    const { description, value } = metadata;
-    await exports.addSpecialChoreValue(houseId, name, description, value, now);
+    const { description, value, valuedAt } = metadata;
+    await exports.addSpecialChoreValue(houseId, name, description, value, valuedAt);
   } else if (!choreId) {
     // Add a regular chore
     const [ chore ] = await exports.addChore(houseId, name, metadata);

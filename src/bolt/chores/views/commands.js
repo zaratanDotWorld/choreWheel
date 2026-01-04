@@ -8,15 +8,18 @@ exports.choresStatsView = function (choreClaims, choreBreaks, choreStats) {
   const mainText = 'Extra information about monthly chores.';
 
   const claimText = '*Your claimed chores:*\n' +
-  choreClaims.map(cc => `\n${cc.claimedAt.toDateString()} - ${cc.name} - ${cc.value} points`)
-    .join('');
+    choreClaims
+      .map(cc => `\n${cc.claimedAt.toDateString()} - ${cc.name} - ${cc.value} points`)
+      .join('');
 
   const breakText = '*Current chore breaks:*\n' +
-    choreBreaks.map(cb => `\n${cb.startDate.toDateString()} - ${cb.endDate.toDateString()} - <@${cb.residentId}>`)
+    choreBreaks
+      .map(cb => `\n${cb.startDate.toDateString()} - ${cb.endDate.toDateString()} - <@${cb.residentId}>`)
       .join('');
 
   const pointsText = '*Last month\'s chore points:*\n' +
-    choreStats.map(cs => `\n${formatStats(cs)}`)
+    choreStats
+      .map(cs => `\n${formatStats(cs)}`)
       .join('');
 
   const blocks = [];
@@ -26,6 +29,39 @@ exports.choresStatsView = function (choreClaims, choreBreaks, choreStats) {
   blocks.push(common.blockSection(claimText));
   blocks.push(common.blockSection(breakText));
   blocks.push(common.blockSection(pointsText));
+
+  return {
+    type: 'modal',
+    title: TITLE,
+    close: common.CLOSE,
+    blocks,
+  };
+};
+
+exports.choresSpecialListView = function (currentChores, futureChores) {
+  const header = 'Special Chores';
+
+  const currentText = '*Current*\n' +
+    (currentChores.length > 0
+      ? currentChores
+        .map(cv => `\n${cv.metadata.name} - ${cv.value} points`)
+        .join('')
+      : '\n_No special chores available_'
+    );
+
+  const futureText = '*Future*\n' +
+    (futureChores.length > 0
+      ? futureChores
+        .map(cv => `\n${cv.metadata.name} - ${cv.value} points - ${common.formatDate(cv.valuedAt)}`)
+        .join('')
+      : '\n_No upcoming special chores_'
+    );
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockDivider());
+  blocks.push(common.blockSection(currentText));
+  blocks.push(common.blockSection(futureText));
 
   return {
     type: 'modal',

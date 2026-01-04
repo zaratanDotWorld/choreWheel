@@ -260,8 +260,8 @@ exports.choresRankView = function (choreRankings) {
 exports.choresRankView2 = function (preference, targetChore, choreRankings) {
   const header = 'Set chore priorities';
   const mainText = 'Priority-setting is a *collaborative and ongoing* process, ' +
-    'where people "take" priority from some chores and give it to others.\n\n' +
-    '*Example:* "I want to _prioritize_ dishes and _deprioritize_ yardwork."\n\n' +
+    'where you "take" priority from some chores and give it to others, ' +
+    'e.g. "I want to _prioritize_ dishes and _deprioritize_ yardwork."\n\n' +
     'To have a *bigger effect,* you can: ' +
     '*1)* take from *more* chores, ' +
     '*2)* take from *higher-priority* chores, ' +
@@ -280,7 +280,7 @@ exports.choresRankView2 = function (preference, targetChore, choreRankings) {
     {
       action_id: 'chores',
       type: 'multi_static_select',
-      placeholder: common.blockPlaintext('Choose some chores'),
+      placeholder: common.blockPlaintext('Choose one or more chores'),
       options: mapChoreRankings(choreRankings),
     },
   ));
@@ -349,9 +349,7 @@ exports.choresRankViewZero = function (preference) {
 
 // Break flow
 
-exports.choresBreakView = function (currentTime) {
-  const formattedTime = `${currentTime.getFullYear()}-${currentTime.getMonth() + 1}-${currentTime.getDate()}`;
-
+exports.choresBreakView = function (now) {
   const header = 'Take a break';
   const mainText = 'Take a chore break when you go out of town, ' +
     'and you won\'t owe points for the days that you\'re gone.\n\n' +
@@ -365,7 +363,7 @@ exports.choresBreakView = function (currentTime) {
     {
       action_id: 'date',
       type: 'datepicker',
-      initial_date: formattedTime,
+      initial_date: common.formatDate(now),
       placeholder: common.blockPlaintext('Select a date'),
     },
   ));
@@ -374,7 +372,7 @@ exports.choresBreakView = function (currentTime) {
     {
       action_id: 'date',
       type: 'datepicker',
-      initial_date: formattedTime,
+      initial_date: common.formatDate(now),
       placeholder: common.blockPlaintext('Select a date'),
     },
   ));
@@ -399,10 +397,10 @@ exports.choresBreakView = function (currentTime) {
 
 // Gift flow
 
-exports.choresGiftView = function (currentBalance) {
+exports.choresGiftView = function (balance) {
   const header = 'Gift chore points';
   const mainText = 'Gift someone points from your balance. ' +
-    `You have *${currentBalance} points* to gift.`;
+    `You have *${balance} points* to gift.`;
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
@@ -438,7 +436,7 @@ exports.choresGiftView = function (currentBalance) {
   return {
     type: 'modal',
     callback_id: 'chores-gift-callback',
-    private_metadata: currentBalance.toString(),
+    private_metadata: balance.toString(),
     title: TITLE,
     close: common.CLOSE,
     submit: common.SUBMIT,
@@ -660,10 +658,9 @@ exports.choresProposeCallbackViewForce = function (metadata, residentId, name, d
 exports.choresSpecialView = function (minVotes, remainder) {
   const header = 'Add special chore';
   const mainText = 'Sometimes there are big one-off tasks that need to be done. ' +
-    'These can be seen as *special chores*.\n\n' +
+    'We call these *special chores*. ' +
     `Creating special chores requires *one upvote per 10 points*, and a *minimum of ${minVotes} upvotes*.`;
-  const remainderText = `There are *${remainder.toFixed(0)} free points* left for special chores this month. ` +
-    'Past this limit, everyone will owe extra points.';
+  const remainderText = `There are *${remainder.toFixed(0)} free points* left for special chores this month.`;
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
@@ -678,6 +675,16 @@ exports.choresSpecialView = function (minVotes, remainder) {
       placeholder: common.blockPlaintext('Name of the chore'),
     },
   ));
+  blocks.push(common.blockInput(
+    'Points',
+    {
+      action_id: 'points',
+      type: 'number_input',
+      min_value: '1',
+      is_decimal_allowed: false,
+      placeholder: common.blockPlaintext('Number of points the chore is worth'),
+    },
+  ));
   blocks.push(common.blockInputOptional(
     'Description',
     {
@@ -688,14 +695,12 @@ exports.choresSpecialView = function (minVotes, remainder) {
       placeholder: common.blockPlaintext('Describe the chore (bullet points work well)'),
     },
   ));
-  blocks.push(common.blockInput(
-    'Points',
+  blocks.push(common.blockInputOptional(
+    'Claimable',
     {
-      action_id: 'points',
-      type: 'number_input',
-      min_value: '1',
-      is_decimal_allowed: false,
-      placeholder: common.blockPlaintext('Number of points the chore is worth'),
+      action_id: 'claimable',
+      type: 'datepicker',
+      placeholder: common.blockPlaintext('When the chore is available to claim'),
     },
   ));
 
@@ -712,8 +717,8 @@ exports.choresSpecialView = function (minVotes, remainder) {
 exports.choresSpecialCallbackView = function (proposal, minVotes, obligation) {
   const mainText = `*<@${proposal.proposedBy}>* wants to create a *special chore* ` +
     `worth *${proposal.metadata.value} points*:`;
-  const obligationText = 'Creating this special chore will add ' +
-    `*~${obligation.toFixed(0)} points* to everyone's requirement :bangbang:`;
+  const obligationText = 'By creating this special chore, ' +
+    `everyone will owe *~${obligation.toFixed(0)} extra points.*`;
 
   const blocks = [];
   blocks.push(common.blockSection(mainText));

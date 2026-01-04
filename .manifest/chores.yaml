@@ -23,6 +23,10 @@ features:
       url: https://chores.mirror.zaratan.world/slack/events
       description: Show more details about monthly chores
       should_escape: false
+    - command: /chores-special
+      url: https://chores.mirror.zaratan.world/slack/events
+      description: View current and upcoming special chores
+      should_escape: false
     - command: /chores-activate
       url: https://chores.mirror.zaratan.world/slack/events
       description: Activate residents for chores

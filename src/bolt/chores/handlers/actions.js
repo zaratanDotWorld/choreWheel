@@ -272,10 +272,10 @@ module.exports = (app) => {
   // Break flow
 
   app.action('chores-break', async ({ ack, body }) => {
-    const { houseId } = common.beginAction('chores-break', body);
+    const { now, houseId } = common.beginAction('chores-break', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
-    const view = views.choresBreakView(new Date());
+    const view = views.choresBreakView(now);
     await common.openView(app, choresConf.oauth, body.trigger_id, view);
 
     await ack();
@@ -482,18 +482,23 @@ module.exports = (app) => {
     const { now, houseId, residentId } = common.beginAction('chores-special-callback', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
-    const name = common.parseTitlecase(common.getInputBlock(body, -3).name.value);
+    const name = common.parseTitlecase(common.getInputBlock(body, -4).name.value);
+    const points = common.getInputBlock(body, -3).points.value;
     const description = common.getInputBlock(body, -2).description.value;
-    const points = common.getInputBlock(body, -1).points.value;
+    const claimableUtc = new Date(common.getInputBlock(body, -1).claimable.selected_date);
+
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const claimable = !isNaN(claimableUtc) ? shiftDate(claimableUtc, now.getTimezoneOffset()) : todayStart;
+    const valuedAt = (claimable >= todayStart) ? claimable : todayStart;
 
     // Create the special chore proposal
-    const [ proposal ] = await Chores.createSpecialChoreProposal(houseId, residentId, name, description, points, now);
+    const [ proposal ] = await Chores.createSpecialChoreProposal(houseId, residentId, name, description, points, valuedAt, now);
     await Polls.submitVote(proposal.pollId, residentId, now, Polls.YAY);
 
     const { minVotes } = await Polls.getPoll(proposal.pollId);
 
-    const numResidents = await Admin.getNumResidents(houseId, now);
-    const balance = await Chores.getSpecialChoreBalance(houseId, now);
+    const numResidents = await Admin.getNumResidents(houseId, valuedAt);
+    const balance = await Chores.getSpecialChoreBalance(houseId, valuedAt);
     const newObligation = Math.min(points, points - balance) / numResidents;
 
     const text = 'Someone just proposed a special chore';
