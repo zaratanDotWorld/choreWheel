@@ -44,6 +44,10 @@ exports.parseUrl = function (url) {
   } catch {}
 };
 
+exports.formatDate = function (date) {
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+};
+
 // Installation store factory
 
 exports.createInstallationStore = function (confName, appName) {

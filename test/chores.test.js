@@ -1649,7 +1649,6 @@ describe('Chores', async () => {
 
       await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
       await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
-
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
       chores = await Chores.getChores(HOUSE);
@@ -1670,7 +1669,6 @@ describe('Chores', async () => {
 
       await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
       await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
-
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
       chores = await Chores.getChores(HOUSE);
@@ -1683,7 +1681,6 @@ describe('Chores', async () => {
 
       await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
       await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
-
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
       chores = await Chores.getChores(HOUSE);
       expect(chores.length).to.equal(1);
@@ -1698,7 +1695,6 @@ describe('Chores', async () => {
 
       await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
       await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
-
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
       chores = await Chores.getChores(HOUSE);
@@ -1712,7 +1708,6 @@ describe('Chores', async () => {
 
       await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
       await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
-
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
       chores = await Chores.getChores(HOUSE);
@@ -1727,7 +1722,6 @@ describe('Chores', async () => {
 
       await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
       await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
-
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
       chores = await Chores.getChores(HOUSE);
@@ -1737,7 +1731,6 @@ describe('Chores', async () => {
 
       await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
       await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
-
       await Chores.resolveChoreProposal(proposal.id, proposalEnd);
 
       chores = await Chores.getChores(HOUSE);
@@ -1757,17 +1750,44 @@ describe('Chores', async () => {
       [ choreValue ] = await Chores.getUnclaimedSpecialChoreValues(HOUSE, now);
       expect(choreValue).to.be.undefined;
 
-      const [ proposal ] = await Chores.createSpecialChoreProposal(HOUSE, RESIDENT1, name, description, value, now);
+      const [ proposal ] = await Chores.createSpecialChoreProposal(HOUSE, RESIDENT1, name, description, value, now, now);
 
       await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
       await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
-
       await Chores.resolveChoreProposal(proposal.id, specialChoreProposalEnd);
 
       [ choreValue ] = await Chores.getUnclaimedSpecialChoreValues(HOUSE, specialChoreProposalEnd);
       expect(choreValue.metadata.name).to.equal(name);
       expect(choreValue.metadata.description).to.equal(description);
       expect(choreValue.value).to.equal(value);
+    });
+
+    it('can create a special chore proposal claimable in the future', async () => {
+      const [ name, description, value ] = [ 'Future Chore', 'Important annual task', 50 ];
+
+      let currentChores;
+      let futureChores;
+
+      currentChores = await Chores.getUnclaimedSpecialChoreValues(HOUSE, now);
+      futureChores = await Chores.getFutureSpecialChoreValues(HOUSE, now);
+      expect(currentChores).to.have.length(0);
+      expect(futureChores).to.have.length(0);
+
+      const [ proposal ] = await Chores.createSpecialChoreProposal(HOUSE, RESIDENT1, name, description, value, tomorrow, now);
+
+      await Polls.submitVote(proposal.pollId, RESIDENT1, now, Polls.YAY);
+      await Polls.submitVote(proposal.pollId, RESIDENT2, now, Polls.YAY);
+      await Chores.resolveChoreProposal(proposal.id, specialChoreProposalEnd);
+
+      currentChores = await Chores.getUnclaimedSpecialChoreValues(HOUSE, soon);
+      futureChores = await Chores.getFutureSpecialChoreValues(HOUSE, soon);
+      expect(currentChores).to.have.length(0);
+      expect(futureChores).to.have.length(1);
+
+      currentChores = await Chores.getUnclaimedSpecialChoreValues(HOUSE, tomorrow);
+      futureChores = await Chores.getFutureSpecialChoreValues(HOUSE, tomorrow);
+      expect(currentChores).to.have.length(1);
+      expect(futureChores).to.have.length(0);
     });
 
     it('can return the minimum votes for a special chore proposal', async () => {

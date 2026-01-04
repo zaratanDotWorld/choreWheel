@@ -47,6 +47,20 @@ module.exports = (app) => {
     await common.openView(app, choresConf.oauth, command.trigger_id, view);
   });
 
+  // Slash command: /chores-special
+  app.command('/chores-special', async ({ ack, command }) => {
+    await ack();
+
+    const { now, houseId } = common.beginCommand('/chores-special', command);
+    const { choresConf } = await Admin.getHouse(houseId);
+
+    const currentSpecialChores = await Chores.getUnclaimedSpecialChoreValues(houseId, now);
+    const futureSpecialChores = await Chores.getFutureSpecialChoreValues(houseId, now);
+
+    const view = views.choresSpecialListView(currentSpecialChores, futureSpecialChores);
+    await common.openView(app, choresConf.oauth, command.trigger_id, view);
+  });
+
   // Slash command: /chores-activate
   app.command('/chores-activate', async ({ ack, command, respond }) => {
     await ack();

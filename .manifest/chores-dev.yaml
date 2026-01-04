@@ -23,6 +23,10 @@ features:
       url: https://zaratan.ngrok.io/slack/events
       description: Show more details about monthly chores
       should_escape: false
+    - command: /chores-special
+      url: https://zaratan.ngrok.io/slack/events
+      description: View current and upcoming special chores
+      should_escape: false
     - command: /chores-activate
       url: https://zaratan.ngrok.io/slack/events
       description: Activate residents for chores

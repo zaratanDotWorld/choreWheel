@@ -52,9 +52,9 @@ exports.choresHomeView = function (choreChannel, choreStats, numActive) {
     if (Number(pointsEarned) < Number(pointsOwed) + Chores.params.pointsBuffer) {
       actions.push(common.blockButton('chores-claim', ':hand::skin-tone-4: Claim a chore'));
     }
+    actions.push(common.blockButton('chores-rank', ':scales: Set priorities'));
     actions.push(common.blockButton('chores-break', ':camping: Take a break'));
     actions.push(common.blockButton('chores-gift', ':gift: Gift your points'));
-    actions.push(common.blockButton('chores-rank', ':scales: Set priorities'));
     actions.push(common.blockButton('chores-special', ':bulb: Add special chore'));
     actions.push(common.blockButton('chores-propose', ':notebook: Edit chores list'));
   } else {
