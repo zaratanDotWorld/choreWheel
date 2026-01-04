@@ -1656,9 +1656,8 @@ describe('Chores', async () => {
       expect(chores.length).to.equal(1);
       expect(chores[0].metadata.description).to.equal(description);
 
-      // Boostrap value equal to number of residents
       const choreValue = await Chores.getCurrentChoreValue(chores[0].id, proposalEnd);
-      expect(choreValue).to.equal(2);
+      expect(choreValue).to.equal(1);
     });
 
     it('can overwrite an existing chore', async () => {

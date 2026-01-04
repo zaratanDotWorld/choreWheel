@@ -45,6 +45,7 @@ exports.params = {
   heartBonus: 0.5,
   specialAllowance: 3, // Per resident / month
   specialIncrement: 5,
+  initialValue: 1,
 };
 
 const params = exports.params;
@@ -812,8 +813,6 @@ exports.getSpecialChoreProposalMinVotes = async function (houseId, value, now) {
 };
 
 exports.executeChoreProposal = async function (houseId, choreId, name, metadata, active, now) {
-  const numResidents = (await Admin.getResidents(houseId, now)).length;
-
   if (metadata.value) {
     // Add a special chore
     const { description, value } = metadata;
@@ -821,7 +820,7 @@ exports.executeChoreProposal = async function (houseId, choreId, name, metadata,
   } else if (!choreId) {
     // Add a regular chore
     const [ chore ] = await exports.addChore(houseId, name, metadata);
-    const choreValue = { houseId, choreId: chore.id, valuedAt: now, value: numResidents };
+    const choreValue = { houseId, choreId: chore.id, valuedAt: now, value: params.initialValue };
     await exports.addChoreValues(choreValue);
   } else {
     // Edit/deactivate a regular chore
