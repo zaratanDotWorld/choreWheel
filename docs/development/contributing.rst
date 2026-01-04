@@ -81,11 +81,7 @@ Points
 Priorities
 
   Another foundational `Chores` concept is **priority** -- the *rate* at which a chore gains points over time.
-  Priorities are always *relative* -- the priorities of all the chores always adds to 1000 (the technical term is *per mille*).
-
-  .. note::
-    Why 1000 and not 100, if the idea is to represent something like a percentage?
-    The answer is pretty boring: a priority of "12" just looked nicer than "1.2%".
+  Priorities are always *relative* -- the priorities of all the chores always adds to 100%.
 
   Having priorities be relative is useful, since it means that the *total number of points* can increase or decrease as the community changes.
   If two people join the community, then 200 points *in total* are added every month,
@@ -100,16 +96,16 @@ Priorities
     :alt: Chores pairwise flow
     :align: center
 
-  While the pairwise format isn't *fundamental* in the same way that priorities adding to 1000 is, it's useful for a few reasons:
+  While the pairwise format isn't *fundamental* in the same way that priorities adding to 100% is, it's useful for a few reasons:
 
-  1. It makes it easy to add and remove chores. If priorities were set explicitly as numbers, they would need to be manually "re-balanced" to 1000 whenever a chore was added or removed.
+  1. It makes it easy to add and remove chores. If priorities were set explicitly as numbers, they would need to be manually "re-balanced" to 100% whenever a chore was added or removed.
   2. It frames choices more intuitively. Instead of thinking about what the "right number" is, the question becomes "do I want more of this or that"?
 
   .. warning::
 
-    Imagine that priorities were set explicitly, and then a chore with a priority of 50 was deleted.
+    Imagine that priorities were set explicitly, and then a chore with a priority of 5% was deleted.
 
-    **Consider:** what happens with that "extra" 50 priority?
+    **Consider:** what happens with that "extra" 5% priority?
 
     Does it automatically get split between all the other chores?
     Does the system freeze up until folks go in and manually re-allocate that priority elsewhere?

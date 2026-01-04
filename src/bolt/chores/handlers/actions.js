@@ -250,18 +250,19 @@ module.exports = (app) => {
     const choreRankings = await Chores.getCurrentChoreRankings(houseId, now);
     const targetChoreRanking = choreRankings.find(chore => chore.id === targetChore.id);
 
-    const newPriority = Math.round(targetChoreRanking.ranking * 1000);
+    const newPriority = targetChoreRanking.ranking * 100;
     const change = newPriority - targetChore.priority;
 
     const numResidents = (await Admin.getResidents(houseId, now)).length;
+    const pointsPerDay = formatPointsPerDay(targetChoreRanking.ranking, numResidents);
 
     if (change > 0) {
-      const text = `Someone *prioritized ${targetChore.name}* by *${change} ppt*, to *${newPriority}* :rocket:\n\n` +
-        `That's about *${formatPointsPerDay(targetChoreRanking.ranking, numResidents)} points per day*.`;
+      const text = `Someone *prioritized ${targetChore.name}* to *${newPriority.toFixed(1)}%* ` +
+        `(*+${change.toFixed(1)}%*), or about *${pointsPerDay} points per day* :rocket:`;
       await common.postMessage(app, choresConf, text);
     } else if (change < 0) {
-      const text = `Someone *deprioritized ${targetChore.name}* by *${Math.abs(change)} ppt*, to *${newPriority}* :snail:\n\n` +
-        `That's about *${formatPointsPerDay(targetChoreRanking.ranking, numResidents)} points per day*.`;
+      const text = `Someone *deprioritized ${targetChore.name}* to *${newPriority.toFixed(1)}%* ` +
+        `(*${change.toFixed(1)}%*), or about *${pointsPerDay} points per day* :snail:`;
       await common.postMessage(app, choresConf, text);
     }
 
