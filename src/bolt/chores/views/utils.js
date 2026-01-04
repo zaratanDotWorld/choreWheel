@@ -32,7 +32,7 @@ exports.formatTotalStats = function (stats) {
 
 exports.formatPointsPerDay = function (ranking, numResidents) {
   const pointsPerDay = ranking * (Chores.params.pointsPerResident / 30) * numResidents;
-  return (pointsPerDay > 5) ? pointsPerDay.toFixed(0) : pointsPerDay.toFixed(1);
+  return (pointsPerDay >= 3) ? pointsPerDay.toFixed(0) : pointsPerDay.toFixed(1);
 };
 
 exports.getAchievement = function (totalPoints) {
@@ -68,6 +68,7 @@ exports.mapChoresValues = function (chores) {
     const name = chore.name || chore.metadata.name;
     return {
       value: JSON.stringify({ choreId: chore.choreId, choreValueId: chore.choreValueId }),
+      // Max length is 75 chars, so we need to truncate the name
       text: common.blockPlaintext(`${name.slice(0, 60)} - ${chore.value.toFixed(0)} points`),
     };
   });
@@ -75,10 +76,11 @@ exports.mapChoresValues = function (chores) {
 
 exports.mapChoreRankings = function (choreRankings) {
   return choreRankings.map((chore) => {
-    const priority = Math.round(chore.ranking * 1000);
+    const priority = chore.ranking * 100;
     return {
       value: JSON.stringify({ id: chore.id, name: chore.name, priority }),
-      text: common.blockPlaintext(`${chore.name.slice(0, 60)} - ${priority} ppt`),
+      // Max length is 75 chars, so we need to truncate the name
+      text: common.blockPlaintext(`${chore.name.slice(0, 60)} - ${priority.toFixed(1)}%`),
     };
   });
 };

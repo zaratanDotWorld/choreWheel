@@ -202,9 +202,9 @@ exports.choresClaimCallbackView = function (claim, name, minVotes, achivementPoi
 
 exports.choresRankView = function (choreRankings) {
   const header = 'Set chore priorities';
-  const mainText = 'The higher a chore\'s priority, the more points it will be worth over time.\n\n' +
-    'Chore priorities are measured in *points-per-thousand* (ppt), which always add up to *1000*. ' +
-    'A ppt of *0* means a chore gets no points, while a ppt of *1000* means a chore gets _all_ the points.';
+  const mainText = 'The higher a chore\'s priority, the more points it gets over time.\n\n' +
+    'Chore priorities are measured in *percentages*. ' +
+    'A chore with *0% priority* gets no points, while one with *100% priority* gets _all_ the points.';
 
   const actions = [
     { value: String(1), text: common.blockPlaintext('prioritize (more points over time)') },
@@ -297,19 +297,20 @@ exports.choresRankView2 = function (preference, targetChore, choreRankings) {
 };
 
 exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetadata, prefSaturation, numResidents) {
-  const newPriority = Math.round(targetChoreRanking.ranking * 1000);
+  const newPriority = targetChoreRanking.ranking * 100;
   const change = newPriority - targetChore.priority;
   const pointsPerDay = formatPointsPerDay(targetChoreRanking.ranking, numResidents);
 
   const effect = change >= 0 ? 'an *increase*' : 'a *decrease*';
   const emoji = change >= 0 ? ':rocket:' : ':snail:';
-  const saturation = change >= 0 ? prefSaturation : 1 - prefSaturation;
+  const saturation = (change >= 0 ? prefSaturation : 1 - prefSaturation) * 100;
 
   const header = 'Set chore priorities';
   const priorityText = 'After your update, ' +
-      `*${targetChore.name}* will have a priority of *${newPriority} ppt*, ${effect} of *${Math.abs(change)} ppt*. ` +
+      `*${targetChore.name}* will have a priority of *${newPriority.toFixed(1)}%*, ` +
+      `${effect} of *${Math.abs(change).toFixed(1)}%*. ` +
       `That's about *${pointsPerDay} points per day* ${emoji}`;
-  const submitText = `Your preferences for *${targetChore.name}* are at *${(saturation * 100).toFixed(0)}%* of possible strength. ` +
+  const submitText = `Your preferences for *${targetChore.name}* are at *${saturation.toFixed(0)}%* of possible strength. ` +
     '*Submit* to confirm, or go *back* to change your update.';
 
   const blocks = [];
