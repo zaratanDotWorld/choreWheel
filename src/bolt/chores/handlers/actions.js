@@ -258,11 +258,11 @@ module.exports = (app) => {
 
     if (change > 0) {
       const text = `Someone *prioritized ${targetChore.name}* to *${newPriority.toFixed(1)}%* ` +
-        `(*+${change.toFixed(1)}%*), or about *${pointsPerDay} points per day* :rocket:`;
+        `(+${change.toFixed(1)}%), or about *${pointsPerDay} points per day* :rocket:`;
       await common.postMessage(app, choresConf, text);
     } else if (change < 0) {
       const text = `Someone *deprioritized ${targetChore.name}* to *${newPriority.toFixed(1)}%* ` +
-        `(*${change.toFixed(1)}%*), or about *${pointsPerDay} points per day* :snail:`;
+        `(${change.toFixed(1)}%), or about *${pointsPerDay} points per day* :snail:`;
       await common.postMessage(app, choresConf, text);
     }
 
