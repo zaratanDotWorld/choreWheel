@@ -487,9 +487,8 @@ module.exports = (app) => {
     const description = common.getInputBlock(body, -2).description.value;
     const claimableUtc = new Date(common.getInputBlock(body, -1).claimable.selected_date);
 
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const claimable = !isNaN(claimableUtc) ? shiftDate(claimableUtc, now.getTimezoneOffset()) : todayStart;
-    const valuedAt = (claimable >= todayStart) ? claimable : todayStart;
+    const claimable = shiftDate(claimableUtc, now.getTimezoneOffset());
+    const valuedAt = (claimable >= now) ? claimable : now;
 
     // Create the special chore proposal
     const [ proposal ] = await Chores.createSpecialChoreProposal(houseId, residentId, name, description, points, valuedAt, now);
@@ -502,7 +501,7 @@ module.exports = (app) => {
     const newObligation = Math.min(points, points - balance) / numResidents;
 
     const text = 'Someone just proposed a special chore';
-    const blocks = views.choresSpecialCallbackView(proposal, minVotes, newObligation);
+    const blocks = views.choresSpecialCallbackView(proposal, minVotes, newObligation, valuedAt);
     const { channel, ts } = await common.postMessage(app, choresConf, text, blocks);
     await Polls.updateMetadata(proposal.pollId, { channel, ts });
 

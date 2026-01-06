@@ -657,10 +657,10 @@ exports.choresProposeCallbackViewForce = function (metadata, residentId, name, d
 
 exports.choresSpecialView = function (minVotes, remainder) {
   const header = 'Add special chore';
-  const mainText = 'Sometimes there are big one-off tasks that need to be done. ' +
-    'We call these *special chores*. ' +
+  const mainText = 'Sometimes there are big one-off tasks to be done. We call these *special chores*. ' +
     `Creating special chores requires *one upvote per 10 points*, and a *minimum of ${minVotes} upvotes*.`;
-  const remainderText = `There are *${remainder.toFixed(0)} free points* left for special chores this month.`;
+  const remainderText = `There are *${remainder.toFixed(0)} free points* left for special chores this month. ` +
+    'Past that, folks will owe the difference.';
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
@@ -714,9 +714,9 @@ exports.choresSpecialView = function (minVotes, remainder) {
   };
 };
 
-exports.choresSpecialCallbackView = function (proposal, minVotes, obligation) {
+exports.choresSpecialCallbackView = function (proposal, minVotes, obligation, claimable) {
   const mainText = `*<@${proposal.proposedBy}>* wants to create a *special chore* ` +
-    `worth *${proposal.metadata.value} points*:`;
+    `worth *${proposal.metadata.value} points*, claimable on *${claimable.toDateString()}*:`;
   const obligationText = 'By creating this special chore, ' +
     `everyone will owe *~${obligation.toFixed(0)} extra points.*`;
 
