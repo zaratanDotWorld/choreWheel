@@ -130,6 +130,17 @@ exports.choresClaimView = function (chores) {
   const mainText = 'Claims are verified by the group. ' +
     'Large claims (*10+ points*) require at least *2 upvotes*, including yours.';
 
+  const regularChores = chores.filter(chore => chore.choreId);
+  const specialChores = chores.filter(chore => !chore.choreId);
+
+  const optionGroups = [];
+  if (regularChores.length > 0) {
+    optionGroups.push(common.blockOptionGroup('Regular', mapChoresValues(regularChores)));
+  }
+  if (specialChores.length > 0) {
+    optionGroups.push(common.blockOptionGroup('Special', mapChoresValues(specialChores)));
+  }
+
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
@@ -140,7 +151,7 @@ exports.choresClaimView = function (chores) {
       action_id: 'chore',
       type: 'static_select',
       placeholder: common.blockPlaintext('Choose a chore'),
-      options: mapChoresValues(chores),
+      option_groups: optionGroups,
     },
   ));
 
