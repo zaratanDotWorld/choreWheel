@@ -163,6 +163,36 @@ describe('Admin', async () => {
       const isActive = await Admin.isActive('', now);
       expect(isActive).to.be.undefined;
     });
+
+    it('can activate a resident with a custom obligation', async () => {
+      await Admin.activateResident(HOUSE1, RESIDENT1, now, 50);
+
+      const resident = await Admin.getResident(RESIDENT1);
+      expect(resident.metadata.obligation).to.equal(50);
+    });
+
+    it('can update an obligation without changing activation time', async () => {
+      let resident;
+
+      await Admin.activateResident(HOUSE1, RESIDENT1, now, 50);
+
+      resident = await Admin.getResident(RESIDENT1);
+      expect(resident.metadata.obligation).to.equal(50);
+
+      await Admin.activateResident(HOUSE1, RESIDENT1, soon, 70);
+
+      resident = await Admin.getResident(RESIDENT1);
+      expect(resident.metadata.obligation).to.equal(70);
+      expect(resident.activeAt.getTime()).to.equal(truncateHour(now, 3).getTime());
+    });
+
+    it('does not set obligation in metadata when not specified', async () => {
+      await Admin.activateResident(HOUSE1, RESIDENT1, now);
+
+      const resident = await Admin.getResident(RESIDENT1);
+      expect(resident.metadata).to.deep.equal({});
+      expect(resident.metadata.obligation).to.be.undefined;
+    });
   });
 
   describe('utility functions', async () => {

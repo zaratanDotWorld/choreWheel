@@ -59,16 +59,16 @@ exports.houseActive = async function (houseId, table, field, startTime, endTime)
 
 // Residents
 
-exports.activateResident = async function (houseId, slackId, now) {
-  // No-op if already active
+exports.activateResident = async function (houseId, slackId, now, obligation) {
+  // No-op if already active and no custom obligation
   const resident = await exports.getResident(slackId);
-  if (resident && resident.activeAt) { return; }
+  if (resident?.activeAt && !obligation) { return; }
 
   // Avoid issuing points before residents are active
-  const activeAt = truncateHour(now, params.hourPrecision);
+  const activeAt = resident?.activeAt || truncateHour(now, params.hourPrecision);
 
   return db('Resident')
-    .insert({ houseId, slackId, activeAt, exemptAt: null })
+    .insert({ houseId, slackId, activeAt, exemptAt: null, metadata: { obligation } })
     .onConflict('slackId').merge();
 };
 
