@@ -27,6 +27,7 @@ describe('Chores', async () => {
   const RESIDENT2 = testHelpers.generateSlackId();
   const RESIDENT3 = testHelpers.generateSlackId();
   const RESIDENT4 = testHelpers.generateSlackId();
+  const RESIDENT5 = testHelpers.generateSlackId();
 
   const PPR = Chores.params.pointsPerResident * Chores.params.inflationFactor;
 
@@ -1167,10 +1168,11 @@ describe('Chores', async () => {
 
   describe('additional behaviors', async () => {
     beforeEach(async () => {
+      // Two with implicit obligation, two with explicit obligation
       await Admin.activateResident(HOUSE, RESIDENT1, getPrevMonthEnd(now));
       await Admin.activateResident(HOUSE, RESIDENT2, getPrevMonthEnd(now));
-      await Admin.activateResident(HOUSE, RESIDENT3, getPrevMonthEnd(now));
-      await Admin.activateResident(HOUSE, RESIDENT4, getPrevMonthEnd(now));
+      await Admin.activateResident(HOUSE, RESIDENT3, getPrevMonthEnd(now), 100);
+      await Admin.activateResident(HOUSE, RESIDENT4, getPrevMonthEnd(now), 100);
 
       [ dishes ] = await Chores.addChore(HOUSE, 'dishes');
       [ sweeping ] = await Chores.addChore(HOUSE, 'sweeping');
@@ -1205,12 +1207,25 @@ describe('Chores', async () => {
       expect(choreStats.pointsEarned).to.equal(11);
       expect(choreStats.pointsOwed).to.equal(0);
       expect(choreStats.completionPct).to.equal(1);
+    });
 
-      // Returns default values for non-existent resident
-      choreStats = await Chores.getChoreStats(HOUSE, '', feb1, mar1);
+    it('can get resident chore stats with a custom obligation', async () => {
+      await Admin.activateResident(HOUSE, RESIDENT5, getPrevMonthEnd(now), 50);
+
+      let choreStats;
+
+      choreStats = await Chores.getChoreStats(HOUSE, RESIDENT5, now, soon);
+      expect(choreStats.pointsOwed).to.equal(50);
       expect(choreStats.pointsEarned).to.equal(0);
-      expect(choreStats.pointsOwed).to.equal(0);
-      expect(choreStats.completionPct).to.equal(1);
+      expect(choreStats.completionPct).to.equal(0);
+
+      await db('ChoreValue').insert({ houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 });
+      await Chores.claimChore(HOUSE, dishes.id, RESIDENT5, now, 0);
+
+      choreStats = await Chores.getChoreStats(HOUSE, RESIDENT5, now, soon);
+      expect(choreStats.pointsOwed).to.equal(50);
+      expect(choreStats.pointsEarned).to.equal(10);
+      expect(choreStats.completionPct).to.equal(0.2);
     });
 
     it('can get house chore stats', async () => {
@@ -1319,7 +1334,7 @@ describe('Chores', async () => {
       choreBreaks = await Chores.getChoreBreaks(HOUSE, now);
       expect(choreBreaks.length).to.equal(0);
 
-      const circumstance = 'Visting family';
+      const circumstance = 'Visiting family';
       const [ choreBreak ] = await Chores.addChoreBreak(HOUSE, RESIDENT1, now, tomorrow, circumstance);
 
       choreBreaks = await Chores.getChoreBreaks(HOUSE, now);
