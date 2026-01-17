@@ -6,6 +6,7 @@ exports.up = function(knex, Promise) {
         t.string('houseId').references('House.slackId').notNull();
         t.timestamp('activeAt');
         t.timestamp('exemptAt'); // NOTE: deprecated
+        t.jsonb('metadata').notNull().defaultTo({});
     });
 };
 
