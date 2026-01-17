@@ -75,7 +75,8 @@ exports.choresActivateView = function (residents) {
   const header = 'Update activation status';
   const mainText = 'Activated residents *owe chores*, and can *create or vote on polls*.\n\n' +
     'Choose some residents to update. ' +
-    'You can update *all* residents in the workspace, or only *a few*.';
+    'You can update *all* residents in the workspace, or only *a few*. ' +
+    'You can also customize their monthly *chores* obligation.';
   const residentsText = `*Currently active residents* (${residents.length}): ` +
     residents.slice(0, 100).map(r => `<@${r.slackId}>`).join(', ');
 
@@ -113,6 +114,17 @@ exports.choresActivateView = function (residents) {
       type: 'multi_conversations_select',
       filter: common.userFilter,
       placeholder: common.blockPlaintext('Choose some residents'),
+    },
+  ));
+  blocks.push(common.blockInputOptional(
+    'Customize monthly chores obligation',
+    {
+      type: 'number_input',
+      action_id: 'obligation',
+      is_decimal_allowed: false,
+      min_value: '1',
+      max_value: '200',
+      placeholder: common.blockPlaintext('Default is 100 points'),
     },
   ));
 

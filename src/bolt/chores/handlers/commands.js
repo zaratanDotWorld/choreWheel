@@ -85,8 +85,11 @@ module.exports = (app) => {
     const { now, houseId } = common.beginAction('chores-activate-callback', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
-    const activate = common.getInputBlock(body, -3).action.selected_option.value === 'true';
-    const selectAll = common.getInputBlock(body, -2).select_all.selected_options.length > 0;
+    const activate = common.getInputBlock(body, -4).action.selected_option.value === 'true';
+    const selectAll = common.getInputBlock(body, -3).select_all.selected_options.length > 0;
+    // ResidentIds (block -2) are selected only if selectAll === false
+    let obligation = common.getInputBlock(body, -1).obligation.value;
+    obligation = obligation ? Number(obligation) : undefined;
 
     let residentIds;
     let residentsText;
@@ -96,11 +99,9 @@ module.exports = (app) => {
       residentIds = (await common.getWorkspaceMembers(app, choresConf.oauth))
         .filter(member => !member.deleted)
         .map(member => member.id);
-
       residentsText = `all ${residentIds.length} residents`;
     } else {
-      residentIds = common.getInputBlock(body, -1).residents.selected_conversations;
-
+      residentIds = common.getInputBlock(body, -2).residents.selected_conversations;
       residentsText = residentIds.map(residentId => `<@${residentId}>`).join(' and ');
     }
 
@@ -108,9 +109,10 @@ module.exports = (app) => {
 
     if (activate) {
       for (const residentId of residentIds) {
-        await common.activateResident(houseId, residentId, now);
+        await common.activateResident(houseId, residentId, now, obligation);
       }
-      text = `Activated ${residentsText || 'nobody'} :fire:`;
+      text = `Activated ${residentsText || 'nobody'}` +
+        `${obligation ? ` with a *${obligation}-point* obligation` : ''} :fire:`;
     } else {
       for (const residentId of residentIds) {
         await common.deactivateResident(houseId, residentId);
