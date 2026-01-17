@@ -385,8 +385,9 @@ exports.getAvailablePoints = async function (houseId, startTime, endTime) {
   const residents = await Admin.getResidents(houseId, endTime);
   const residentCount = residents.length;
 
-  // mp = (u_v * ppr * inf)
-  const monthlyPoints = residentCount * params.pointsPerResident * params.inflationFactor;
+  // mp = (sum(u_o) * inf)
+  const totalObligation = await exports.getTotalObligation(houseId, endTime);
+  const monthlyPoints = totalObligation * params.inflationFactor;
 
   // wr = u_w / u_v
   const workingResidentCount = await exports.getWorkingResidentCount(houseId, endTime);
@@ -422,6 +423,16 @@ exports.getAvailablePoints = async function (houseId, startTime, endTime) {
 exports.getTotalAvailablePoints = async function (houseId, startTime, endTime) {
   const availablePoints = await exports.getAvailablePoints(houseId, startTime, endTime);
   return availablePoints.reduce((sum, ap) => sum + ap.value, 0);
+};
+
+exports.getTotalObligation = async function (houseId, now) {
+  return (await Admin.getResidents(houseId, now))
+    .reduce((sum, r) => sum + (r.metadata.obligation || params.pointsPerResident), 0);
+};
+
+exports.getWorkingObligation = async function (houseId, now) {
+  return (await exports.getWorkingResidents(houseId, now))
+    .reduce((sum, r) => sum + (r.metadata.obligation || params.pointsPerResident), 0);
 };
 
 // Chore Values III (TODO: move this section)
@@ -628,7 +639,7 @@ exports.getChoreBreaks = async function (houseId, now) {
     .where('ChoreBreak.startDate', '<=', now)
     .where('ChoreBreak.endDate', '>', now)
     .where('Resident.activeAt', '<=', now)
-    .returning('*');
+    .select('ChoreBreak.*');
 };
 
 // Working residents are voting residents not on break
@@ -724,13 +735,17 @@ exports.getChoreStats = async function (houseId, residentId, startTime, endTime)
   const pointsEarned = await exports.getAllChorePoints(residentId, startTime, endTime);
   const workingPercentage = await exports.getWorkingResidentPercentage(residentId, endTime);
 
+  // Get resident's individual obligation
+  const resident = await Admin.getResident(residentId);
+  const residentObligation = resident.metadata.obligation || params.pointsPerResident;
+
   // Calculate special chore obligations
   const numResidents = await Admin.getNumResidents(houseId, endTime);
   const balance = await exports.getSpecialChoreBalance(houseId, endTime);
-  const obligation = Math.max(0, -balance) / Math.max(1, numResidents); // Avoid divide-by-zero
+  const specialObligation = Math.max(0, -balance) / Math.max(1, numResidents); // Avoid divide-by-zero
 
   // Note: special chore obligations are not re-allocated by workingPercentage; so are mildly inflationary
-  const pointsOwed = Math.round((params.pointsPerResident + obligation) * workingPercentage);
+  const pointsOwed = Math.round((residentObligation + specialObligation) * workingPercentage);
   const completionPct = (pointsOwed) ? pointsEarned / pointsOwed : 1;
 
   return { pointsEarned, pointsOwed, completionPct };

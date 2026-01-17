@@ -269,17 +269,20 @@ exports.choresRankView = function (choreRankings) {
 };
 
 exports.choresRankView2 = function (preference, targetChore, choreRankings) {
+  const effect = (preference >= 0.5) ? 'prioritize' : 'deprioritize';
+  const magnitude = Math.abs(preference - 0.5) > 0.2 ? 'a lot' : 'a little';
+
   const header = 'Set chore priorities';
-  const mainText = 'Priority-setting is a *collaborative and ongoing* process, ' +
+  const mainText = 'Priority-setting is a *cumulative and ongoing* process, ' +
     'where you "take" priority from some chores and give it to others, ' +
     'e.g. "I want to _prioritize_ dishes and _deprioritize_ yardwork."\n\n' +
     'To have a *bigger effect,* you can: ' +
     '*1)* take from *more* chores, ' +
     '*2)* take from *higher-priority* chores, ' +
-    '*3)* set a *stronger* preference, ' +
-    'or *4)* get *other people* to back you up.';
-  const actionText = `You want to *${(preference >= 0.5) ? 'prioritize' : 'deprioritize'}* ` +
-    `*${targetChore.name}* by *${Math.abs(preference - 0.5) > 0.2 ? 'a lot' : 'a little'}*,`;
+    '*3)* set a *stronger* preference, or ' +
+    '*4)* get *other people* to put in the same preferences.';
+  const actionText = `You want to *${effect}* *${targetChore.name}* ` +
+    `(${targetChore.priority.toFixed(1)}%) by *${magnitude}*,`;
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
@@ -307,10 +310,10 @@ exports.choresRankView2 = function (preference, targetChore, choreRankings) {
   };
 };
 
-exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetadata, prefSaturation, numResidents) {
+exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetadata, prefSaturation, totalObligation) {
   const newPriority = targetChoreRanking.ranking * 100;
   const change = newPriority - targetChore.priority;
-  const pointsPerDay = formatPointsPerDay(targetChoreRanking.ranking, numResidents);
+  const pointsPerDay = formatPointsPerDay(targetChoreRanking.ranking, totalObligation);
 
   const effect = change >= 0 ? 'an *increase*' : 'a *decrease*';
   const emoji = change >= 0 ? ':rocket:' : ':snail:';

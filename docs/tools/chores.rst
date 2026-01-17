@@ -39,8 +39,8 @@ Every house creates a list of chores that they need done.
 The key idea is that chores aren't done on a schedule, but rather "whenever necessary", as determined by the residents.
 Chores are worth points, and the amount of points a chore is worth goes up the longer the chore goes undone.
 
-**Everyone in the house needs to earn a certain number of points, about 100 per month.**
-**Over the course of the month, all the chores (collectively) gain about 100 points per person.**
+**Everyone in the house needs to earn a certain number of points, typically 100 per month.**
+**Over the course of the month, all the chores (collectively) gain points based on the total obligation.**
 Everyone does the chores they think are worth their time, and the result is a continuous process of domestic renewal.
 
 .. note::
@@ -96,7 +96,7 @@ Chores
       :widths: auto
 
 Points
-  Everyone owes **100 points** per month.
+  Everyone owes points each month, typically **100 points** (though this can be customized per resident).
   When someone does a chore, they earn points.
   The amount of points a chore is worth is not fixed, but grows over time.
   When someone claims a chore, the chore's value goes back to zero.
@@ -169,8 +169,8 @@ The app home is also the entryway into the basic functionality, described below:
     Once a special chore has been approved, you'll still need to claim it.
 
 :guilabel:`Set priorities`
-  The **total amount** of points distributed per month is fixed, at 100 points per resident.
-  Those points are distributed continuously over the course of the month. In a 10-person house and a 30-day month, that works out to about **33 points per day** in total.
+  The **total amount** of points distributed per month is based on the sum of all residents' obligations (typically 100 points per resident, but customizable).
+  Those points are distributed continuously over the course of the month. With 10 people and a 30-day month, that works out to about **33 points per day** in total.
   That number can't be changed, as it ensures that chores are done over the entire course of the month.
   (Imagine everyone getting to 100 points during the first week -- the house would be a mess for the rest of the month!).
   However, those 33 points are divided among the chores in different ways, depending on that chore's "priority".
@@ -230,8 +230,12 @@ Most people will not need to know about these commands to use Chores.
 
 ``/chores-activate`` \*
   The ``/chores-activate`` command is used by workspace administrators to "activate" users.
-  Workspace members are deactive by default, and must be activated to participate in chores.
+  Workspace members are inactive by default, and must be activated to participate in chores.
   An active user can claim chores, vote on claims, take breaks, and gift points.
+
+  When activating a user, administrators can optionally set a **custom obligation** (the number of points owed per month).
+  If not specified, the default obligation of 100 points is used.
+  Custom obligations are useful for residents with different living arrangements, such as those who are only part-time or have reduced responsibilities.
 
 ``/chores-reset`` \*
   The ``/chores-reset`` command is used to reset chore points.

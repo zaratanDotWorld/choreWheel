@@ -228,9 +228,9 @@ module.exports = (app) => {
     // Forward the preferences through metadata
     const prefsMetadata = JSON.stringify({ targetChore, sourceChoreIds, preference });
 
-    const numResidents = (await Admin.getResidents(houseId, now)).length;
+    const totalObligation = await Chores.getTotalObligation(houseId, now);
 
-    const view = views.choresRankView3(targetChore, targetChoreRanking, prefsMetadata, prefSaturation, numResidents);
+    const view = views.choresRankView3(targetChore, targetChoreRanking, prefsMetadata, prefSaturation, totalObligation);
     await ack({ response_action: 'push', view });
   });
 
@@ -253,8 +253,8 @@ module.exports = (app) => {
     const newPriority = targetChoreRanking.ranking * 100;
     const change = newPriority - targetChore.priority;
 
-    const numResidents = (await Admin.getResidents(houseId, now)).length;
-    const pointsPerDay = formatPointsPerDay(targetChoreRanking.ranking, numResidents);
+    const totalObligation = await Chores.getTotalObligation(houseId, now);
+    const pointsPerDay = formatPointsPerDay(targetChoreRanking.ranking, totalObligation);
 
     if (change > 0) {
       const text = `Someone *prioritized ${targetChore.name}* to *${newPriority.toFixed(1)}%* ` +

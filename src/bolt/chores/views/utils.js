@@ -30,8 +30,8 @@ exports.formatTotalStats = function (stats) {
   return `*Total - ${pointsEarned} / ${pointsOwed} (${(completionPct * 100).toFixed(0)}%)*`;
 };
 
-exports.formatPointsPerDay = function (ranking, numResidents) {
-  const pointsPerDay = ranking * (Chores.params.pointsPerResident / 30) * numResidents;
+exports.formatPointsPerDay = function (ranking, totalObligation) {
+  const pointsPerDay = ranking * totalObligation / 30;
   return (pointsPerDay >= 3) ? pointsPerDay.toFixed(0) : pointsPerDay.toFixed(1);
 };
 

@@ -238,8 +238,8 @@ exports.setChannel = async function (app, oauth, confName, command, respond) {
   }
 };
 
-exports.activateResident = async function (houseId, residentId, now) {
-  await Admin.activateResident(houseId, residentId, now);
+exports.activateResident = async function (houseId, residentId, now, obligation) {
+  await Admin.activateResident(houseId, residentId, now, obligation);
   await Hearts.initialiseResident(houseId, residentId, now);
 };
 
@@ -300,6 +300,7 @@ exports.parseLowercase = function (text) {
 
 exports.getInputBlock = function (body, blockIdx) {
   // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
+  // Indexing is based on the entire block, not only the inputs
   const realIdx = (blockIdx < 0) ? body.view.blocks.length + blockIdx : blockIdx;
   const blockId = body.view.blocks[realIdx].block_id;
   return body.view.state.values[blockId];
