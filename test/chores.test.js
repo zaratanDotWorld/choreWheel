@@ -1910,4 +1910,284 @@ describe('Chores', async () => {
       expect(chores.length).to.equal(2);
     });
   });
+
+  describe('importing chores', async () => {
+    const {
+      parseChoresCsv,
+      normalizeFrequency,
+      groupByTier,
+      generateTierPreferences,
+      FREQUENCY_TIERS,
+      PREFERENCE_STRENGTHS,
+    } = Chores;
+
+    beforeEach(async () => {
+      await Admin.activateResident(HOUSE, RESIDENT1, now);
+      await Admin.activateResident(HOUSE, RESIDENT2, now);
+    });
+
+    describe('CSV parsing utilities', async () => {
+      it('can normalize frequency strings', async () => {
+        expect(normalizeFrequency('high')).to.equal(FREQUENCY_TIERS.HIGH);
+        expect(normalizeFrequency('HIGH')).to.equal(FREQUENCY_TIERS.HIGH);
+        expect(normalizeFrequency('h')).to.equal(FREQUENCY_TIERS.HIGH);
+        expect(normalizeFrequency('medium')).to.equal(FREQUENCY_TIERS.MEDIUM);
+        expect(normalizeFrequency('med')).to.equal(FREQUENCY_TIERS.MEDIUM);
+        expect(normalizeFrequency('m')).to.equal(FREQUENCY_TIERS.MEDIUM);
+        expect(normalizeFrequency('low')).to.equal(FREQUENCY_TIERS.LOW);
+        expect(normalizeFrequency('l')).to.equal(FREQUENCY_TIERS.LOW);
+        expect(normalizeFrequency('invalid')).to.be.null;
+        expect(normalizeFrequency('')).to.be.null;
+        expect(normalizeFrequency(null)).to.be.null;
+      });
+
+      it('can parse a valid CSV with all columns', async () => {
+        const csv = `name,frequency,description
+dishes,high,Clean the dishes
+sweeping,medium,Sweep the floors
+trash,low,Take out the trash`;
+
+        const { chores, errors } = parseChoresCsv(csv);
+
+        expect(errors).to.have.length(0);
+        expect(chores).to.have.length(3);
+        // Names are returned as-is; caller applies titlecase
+        expect(chores[0]).to.deep.equal({ name: 'dishes', frequency: 'high', description: 'Clean the dishes' });
+        expect(chores[1]).to.deep.equal({ name: 'sweeping', frequency: 'medium', description: 'Sweep the floors' });
+        expect(chores[2]).to.deep.equal({ name: 'trash', frequency: 'low', description: 'Take out the trash' });
+      });
+
+      it('can parse a CSV without description column', async () => {
+        const csv = `name,frequency
+dishes,high
+sweeping,medium`;
+
+        const { chores, errors } = parseChoresCsv(csv);
+
+        expect(errors).to.have.length(0);
+        expect(chores).to.have.length(2);
+        expect(chores[0]).to.deep.equal({ name: 'dishes', frequency: 'high', description: '' });
+        expect(chores[1]).to.deep.equal({ name: 'sweeping', frequency: 'medium', description: '' });
+      });
+
+      it('can parse a CSV with quoted strings containing commas', async () => {
+        const csv = `name,frequency,description
+dishes,high,"Clean the dishes, pots, and pans"`;
+
+        const { chores, errors } = parseChoresCsv(csv);
+
+        expect(errors).to.have.length(0);
+        expect(chores).to.have.length(1);
+        expect(chores[0].description).to.equal('Clean the dishes, pots, and pans');
+      });
+
+      it('can parse a CSV with escaped quotes', async () => {
+        const csv = `name,frequency,description
+dishes,high,"Clean the ""main"" kitchen"`;
+
+        const { chores, errors } = parseChoresCsv(csv);
+
+        expect(errors).to.have.length(0);
+        expect(chores).to.have.length(1);
+        expect(chores[0].description).to.equal('Clean the "main" kitchen');
+      });
+
+      it('returns errors for missing required columns', async () => {
+        const csv = `chore_name,frequency
+dishes,high`;
+
+        const { chores, errors } = parseChoresCsv(csv);
+
+        expect(errors).to.include('Missing required column: name');
+        expect(chores).to.have.length(0);
+      });
+
+      it('returns errors for invalid frequency values', async () => {
+        const csv = `name,frequency
+dishes,daily
+sweeping,high`;
+
+        const { chores, errors } = parseChoresCsv(csv);
+
+        expect(errors).to.have.length(1);
+        expect(errors[0]).to.include('Invalid frequency');
+        expect(chores).to.have.length(1);
+      });
+
+      it('returns errors for duplicate chore names', async () => {
+        const csv = `name,frequency
+dishes,high
+Dishes,medium`;
+
+        const { errors } = parseChoresCsv(csv);
+
+        expect(errors).to.have.length(1);
+        expect(errors[0]).to.include('Duplicate chore name');
+      });
+
+      it('returns errors for empty CSV', async () => {
+        const csv = 'name,frequency';
+
+        const { errors } = parseChoresCsv(csv);
+
+        expect(errors).to.include('CSV must have a header row and at least one chore');
+      });
+
+      it('can group chores by tier', async () => {
+        const chores = [
+          { id: 1, name: 'dishes', frequency: 'high' },
+          { id: 2, name: 'sweeping', frequency: 'medium' },
+          { id: 3, name: 'trash', frequency: 'low' },
+          { id: 4, name: 'laundry', frequency: 'high' },
+        ];
+
+        const grouped = groupByTier(chores);
+
+        expect(grouped.high).to.have.length(2);
+        expect(grouped.medium).to.have.length(1);
+        expect(grouped.low).to.have.length(1);
+      });
+    });
+
+    describe('preference generation', async () => {
+      it('generates correct pairwise preferences from tiers', async () => {
+        const chores = [
+          { id: 1, name: 'dishes', frequency: 'high' },
+          { id: 2, name: 'sweeping', frequency: 'medium' },
+          { id: 3, name: 'trash', frequency: 'low' },
+        ];
+
+        const preferences = generateTierPreferences(RESIDENT1, chores);
+
+        // High > Low (strong: 1.0)
+        const highLow = preferences.find(p =>
+          (p.alphaChoreId === 1 && p.betaChoreId === 3) ||
+          (p.alphaChoreId === 3 && p.betaChoreId === 1),
+        );
+        expect(highLow).to.exist;
+        // When normalized, dishes(1) < trash(3), so alpha=1, beta=3, preference=1.0 (favoring alpha)
+        expect(highLow.alphaChoreId).to.equal(1);
+        expect(highLow.betaChoreId).to.equal(3);
+        expect(highLow.preference).to.equal(PREFERENCE_STRENGTHS.STRONG);
+
+        // High > Medium (intermediate: 0.7)
+        const highMed = preferences.find(p =>
+          (p.alphaChoreId === 1 && p.betaChoreId === 2) ||
+          (p.alphaChoreId === 2 && p.betaChoreId === 1),
+        );
+        expect(highMed).to.exist;
+        expect(highMed.alphaChoreId).to.equal(1);
+        expect(highMed.betaChoreId).to.equal(2);
+        expect(highMed.preference).to.equal(PREFERENCE_STRENGTHS.INTERMEDIATE);
+
+        // Medium > Low (intermediate: 0.7)
+        const medLow = preferences.find(p =>
+          (p.alphaChoreId === 2 && p.betaChoreId === 3) ||
+          (p.alphaChoreId === 3 && p.betaChoreId === 2),
+        );
+        expect(medLow).to.exist;
+        expect(medLow.alphaChoreId).to.equal(2);
+        expect(medLow.betaChoreId).to.equal(3);
+        expect(medLow.preference).to.equal(PREFERENCE_STRENGTHS.INTERMEDIATE);
+
+        expect(preferences).to.have.length(3);
+      });
+
+      it('generates multiple preferences for multiple chores per tier', async () => {
+        const chores = [
+          { id: 1, name: 'dishes', frequency: 'high' },
+          { id: 2, name: 'laundry', frequency: 'high' },
+          { id: 3, name: 'trash', frequency: 'low' },
+          { id: 4, name: 'recycling', frequency: 'low' },
+        ];
+
+        const preferences = generateTierPreferences(RESIDENT1, chores);
+
+        // Should have 2 high × 2 low = 4 strong preferences
+        const strongPrefs = preferences.filter(p => p.preference === PREFERENCE_STRENGTHS.STRONG);
+        expect(strongPrefs).to.have.length(4);
+      });
+    });
+
+    describe('importChores', async () => {
+      it('can import chores', async () => {
+        const choresToImport = [
+          { name: 'dishes', frequency: 'high', description: 'Clean dishes' },
+          { name: 'sweeping', frequency: 'medium', description: 'Sweep floors' },
+          { name: 'trash', frequency: 'low', description: 'Take out trash' },
+        ];
+
+        const { imported } = await Chores.importChores(HOUSE, choresToImport, now);
+
+        expect(imported).to.have.length(3);
+
+        const chores = await Chores.getChores(HOUSE);
+        expect(chores).to.have.length(3);
+
+        const dishesChore = chores.find(c => c.name === 'dishes');
+        expect(dishesChore.metadata.description).to.equal('Clean dishes');
+        expect(dishesChore.active).to.be.true;
+      });
+
+      it('inactivates existing chores when importing', async () => {
+        // Create some existing chores
+        await Chores.addChore(HOUSE, 'oldChore1');
+        await Chores.addChore(HOUSE, 'oldChore2');
+
+        let chores = await Chores.getChores(HOUSE);
+        expect(chores).to.have.length(2);
+
+        // Import new chores
+        const choresToImport = [
+          { name: 'newChore', frequency: 'high', description: '' },
+        ];
+
+        await Chores.importChores(HOUSE, choresToImport, now);
+
+        // Only active chores
+        chores = await Chores.getChores(HOUSE);
+        expect(chores).to.have.length(1);
+        expect(chores[0].name).to.equal('newChore');
+
+        // Old chores should be inactive
+        const allChores = await db('Chore').where({ houseId: HOUSE });
+        expect(allChores).to.have.length(3);
+        const oldChore1 = allChores.find(c => c.name === 'oldChore1');
+        expect(oldChore1.active).to.be.false;
+      });
+
+      it('reactivates existing chores with same name', async () => {
+        // Create and then inactivate a chore
+        const [ existingChore ] = await Chores.addChore(HOUSE, 'dishes');
+        await db('Chore').where({ id: existingChore.id }).update({ active: false });
+
+        // Import chores including one with same name
+        const choresToImport = [
+          { name: 'dishes', frequency: 'high', description: 'Updated description' },
+        ];
+
+        const { imported } = await Chores.importChores(HOUSE, choresToImport, now);
+
+        expect(imported).to.have.length(1);
+        expect(imported[0].id).to.equal(existingChore.id); // Same ID reused
+        expect(imported[0].metadata.description).to.equal('Updated description');
+        expect(imported[0].active).to.be.true;
+      });
+
+      it('initializes chore values for imported chores', async () => {
+        const choresToImport = [
+          { name: 'dishes', frequency: 'high', description: '' },
+          { name: 'sweeping', frequency: 'medium', description: '' },
+        ];
+
+        await Chores.importChores(HOUSE, choresToImport, now);
+
+        const choreValues = await db('ChoreValue').where({ houseId: HOUSE });
+        expect(choreValues).to.have.length(2);
+        choreValues.forEach((cv) => {
+          expect(cv.value).to.equal(Chores.params.initialValue);
+        });
+      });
+    });
+  });
 });
