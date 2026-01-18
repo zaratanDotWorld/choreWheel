@@ -534,6 +534,123 @@ module.exports = (app) => {
     await ack({ response_action: 'clear' });
   });
 
+  // Import flow
+
+  app.action('chores-import', async ({ ack, body }) => {
+    await ack();
+
+    const { houseId, residentId } = common.beginAction('chores-import', body);
+    const { choresConf } = await Admin.getHouse(houseId);
+
+    if (!(await common.isAdmin(app, choresConf.oauth, residentId))) {
+      const text = ':warning: Import is admin-only :warning:';
+      await common.postEphemeral(app, choresConf, residentId, text);
+      return;
+    }
+
+    const view = views.choresImportView();
+    await common.openView(app, choresConf.oauth, body.trigger_id, view);
+  });
+
+  app.view('chores-import-preview', async ({ ack, body }) => {
+    const { houseId, residentId } = common.beginAction('chores-import-preview', body);
+    const { choresConf } = await Admin.getHouse(houseId);
+
+    // Get the file from Slack
+    const fileBlock = body.view.state.values.file_block;
+    const files = fileBlock.csv_file.files;
+
+    if (!files || files.length === 0) {
+      const view = views.choresImportErrorView([ 'No file uploaded' ]);
+      await ack({ response_action: 'update', view });
+      return;
+    }
+
+    const file = files[0];
+
+    // Fetch file content from Slack
+    let fileContent;
+    try {
+      const fileInfo = await app.client.files.info({
+        token: choresConf.oauth.bot.token,
+        file: file.id,
+      });
+
+      // Download the file content
+      const response = await fetch(fileInfo.file.url_private, {
+        headers: { Authorization: `Bearer ${choresConf.oauth.bot.token}` },
+      });
+      fileContent = await response.text();
+    } catch (error) {
+      console.error('Failed to fetch file:', error);
+      const view = views.choresImportErrorView([ 'Failed to read uploaded file' ]);
+      await ack({ response_action: 'update', view });
+      return;
+    }
+
+    // Parse CSV
+    const { chores: parsedChores, errors } = Chores.parseChoresCsv(fileContent);
+
+    if (errors.length > 0) {
+      const view = views.choresImportErrorView(errors);
+      await ack({ response_action: 'update', view });
+      return;
+    }
+
+    if (parsedChores.length === 0) {
+      const view = views.choresImportErrorView([ 'No valid chores found in file' ]);
+      await ack({ response_action: 'update', view });
+      return;
+    }
+
+    // Apply titlecase to chore names (matches other chore creation flows)
+    const chores = parsedChores.map(c => ({ ...c, name: common.parseTitlecase(c.name) }));
+
+    // Get existing chores count
+    const existingChores = await Chores.getChores(houseId);
+
+    // Group by tier for preview
+    const choresByTier = Chores.groupByTier(chores);
+
+    // Store parsed chores in private_metadata for the callback
+    const metadata = JSON.stringify({ chores, residentId });
+
+    const view = {
+      ...views.choresImportPreviewView(choresByTier, existingChores.length),
+      private_metadata: metadata,
+    };
+
+    await ack({ response_action: 'push', view });
+  });
+
+  app.view('chores-import-callback', async ({ ack, body }) => {
+    await ack({ response_action: 'clear' });
+
+    const { now, houseId, residentId } = common.beginAction('chores-import-callback', body);
+    const { choresConf } = await Admin.getHouse(houseId);
+
+    const { chores, residentId: adminId } = JSON.parse(body.view.private_metadata);
+
+    // Execute import
+    const { imported } = await Chores.importChores(houseId, chores, now);
+
+    // Generate and set preferences for the admin
+    const preferences = Chores.generateTierPreferences(adminId, imported);
+    if (preferences.length > 0) {
+      await Chores.setChorePreferences(houseId, preferences);
+    }
+
+    // Group for summary
+    const choresByTier = Chores.groupByTier(imported);
+
+    const text = `<@${residentId}> just imported *${imported.length} chores* :rocket:\n` +
+      `• High: ${choresByTier.high.length}\n` +
+      `• Medium: ${choresByTier.medium.length}\n` +
+      `• Low: ${choresByTier.low.length}`;
+
+    await common.postMessage(app, choresConf, text);
+  });
+
   // Voting flow
 
   app.action(/poll-vote/, async ({ ack, body, action }) => {

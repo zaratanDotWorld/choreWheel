@@ -78,6 +78,14 @@ exports.choresOnboardMessage = function (oauth) {
   ));
 
   blocks.push(common.blockSection(
+    '*Admins* can also import chores from a CSV file using the button below.',
+  ));
+
+  blocks.push(common.blockActions([
+    common.blockButton('chores-import', 'Import Chores'),
+  ]));
+
+  blocks.push(common.blockSection(
     `_Tip: pin this message to the channel. To learn more about Chores, read the <${DOCS_URL}|docs>._`,
   ));
 
@@ -783,4 +791,97 @@ exports.choresSpecialCallbackView = function (proposal, minVotes, obligation, cl
   blocks.push(common.blockSection(common.makeVoteText(minVotes, Chores.params.specialProposalPollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(proposal.pollId, 1, 0)));
   return blocks;
+};
+
+// Import flow
+
+exports.choresImportView = function () {
+  const header = 'Import Chores';
+  const mainText = 'Upload a CSV file with your chores list. ' +
+    'This will *replace all existing chores* with the ones in your file.\n\n' +
+    '*CSV Format:*\n' +
+    '```name,frequency,description\n' +
+    'Dishes,High,Wash all dishes in the sink\n' +
+    'Trash Takeout,Medium,Take out trash and recycling\n' +
+    'Deep Clean,Low,Monthly deep cleaning tasks```\n\n' +
+    '*Frequency* must be: `High`, `Medium`, or `Low`';
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockDivider());
+  blocks.push({
+    type: 'input',
+    block_id: 'file_block',
+    label: common.blockPlaintext('CSV File'),
+    element: {
+      type: 'file_input',
+      action_id: 'csv_file',
+      filetypes: [ 'csv', 'text' ],
+      max_files: 1,
+    },
+  });
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-import-preview',
+    title: TITLE,
+    close: common.CLOSE,
+    submit: common.NEXT,
+    blocks,
+  };
+};
+
+exports.choresImportPreviewView = function (choresByTier, existingCount) {
+  const header = 'Confirm Import';
+
+  const totalNew = choresByTier.high.length + choresByTier.medium.length + choresByTier.low.length;
+
+  let warningText = '';
+  if (existingCount > 0) {
+    warningText = `:warning: This will *inactivate ${existingCount} existing chore(s)* and replace them.\n\n`;
+  }
+
+  const summaryText = warningText +
+    `*${totalNew} chore(s)* will be imported:\n` +
+    `• High priority: ${choresByTier.high.length}\n` +
+    `• Medium priority: ${choresByTier.medium.length}\n` +
+    `• Low priority: ${choresByTier.low.length}`;
+
+  const choreListText = '*Chores to import:*\n' +
+    [ ...choresByTier.high, ...choresByTier.medium, ...choresByTier.low ]
+      .map(c => `• ${c.name} (${c.frequency})`)
+      .join('\n');
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(summaryText));
+  blocks.push(common.blockDivider());
+  blocks.push(common.blockSection(choreListText));
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-import-callback',
+    title: TITLE,
+    close: common.BACK,
+    submit: common.SUBMIT,
+    blocks,
+  };
+};
+
+exports.choresImportErrorView = function (errors) {
+  const header = 'Import Errors';
+  const mainText = 'The following errors were found in your CSV file:\n\n' +
+    errors.map(e => `• ${e}`).join('\n');
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+
+  return {
+    type: 'modal',
+    title: TITLE,
+    close: common.CLOSE,
+    blocks,
+  };
 };
