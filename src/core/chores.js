@@ -1,4 +1,5 @@
 const assert = require('assert');
+const { parse: parseCsv } = require('csv-parse/sync');
 
 const { db } = require('./db');
 const { DAY, HOUR } = require('../time');
@@ -915,4 +916,184 @@ exports.resetChorePoints = async function (houseId, now) {
     await tx('Resident').insert(resetResidents).onConflict('slackId').merge(); // HACK: write Resident table directly
     await tx('ChoreClaim').insert([ ...resetResidentClaims, ...resetChoreClaims ]);
   });
+};
+
+// Bulk import chores (onboarding)
+
+exports.importChores = async function (houseId, chores, now) {
+  // chores: [{ name, frequency, description }]
+  // Returns: { imported: [chore] }
+
+  const importedChores = [];
+
+  await db.transaction(async (tx) => {
+    // Step 1: Inactivate all existing chores
+    await tx('Chore')
+      .where({ houseId, active: true })
+      .update({ active: false });
+
+    // Step 2: Insert new chores (merge on conflict to handle reactivation)
+    for (const choreData of chores) {
+      const [ chore ] = await tx('Chore')
+        .insert({
+          houseId,
+          name: choreData.name,
+          metadata: { description: choreData.description },
+          active: true,
+        })
+        .onConflict([ 'houseId', 'name' ]).merge()
+        .returning('*');
+
+      // Attach frequency for preference generation
+      importedChores.push({ ...chore, frequency: choreData.frequency });
+    }
+
+    // Step 3: Initialize chore values
+    const choreValues = importedChores.map(chore => ({
+      houseId,
+      choreId: chore.id,
+      valuedAt: now,
+      value: params.initialValue,
+    }));
+
+    if (choreValues.length > 0) {
+      await tx('ChoreValue').insert(choreValues);
+    }
+  });
+
+  return { imported: importedChores };
+};
+
+// Bulk import utilities
+
+exports.FREQUENCY_TIERS = {
+  HIGH: 'high',
+  MEDIUM: 'medium',
+  LOW: 'low',
+};
+
+const TIERS = exports.FREQUENCY_TIERS;
+
+exports.PREFERENCE_STRENGTHS = {
+  STRONG: 1.0, // High > Low (skip a tier)
+  INTERMEDIATE: 0.7, // High > Medium, Medium > Low (adjacent tiers)
+};
+
+const STRENGTHS = exports.PREFERENCE_STRENGTHS;
+
+// Parse CSV content into structured chore data
+// Expected format: name,frequency,description (header row required)
+// Note: Names are returned as-is; caller should apply any normalization (e.g., titlecase)
+exports.parseChoresCsv = function (csvContent) {
+  let records;
+  try {
+    records = parseCsv(csvContent, {
+      columns: header => header.map(col => col.toLowerCase().trim()),
+      skip_empty_lines: true,
+      trim: true,
+    });
+  } catch (err) {
+    return { chores: [], errors: [ `Invalid CSV format: ${err.message}` ] };
+  }
+
+  if (!records.length) {
+    return { chores: [], errors: [ 'CSV must have a header row and at least one chore' ] };
+  }
+
+  const cols = Object.keys(records[0]);
+  const missing = [ 'name', 'frequency' ].filter(c => !cols.includes(c));
+  if (missing.length) {
+    return { chores: [], errors: missing.map(c => `Missing required column: ${c}`) };
+  }
+
+  const chores = [];
+  const errors = [];
+  const seen = new Set();
+
+  for (const [ i, { name, frequency: freq, description = '' } ] of records.entries()) {
+    const row = i + 2;
+    if (!name) { errors.push(`Row ${row}: Missing chore name`); continue; }
+
+    const frequency = exports.normalizeFrequency(freq);
+    if (!frequency) { errors.push(`Row ${row}: Invalid frequency "${freq}"`); continue; }
+
+    if (seen.has(name.toLowerCase())) { errors.push(`Duplicate chore name: "${name}"`); continue; }
+    seen.add(name.toLowerCase());
+
+    chores.push({ name, frequency, description });
+  }
+
+  return { chores, errors };
+};
+
+// Normalize frequency string to tier constant
+exports.normalizeFrequency = function (frequency) {
+  if (!frequency) return null;
+
+  const normalized = frequency.toLowerCase().trim();
+  switch (normalized) {
+    case 'high':
+    case 'h':
+      return TIERS.HIGH;
+    case 'medium':
+    case 'med':
+    case 'm':
+      return TIERS.MEDIUM;
+    case 'low':
+    case 'l':
+      return TIERS.LOW;
+    default:
+      return null;
+  }
+};
+
+// Group chores by their frequency tier
+exports.groupByTier = function (chores) {
+  return {
+    high: chores.filter(c => c.frequency === TIERS.HIGH),
+    medium: chores.filter(c => c.frequency === TIERS.MEDIUM),
+    low: chores.filter(c => c.frequency === TIERS.LOW),
+  };
+};
+
+// Generate pairwise preferences based on frequency tiers
+// Higher tiers get preference over lower tiers
+exports.generateTierPreferences = function (residentId, choresWithIds) {
+  const grouped = exports.groupByTier(choresWithIds);
+  const preferences = [];
+
+  // High > Low (strong preference)
+  for (const highChore of grouped.high) {
+    for (const lowChore of grouped.low) {
+      preferences.push(
+        exports.createTierPreference(residentId, highChore.id, lowChore.id, STRENGTHS.STRONG),
+      );
+    }
+  }
+
+  // High > Medium (intermediate preference)
+  for (const highChore of grouped.high) {
+    for (const medChore of grouped.medium) {
+      preferences.push(
+        exports.createTierPreference(residentId, highChore.id, medChore.id, STRENGTHS.INTERMEDIATE),
+      );
+    }
+  }
+
+  // Medium > Low (intermediate preference)
+  for (const medChore of grouped.medium) {
+    for (const lowChore of grouped.low) {
+      preferences.push(
+        exports.createTierPreference(residentId, medChore.id, lowChore.id, STRENGTHS.INTERMEDIATE),
+      );
+    }
+  }
+
+  return preferences;
+};
+
+// Create a normalized preference object
+exports.createTierPreference = function (residentId, targetChoreId, sourceChoreId, preference) {
+  const normalized = exports.normalizeChorePreference({ targetChoreId, sourceChoreId, preference });
+  return { residentId, ...normalized };
 };
