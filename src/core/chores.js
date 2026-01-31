@@ -17,7 +17,7 @@ const Admin = require('./admin');
 const Hearts = require('./hearts');
 const Polls = require('./polls');
 
-const { PowerRanker } = require('power-ranker');
+const PowerRanker = require('../lib/power');
 
 // Params
 

@@ -32,7 +32,6 @@
     "newrelic": "^11.23.2",
     "node-cron": "^3.0.3",
     "pg": "^8.16.3",
-    "power-ranker": "^0.3.0",
     "voca": "^1.4.1"
   },
   "devDependencies": {
