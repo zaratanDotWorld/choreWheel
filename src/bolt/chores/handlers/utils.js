@@ -37,7 +37,11 @@ exports.generatePreferencesFromScores = function (residentId, chores) {
     for (let j = i + 1; j < chores.length; j++) {
       const [ a, b ] = [ chores[i], chores[j] ];
       const [ target, source ] = a.score >= b.score ? [ a, b ] : [ b, a ];
-      const preference = target.score / (target.score + source.score);
+
+      // Power-scaled ratio: ratio^k / (ratio^k + 1)
+      // k > 1 stretches preferences further from 0.5, preserving more of the score ratio
+      const ratio = target.score / source.score;
+      const preference = (ratio ** 2) / ((ratio ** 2) + 1);
 
       preferences.push({
         targetChoreId: target.id,
