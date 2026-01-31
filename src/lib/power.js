@@ -40,15 +40,20 @@ class PowerRanker {
       const targetIx = itemMap.get(p.target);
       const sourceIx = itemMap.get(p.source);
 
-      // Remove the implicit neutral preference
-      matrix.data[sourceIx][targetIx] -= implicitPref;
-      matrix.data[targetIx][sourceIx] -= implicitPref;
+      // Scale preference so 0.5 is truly neutral (contributes 0)
+      // Values above 0.5 flow toward target, below 0.5 flow toward source
+      const scaled = (p.value - 0.5) * 2;
 
-      // We only record the dominant preference
-      if (p.value >= 0.5) {
-        matrix.data[sourceIx][targetIx] += p.value;
-      } else {
-        matrix.data[targetIx][sourceIx] += (1 - p.value);
+      if (scaled !== 0) {
+        // Remove the implicit neutral preference
+        matrix.data[sourceIx][targetIx] -= implicitPref;
+        matrix.data[targetIx][sourceIx] -= implicitPref;
+
+        if (scaled > 0) {
+          matrix.data[sourceIx][targetIx] += scaled;
+        } else {
+          matrix.data[targetIx][sourceIx] += -scaled;
+        }
       }
     });
 
