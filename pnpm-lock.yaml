@@ -29,6 +29,9 @@ importers:
       linear-algebra:
         specifier: ^3.1.4
         version: 3.1.4
+      lru-cache:
+        specifier: ^11.2.4
+        version: 11.2.4
       newrelic:
         specifier: ^11.23.2
         version: 11.23.2
@@ -38,9 +41,6 @@ importers:
       pg:
         specifier: ^8.16.3
         version: 8.16.3
-      power-ranker:
-        specifier: ^0.3.0
-        version: 0.3.0
       voca:
         specifier: ^1.4.1
         version: 1.4.1
@@ -1816,6 +1816,10 @@ packages:
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
 
+  lru-cache@11.2.4:
+    resolution: {integrity: sha512-B5Y16Jr9LB9dHVkh6ZevG+vAbOsNOYCX+sXvFWFu7B3Iz5mijW3zdbMyhsh8ANd2mSWBYdJgnqi+mL7/LrOPYg==}
+    engines: {node: 20 || >=22}
+
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
@@ -2202,10 +2206,6 @@ packages:
   postgres-interval@1.2.0:
     resolution: {integrity: sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==}
     engines: {node: '>=0.10.0'}
-
-  power-ranker@0.3.0:
-    resolution: {integrity: sha512-rRSj05pEP9uTIdJfrkI1So37DFJIP4Il0ddPU14Sbi3bULL2P7w+6bfxEONGZn7VGMnMZZI1YiFRx2+zQ+oiLw==}
-    engines: {node: ^20.11.1, npm: ^10.9.1}
 
   prebuildify@6.0.1:
     resolution: {integrity: sha512-8Y2oOOateom/s8dNBsGIcnm6AxPmLH4/nanQzL5lQMU+sC0CMhzARZHizwr36pUPLdvBnOkCNQzxg4djuFSgIw==}
@@ -4925,6 +4925,8 @@ snapshots:
   lru-cache@10.4.3:
     optional: true
 
+  lru-cache@11.2.4: {}
+
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
@@ -5385,10 +5387,6 @@ snapshots:
   postgres-interval@1.2.0:
     dependencies:
       xtend: 4.0.2
-
-  power-ranker@0.3.0:
-    dependencies:
-      linear-algebra: 3.1.4
 
   prebuildify@6.0.1:
     dependencies:
