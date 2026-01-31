@@ -54,35 +54,21 @@ exports.choresOnboardMessage = function (oauth) {
   blocks.push(common.blockDivider());
 
   blocks.push(common.blockSection(
-    'Everyone can access Chores functionality through the app home screen:',
+    `Everyone can access <@${oauth.bot.userId}> through the app home screen. ` +
+    'This is where people will claim chores, set priorities, and do everything else.',
   ));
 
   blocks.push(common.blockImage(imageUrl, 'Chore Wheel App Home'));
 
   blocks.push(common.blockSection(
-    `If you don't see the app home, you can reach it by clicking on <@${oauth.bot.userId}>.`,
-  ));
-
-  blocks.push(common.blockDivider());
-
-  blocks.push(common.blockSection(
-    'Your group has been set up with two starter chores: _Dishes_ and _Trash Takeout_. ' +
-    'Next steps are to *activate the rest of your group* and *add a few more chores* to the list. ' +
-    'Then sit back and let the magic happen. :sparkles:',
-  ));
-
-  blocks.push(common.blockSection(
-    'Folks can activate themselves through the app home, ' +
-    'and admins activate others with the `/chores-activate` command. ' +
-    'Adding and claiming chores can be done by anybody through the app home.',
-  ));
-
-  blocks.push(common.blockSection(
-    '*Admins* can also import chores from a CSV file using the button below.',
+    'Next steps are to *activate the rest of your group* and *add some chores* to the list. ' +
+    'Then sit back and let the magic happen :sparkles:',
   ));
 
   blocks.push(common.blockActions([
-    common.blockButton('chores-import', 'Import Chores'),
+    common.blockButton('chores-activate-solo', ':fire: Activate yourself'),
+    common.blockButton('chores-propose', ':notebook: Edit chores list'),
+    common.blockButton('chores-import', ':floppy_disk: Import bulk chores'),
   ]));
 
   blocks.push(common.blockSection(
@@ -796,35 +782,34 @@ exports.choresSpecialCallbackView = function (proposal, minVotes, obligation, cl
 // Import flow
 
 exports.choresImportView = function () {
+  const sampleCsvUrl = 'https://docs.google.com/spreadsheets/d/1PCGAKVNAPtNXPHPXojCIH_SW_lgNGOOiBSssSEi5WFM';
+
   const header = 'Import Chores';
   const mainText = 'Upload a CSV file with your chores list. ' +
-    'This will *replace all existing chores* with the ones in your file.\n\n' +
-    '*CSV Format:*\n' +
-    '```name,frequency,description\n' +
-    'Dishes,High,Wash all dishes in the sink\n' +
-    'Trash Takeout,Medium,Take out trash and recycling\n' +
-    'Deep Clean,Low,Monthly deep cleaning tasks```\n\n' +
-    '*Frequency* must be: `High`, `Medium`, or `Low`';
+    'This will *replace all existing chores* with the ones in your file.';
+  const formatText = 'Please upload a CSV file with the following columns: *Name*, *Score*, and *Description*. ' +
+    'Scores will be used to set initial priorities, with higher scores leading to higher priorities.';
+  const sampleText = `*${common.makeLink(sampleCsvUrl, 'Click here')}* for a sample CSV template.`;
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
   blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockSection(formatText));
+  blocks.push(common.blockSection(sampleText));
   blocks.push(common.blockDivider());
-  blocks.push({
-    type: 'input',
-    block_id: 'file_block',
-    label: common.blockPlaintext('CSV File'),
-    element: {
+  blocks.push(common.blockInput(
+    'Upload CSV',
+    {
       type: 'file_input',
-      action_id: 'csv_file',
+      action_id: 'csv',
       filetypes: [ 'csv', 'text' ],
       max_files: 1,
     },
-  });
+  ));
 
   return {
     type: 'modal',
-    callback_id: 'chores-import-preview',
+    callback_id: 'chores-import-2',
     title: TITLE,
     close: common.CLOSE,
     submit: common.NEXT,
@@ -832,32 +817,21 @@ exports.choresImportView = function () {
   };
 };
 
-exports.choresImportPreviewView = function (choresByTier, existingCount) {
-  const header = 'Confirm Import';
+exports.choresImport2View = function (rankings) {
+  const header = 'Import Chores';
 
-  const totalNew = choresByTier.high.length + choresByTier.medium.length + choresByTier.low.length;
+  const mainText = 'This import will create the following chores and priorities. ' +
+    'Submit to confirm, or go back to update your import.';
 
-  let warningText = '';
-  if (existingCount > 0) {
-    warningText = `:warning: This will *inactivate ${existingCount} existing chore(s)* and replace them.\n\n`;
-  }
-
-  const summaryText = warningText +
-    `*${totalNew} chore(s)* will be imported:\n` +
-    `• High priority: ${choresByTier.high.length}\n` +
-    `• Medium priority: ${choresByTier.medium.length}\n` +
-    `• Low priority: ${choresByTier.low.length}`;
-
-  const choreListText = '*Chores to import:*\n' +
-    [ ...choresByTier.high, ...choresByTier.medium, ...choresByTier.low ]
-      .map(c => `• ${c.name} (${c.frequency})`)
-      .join('\n');
+  const choresText = rankings
+    .map(c => `${c.name} - ${(c.ranking * 100).toFixed(1)}%`)
+    .join('\n');
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
-  blocks.push(common.blockSection(summaryText));
+  blocks.push(common.blockSection(mainText));
   blocks.push(common.blockDivider());
-  blocks.push(common.blockSection(choreListText));
+  blocks.push(common.blockSection(choresText));
 
   return {
     type: 'modal',

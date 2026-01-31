@@ -3,6 +3,7 @@ const { getMonthStart, getPrevMonthEnd } = require('../../../time');
 
 const common = require('../../common');
 const views = require('../views/commands');
+const viewsActions = require('../views/actions');
 
 module.exports = (app) => {
   // Slash command: /chores-prune
@@ -24,6 +25,7 @@ module.exports = (app) => {
     const { choresConf } = await Admin.getHouse(houseId);
 
     await common.setChannel(app, choresConf.oauth, Admin.CHORES_CONF, command, respond);
+    await common.postMessage(app, choresConf, 'Welcome to Chores!', viewsActions.choresOnboardMessage(choresConf.oauth));
   });
 
   // Slash command: /chores-stats
@@ -72,7 +74,6 @@ module.exports = (app) => {
       await respond({ response_type: 'ephemeral', text: common.ADMIN_ONLY });
     } else {
       const residents = await Admin.getResidents(houseId, now);
-
       const view = views.choresActivateView(residents);
       await common.openView(app, choresConf.oauth, command.trigger_id, view);
     }

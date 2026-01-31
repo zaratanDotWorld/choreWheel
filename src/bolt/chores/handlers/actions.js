@@ -1,14 +1,20 @@
 const assert = require('assert');
 
+const CSV = require('csv-parse/sync');
+const { LRUCache } = require('lru-cache');
+
 const { Admin, Polls, Chores } = require('../../../core/index');
 const { DAY, getMonthStart, shiftDate } = require('../../../time');
 
 const common = require('../../common');
+const utils = require('./utils');
 const views = require('../views/actions');
 
 const { formatPointsPerDay } = require('../views/utils');
 
 module.exports = (app) => {
+  const cache = new LRUCache({ max: 100, ttl: 1000 * 60 * 15 });
+
   // Onboarding flow
 
   app.action('chores-onboard', async ({ ack, body }) => {
@@ -543,83 +549,43 @@ module.exports = (app) => {
     const { choresConf } = await Admin.getHouse(houseId);
 
     if (!(await common.isAdmin(app, choresConf.oauth, residentId))) {
-      const text = ':warning: Import is admin-only :warning:';
-      await common.postEphemeral(app, choresConf, residentId, text);
-      return;
+      await common.postEphemeral(app, choresConf, residentId, common.ADMIN_ONLY);
+    } else {
+      const view = views.choresImportView();
+      await common.openView(app, choresConf.oauth, body.trigger_id, view);
     }
-
-    const view = views.choresImportView();
-    await common.openView(app, choresConf.oauth, body.trigger_id, view);
   });
 
-  app.view('chores-import-preview', async ({ ack, body }) => {
-    const { houseId, residentId } = common.beginAction('chores-import-preview', body);
+  app.view('chores-import-2', async ({ ack, body }) => {
+    const { now, houseId, residentId } = common.beginAction('chores-import-2  ', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
-    // Get the file from Slack
-    const fileBlock = body.view.state.values.file_block;
-    const files = fileBlock.csv_file.files;
+    const [ file ] = common.getInputBlock(body, -1).csv.files;
 
-    if (!files || files.length === 0) {
-      const view = views.choresImportErrorView([ 'No file uploaded' ]);
-      await ack({ response_action: 'update', view });
-      return;
-    }
+    const fileObject = await app.client.files.info({
+      token: choresConf.oauth.bot.token,
+      file: file.id,
+    });
 
-    const file = files[0];
+    // TODO: handle errors
+    const chores = CSV.parse(fileObject.content, {
+      columns: header => header.map(col => col.toLowerCase().trim()),
+      skip_empty_lines: true,
+      trim: true,
+    }).map((c, i) => ({
+      id: i + 1,
+      name: common.parseTitlecase(c.name),
+      score: parseInt(c.score),
+      description: c.description,
+    }));
 
-    // Fetch file content from Slack
-    let fileContent;
-    try {
-      const fileInfo = await app.client.files.info({
-        token: choresConf.oauth.bot.token,
-        file: file.id,
-      });
+    const numResidents = await Admin.getNumResidents(houseId, now);
+    const preferences = utils.generatePreferencesFromScores(residentId, chores);
+    const rankings = await Chores.getChoreRankings(chores, numResidents, preferences);
 
-      // Download the file content
-      const response = await fetch(fileInfo.file.url_private, {
-        headers: { Authorization: `Bearer ${choresConf.oauth.bot.token}` },
-      });
-      fileContent = await response.text();
-    } catch (error) {
-      console.error('Failed to fetch file:', error);
-      const view = views.choresImportErrorView([ 'Failed to read uploaded file' ]);
-      await ack({ response_action: 'update', view });
-      return;
-    }
+    cache.set(`chores-import-${residentId}`, chores);
 
-    // Parse CSV
-    const { chores: parsedChores, errors } = Chores.parseChoresCsv(fileContent);
-
-    if (errors.length > 0) {
-      const view = views.choresImportErrorView(errors);
-      await ack({ response_action: 'update', view });
-      return;
-    }
-
-    if (parsedChores.length === 0) {
-      const view = views.choresImportErrorView([ 'No valid chores found in file' ]);
-      await ack({ response_action: 'update', view });
-      return;
-    }
-
-    // Apply titlecase to chore names (matches other chore creation flows)
-    const chores = parsedChores.map(c => ({ ...c, name: common.parseTitlecase(c.name) }));
-
-    // Get existing chores count
-    const existingChores = await Chores.getChores(houseId);
-
-    // Group by tier for preview
-    const choresByTier = Chores.groupByTier(chores);
-
-    // Store parsed chores in private_metadata for the callback
-    const metadata = JSON.stringify({ chores, residentId });
-
-    const view = {
-      ...views.choresImportPreviewView(choresByTier, existingChores.length),
-      private_metadata: metadata,
-    };
-
+    const view = views.choresImport2View(rankings);
     await ack({ response_action: 'push', view });
   });
 
@@ -629,24 +595,15 @@ module.exports = (app) => {
     const { now, houseId, residentId } = common.beginAction('chores-import-callback', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
-    const { chores, residentId: adminId } = JSON.parse(body.view.private_metadata);
+    const chores = cache.get(`chores-import-${residentId}`);
 
-    // Execute import
-    const { imported } = await Chores.importChores(houseId, chores, now);
+    const choresWithId = (await Chores.importChores(houseId, chores, now))
+      .map(c => ({ ...c, score: chores.find(c2 => c2.name === c.name).score }));
 
-    // Generate and set preferences for the admin
-    const preferences = Chores.generateTierPreferences(adminId, imported);
-    if (preferences.length > 0) {
-      await Chores.setChorePreferences(houseId, preferences);
-    }
+    const preferences = utils.generatePreferencesFromScores(residentId, choresWithId);
+    await Chores.setChorePreferences(houseId, preferences);
 
-    // Group for summary
-    const choresByTier = Chores.groupByTier(imported);
-
-    const text = `<@${residentId}> just imported *${imported.length} chores* :rocket:\n` +
-      `• High: ${choresByTier.high.length}\n` +
-      `• Medium: ${choresByTier.medium.length}\n` +
-      `• Low: ${choresByTier.low.length}`;
+    const text = `<@${residentId}> just imported *${choresWithId.length} chores* :rocket:`;
 
     await common.postMessage(app, choresConf, text);
   });

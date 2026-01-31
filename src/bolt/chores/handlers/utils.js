@@ -27,3 +27,26 @@ exports.pingChores = async function (app) {
     }
   }
 };
+
+// Import functions
+
+exports.generatePreferencesFromScores = function (residentId, chores) {
+  const preferences = [];
+
+  for (let i = 0; i < chores.length; i++) {
+    for (let j = i + 1; j < chores.length; j++) {
+      const [ a, b ] = [ chores[i], chores[j] ];
+      const [ target, source ] = a.score >= b.score ? [ a, b ] : [ b, a ];
+      const preference = target.score / (target.score + source.score);
+
+      preferences.push({
+        targetChoreId: target.id,
+        sourceChoreId: source.id,
+        preference,
+      });
+    }
+  }
+
+  return preferences
+    .map(p => ({ residentId, ...Chores.normalizeChorePreference(p) }));
+};
