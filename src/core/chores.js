@@ -1,5 +1,4 @@
 const assert = require('assert');
-const { parse: parseCsv } = require('csv-parse/sync');
 
 const { db } = require('./db');
 const { DAY, HOUR } = require('../time');
@@ -329,29 +328,28 @@ exports.getCurrentChoreValues = async function (houseId, now) {
 // Chore Rankings
 
 exports.getCurrentChoreRankings = async function (houseId, now) {
+  const chores = await exports.getChores(houseId);
+  const numResidents = await Admin.getNumResidents(houseId, now);
   const preferences = await exports.getActiveChorePreferences(houseId, now);
-  return exports.getChoreRankings(houseId, now, preferences);
+  return exports.getChoreRankings(chores, numResidents, preferences);
 };
 
 exports.getProposedChoreRankings = async function (houseId, newPrefs, now) {
+  const chores = await exports.getChores(houseId);
+  const numResidents = await Admin.getNumResidents(houseId, now);
   const currentPrefs = await exports.getActiveChorePreferences(houseId, now);
   const proposedPrefs = exports.mergeChorePreferences(currentPrefs, newPrefs);
-  return exports.getChoreRankings(houseId, now, proposedPrefs);
+  return exports.getChoreRankings(chores, numResidents, proposedPrefs);
 };
 
-exports.getChoreRankings = async function (houseId, now, preferences) {
-  const chores = await exports.getChores(houseId);
-  const residents = await Admin.getResidents(houseId, now);
-
+exports.getChoreRankings = async function (chores, numResidents, preferences) {
   // Handle the case of less than two chores
   if (chores.length <= 1) {
-    return chores.map((chore) => {
-      return { id: chore.id, name: chore.name, ranking: 1.0 };
-    });
+    return chores.map(c => ({ id: c.id, name: c.name, ranking: 1.0 }));
   }
 
   const items = new Set(chores.map(c => c.id));
-  const options = { numParticipants: residents.length, implicitPref: (1 / residents.length) / 2 };
+  const options = { numParticipants: numResidents, implicitPref: (1 / numResidents) / 2 };
   const powerRanker = new PowerRanker({ items, options });
 
   powerRanker.addPreferences(preferences.map((p) => {
@@ -360,8 +358,8 @@ exports.getChoreRankings = async function (houseId, now, preferences) {
 
   const rankings = powerRanker.run({ d: params.dampingFactor });
 
-  return chores.map((chore) => {
-    return { id: chore.id, name: chore.name, ranking: rankings.get(chore.id) };
+  return chores.map((c) => {
+    return { id: c.id, name: c.name, ranking: rankings.get(c.id) };
   }).sort((a, b) => b.ranking - a.ranking);
 };
 
@@ -918,182 +916,36 @@ exports.resetChorePoints = async function (houseId, now) {
   });
 };
 
-// Bulk import chores (onboarding)
-
 exports.importChores = async function (houseId, chores, now) {
-  // chores: [{ name, frequency, description }]
-  // Returns: { imported: [chore] }
-
-  const importedChores = [];
+  let choresWithId;
 
   await db.transaction(async (tx) => {
-    // Step 1: Inactivate all existing chores
     await tx('Chore')
-      .where({ houseId, active: true })
+      .where({ houseId })
       .update({ active: false });
 
-    // Step 2: Insert new chores (merge on conflict to handle reactivation)
-    for (const choreData of chores) {
-      const [ chore ] = await tx('Chore')
-        .insert({
-          houseId,
-          name: choreData.name,
-          metadata: { description: choreData.description },
-          active: true,
-        })
-        .onConflict([ 'houseId', 'name' ]).merge()
-        .returning('*');
+    await tx('ChoreValue')
+      .where({ houseId })
+      .update({ value: 0 });
 
-      // Attach frequency for preference generation
-      importedChores.push({ ...chore, frequency: choreData.frequency });
-    }
+    choresWithId = await tx('Chore')
+      .insert(chores.map(c => ({
+        houseId,
+        name: c.name,
+        metadata: { description: c.description },
+        active: true,
+      })))
+      .onConflict([ 'houseId', 'name' ]).merge()
+      .returning('*');
 
-    // Step 3: Initialize chore values
-    const choreValues = importedChores.map(chore => ({
-      houseId,
-      choreId: chore.id,
-      valuedAt: now,
-      value: params.initialValue,
-    }));
-
-    if (choreValues.length > 0) {
-      await tx('ChoreValue').insert(choreValues);
-    }
+    await tx('ChoreValue')
+      .insert(choresWithId.map(c => ({
+        houseId,
+        choreId: c.id,
+        valuedAt: now,
+        value: params.initialValue,
+      })));
   });
 
-  return { imported: importedChores };
-};
-
-// Bulk import utilities
-
-exports.FREQUENCY_TIERS = {
-  HIGH: 'high',
-  MEDIUM: 'medium',
-  LOW: 'low',
-};
-
-const TIERS = exports.FREQUENCY_TIERS;
-
-exports.PREFERENCE_STRENGTHS = {
-  STRONG: 1.0, // High > Low (skip a tier)
-  INTERMEDIATE: 0.7, // High > Medium, Medium > Low (adjacent tiers)
-};
-
-const STRENGTHS = exports.PREFERENCE_STRENGTHS;
-
-// Parse CSV content into structured chore data
-// Expected format: name,frequency,description (header row required)
-// Note: Names are returned as-is; caller should apply any normalization (e.g., titlecase)
-exports.parseChoresCsv = function (csvContent) {
-  let records;
-  try {
-    records = parseCsv(csvContent, {
-      columns: header => header.map(col => col.toLowerCase().trim()),
-      skip_empty_lines: true,
-      trim: true,
-    });
-  } catch (err) {
-    return { chores: [], errors: [ `Invalid CSV format: ${err.message}` ] };
-  }
-
-  if (!records.length) {
-    return { chores: [], errors: [ 'CSV must have a header row and at least one chore' ] };
-  }
-
-  const cols = Object.keys(records[0]);
-  const missing = [ 'name', 'frequency' ].filter(c => !cols.includes(c));
-  if (missing.length) {
-    return { chores: [], errors: missing.map(c => `Missing required column: ${c}`) };
-  }
-
-  const chores = [];
-  const errors = [];
-  const seen = new Set();
-
-  for (const [ i, { name, frequency: freq, description = '' } ] of records.entries()) {
-    const row = i + 2;
-    if (!name) { errors.push(`Row ${row}: Missing chore name`); continue; }
-
-    const frequency = exports.normalizeFrequency(freq);
-    if (!frequency) { errors.push(`Row ${row}: Invalid frequency "${freq}"`); continue; }
-
-    if (seen.has(name.toLowerCase())) { errors.push(`Duplicate chore name: "${name}"`); continue; }
-    seen.add(name.toLowerCase());
-
-    chores.push({ name, frequency, description });
-  }
-
-  return { chores, errors };
-};
-
-// Normalize frequency string to tier constant
-exports.normalizeFrequency = function (frequency) {
-  if (!frequency) return null;
-
-  const normalized = frequency.toLowerCase().trim();
-  switch (normalized) {
-    case 'high':
-    case 'h':
-      return TIERS.HIGH;
-    case 'medium':
-    case 'med':
-    case 'm':
-      return TIERS.MEDIUM;
-    case 'low':
-    case 'l':
-      return TIERS.LOW;
-    default:
-      return null;
-  }
-};
-
-// Group chores by their frequency tier
-exports.groupByTier = function (chores) {
-  return {
-    high: chores.filter(c => c.frequency === TIERS.HIGH),
-    medium: chores.filter(c => c.frequency === TIERS.MEDIUM),
-    low: chores.filter(c => c.frequency === TIERS.LOW),
-  };
-};
-
-// Generate pairwise preferences based on frequency tiers
-// Higher tiers get preference over lower tiers
-exports.generateTierPreferences = function (residentId, choresWithIds) {
-  const grouped = exports.groupByTier(choresWithIds);
-  const preferences = [];
-
-  // High > Low (strong preference)
-  for (const highChore of grouped.high) {
-    for (const lowChore of grouped.low) {
-      preferences.push(
-        exports.createTierPreference(residentId, highChore.id, lowChore.id, STRENGTHS.STRONG),
-      );
-    }
-  }
-
-  // High > Medium (intermediate preference)
-  for (const highChore of grouped.high) {
-    for (const medChore of grouped.medium) {
-      preferences.push(
-        exports.createTierPreference(residentId, highChore.id, medChore.id, STRENGTHS.INTERMEDIATE),
-      );
-    }
-  }
-
-  // Medium > Low (intermediate preference)
-  for (const medChore of grouped.medium) {
-    for (const lowChore of grouped.low) {
-      preferences.push(
-        exports.createTierPreference(residentId, medChore.id, lowChore.id, STRENGTHS.INTERMEDIATE),
-      );
-    }
-  }
-
-  return preferences;
-};
-
-// Create a normalized preference object
-exports.createTierPreference = function (residentId, targetChoreId, sourceChoreId, preference) {
-  const normalized = exports.normalizeChorePreference({ targetChoreId, sourceChoreId, preference });
-  return { residentId, ...normalized };
+  return choresWithId;
 };
