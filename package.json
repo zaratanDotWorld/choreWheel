@@ -39,7 +39,7 @@
     "chai": "^4.5.0",
     "chai-almost": "^1.0.1",
     "chai-as-promised": "^7.1.2",
-    "eslint": "^8.57.1",
+    "eslint": "^9.26.0",
     "eslint-config-semistandard": "^17.0.0",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-n": "^15.7.0",
