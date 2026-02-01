@@ -842,20 +842,3 @@ exports.choresImport2View = function (rankings) {
     blocks,
   };
 };
-
-exports.choresImportErrorView = function (errors) {
-  const header = 'Import Errors';
-  const mainText = 'The following errors were found in your CSV file:\n\n' +
-    errors.map(e => `• ${e}`).join('\n');
-
-  const blocks = [];
-  blocks.push(common.blockHeader(header));
-  blocks.push(common.blockSection(mainText));
-
-  return {
-    type: 'modal',
-    title: TITLE,
-    close: common.CLOSE,
-    blocks,
-  };
-};

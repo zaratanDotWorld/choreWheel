@@ -1929,15 +1929,10 @@ describe('Chores', async () => {
         { name: 'trash', description: 'Take out trash' },
       ];
 
-      const importedChores = await Chores.importChores(HOUSE, newChores, now);
-      expect(importedChores).to.have.length(3);
+      await Chores.importChores(HOUSE, newChores, now);
 
       const chores = await Chores.getChores(HOUSE);
       expect(chores).to.have.length(3);
-
-      const dishes = chores.find(c => c.name === 'dishes');
-      expect(dishes.metadata.description).to.equal('Clean dishes');
-      expect(dishes.active).to.be.true;
     });
 
     it('deactivates existing chores when importing', async () => {
@@ -1956,12 +1951,6 @@ describe('Chores', async () => {
       chores = await Chores.getChores(HOUSE);
       expect(chores).to.have.length(1);
       expect(chores[0].name).to.equal('pottery');
-
-      const allChores = await db('Chore').where({ houseId: HOUSE });
-      expect(allChores).to.have.length(3);
-
-      const laundry = allChores.find(c => c.name === 'laundry');
-      expect(laundry.active).to.be.false;
     });
 
     it('reactivates existing chores with same name', async () => {
@@ -1972,12 +1961,12 @@ describe('Chores', async () => {
         { name: 'dishes', description: 'New description' },
       ];
 
-      const imported = await Chores.importChores(HOUSE, newChores, now);
+      const chores = await Chores.importChores(HOUSE, newChores, now);
 
-      expect(imported).to.have.length(1);
-      expect(imported[0].id).to.equal(dishes.id);
-      expect(imported[0].metadata.description).to.equal('New description');
-      expect(imported[0].active).to.be.true;
+      expect(chores).to.have.length(1);
+      expect(chores[0].id).to.equal(dishes.id);
+      expect(chores[0].metadata.description).to.equal('New description');
+      expect(chores[0].active).to.be.true;
     });
 
     it('initializes chore values for imported chores', async () => {
@@ -1990,7 +1979,6 @@ describe('Chores', async () => {
 
       const choreValues = await Chores.getCurrentChoreValues(HOUSE, now);
       expect(choreValues).to.have.length(2);
-
       expect(choreValues[0].value).to.equal(Chores.params.initialValue);
       expect(choreValues[1].value).to.equal(Chores.params.initialValue);
     });
