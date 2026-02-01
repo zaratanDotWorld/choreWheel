@@ -16,7 +16,7 @@ const Admin = require('./admin');
 const Hearts = require('./hearts');
 const Polls = require('./polls');
 
-const { PowerRanker } = require('power-ranker');
+const PowerRanker = require('../lib/power');
 
 // Params
 
@@ -328,29 +328,28 @@ exports.getCurrentChoreValues = async function (houseId, now) {
 // Chore Rankings
 
 exports.getCurrentChoreRankings = async function (houseId, now) {
+  const chores = await exports.getChores(houseId);
+  const numResidents = await Admin.getNumResidents(houseId, now);
   const preferences = await exports.getActiveChorePreferences(houseId, now);
-  return exports.getChoreRankings(houseId, now, preferences);
+  return exports.getChoreRankings(chores, numResidents, preferences);
 };
 
 exports.getProposedChoreRankings = async function (houseId, newPrefs, now) {
+  const chores = await exports.getChores(houseId);
+  const numResidents = await Admin.getNumResidents(houseId, now);
   const currentPrefs = await exports.getActiveChorePreferences(houseId, now);
   const proposedPrefs = exports.mergeChorePreferences(currentPrefs, newPrefs);
-  return exports.getChoreRankings(houseId, now, proposedPrefs);
+  return exports.getChoreRankings(chores, numResidents, proposedPrefs);
 };
 
-exports.getChoreRankings = async function (houseId, now, preferences) {
-  const chores = await exports.getChores(houseId);
-  const residents = await Admin.getResidents(houseId, now);
-
+exports.getChoreRankings = async function (chores, numResidents, preferences) {
   // Handle the case of less than two chores
   if (chores.length <= 1) {
-    return chores.map((chore) => {
-      return { id: chore.id, name: chore.name, ranking: 1.0 };
-    });
+    return chores.map(c => ({ id: c.id, name: c.name, ranking: 1.0 }));
   }
 
   const items = new Set(chores.map(c => c.id));
-  const options = { numParticipants: residents.length, implicitPref: (1 / residents.length) / 2 };
+  const options = { numParticipants: numResidents, implicitPref: (1 / numResidents) / 2 };
   const powerRanker = new PowerRanker({ items, options });
 
   powerRanker.addPreferences(preferences.map((p) => {
@@ -359,8 +358,8 @@ exports.getChoreRankings = async function (houseId, now, preferences) {
 
   const rankings = powerRanker.run({ d: params.dampingFactor });
 
-  return chores.map((chore) => {
-    return { id: chore.id, name: chore.name, ranking: rankings.get(chore.id) };
+  return chores.map((c) => {
+    return { id: c.id, name: c.name, ranking: rankings.get(c.id) };
   }).sort((a, b) => b.ranking - a.ranking);
 };
 
@@ -886,33 +885,81 @@ exports.resolveChoreProposals = async function (houseId, now) {
 // Reset chore points
 
 exports.resetChorePoints = async function (houseId, now) {
+  // Reset obligations by setting activeAt = now
   const residents = await Admin.getResidents(houseId, now);
   const resetResidents = residents.map((r) => {
-    return { houseId, slackId: r.slackId, activeAt: now, exemptAt: null }; // activeAt = now
+    return {
+      houseId,
+      slackId: r.slackId,
+      activeAt: now,
+      exemptAt: null,
+    };
   });
 
   const monthStart = getMonthStart(now);
   const metadata = { reason: 'reset' };
 
+  // Create claims without choreId or choreValueId to zero out obligations
   const resetResidentClaims = await Promise.all(residents.map(async (r) => {
     const userPoints = await exports.getAllChorePoints(r.slackId, monthStart, now);
-    return { houseId, claimedBy: r.slackId, value: -userPoints, claimedAt: now, metadata }; // choreId = null
+    return {
+      houseId,
+      claimedBy: r.slackId,
+      claimedAt: now,
+      value: -userPoints,
+      metadata,
+      // choreId = null
+      // choreValueId = null
+    };
   }));
 
+  // Creat claims without claimedBy to zero out chores
   const choreValues = await exports.getUpdatedChoreValues(houseId, now);
   const resetChoreClaims = choreValues.map((cv) => {
     return {
       houseId,
       choreId: cv.choreId,
       choreValueId: cv.choreValueId,
-      value: cv.value,
       claimedAt: now,
+      value: cv.value,
       metadata,
-    }; // claimedBy = null
+      // claimedBy = null
+    };
   });
 
   await db.transaction(async (tx) => {
-    await tx('Resident').insert(resetResidents).onConflict('slackId').merge(); // HACK: write Resident table directly
+    // HACK: we shouldn't write the Resident table from here
+    await tx('Resident').insert(resetResidents).onConflict('slackId').merge();
     await tx('ChoreClaim').insert([ ...resetResidentClaims, ...resetChoreClaims ]);
   });
+};
+
+exports.importChores = async function (houseId, chores, now) {
+  let choresWithId;
+
+  await db.transaction(async (tx) => {
+    await tx('Chore')
+      .where({ houseId })
+      .update({ active: false });
+
+    choresWithId = await tx('Chore')
+      .insert(chores.map(c => ({
+        houseId,
+        name: c.name,
+        metadata: { description: c.description },
+        active: true,
+      })))
+      .onConflict([ 'houseId', 'name' ]).merge()
+      .returning('*');
+
+    await tx('ChoreValue')
+      .insert(choresWithId.map(c => ({
+        houseId,
+        choreId: c.id,
+        valuedAt: now,
+        value: params.initialValue,
+      })));
+  });
+
+  return choresWithId;
 };

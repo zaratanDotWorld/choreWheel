@@ -54,28 +54,22 @@ exports.choresOnboardMessage = function (oauth) {
   blocks.push(common.blockDivider());
 
   blocks.push(common.blockSection(
-    'Everyone can access Chores functionality through the app home screen:',
+    `Everyone can access <@${oauth.bot.userId}> through the app home screen. ` +
+    'This is where people will claim chores, set priorities, and do everything else.',
   ));
 
   blocks.push(common.blockImage(imageUrl, 'Chore Wheel App Home'));
 
   blocks.push(common.blockSection(
-    `If you don't see the app home, you can reach it by clicking on <@${oauth.bot.userId}>.`,
+    'Next steps are to *activate the rest of your group* and *add some chores* to the list. ' +
+    'Then sit back and let the magic happen :sparkles:',
   ));
 
-  blocks.push(common.blockDivider());
-
-  blocks.push(common.blockSection(
-    'Your group has been set up with two starter chores: _Dishes_ and _Trash Takeout_. ' +
-    'Next steps are to *activate the rest of your group* and *add a few more chores* to the list. ' +
-    'Then sit back and let the magic happen. :sparkles:',
-  ));
-
-  blocks.push(common.blockSection(
-    'Folks can activate themselves through the app home, ' +
-    'and admins activate others with the `/chores-activate` command. ' +
-    'Adding and claiming chores can be done by anybody through the app home.',
-  ));
+  blocks.push(common.blockActions([
+    common.blockButton('chores-activate-solo', ':fire: Activate yourself'),
+    common.blockButton('chores-propose', ':notebook: Edit chores list'),
+    common.blockButton('chores-import', ':floppy_disk: Import bulk chores'),
+  ]));
 
   blocks.push(common.blockSection(
     `_Tip: pin this message to the channel. To learn more about Chores, read the <${DOCS_URL}|docs>._`,
@@ -783,4 +777,68 @@ exports.choresSpecialCallbackView = function (proposal, minVotes, obligation, cl
   blocks.push(common.blockSection(common.makeVoteText(minVotes, Chores.params.specialProposalPollLength)));
   blocks.push(common.blockActions(common.makeVoteButtons(proposal.pollId, 1, 0)));
   return blocks;
+};
+
+// Import flow
+
+exports.choresImportView = function () {
+  const sampleCsvUrl = 'https://docs.google.com/spreadsheets/d/1PCGAKVNAPtNXPHPXojCIH_SW_lgNGOOiBSssSEi5WFM';
+
+  const header = 'Import Chores';
+  const mainText = 'Upload a CSV file with your chores list. ' +
+    'This will *replace all existing chores* with the ones in your file.';
+  const formatText = 'Please upload a CSV file with the following columns: *Name*, *Score*, and *Description*. ' +
+    'Scores (out of 100) will be used to set initial priorities, with higher scores yielding higher priorities.';
+  const sampleText = `*${common.makeLink(sampleCsvUrl, 'Click here')}* for a sample CSV template.`;
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockSection(formatText));
+  blocks.push(common.blockSection(sampleText));
+  blocks.push(common.blockDivider());
+  blocks.push(common.blockInput(
+    'Upload CSV',
+    {
+      type: 'file_input',
+      action_id: 'csv',
+      filetypes: [ 'csv', 'text' ],
+      max_files: 1,
+    },
+  ));
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-import-2',
+    title: TITLE,
+    close: common.CLOSE,
+    submit: common.NEXT,
+    blocks,
+  };
+};
+
+exports.choresImport2View = function (rankings) {
+  const header = 'Import Chores';
+
+  const mainText = 'This import will create the following chores and priorities. ' +
+    'Submit to confirm, or go back to update your import.';
+
+  const choresText = rankings
+    .map(c => `${c.name} - ${(c.ranking * 100).toFixed(1)}%`)
+    .join('\n');
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+  blocks.push(common.blockDivider());
+  blocks.push(common.blockSection(choresText));
+
+  return {
+    type: 'modal',
+    callback_id: 'chores-import-callback',
+    title: TITLE,
+    close: common.BACK,
+    submit: common.SUBMIT,
+    blocks,
+  };
 };

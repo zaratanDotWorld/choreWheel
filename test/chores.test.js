@@ -300,14 +300,18 @@ describe('Chores', async () => {
     it('handles the case of less than two chores', async () => {
       await db('Chore').where({ houseId: HOUSE }).whereNot({ id: dishes.id }).delete();
 
+      let chores = await Chores.getChores(HOUSE);
+      const numResidents = await Admin.getNumResidents(HOUSE, now);
+
       let choreRankings;
-      choreRankings = await Chores.getChoreRankings(HOUSE, now, []);
+      choreRankings = await Chores.getChoreRankings(chores, numResidents, []);
       expect(choreRankings.length).to.equal(1);
       expect(choreRankings[0].ranking).to.equal(1);
 
       await db('Chore').where({ houseId: HOUSE }).delete();
 
-      choreRankings = await Chores.getChoreRankings(HOUSE, now, []);
+      chores = await Chores.getChores(HOUSE);
+      choreRankings = await Chores.getChoreRankings(chores, numResidents, []);
       expect(choreRankings.length).to.equal(0);
     });
 
@@ -338,9 +342,9 @@ describe('Chores', async () => {
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.4670116340772533);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.31890095736170976);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.21408740856103664);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.42388188734554155);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.3194808217691187);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.2566372908853395);
     });
 
     it('can use preferences to determine complex chore rankings', async () => {
@@ -386,17 +390,18 @@ describe('Chores', async () => {
       newPrefs.push({ residentId: RESIDENT1, alphaChoreId: dishes.id, betaChoreId: sweeping.id, preference: 0.7 });
       choreRankings = await Chores.getProposedChoreRankings(HOUSE, newPrefs, now);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.4466524560901651);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.35710339136726454);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.19624415254257002);
+      // Note how sweeping gains a higher priority despite being less preferred than dishes
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.37387148472621634);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.41854195159603846);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.20758656367774447);
 
       // Shift priority from sweeping to restock
       newPrefs.push({ residentId: RESIDENT2, alphaChoreId: sweeping.id, betaChoreId: restock.id, preference: 0.7 });
       choreRankings = await Chores.getProposedChoreRankings(HOUSE, newPrefs, now);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.4670116340772533);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.31890095736170976);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.21408740856103664);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.42388188734554155);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.3194808217691187);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.2566372908853395);
     });
   });
 
@@ -1908,6 +1913,74 @@ describe('Chores', async () => {
       await Chores.resolveChoreProposals(HOUSE, proposalEnd);
       chores = await Chores.getChores(HOUSE);
       expect(chores.length).to.equal(2);
+    });
+  });
+
+  describe('importing chores', async () => {
+    beforeEach(async () => {
+      await Admin.activateResident(HOUSE, RESIDENT1, now);
+      await Admin.activateResident(HOUSE, RESIDENT2, now);
+    });
+
+    it('can import chores', async () => {
+      const newChores = [
+        { name: 'dishes', description: 'Clean dishes' },
+        { name: 'sweeping', description: 'Sweep floors' },
+        { name: 'trash', description: 'Take out trash' },
+      ];
+
+      await Chores.importChores(HOUSE, newChores, now);
+
+      const chores = await Chores.getChores(HOUSE);
+      expect(chores).to.have.length(3);
+    });
+
+    it('deactivates existing chores when importing', async () => {
+      await Chores.addChore(HOUSE, 'laundry');
+      await Chores.addChore(HOUSE, 'gardening');
+
+      let chores = await Chores.getChores(HOUSE);
+      expect(chores).to.have.length(2);
+
+      const newChores = [
+        { name: 'pottery', description: '' },
+      ];
+
+      await Chores.importChores(HOUSE, newChores, now);
+
+      chores = await Chores.getChores(HOUSE);
+      expect(chores).to.have.length(1);
+      expect(chores[0].name).to.equal('pottery');
+    });
+
+    it('reactivates existing chores with same name', async () => {
+      const [ dishes ] = await Chores.addChore(HOUSE, 'dishes');
+      await db('Chore').where({ id: dishes.id }).update({ active: false });
+
+      const newChores = [
+        { name: 'dishes', description: 'New description' },
+      ];
+
+      const chores = await Chores.importChores(HOUSE, newChores, now);
+
+      expect(chores).to.have.length(1);
+      expect(chores[0].id).to.equal(dishes.id);
+      expect(chores[0].metadata.description).to.equal('New description');
+      expect(chores[0].active).to.be.true;
+    });
+
+    it('initializes chore values for imported chores', async () => {
+      const newChores = [
+        { name: 'dishes', description: '' },
+        { name: 'sweeping', description: '' },
+      ];
+
+      await Chores.importChores(HOUSE, newChores, now);
+
+      const choreValues = await Chores.getCurrentChoreValues(HOUSE, now);
+      expect(choreValues).to.have.length(2);
+      expect(choreValues[0].value).to.equal(Chores.params.initialValue);
+      expect(choreValues[1].value).to.equal(Chores.params.initialValue);
     });
   });
 });

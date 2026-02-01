@@ -1,14 +1,20 @@
 const assert = require('assert');
 
+const CSV = require('csv-parse/sync');
+const { LRUCache } = require('lru-cache');
+
 const { Admin, Polls, Chores } = require('../../../core/index');
 const { DAY, getMonthStart, shiftDate } = require('../../../time');
 
 const common = require('../../common');
+const utils = require('./utils');
 const views = require('../views/actions');
 
 const { formatPointsPerDay } = require('../views/utils');
 
 module.exports = (app) => {
+  const cache = new LRUCache({ max: 100, ttl: 1000 * 60 * 15 });
+
   // Onboarding flow
 
   app.action('chores-onboard', async ({ ack, body }) => {
@@ -532,6 +538,73 @@ module.exports = (app) => {
     await Polls.updateMetadata(proposal.pollId, { channel, ts });
 
     await ack({ response_action: 'clear' });
+  });
+
+  // Import flow
+
+  app.action('chores-import', async ({ ack, body }) => {
+    await ack();
+
+    const { houseId, residentId } = common.beginAction('chores-import', body);
+    const { choresConf } = await Admin.getHouse(houseId);
+
+    if (!(await common.isAdmin(app, choresConf.oauth, residentId))) {
+      await common.postEphemeral(app, choresConf, residentId, common.ADMIN_ONLY);
+    } else {
+      const view = views.choresImportView();
+      await common.openView(app, choresConf.oauth, body.trigger_id, view);
+    }
+  });
+
+  app.view('chores-import-2', async ({ ack, body }) => {
+    const { now, houseId, residentId } = common.beginAction('chores-import-2  ', body);
+    const { choresConf } = await Admin.getHouse(houseId);
+
+    const [ file ] = common.getInputBlock(body, -1).csv.files;
+
+    const fileObject = await app.client.files.info({
+      token: choresConf.oauth.bot.token,
+      file: file.id,
+    });
+
+    const chores = CSV.parse(fileObject.content, {
+      columns: header => header.map(col => col.toLowerCase().trim()),
+      skip_empty_lines: true,
+      trim: true,
+    }).map((c, i) => ({
+      id: i + 1,
+      name: common.parseTitlecase(c.name),
+      score: parseInt(c.score),
+      description: c.description,
+    })).filter(c => c.name && c.score);
+
+    const numResidents = await Admin.getNumResidents(houseId, now);
+    const preferences = utils.generatePreferencesFromScores(residentId, chores);
+    const rankings = await Chores.getChoreRankings(chores, numResidents, preferences);
+
+    cache.set(`chores-import-${residentId}`, chores);
+
+    const view = views.choresImport2View(rankings);
+    await ack({ response_action: 'push', view });
+  });
+
+  app.view('chores-import-callback', async ({ ack, body }) => {
+    await ack({ response_action: 'clear' });
+
+    const { now, houseId, residentId } = common.beginAction('chores-import-callback', body);
+    const { choresConf } = await Admin.getHouse(houseId);
+
+    const chores = cache.get(`chores-import-${residentId}`);
+
+    const choresWithId = (await Chores.importChores(houseId, chores, now))
+      .map(c => ({ ...c, score: chores.find(c2 => c2.name === c.name).score }));
+
+    const preferences = utils.generatePreferencesFromScores(residentId, choresWithId);
+    await Chores.setChorePreferences(houseId, preferences);
+
+    const text = `<@${residentId}> just imported *${choresWithId.length} chores* :rocket:`;
+
+    await common.postMessage(app, choresConf, text);
   });
 
   // Voting flow
