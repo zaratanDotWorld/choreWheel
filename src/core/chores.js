@@ -885,33 +885,51 @@ exports.resolveChoreProposals = async function (houseId, now) {
 // Reset chore points
 
 exports.resetChorePoints = async function (houseId, now) {
+  // Reset obligations by setting activeAt = now
   const residents = await Admin.getResidents(houseId, now);
   const resetResidents = residents.map((r) => {
-    return { houseId, slackId: r.slackId, activeAt: now, exemptAt: null }; // activeAt = now
+    return {
+      houseId,
+      slackId: r.slackId,
+      activeAt: now,
+      exemptAt: null,
+    };
   });
 
   const monthStart = getMonthStart(now);
   const metadata = { reason: 'reset' };
 
+  // Create claims without choreId or choreValueId to zero out obligations
   const resetResidentClaims = await Promise.all(residents.map(async (r) => {
     const userPoints = await exports.getAllChorePoints(r.slackId, monthStart, now);
-    return { houseId, claimedBy: r.slackId, value: -userPoints, claimedAt: now, metadata }; // choreId = null
+    return {
+      houseId,
+      claimedBy: r.slackId,
+      claimedAt: now,
+      value: -userPoints,
+      metadata,
+      // choreId = null
+      // choreValueId = null
+    };
   }));
 
+  // Creat claims without claimedBy to zero out chores
   const choreValues = await exports.getUpdatedChoreValues(houseId, now);
   const resetChoreClaims = choreValues.map((cv) => {
     return {
       houseId,
       choreId: cv.choreId,
       choreValueId: cv.choreValueId,
-      value: cv.value,
       claimedAt: now,
+      value: cv.value,
       metadata,
-    }; // claimedBy = null
+      // claimedBy = null
+    };
   });
 
   await db.transaction(async (tx) => {
-    await tx('Resident').insert(resetResidents).onConflict('slackId').merge(); // HACK: write Resident table directly
+    // HACK: we shouldn't write the Resident table from here
+    await tx('Resident').insert(resetResidents).onConflict('slackId').merge();
     await tx('ChoreClaim').insert([ ...resetResidentClaims, ...resetChoreClaims ]);
   });
 };
@@ -923,10 +941,6 @@ exports.importChores = async function (houseId, chores, now) {
     await tx('Chore')
       .where({ houseId })
       .update({ active: false });
-
-    await tx('ChoreValue')
-      .where({ houseId })
-      .update({ value: 0 });
 
     choresWithId = await tx('Chore')
       .insert(chores.map(c => ({
