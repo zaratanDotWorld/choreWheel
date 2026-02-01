@@ -125,6 +125,23 @@ exports.choresClaimViewZero = function () {
   };
 };
 
+exports.choresClaimPreView = function (chores) {
+  const header = 'Preview chores';
+  const mainText = 'The following chores are available to claim:\n\n' +
+    chores.map(chore => `- ${chore.name} - ${chore.value.toFixed(1)} points`).join('\n');
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+
+  return {
+    type: 'modal',
+    title: TITLE,
+    close: common.CLOSE,
+    blocks,
+  };
+};
+
 exports.choresClaimView = function (chores) {
   const header = 'Claim a chore';
   const mainText = 'Claims are verified by the group. ' +
@@ -210,6 +227,23 @@ exports.choresClaimCallbackView = function (claim, name, minVotes, achivementPoi
 };
 
 // Ranking flow
+
+exports.choresRankPreView = function (choreRankings) {
+  const header = 'Preview priorities';
+  const mainText = 'These are the current chore priorities:\n\n' +
+    choreRankings.map(chore => `- ${chore.name} - ${(chore.ranking * 100).toFixed(1)}%`).join('\n');
+
+  const blocks = [];
+  blocks.push(common.blockHeader(header));
+  blocks.push(common.blockSection(mainText));
+
+  return {
+    type: 'modal',
+    title: TITLE,
+    close: common.CLOSE,
+    blocks,
+  };
+};
 
 exports.choresRankView = function (choreRankings) {
   const header = 'Set chore priorities';

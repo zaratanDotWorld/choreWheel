@@ -59,6 +59,8 @@ exports.choresHomeView = function (choreChannel, choreStats, numActive) {
     actions.push(common.blockButton('chores-propose', ':notebook: Edit chores list'));
   } else {
     actions.push(common.blockButton('chores-activate-solo', ':fire: Activate yourself'));
+    actions.push(common.blockButton('chores-claim-preview', ':mag: View chores'));
+    actions.push(common.blockButton('chores-rank-preview', ':eyes: View priorities'));
   }
 
   const blocks = [];
