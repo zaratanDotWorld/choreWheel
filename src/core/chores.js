@@ -33,7 +33,6 @@ exports.params = {
   penaltyUnit: 0.25,
   achievementBase: 20,
   achievementWindow: 18 * 30 * DAY,
-  dampingFactor: 0.99,
   proposalPollLength: 2 * DAY,
   specialProposalPollLength: DAY,
   proposalPct: 0.4,
@@ -329,34 +328,32 @@ exports.getCurrentChoreValues = async function (houseId, now) {
 
 exports.getCurrentChoreRankings = async function (houseId, now) {
   const chores = await exports.getChores(houseId);
-  const numResidents = await Admin.getNumResidents(houseId, now);
   const preferences = await exports.getActiveChorePreferences(houseId, now);
-  return exports.getChoreRankings(chores, numResidents, preferences);
+  return exports.getChoreRankings(chores, preferences);
 };
 
 exports.getProposedChoreRankings = async function (houseId, newPrefs, now) {
   const chores = await exports.getChores(houseId);
-  const numResidents = await Admin.getNumResidents(houseId, now);
   const currentPrefs = await exports.getActiveChorePreferences(houseId, now);
   const proposedPrefs = exports.mergeChorePreferences(currentPrefs, newPrefs);
-  return exports.getChoreRankings(chores, numResidents, proposedPrefs);
+  return exports.getChoreRankings(chores, proposedPrefs);
 };
 
-exports.getChoreRankings = async function (chores, numResidents, preferences) {
+exports.getChoreRankings = async function (chores, preferences) {
   // Handle the case of less than two chores
   if (chores.length <= 1) {
     return chores.map(c => ({ id: c.id, name: c.name, ranking: 1.0 }));
   }
 
   const items = new Set(chores.map(c => c.id));
-  const options = { numParticipants: numResidents, implicitPref: (1 / numResidents) / 2 };
-  const powerRanker = new PowerRanker({ items, options });
+  const powerRanker = new PowerRanker({ items });
 
   powerRanker.addPreferences(preferences.map((p) => {
     return { target: p.alphaChoreId, source: p.betaChoreId, value: p.preference };
   }));
 
-  const rankings = powerRanker.run({ d: params.dampingFactor });
+  // Damping factor is computed automatically based on data size
+  const rankings = powerRanker.run();
 
   return chores.map((c) => {
     return { id: c.id, name: c.name, ranking: rankings.get(c.id) };
