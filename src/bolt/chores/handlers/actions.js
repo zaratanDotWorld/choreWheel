@@ -75,6 +75,32 @@ module.exports = (app) => {
     await common.postMessage(app, choresConf, `<@${residentId}> is now active :fire:`);
   });
 
+  // Preview flows (for non-active users)
+
+  app.action('chores-claim-preview', async ({ ack, body }) => {
+    const { now, houseId } = common.beginAction('chores-claim-preview', body);
+    const { choresConf } = await Admin.getHouse(houseId);
+
+    const choreValues = await Chores.getUpdatedChoreValues(houseId, now);
+
+    const view = views.choresClaimPreView(choreValues);
+    await common.openView(app, choresConf.oauth, body.trigger_id, view);
+
+    await ack();
+  });
+
+  app.action('chores-rank-preview', async ({ ack, body }) => {
+    const { now, houseId } = common.beginAction('chores-rank-preview', body);
+    const { choresConf } = await Admin.getHouse(houseId);
+
+    const choreRankings = await Chores.getCurrentChoreRankings(houseId, now);
+
+    const view = views.choresRankPreView(choreRankings);
+    await common.openView(app, choresConf.oauth, body.trigger_id, view);
+
+    await ack();
+  });
+
   // Claim flow
 
   app.action('chores-claim', async ({ ack, body }) => {
