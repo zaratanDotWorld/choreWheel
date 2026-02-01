@@ -567,7 +567,6 @@ module.exports = (app) => {
       file: file.id,
     });
 
-    // TODO: handle errors
     const chores = CSV.parse(fileObject.content, {
       columns: header => header.map(col => col.toLowerCase().trim()),
       skip_empty_lines: true,
@@ -577,7 +576,7 @@ module.exports = (app) => {
       name: common.parseTitlecase(c.name),
       score: parseInt(c.score),
       description: c.description,
-    }));
+    })).filter(c => c.name && c.score);
 
     const numResidents = await Admin.getNumResidents(houseId, now);
     const preferences = utils.generatePreferencesFromScores(residentId, chores);

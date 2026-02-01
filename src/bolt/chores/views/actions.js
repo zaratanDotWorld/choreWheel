@@ -788,7 +788,7 @@ exports.choresImportView = function () {
   const mainText = 'Upload a CSV file with your chores list. ' +
     'This will *replace all existing chores* with the ones in your file.';
   const formatText = 'Please upload a CSV file with the following columns: *Name*, *Score*, and *Description*. ' +
-    'Scores will be used to set initial priorities, with higher scores leading to higher priorities.';
+    'Scores (out of 100) will be used to set initial priorities, with higher scores yielding higher priorities.';
   const sampleText = `*${common.makeLink(sampleCsvUrl, 'Click here')}* for a sample CSV template.`;
 
   const blocks = [];
