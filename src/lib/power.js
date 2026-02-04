@@ -5,7 +5,6 @@ class PowerRanker {
   items; // Set(str)
   options; // Object
   matrix; // linAlg.Matrix
-  numPreferences; // int
 
   /// @notice Construct an instance of a PowerRanker
   /// @param items:Set(str) The items being decided
@@ -15,7 +14,6 @@ class PowerRanker {
 
     this.items = this.#sort(items);
     this.options = options;
-    this.numPreferences = 0;
 
     this.matrix = this._prepareMatrix();
 
@@ -44,8 +42,6 @@ class PowerRanker {
       // Bidirectional: allocate p.value toward target, (1-p.value) toward source
       matrix.data[sourceIx][targetIx] += p.value;
       matrix.data[targetIx][sourceIx] += (1 - p.value);
-
-      this.numPreferences++;
     });
 
     // Add the diagonals (sums of columns)
@@ -53,14 +49,12 @@ class PowerRanker {
   }
 
   /// @notice Run the algorithm and return the results
-  /// @param d:float The damping factor (optional, computed from data if not provided)
+  /// @param d:float The damping factor (default 1, full weight on preferences)
   /// @param epsilon:float The precision at which to run the algorithm
   /// @param nIter:int The maximum number of iterations to run the algorithm
   /// @return rankings:Map(int => float) The rankings, with item mapped to result
-  run ({ d = null, epsilon = 0.001, nIter = 1000 } = {}) {
-    // Compute damping from data size if not provided
-    const damping = d !== null ? d : this._computeDamping();
-    const weights = this._powerMethod(this.matrix, damping, epsilon, nIter);
+  run ({ d = 1, epsilon = 0.001, nIter = 1000 } = {}) {
+    const weights = this._powerMethod(this.matrix, d, epsilon, nIter);
     return this._applyLabels(weights);
   }
 
@@ -99,21 +93,6 @@ class PowerRanker {
 
     // Initialize the zero matrix (no implicit preferences)
     return linAlg.Matrix.zero(n, n);
-  }
-
-  /// @notice Compute damping factor based on data size
-  /// @dev Formula: d = P / (P + 0.5 * maxPairs), bounded by [0.05, 0.99]
-  /// @dev The 0.5 coefficient reflects that ranking differentiation comes from
-  ///      the asymmetric component of preferences, not total preference weight
-  /// @return d:float The computed damping factor
-  _computeDamping () {
-    const n = this.items.length;
-    const maxPairs = n * (n - 1) / 2;
-    const P = this.numPreferences;
-
-    // Formula derived from empirical analysis: d = P / (P + 0.5 * maxPairs)
-    // Bounded to ensure stability at extremes
-    return Math.max(0.05, Math.min(0.99, P / (P + 0.5 * maxPairs)));
   }
 
   // Complexity is O(n^3)-ish
