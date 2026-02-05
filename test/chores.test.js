@@ -287,30 +287,33 @@ describe('Chores', async () => {
   });
 
   describe('computing damping factor', async () => {
-    it('can compute damping factor with default alpha', () => {
-      // Formula: d = P / (P + α × maxPairs)
+    it('can compute damping factor with default a', () => {
+      // Formula: d = 1 / (1 + exp(-a × P / maxPairs))
       // With 3 chores: maxPairs = 3 × 2 / 2 = 3
-      // With α = 0.05: d = P / (P + 0.15)
+      // With a = 1.0 (default)
 
-      // P = 2: d = 2 / (2 + 0.15) = 2 / 2.15 ≈ 0.930
-      expect(Chores.computeDamping(2, 3)).to.almost.equal(2 / 2.15);
+      // P = 0: coverage = 0, d = 1 / (1 + exp(0)) = 0.5
+      expect(Chores.computeDamping(0, 3)).to.almost.equal(0.5);
 
-      // P = 0: d = 0.05 (minimum bound)
-      expect(Chores.computeDamping(0, 3)).to.equal(0.05);
+      // P = 2: coverage = 2/3, d = 1 / (1 + exp(-2/3)) ≈ 0.661
+      expect(Chores.computeDamping(2, 3)).to.almost.equal(1 / (1 + Math.exp(-2 / 3)));
 
-      // P = very large: d approaches 0.99 (maximum bound)
-      expect(Chores.computeDamping(100000, 3)).to.equal(0.99);
+      // P = 3: coverage = 1, d = 1 / (1 + exp(-1)) ≈ 0.731
+      expect(Chores.computeDamping(3, 3)).to.almost.equal(1 / (1 + Math.exp(-1)));
+
+      // P = very large: d approaches 1.0
+      expect(Chores.computeDamping(100000, 3)).to.almost.equal(1.0);
     });
 
-    it('can compute damping factor with custom alpha', () => {
+    it('can compute damping factor with custom a', () => {
       // With 3 chores: maxPairs = 3
-      // With α = 1.0: d = P / (P + 3)
+      // With a = 2.0: steeper sigmoid
 
-      // P = 2: d = 2 / (2 + 3) = 0.4
-      expect(Chores.computeDamping(2, 3, 1.0)).to.almost.equal(0.4);
+      // P = 2: coverage = 2/3, d = 1 / (1 + exp(-2 × 2/3)) ≈ 0.791
+      expect(Chores.computeDamping(2, 3, 2.0)).to.almost.equal(1 / (1 + Math.exp(-4 / 3)));
 
-      // P = 3: d = 3 / (3 + 3) = 0.5
-      expect(Chores.computeDamping(3, 3, 1.0)).to.almost.equal(0.5);
+      // P = 3: coverage = 1, d = 1 / (1 + exp(-2)) ≈ 0.881
+      expect(Chores.computeDamping(3, 3, 2.0)).to.almost.equal(1 / (1 + Math.exp(-2)));
     });
   });
 
@@ -357,21 +360,23 @@ describe('Chores', async () => {
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.8924090120442653);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.08433517400224669);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.023255813953488382);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.6062495051489752);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.28066928443963035);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.11308121041139424);
     });
 
     it('can use preferences to determine mild chore rankings', async () => {
       // Slightly prefer dishes to sweeping, and sweeping to restock
+      // Note: With scaled unidirectional prefs and no competing preferences,
+      // relative rankings are the same regardless of preference strength
       await setChorePreference(HOUSE, RESIDENT1, dishes.id, sweeping.id, 0.7);
       await setChorePreference(HOUSE, RESIDENT2, sweeping.id, restock.id, 0.7);
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.4615496354516828);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.42396499236648033);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.11448537218183696);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.6062495051489752);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.28066928443963035);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.11308121041139424);
     });
 
     it('can use preferences to determine complex chore rankings', async () => {
@@ -381,9 +386,9 @@ describe('Chores', async () => {
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.48837209302325585);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.023255813953488375);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.48837209302325585);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.4434593947943028);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.11308121041139424);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.4434593947943028);
     });
 
     it('can handle circular chore rankings', async () => {
@@ -409,26 +414,26 @@ describe('Chores', async () => {
       const newPrefs = [];
       choreRankings = await Chores.getProposedChoreRankings(HOUSE, newPrefs, now);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.8924090120442653);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.08433517400224669);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.023255813953488382);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.6062495051489752);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.28066928443963035);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.11308121041139424);
 
       // Shift priority from dishes to sweeping
       newPrefs.push({ residentId: RESIDENT1, alphaChoreId: dishes.id, betaChoreId: sweeping.id, preference: 0.7 });
       choreRankings = await Chores.getProposedChoreRankings(HOUSE, newPrefs, now);
 
       // Note how sweeping gains a higher priority despite being less preferred than dishes
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.5058272168599834);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.47091696918652814);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.023255813953488375);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.5309249482488867);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.35599384133971873);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.1130812104113942);
 
       // Shift priority from sweeping to restock
       newPrefs.push({ residentId: RESIDENT2, alphaChoreId: sweeping.id, betaChoreId: restock.id, preference: 0.7 });
       choreRankings = await Chores.getProposedChoreRankings(HOUSE, newPrefs, now);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.4615496354516828);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.42396499236648033);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.11448537218183696);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.6062495051489752);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.28066928443963035);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.11308121041139424);
     });
   });
 

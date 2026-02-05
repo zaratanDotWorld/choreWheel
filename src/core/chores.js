@@ -326,18 +326,18 @@ exports.getCurrentChoreValues = async function (houseId, now) {
 
 // Chore Rankings
 
-/// @notice Compute damping factor based on preference count and chore count
-/// @dev Formula: d = P / (P + α × maxPairs), bounded by [0.05, 0.99]
-/// @dev Both P and maxPairs are on the same scale (counting pairs), making α interpretable:
-/// @dev   α = 1.0 means "half saturation when prefs = maxPairs"
-/// @dev   α = 0.5 means "half saturation when prefs = 2 × maxPairs"
+/// @notice Compute damping factor based on preference coverage using sigmoid
+/// @dev Formula: d = 1 / (1 + exp(-a × P / maxPairs))
+/// @dev Sigmoid provides smooth S-curve from 0.5 (no data) to ~1.0 (full coverage)
+/// @dev   a controls steepness: higher a = faster rise to full confidence
 /// @param numPrefs The total number of preferences
 /// @param numChores The number of chores being ranked
-/// @param alpha The scaling coefficient (default 0.05)
+/// @param a The sigmoid steepness parameter (default 1.0)
 /// @return d The computed damping factor
-exports.computeDamping = function (numPrefs, numChores, alpha = 0.05) {
+exports.computeDamping = function (numPrefs, numChores, a = 1.0) {
   const maxPairs = numChores * (numChores - 1) / 2;
-  return Math.max(0.05, Math.min(0.99, numPrefs / (numPrefs + alpha * maxPairs)));
+  const coverage = numPrefs / maxPairs;
+  return 1 / (1 + Math.exp(-a * coverage));
 };
 
 exports.getCurrentChoreRankings = async function (houseId, now) {

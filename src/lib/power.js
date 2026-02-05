@@ -33,15 +33,23 @@ class PowerRanker {
     const matrix = this.matrix;
     const itemMap = this.#toItemMap(this.items);
 
-    // Add bidirectional preferences to the off-diagonals
-    // Each preference allocates p.value toward target and (1 - p.value) toward source
+    // Add scaled unidirectional preferences to the off-diagonals
+    // Scale so 0.5 -> 0 (neutral), only the preferred item gains value
     preferences.forEach((p) => {
       const targetIx = itemMap.get(p.target);
       const sourceIx = itemMap.get(p.source);
 
-      // Bidirectional: allocate p.value toward target, (1-p.value) toward source
-      matrix.data[sourceIx][targetIx] += p.value;
-      matrix.data[targetIx][sourceIx] += (1 - p.value);
+      // Scale preference: 0.5 is neutral (no effect), range becomes -1 to +1
+      const scaled = (p.value - 0.5) * 2;
+
+      if (scaled > 0) {
+        // Prefer target: only target gains value
+        matrix.data[sourceIx][targetIx] += scaled;
+      } else if (scaled < 0) {
+        // Prefer source: only source gains value
+        matrix.data[targetIx][sourceIx] += Math.abs(scaled);
+      }
+      // scaled === 0: neutral preference, no effect
     });
 
     // Add the diagonals (sums of columns)

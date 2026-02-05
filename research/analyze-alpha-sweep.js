@@ -98,8 +98,8 @@ class CurrentPowerRanker {
 
 // ============================================================================
 // NEW PROPOSED IMPLEMENTATION
-// No implicit preferences, bidirectional explicit, simple damping
-// Formula: d = P / (P + α × maxPairs)
+// No implicit preferences, scaled unidirectional explicit, sigmoid damping
+// Formula: d = 1 / (1 + exp(-a × P / maxPairs))
 // Where P = total preferences, maxPairs = n × (n-1) / 2
 // ============================================================================
 class NewPowerRanker {
@@ -124,9 +124,13 @@ class NewPowerRanker {
       const sourceIx = itemMap.get(p.source);
       if (targetIx === undefined || sourceIx === undefined) return;
 
-      // Bidirectional: allocate p.value toward target, (1-p.value) toward source
-      matrix.data[sourceIx][targetIx] += p.value;
-      matrix.data[targetIx][sourceIx] += (1 - p.value);
+      // Scaled unidirectional: 0.5 is neutral, only preferred item gains
+      const scaled = (p.value - 0.5) * 2;
+      if (scaled > 0) {
+        matrix.data[sourceIx][targetIx] += scaled;
+      } else if (scaled < 0) {
+        matrix.data[targetIx][sourceIx] += Math.abs(scaled);
+      }
 
       // Track total preferences
       this.numPrefs++;
@@ -136,14 +140,15 @@ class NewPowerRanker {
     this.#sumColumns(matrix).forEach((sum, ix) => { matrix.data[ix][ix] = sum; });
   }
 
-  _computeDamping (alpha) {
+  _computeDamping (a) {
     const n = this.items.length;
     const maxPairs = n * (n - 1) / 2;
-    return Math.max(0.05, Math.min(0.99, this.numPrefs / (this.numPrefs + alpha * maxPairs)));
+    const coverage = this.numPrefs / maxPairs;
+    return 1 / (1 + Math.exp(-a * coverage));
   }
 
-  run (alpha) {
-    const d = this._computeDamping(alpha);
+  run (a) {
+    const d = this._computeDamping(a);
     const n = this.items.length;
     const matrix = this.matrix.clone();
 
@@ -318,12 +323,12 @@ function analyzeDataset (name, csvPath, numResidents, alphaValues) {
 // ============================================================================
 
 console.log('╔════════════════════════════════════════════════════════════════════════════════════════════════╗');
-console.log('║                           ALPHA PARAMETERIZATION ANALYSIS                                      ║');
+console.log('║                           SIGMOID DAMPING ANALYSIS                                             ║');
 console.log('║  CURRENT: implicit prefs + unidirectional explicit + d=0.99                                    ║');
-console.log('║  NEW: no implicit + bidirectional + d = P / (P + α × maxPairs)                                 ║');
+console.log('║  NEW: no implicit + scaled unidirectional + d = 1/(1+exp(-a×coverage))                         ║');
 console.log('╚════════════════════════════════════════════════════════════════════════════════════════════════╝');
 
-const ALPHA_VALUES = [ 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0 ];
+const ALPHA_VALUES = [ 0.5, 0.7, 1.0, 1.2, 1.5, 2.0, 3.0, 4.0 ];
 
 const sageResults = analyzeDataset(
   'SAGE (9 residents, 28 chores)',
