@@ -334,7 +334,7 @@ exports.getCurrentChoreValues = async function (houseId, now) {
 /// @param numChores The number of chores being ranked
 /// @param a The sigmoid steepness parameter (default 1.0)
 /// @return d The computed damping factor
-exports.computeDamping = function (numPrefs, numChores, a = 1.0) {
+exports.computeDamping = function (numPrefs, numChores, a = 0.5) {
   const maxPairs = numChores * (numChores - 1) / 2;
   const coverage = numPrefs / maxPairs;
   return 1 / (1 + Math.exp(-a * coverage));

@@ -1,5 +1,7 @@
 /**
- * Side-by-side comparison: Current production rankings vs New (α=0.4) rankings
+ * Side-by-side comparison: Current production rankings vs New rankings
+ * Current: implicit prefs + scaled unidirectional + d=0.99
+ * New: no implicit prefs + scaled unidirectional + sigmoid damping (a=0.5)
  */
 
 const fs = require('fs');
@@ -8,26 +10,24 @@ const linAlg = require('linear-algebra')();
 
 // ============================================================================
 // CURRENT PRODUCTION IMPLEMENTATION
-// Uses implicit preferences based on numResidents, data-dependent damping
+// Uses implicit preferences + scaled unidirectional explicit + d=0.99
 // ============================================================================
 class CurrentPowerRanker {
   constructor ({ items, numResidents }) {
     this.items = Array.from(items).sort((a, b) => a.localeCompare(b));
     this.numResidents = numResidents;
-    this.numPreferences = 0;
     const n = this.items.length;
 
-    // Initialize with implicit preferences
+    // implicitPref = (1 / numResidents) / 2
     const implicitPref = (1 / numResidents) / 2;
-    let matrix = linAlg.Matrix.zero(n, n);
-    // Add implicit preferences to off-diagonals
-    matrix = matrix.plusEach(numResidents * implicitPref);
-    // Remove from diagonal
-    for (let i = 0; i < n; i++) {
-      matrix.data[i][i] = 0;
-    }
-    this.matrix = matrix;
     this.implicitPref = implicitPref;
+
+    // Initialize matrix with implicit preferences on all off-diagonals
+    // Each cell gets numResidents * implicitPref = 0.5
+    let matrix = linAlg.Matrix.zero(n, n);
+    matrix = matrix.plusEach(1).minus(linAlg.Matrix.identity(n))
+      .mulEach(numResidents).mulEach(implicitPref);
+    this.matrix = matrix;
   }
 
   #toItemMap (items) { return new Map(items.map((item, ix) => [ item, ix ])); }
@@ -38,32 +38,36 @@ class CurrentPowerRanker {
   addPreferences (preferences) {
     const matrix = this.matrix;
     const itemMap = this.#toItemMap(this.items);
+    const implicitPref = this.implicitPref;
 
     preferences.forEach((p) => {
       const targetIx = itemMap.get(p.target);
       const sourceIx = itemMap.get(p.source);
       if (targetIx === undefined || sourceIx === undefined) return;
 
-      // Bidirectional: allocate p.value toward target, (1-p.value) toward source
-      matrix.data[sourceIx][targetIx] += p.value;
-      matrix.data[targetIx][sourceIx] += (1 - p.value);
-      this.numPreferences++;
+      // Scale preference so 0.5 is truly neutral (contributes 0)
+      const scaled = (p.value - 0.5) * 2;
+
+      if (scaled !== 0) {
+        // Remove the implicit neutral preference from BOTH directions
+        matrix.data[sourceIx][targetIx] -= implicitPref;
+        matrix.data[targetIx][sourceIx] -= implicitPref;
+
+        // Add scaled preference to ONE direction only
+        if (scaled > 0) {
+          matrix.data[sourceIx][targetIx] += scaled;
+        } else {
+          matrix.data[targetIx][sourceIx] += -scaled;
+        }
+      }
     });
 
     // Update diagonals
     this.#sumColumns(matrix).forEach((sum, ix) => { matrix.data[ix][ix] = sum; });
   }
 
-  // Current damping formula: d = P / (P + 0.5 * maxPairs)
-  _computeDamping () {
-    const n = this.items.length;
-    const maxPairs = n * (n - 1) / 2;
-    const P = this.numPreferences;
-    return Math.max(0.05, Math.min(0.99, P / (P + 0.5 * maxPairs)));
-  }
-
   run () {
-    const d = this._computeDamping();
+    const d = 0.99; // Fixed damping factor in production
     const n = this.items.length;
     const matrix = this.matrix.clone();
 
@@ -91,13 +95,13 @@ class CurrentPowerRanker {
 
 // ============================================================================
 // NEW PROPOSED IMPLEMENTATION
-// No implicit preferences, QV-based effectiveP, α parameter
-// Formula: effectiveP = Σ√prefs_i, d = effectiveP / (effectiveP + α × numItems)
+// No implicit preferences, scaled unidirectional, sigmoid damping
+// Formula: d = 1 / (1 + exp(-a × P / maxPairs))
 // ============================================================================
 class NewPowerRanker {
   constructor ({ items }) {
     this.items = Array.from(items).sort((a, b) => a.localeCompare(b));
-    this.prefsByResident = {};
+    this.numPreferences = 0;
     const n = this.items.length;
     this.matrix = linAlg.Matrix.zero(n, n);
   }
@@ -116,28 +120,32 @@ class NewPowerRanker {
       const sourceIx = itemMap.get(p.source);
       if (targetIx === undefined || sourceIx === undefined) return;
 
-      // Bidirectional: allocate p.value toward target, (1-p.value) toward source
-      matrix.data[sourceIx][targetIx] += p.value;
-      matrix.data[targetIx][sourceIx] += (1 - p.value);
+      // Scaled unidirectional: 0.5 is neutral, only winner gains
+      const scaled = (p.value - 0.5) * 2;
 
-      // Track by resident for effectiveP calculation
-      this.prefsByResident[p.residentId] = (this.prefsByResident[p.residentId] || 0) + 1;
+      if (scaled > 0) {
+        matrix.data[sourceIx][targetIx] += scaled;
+      } else if (scaled < 0) {
+        matrix.data[targetIx][sourceIx] += Math.abs(scaled);
+      }
+
+      this.numPreferences++;
     });
 
     // Update diagonals
     this.#sumColumns(matrix).forEach((sum, ix) => { matrix.data[ix][ix] = sum; });
   }
 
-  // New damping formula: effectiveP = Σ√prefs_i, d = effectiveP / (effectiveP + α × n)
-  _computeDamping (alpha) {
+  // Sigmoid damping: d = 1 / (1 + exp(-a × coverage))
+  _computeDamping (a) {
     const n = this.items.length;
-    const effectiveP = Object.values(this.prefsByResident)
-      .reduce((sum, count) => sum + Math.sqrt(count), 0);
-    return Math.max(0.05, Math.min(0.99, effectiveP / (effectiveP + alpha * n)));
+    const maxPairs = n * (n - 1) / 2;
+    const coverage = this.numPreferences / maxPairs;
+    return 1 / (1 + Math.exp(-a * coverage));
   }
 
-  run (alpha = 0.4) {
-    const d = this._computeDamping(alpha);
+  run (a = 0.5) {
+    const d = this._computeDamping(a);
     const n = this.items.length;
     const matrix = this.matrix.clone();
 
@@ -160,9 +168,9 @@ class NewPowerRanker {
     const weights = eigenvector.data[0];
     itemMap.forEach((ix, item) => itemMap.set(item, weights[ix]));
 
-    const effectiveP = Object.values(this.prefsByResident)
-      .reduce((sum, count) => sum + Math.sqrt(count), 0);
-    return { rankings: itemMap, damping: d, effectiveP };
+    const maxPairs = n * (n - 1) / 2;
+    const coverage = this.numPreferences / maxPairs;
+    return { rankings: itemMap, damping: d, coverage };
   }
 }
 
@@ -195,10 +203,11 @@ function getUniqueChores (preferences) {
   return chores;
 }
 
-function analyzeDataset (name, csvPath, numResidents, alpha) {
+function analyzeDataset (name, csvPath, numResidents, a) {
   const preferences = parseCSV(csvPath);
   const chores = getUniqueChores(preferences);
   const numItems = chores.size;
+  const maxPairs = numItems * (numItems - 1) / 2;
 
   // Current implementation
   const currentRanker = new CurrentPowerRanker({ items: chores, numResidents });
@@ -206,7 +215,6 @@ function analyzeDataset (name, csvPath, numResidents, alpha) {
     target: p.alphaChore,
     source: p.betaChore,
     value: p.preference,
-    residentId: p.residentId,
   })));
   const currentResult = currentRanker.run();
 
@@ -216,22 +224,26 @@ function analyzeDataset (name, csvPath, numResidents, alpha) {
     target: p.alphaChore,
     source: p.betaChore,
     value: p.preference,
-    residentId: p.residentId,
   })));
-  const newResult = newRanker.run(alpha);
+  const newResult = newRanker.run(a);
 
-  console.log(`\n${'='.repeat(90)}`);
+  console.log(`\n${'='.repeat(100)}`);
   console.log(`${name}`);
-  console.log('='.repeat(90));
+  console.log('='.repeat(100));
 
-  console.log(`\nItems: ${numItems}, Total prefs: ${preferences.length}, Residents: ${numResidents}`);
-  console.log(`\nCurrent damping: d = ${currentResult.damping.toFixed(3)}`);
-  console.log(`New damping (α=${alpha}): d = ${newResult.damping.toFixed(3)} (effectiveP = ${newResult.effectiveP.toFixed(1)})`);
+  console.log(`\nItems: ${numItems}  |  Preferences: ${preferences.length}  |  ` +
+              `maxPairs: ${maxPairs}  |  Coverage: ${(newResult.coverage * 100).toFixed(1)}%`);
+  console.log(`\nCurrent damping: d = ${currentResult.damping.toFixed(3)} (fixed)`);
+  console.log(`New damping (a=${a}): d = ${newResult.damping.toFixed(3)} (sigmoid)`);
 
   // Sort by current ranking
   const sortedChores = Array.from(currentResult.rankings.entries())
     .sort((a, b) => b[1] - a[1])
-    .map(([ chore, rank ]) => ({ chore, currentRank: rank, newRank: newResult.rankings.get(chore) }));
+    .map(([ chore, rank ]) => ({
+      chore,
+      currentRank: rank,
+      newRank: newResult.rankings.get(chore),
+    }));
 
   // Compute changes
   sortedChores.forEach((item) => {
@@ -243,19 +255,24 @@ function analyzeDataset (name, csvPath, numResidents, alpha) {
 
   const uniform = 100 / numItems;
 
-  console.log(`\n${'─'.repeat(90)}`);
-  console.log('SIDE-BY-SIDE COMPARISON (sorted by current ranking)');
-  console.log('─'.repeat(90));
-  console.log(`${'Chore'.padEnd(42)} ${'Current'.padStart(9)} ${'New'.padStart(9)} ${'Change'.padStart(9)} ${'Δ%'.padStart(8)}`);
-  console.log('─'.repeat(90));
+  console.log(`\n${'─'.repeat(100)}`);
+  console.log('FULL CHORE PRIORITY LIST (sorted by current ranking)');
+  console.log('─'.repeat(100));
+  console.log(`${'#'.padStart(3)} ${'Chore'.padEnd(45)} ${'Current'.padStart(9)} ` +
+              `${'New'.padStart(9)} ${'Change'.padStart(9)} ${'Δ%'.padStart(8)}`);
+  console.log('─'.repeat(100));
 
-  sortedChores.forEach((item) => {
+  sortedChores.forEach((item, i) => {
     const changeStr = item.change >= 0 ? `+${item.change.toFixed(2)}` : item.change.toFixed(2);
-    const changePctStr = item.changePct >= 0 ? `+${item.changePct.toFixed(0)}%` : `${item.changePct.toFixed(0)}%`;
-    const choreName = item.chore.slice(0, 41).padEnd(42);
+    const changePctStr = item.changePct >= 0
+      ? `+${item.changePct.toFixed(0)}%`
+      : `${item.changePct.toFixed(0)}%`;
+    const rank = String(i + 1).padStart(3);
+    const choreName = item.chore.slice(0, 44).padEnd(45);
     const curPct = item.currentPct.toFixed(2).padStart(8);
     const newPct = item.newPct.toFixed(2).padStart(8);
-    console.log(`${choreName} ${curPct}% ${newPct}% ${changeStr.padStart(8)}% ${changePctStr.padStart(7)}`);
+    console.log(`${rank} ${choreName} ${curPct}% ${newPct}% ` +
+                `${changeStr.padStart(8)}% ${changePctStr.padStart(7)}`);
   });
 
   // Summary stats
@@ -268,22 +285,27 @@ function analyzeDataset (name, csvPath, numResidents, alpha) {
     max: Math.max(...sortedChores.map(c => c.newPct)),
   };
 
-  console.log('\n' + '─'.repeat(90));
+  console.log('\n' + '─'.repeat(100));
   console.log('SUMMARY');
-  console.log('─'.repeat(90));
+  console.log('─'.repeat(100));
   console.log(`Uniform baseline: ${uniform.toFixed(2)}%`);
-  const curRatio = (currentSpread.max / currentSpread.min).toFixed(1);
-  const newRatio = (newSpread.max / newSpread.min).toFixed(1);
-  console.log(`\nCurrent:  ${currentSpread.min.toFixed(2)}% - ${currentSpread.max.toFixed(2)}%  (${curRatio}x spread)`);
-  console.log(`New:      ${newSpread.min.toFixed(2)}% - ${newSpread.max.toFixed(2)}%  (${newRatio}x spread)`);
+  const curRatio = (currentSpread.max / currentSpread.min).toFixed(2);
+  const newRatio = (newSpread.max / newSpread.min).toFixed(2);
+  console.log(`\nCurrent:  ${currentSpread.min.toFixed(2)}% - ` +
+              `${currentSpread.max.toFixed(2)}%  (${curRatio}x spread)`);
+  console.log(`New:      ${newSpread.min.toFixed(2)}% - ` +
+              `${newSpread.max.toFixed(2)}%  (${newRatio}x spread)`);
+  console.log(`\nSpread change: ${curRatio}x → ${newRatio}x ` +
+              `(${((newRatio / curRatio - 1) * 100).toFixed(1)}%)`);
 
   // Biggest changes
-  const sortedByChange = [ ...sortedChores ].sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
-  console.log('\nBiggest changes:');
+  const sortedByChange = [ ...sortedChores ].sort((a, b) =>
+    Math.abs(b.change) - Math.abs(a.change));
+  console.log('\nBiggest priority changes:');
   sortedByChange.slice(0, 5).forEach((item) => {
     const dir = item.change > 0 ? '↑' : '↓';
     const sign = item.change >= 0 ? '+' : '';
-    const name = item.chore.slice(0, 35).padEnd(36);
+    const name = item.chore.slice(0, 38).padEnd(39);
     const cur = item.currentPct.toFixed(2);
     const nw = item.newPct.toFixed(2);
     console.log(`  ${dir} ${name} ${cur}% → ${nw}% (${sign}${item.change.toFixed(2)}%)`);
@@ -294,35 +316,55 @@ function analyzeDataset (name, csvPath, numResidents, alpha) {
   const newOrder = [ ...sortedChores ].sort((a, b) => b.newPct - a.newPct).map(c => c.chore);
 
   let rankChanges = 0;
+  const positionChanges = [];
   currentOrder.forEach((chore, i) => {
     const newIdx = newOrder.indexOf(chore);
-    if (Math.abs(newIdx - i) > 0) rankChanges++;
+    if (newIdx !== i) {
+      rankChanges++;
+      positionChanges.push({ chore, from: i + 1, to: newIdx + 1, delta: i - newIdx });
+    }
   });
 
   console.log(`\nRank order changes: ${rankChanges}/${numItems} chores changed position`);
+
+  if (positionChanges.length > 0) {
+    const biggestMoves = positionChanges.sort((a, b) =>
+      Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 5);
+    console.log('Biggest rank moves:');
+    biggestMoves.forEach((m) => {
+      const dir = m.delta > 0 ? '↑' : '↓';
+      const name = m.chore.slice(0, 38).padEnd(39);
+      console.log(`  ${dir} ${name} #${m.from} → #${m.to} (${m.delta > 0 ? '+' : ''}${m.delta})`);
+    });
+  }
 
   return { sortedChores, currentResult, newResult };
 }
 
 // Main
-console.log('╔══════════════════════════════════════════════════════════════════════════════════════╗');
-console.log('║         CURRENT vs NEW RANKINGS COMPARISON                                          ║');
-console.log('║         Current: implicit prefs + data-dependent damping                            ║');
-console.log('║         New: no implicit prefs + QV-based damping (α=0.4)                           ║');
-console.log('╚══════════════════════════════════════════════════════════════════════════════════════╝');
+const A = 0.5;
 
-const ALPHA = 0.4;
+console.log('╔════════════════════════════════════════════════════════════════════' +
+            '══════════════════════════════╗');
+console.log('║                        CURRENT vs NEW RANKINGS COMPARISON          ' +
+            '                              ║');
+console.log('║  Current: implicit prefs + scaled unidirectional + d=0.99          ' +
+            '                              ║');
+console.log('║  New: no implicit prefs + scaled unidirectional + sigmoid (a=' +
+            A.toFixed(1) + ')                              ║');
+console.log('╚════════════════════════════════════════════════════════════════════' +
+            '══════════════════════════════╝');
 
 analyzeDataset(
-  'SAGE (9 residents, 28 chores)',
+  'SAGE (9 residents, 23 chores)',
   path.join(__dirname, 'prefs-sage-9.csv'),
   9,
-  ALPHA,
+  A,
 );
 
 analyzeDataset(
-  'SOLEGRIA (5 residents, 72 chores)',
+  'SOLEGRIA (5 residents, 34 chores)',
   path.join(__dirname, 'prefs-solegria-5.csv'),
   5,
-  ALPHA,
+  A,
 );
