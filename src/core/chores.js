@@ -326,31 +326,18 @@ exports.getCurrentChoreValues = async function (houseId, now) {
 
 // Chore Rankings
 
-/// @notice Compute effective preference count using quadratic voting formula
-/// @dev Formula: effectiveP = (Σᵢ √numPrefs_i)²
-/// @dev This rewards coalition-building: 5 people × 75 prefs > 1 person × 375 prefs
-/// @param preferences Array of preferences with residentId
-/// @return effectiveP The quadratic-weighted effective preference count
-exports.computeEffectivePreferences = function (preferences) {
-  const byResident = {};
-  preferences.forEach((p) => {
-    byResident[p.residentId] = (byResident[p.residentId] || 0) + 1;
-  });
-  return Math.pow(
-    Object.values(byResident).reduce((sum, n) => sum + Math.sqrt(n), 0),
-    2,
-  );
-};
-
-/// @notice Compute damping factor based on effective preferences and chore count
-/// @dev Formula: d = effectiveP / (effectiveP + α × maxPairs), bounded by [0.05, 0.99]
-/// @param effectiveP The quadratic-weighted effective preference count
+/// @notice Compute damping factor based on preference count and chore count
+/// @dev Formula: d = P / (P + α × maxPairs), bounded by [0.05, 0.99]
+/// @dev Both P and maxPairs are on the same scale (counting pairs), making α interpretable:
+/// @dev   α = 1.0 means "half saturation when prefs = maxPairs"
+/// @dev   α = 0.5 means "half saturation when prefs = 2 × maxPairs"
+/// @param numPrefs The total number of preferences
 /// @param numChores The number of chores being ranked
-/// @param alpha The scaling coefficient (default 0.5)
+/// @param alpha The scaling coefficient (default 0.05)
 /// @return d The computed damping factor
-exports.computeDamping = function (effectiveP, numChores, alpha = 0.5) {
+exports.computeDamping = function (numPrefs, numChores, alpha = 0.05) {
   const maxPairs = numChores * (numChores - 1) / 2;
-  return Math.max(0.05, Math.min(0.99, effectiveP / (effectiveP + alpha * maxPairs)));
+  return Math.max(0.05, Math.min(0.99, numPrefs / (numPrefs + alpha * maxPairs)));
 };
 
 exports.getCurrentChoreRankings = async function (houseId, now) {
@@ -379,9 +366,7 @@ exports.getChoreRankings = function (chores, preferences) {
     return { target: p.alphaChoreId, source: p.betaChoreId, value: p.preference };
   }));
 
-  // Compute damping factor using quadratic voting formula
-  const effectiveP = exports.computeEffectivePreferences(preferences);
-  const d = exports.computeDamping(effectiveP, chores.length);
+  const d = exports.computeDamping(preferences.length, chores.length);
   const rankings = powerRanker.run({ d });
 
   return chores.map((c) => {
