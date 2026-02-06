@@ -12,9 +12,9 @@ class PowerRanker {
   constructor ({ items, options = {} }) {
     assert(items.size >= 2, 'PowerRanker: Cannot rank less than two items');
 
-    this.items = this.#sort(items);
     this.options = options;
 
+    this.items = this.#sort(items);
     this.matrix = this._prepareMatrix();
 
     this.log('Matrix initialized');
@@ -22,38 +22,40 @@ class PowerRanker {
 
   log (msg) {
     /* istanbul ignore next */
-    if (this.options.verbose) { console.log(msg); }
+    if (this.options.verbose) {
+      console.log(msg);
+    }
   }
 
   /// @notice Add preferences to the matrix
   /// @dev We assume max one submission per participant/pair
   /// @dev Complexity is O(n)
-  /// @param preferences:Array[{target:str, source:str, value:float}] The preferences of the participants
+  /// @param preferences:Array[{target:str, source:str, value:float}] Participant preferences
   addPreferences (preferences) { // [{ target, source, value }]
     const matrix = this.matrix;
     const itemMap = this.#toItemMap(this.items);
 
-    // Add scaled unidirectional preferences to the off-diagonals
-    // Scale so 0.5 -> 0 (neutral), only the preferred item gains value
+    // Add preferences to the off-diagonals
     preferences.forEach((p) => {
       const targetIx = itemMap.get(p.target);
       const sourceIx = itemMap.get(p.source);
 
-      // Scale preference: 0.5 is neutral (no effect), range becomes -1 to +1
+      // Scale so 0.5 -> 0, 0.7 -> 0.4, etc.
       const scaled = (p.value - 0.5) * 2;
 
-      if (scaled > 0) {
+      // Rows: source, cols: target
+      if (scaled >= 0) {
         // Prefer target: only target gains value
         matrix.data[sourceIx][targetIx] += scaled;
       } else if (scaled < 0) {
         // Prefer source: only source gains value
         matrix.data[targetIx][sourceIx] += Math.abs(scaled);
       }
-      // scaled === 0: neutral preference, no effect
     });
 
-    // Add the diagonals (sums of columns)
-    this.#sumColumns(matrix).map((sum, ix) => matrix.data[ix][ix] = sum); // eslint-disable-line no-return-assign
+    // Add the diagonals (sums of columns, representing sum preference received)
+    this.#sumColumns(matrix)
+      .map((sum, ix) => matrix.data[ix][ix] = sum); // eslint-disable-line no-return-assign
   }
 
   /// @notice Run the algorithm and return the results
@@ -61,7 +63,7 @@ class PowerRanker {
   /// @param epsilon:float The precision at which to run the algorithm
   /// @param nIter:int The maximum number of iterations to run the algorithm
   /// @return rankings:Map(int => float) The rankings, with item mapped to result
-  run ({ d = 1, epsilon = 0.001, nIter = 1000 } = {}) {
+  run ({ d = 1, epsilon = 0.001, nIter = 1000 }) {
     const weights = this._powerMethod(this.matrix, d, epsilon, nIter);
     return this._applyLabels(weights);
   }
@@ -98,28 +100,27 @@ class PowerRanker {
   // Complexity is O(1)
   _prepareMatrix () {
     const n = this.items.length;
-
-    // Initialize the zero matrix (no implicit preferences)
     return linAlg.Matrix.zero(n, n);
   }
 
   // Complexity is O(n^3)-ish
   _powerMethod (matrix, d, epsilon, nIter) {
     assert(matrix.rows === matrix.cols, 'Matrix must be square!');
+    matrix = matrix.clone(); // Make a copy for safety
     const n = matrix.rows;
 
+    // Add damping factor before normalization to preserve preference magnitude
+    matrix.mulEach_(d);
+    matrix.plusEach_((1 - d) / n);
+
     // Normalize matrix
-    matrix = matrix.clone(); // Make a copy for safety
     matrix.data = matrix.data
       .map((row) => {
         const rowSum = this.#sum(row);
-        // Handle zero-sum rows by using uniform distribution
-        return rowSum > 0 ? row.map(x => x / rowSum) : row.map(() => 1 / n);
+        return rowSum > 0
+          ? row.map(x => x / rowSum)
+          : row.map(() => 1 / n); // Give zero-sum rows uniform distribution
       });
-
-    // Add damping factor
-    matrix.mulEach_(d);
-    matrix.plusEach_((1 - d) / n);
 
     // Initialize eigenvector to uniform distribution
     let eigenvector = linAlg.Vector.zero(n)
