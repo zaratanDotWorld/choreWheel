@@ -330,20 +330,20 @@ const PSEUDOCOUNT_C = 0.05;
 
 exports.getCurrentChoreRankings = async function (houseId, now) {
   const chores = await exports.getChores(houseId);
-  const preferences = await exports.getActiveChorePreferences(houseId, now);
   const numResidents = await Admin.getNumResidents(houseId, now);
-  return exports.getChoreRankings(chores, preferences, numResidents);
+  const preferences = await exports.getActiveChorePreferences(houseId, now);
+  return exports.getChoreRankings(chores, numResidents, preferences);
 };
 
 exports.getProposedChoreRankings = async function (houseId, newPrefs, now) {
   const chores = await exports.getChores(houseId);
+  const numResidents = await Admin.getNumResidents(houseId, now);
   const currentPrefs = await exports.getActiveChorePreferences(houseId, now);
   const proposedPrefs = exports.mergeChorePreferences(currentPrefs, newPrefs);
-  const numResidents = await Admin.getNumResidents(houseId, now);
-  return exports.getChoreRankings(chores, proposedPrefs, numResidents);
+  return exports.getChoreRankings(chores, numResidents, proposedPrefs);
 };
 
-exports.getChoreRankings = function (chores, preferences, numResidents = 0) {
+exports.getChoreRankings = function (chores, numResidents, preferences) {
   // Handle the case of less than two chores
   if (chores.length <= 1) {
     return chores.map(c => ({ id: c.id, name: c.name, ranking: 1.0 }));

@@ -301,16 +301,17 @@ describe('Chores', async () => {
       await db('Chore').where({ houseId: HOUSE }).whereNot({ id: dishes.id }).delete();
 
       let chores = await Chores.getChores(HOUSE);
+      const numResidents = await Admin.getNumResidents(HOUSE, now);
 
       let choreRankings;
-      choreRankings = await Chores.getChoreRankings(chores, []);
+      choreRankings = await Chores.getChoreRankings(chores, numResidents, []);
       expect(choreRankings.length).to.equal(1);
       expect(choreRankings[0].ranking).to.equal(1);
 
       await db('Chore').where({ houseId: HOUSE }).delete();
 
       chores = await Chores.getChores(HOUSE);
-      choreRankings = await Chores.getChoreRankings(chores, []);
+      choreRankings = await Chores.getChoreRankings(chores, numResidents, []);
       expect(choreRankings.length).to.equal(0);
     });
 
@@ -397,6 +398,7 @@ describe('Chores', async () => {
       // Shift priority from sweeping to restock
       newPrefs.push({ residentId: RESIDENT2, alphaChoreId: sweeping.id, betaChoreId: restock.id, preference: 0.7 });
       choreRankings = await Chores.getProposedChoreRankings(HOUSE, newPrefs, now);
+
       expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.5109403527338869);
       expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.32920913470298835);
       expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.15985051256312477);

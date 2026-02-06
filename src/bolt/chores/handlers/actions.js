@@ -580,7 +580,7 @@ module.exports = (app) => {
 
     const numResidents = await Admin.getNumResidents(houseId, now);
     const preferences = utils.generatePreferencesFromScores(residentId, chores);
-    const rankings = Chores.getChoreRankings(chores, preferences, numResidents);
+    const rankings = Chores.getChoreRankings(chores, numResidents, preferences);
 
     cache.set(`chores-import-${residentId}`, chores);
 

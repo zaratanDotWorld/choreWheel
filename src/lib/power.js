@@ -47,7 +47,7 @@ class PowerRanker {
       if (scaled > 0) {
         matrix.data[sourceIx][targetIx] += scaled;
       } else {
-        matrix.data[targetIx][sourceIx] += Math.abs(scaled);
+        matrix.data[targetIx][sourceIx] += -scaled;
       }
     });
 
