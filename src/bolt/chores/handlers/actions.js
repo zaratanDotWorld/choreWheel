@@ -557,7 +557,7 @@ module.exports = (app) => {
   });
 
   app.view('chores-import-2', async ({ ack, body }) => {
-    const { houseId, residentId } = common.beginAction('chores-import-2  ', body);
+    const { now, houseId, residentId } = common.beginAction('chores-import-2  ', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
     const [ file ] = common.getInputBlock(body, -1).csv.files;
@@ -578,8 +578,9 @@ module.exports = (app) => {
       description: c.description,
     })).filter(c => c.name && c.score);
 
+    const numResidents = await Admin.getNumResidents(houseId, now);
     const preferences = utils.generatePreferencesFromScores(residentId, chores);
-    const rankings = Chores.getChoreRankings(chores, preferences);
+    const rankings = Chores.getChoreRankings(chores, preferences, numResidents);
 
     cache.set(`chores-import-${residentId}`, chores);
 

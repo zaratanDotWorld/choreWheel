@@ -326,48 +326,38 @@ exports.getCurrentChoreValues = async function (houseId, now) {
 
 // Chore Rankings
 
-/// @notice Compute damping factor based on preference coverage using sigmoid
-/// @dev Formula: d = 1 / (1 + exp(-a × P / maxPairs))
-/// @dev Sigmoid provides smooth S-curve from 0.5 (no data) to ~1.0 (full coverage)
-/// @dev   a controls steepness: higher a = faster rise to full confidence
-/// @param numPrefs The total number of preferences
-/// @param numChores The number of chores being ranked
-/// @param a The sigmoid steepness parameter (default 1.0)
-/// @return d The computed damping factor
-exports.computeDamping = function (numPrefs, numChores, a = 0.5) {
-  const maxPairs = numChores * (numChores - 1) / 2;
-  const coverage = numPrefs / maxPairs;
-  return 1 / (1 + Math.exp(-a * coverage));
-};
+const PSEUDOCOUNT_C = 0.05;
 
 exports.getCurrentChoreRankings = async function (houseId, now) {
   const chores = await exports.getChores(houseId);
   const preferences = await exports.getActiveChorePreferences(houseId, now);
-  return exports.getChoreRankings(chores, preferences);
+  const numResidents = await Admin.getNumResidents(houseId, now);
+  return exports.getChoreRankings(chores, preferences, numResidents);
 };
 
 exports.getProposedChoreRankings = async function (houseId, newPrefs, now) {
   const chores = await exports.getChores(houseId);
   const currentPrefs = await exports.getActiveChorePreferences(houseId, now);
   const proposedPrefs = exports.mergeChorePreferences(currentPrefs, newPrefs);
-  return exports.getChoreRankings(chores, proposedPrefs);
+  const numResidents = await Admin.getNumResidents(houseId, now);
+  return exports.getChoreRankings(chores, proposedPrefs, numResidents);
 };
 
-exports.getChoreRankings = function (chores, preferences) {
+exports.getChoreRankings = function (chores, preferences, numResidents = 0) {
   // Handle the case of less than two chores
   if (chores.length <= 1) {
     return chores.map(c => ({ id: c.id, name: c.name, ranking: 1.0 }));
   }
 
   const items = new Set(chores.map(c => c.id));
-  const powerRanker = new PowerRanker({ items });
+  const k = PSEUDOCOUNT_C * numResidents;
+  const powerRanker = new PowerRanker({ items, options: { k } });
 
   powerRanker.addPreferences(preferences.map((p) => {
     return { target: p.alphaChoreId, source: p.betaChoreId, value: p.preference };
   }));
 
-  const d = exports.computeDamping(preferences.length, chores.length);
-  const rankings = powerRanker.run({ d });
+  const rankings = powerRanker.run();
 
   return chores.map((c) => {
     return { id: c.id, name: c.name, ranking: rankings.get(c.id) };

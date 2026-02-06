@@ -44,11 +44,9 @@ class PowerRanker {
       const scaled = (p.value - 0.5) * 2;
 
       // Rows: source, cols: target
-      if (scaled >= 0) {
-        // Prefer target: only target gains value
+      if (scaled > 0) {
         matrix.data[sourceIx][targetIx] += scaled;
-      } else if (scaled < 0) {
-        // Prefer source: only source gains value
+      } else {
         matrix.data[targetIx][sourceIx] += Math.abs(scaled);
       }
     });
@@ -59,12 +57,11 @@ class PowerRanker {
   }
 
   /// @notice Run the algorithm and return the results
-  /// @param d:float The damping factor (default 1, full weight on preferences)
   /// @param epsilon:float The precision at which to run the algorithm
   /// @param nIter:int The maximum number of iterations to run the algorithm
   /// @return rankings:Map(int => float) The rankings, with item mapped to result
-  run ({ d = 1, epsilon = 0.001, nIter = 1000 }) {
-    const weights = this._powerMethod(this.matrix, d, epsilon, nIter);
+  run ({ epsilon = 0.001, nIter = 1000 } = {}) {
+    const weights = this._powerMethod(this.matrix, epsilon, nIter);
     return this._applyLabels(weights);
   }
 
@@ -97,21 +94,28 @@ class PowerRanker {
     return itemMap;
   }
 
-  // Complexity is O(1)
+  // Complexity is O(n^2)
   _prepareMatrix () {
     const n = this.items.length;
-    return linAlg.Matrix.zero(n, n);
+
+    // Initialise the zero matrix;
+    let matrix = linAlg.Matrix.zero(n, n);
+
+    // Initialize off-diagonals with pseudocount k
+    if (this.options.k) {
+      matrix = matrix
+        .plusEach(1).minus(linAlg.Matrix.identity(n))
+        .mulEach(this.options.k);
+    }
+
+    return matrix;
   }
 
   // Complexity is O(n^3)-ish
-  _powerMethod (matrix, d, epsilon, nIter) {
+  _powerMethod (matrix, epsilon, nIter) {
     assert(matrix.rows === matrix.cols, 'Matrix must be square!');
     matrix = matrix.clone(); // Make a copy for safety
     const n = matrix.rows;
-
-    // Add damping factor before normalization to preserve preference magnitude
-    matrix.mulEach_(d);
-    matrix.plusEach_((1 - d) / n);
 
     // Normalize matrix
     matrix.data = matrix.data
