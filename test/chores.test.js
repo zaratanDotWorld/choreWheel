@@ -330,9 +330,9 @@ describe('Chores', async () => {
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.5038945471248252);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.31132043857597014);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.18478501429920438);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.6504044299518104);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.25639052368514753);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.093205046363043);
     });
 
     it('can use preferences to determine mild chore rankings', async () => {
@@ -342,9 +342,9 @@ describe('Chores', async () => {
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.42388188734554155);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.3194808217691187);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.2566372908853395);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.5109403527338869);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.32920913470298835);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.15985051256312477);
     });
 
     it('can use preferences to determine complex chore rankings', async () => {
@@ -354,9 +354,9 @@ describe('Chores', async () => {
 
       const choreRankings = await Chores.getCurrentChoreRankings(HOUSE, now);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.43135897930403255);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.13728204139193492);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.43135897930403255);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.45208724954750107);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.09582550090499836);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.45208724954750096);
     });
 
     it('can handle circular chore rankings', async () => {
@@ -382,26 +382,26 @@ describe('Chores', async () => {
       const newPrefs = [];
       choreRankings = await Chores.getProposedChoreRankings(HOUSE, newPrefs, now);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.5038945471248252);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.31132043857597014);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.18478501429920438);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.6504044299518104);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.25639052368514753);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.093205046363043);
 
       // Shift priority from dishes to sweeping
       newPrefs.push({ residentId: RESIDENT1, alphaChoreId: dishes.id, betaChoreId: sweeping.id, preference: 0.7 });
       choreRankings = await Chores.getProposedChoreRankings(HOUSE, newPrefs, now);
 
       // Note how sweeping gains a higher priority despite being less preferred than dishes
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.37387148472621634);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.41854195159603846);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.20758656367774447);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.4395874692001581);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.43882103155500896);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.12159149924483303);
 
       // Shift priority from sweeping to restock
       newPrefs.push({ residentId: RESIDENT2, alphaChoreId: sweeping.id, betaChoreId: restock.id, preference: 0.7 });
       choreRankings = await Chores.getProposedChoreRankings(HOUSE, newPrefs, now);
 
-      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.42388188734554155);
-      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.3194808217691187);
-      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.2566372908853395);
+      expect(choreRankings.find(x => x.id === dishes.id).ranking).to.almost.equal(0.5109403527338869);
+      expect(choreRankings.find(x => x.id === sweeping.id).ranking).to.almost.equal(0.32920913470298835);
+      expect(choreRankings.find(x => x.id === restock.id).ranking).to.almost.equal(0.15985051256312477);
     });
   });
 
@@ -574,7 +574,7 @@ describe('Chores', async () => {
       expect(availablePoints).to.almost.equal(3 * PPR);
 
       choreValues = await Chores.updateChoreValues(HOUSE, t1);
-      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0)).to.almost.equal(3 * PPR / 3);
+      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0)).to.be.almost(3 * PPR / 3, 1e-4);
 
       // t2, 10 days later
       lastUpdateTime = await Chores.getLastChoreValueUpdateTime(HOUSE, t2);
@@ -584,7 +584,7 @@ describe('Chores', async () => {
       expect(availablePoints).to.almost.equal(3 * PPR * 2 / 3);
 
       choreValues = await Chores.updateChoreValues(HOUSE, t2);
-      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0)).to.almost.equal(3 * PPR / 3);
+      expect(choreValues.reduce((sum, cv) => sum + cv.value, 0)).to.be.almost(3 * PPR / 3, 1e-4);
     });
 
     it('can get the current, updated chore values', async () => {

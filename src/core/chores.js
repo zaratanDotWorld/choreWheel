@@ -33,7 +33,6 @@ exports.params = {
   penaltyUnit: 0.25,
   achievementBase: 20,
   achievementWindow: 18 * 30 * DAY,
-  dampingFactor: 0.99,
   proposalPollLength: 2 * DAY,
   specialProposalPollLength: DAY,
   proposalPct: 0.4,
@@ -327,6 +326,8 @@ exports.getCurrentChoreValues = async function (houseId, now) {
 
 // Chore Rankings
 
+const PSEUDOCOUNT_C = 0.05;
+
 exports.getCurrentChoreRankings = async function (houseId, now) {
   const chores = await exports.getChores(houseId);
   const numResidents = await Admin.getNumResidents(houseId, now);
@@ -342,21 +343,21 @@ exports.getProposedChoreRankings = async function (houseId, newPrefs, now) {
   return exports.getChoreRankings(chores, numResidents, proposedPrefs);
 };
 
-exports.getChoreRankings = async function (chores, numResidents, preferences) {
+exports.getChoreRankings = function (chores, numResidents, preferences) {
   // Handle the case of less than two chores
   if (chores.length <= 1) {
     return chores.map(c => ({ id: c.id, name: c.name, ranking: 1.0 }));
   }
 
   const items = new Set(chores.map(c => c.id));
-  const options = { numParticipants: numResidents, implicitPref: (1 / numResidents) / 2 };
-  const powerRanker = new PowerRanker({ items, options });
+  const k = PSEUDOCOUNT_C * numResidents;
+  const powerRanker = new PowerRanker({ items, options: { k } });
 
   powerRanker.addPreferences(preferences.map((p) => {
     return { target: p.alphaChoreId, source: p.betaChoreId, value: p.preference };
   }));
 
-  const rankings = powerRanker.run({ d: params.dampingFactor });
+  const rankings = powerRanker.run();
 
   return chores.map((c) => {
     return { id: c.id, name: c.name, ranking: rankings.get(c.id) };
