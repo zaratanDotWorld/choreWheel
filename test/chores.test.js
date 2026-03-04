@@ -1198,6 +1198,8 @@ describe('Chores', async () => {
       expect(choreStats.pointsEarned).to.equal(11);
       expect(choreStats.pointsOwed).to.equal(100);
       expect(choreStats.completionPct).to.equal(0.11);
+      expect(choreStats.workingPercentage).to.equal(1);
+      expect(choreStats.specialObligation).to.equal(0);
 
       await Chores.addSpecialChoreValue(HOUSE, 'Special', '', 55, feb15);
 
@@ -1205,6 +1207,8 @@ describe('Chores', async () => {
       expect(choreStats.pointsEarned).to.equal(11);
       expect(choreStats.pointsOwed).to.equal(110); // Split among 4 residents
       expect(choreStats.completionPct).to.equal(0.1);
+      expect(choreStats.workingPercentage).to.equal(1);
+      expect(choreStats.specialObligation).to.equal(10);
 
       await Chores.addChoreBreak(HOUSE, RESIDENT1, feb1, mar1, '');
 
@@ -1212,6 +1216,7 @@ describe('Chores', async () => {
       expect(choreStats.pointsEarned).to.equal(11);
       expect(choreStats.pointsOwed).to.equal(0);
       expect(choreStats.completionPct).to.equal(1);
+      expect(choreStats.workingPercentage).to.equal(0);
     });
 
     it('can get resident chore stats with a custom obligation', async () => {
