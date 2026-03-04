@@ -253,12 +253,11 @@ exports.getSpecialChoreValue = async function (choreValueId) {
 
 exports.getSpecialChoreTotal = async function (houseId, startTime, endTime) {
   const choreValues = await db('ChoreValue')
-    .leftJoin('ChoreClaim', 'ChoreValue.id', 'ChoreClaim.choreValueId')
-    .where('ChoreValue.houseId', houseId)
-    .where('ChoreValue.valuedAt', '>', startTime)
-    .where('ChoreValue.valuedAt', '<=', endTime)
-    .whereNull('ChoreValue.choreId')
-    .sum('ChoreValue.value')
+    .where('houseId', houseId)
+    .where('valuedAt', '>', startTime)
+    .where('valuedAt', '<=', endTime)
+    .whereNull('choreId')
+    .sum('value')
     .first();
 
   return choreValues.sum || 0;
