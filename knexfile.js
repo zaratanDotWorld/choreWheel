@@ -11,6 +11,9 @@ module.exports = {
   },
   production: {
     client: 'pg',
-    connection: process.env.PG_CONNECTION_PROD,
+    connection: {
+      connectionString: process.env.PG_CONNECTION_PROD,
+      ssl: { rejectUnauthorized: false },
+    },
   },
 };
