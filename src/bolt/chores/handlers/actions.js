@@ -100,8 +100,9 @@ module.exports = (app) => {
     const { choresConf } = await Admin.getHouse(houseId);
 
     const choreRankings = await Chores.getCurrentChoreRankings(houseId, now);
+    const totalObligation = await Chores.getTotalObligation(houseId, now);
 
-    const view = views.choresRankPreView(choreRankings);
+    const view = views.choresRankPreView(choreRankings, totalObligation);
     await common.openView(app, choresConf.oauth, body.trigger_id, view);
 
     await ack();
@@ -209,8 +210,9 @@ module.exports = (app) => {
     const { choresConf } = await Admin.getHouse(houseId);
 
     const choreRankings = await Chores.getCurrentChoreRankings(houseId, now);
+    const totalObligation = await Chores.getTotalObligation(houseId, now);
 
-    const view = views.choresRankView(choreRankings);
+    const view = views.choresRankView(choreRankings, totalObligation);
     await common.openView(app, choresConf.oauth, body.trigger_id, view);
 
     await ack();
@@ -233,8 +235,10 @@ module.exports = (app) => {
     const choreRankings = (await Chores.getCurrentChoreRankings(houseId, now))
       .filter(ranking => ranking.id !== targetChore.id && !sourceExclusionSet.has(ranking.id));
 
+    const totalObligation = await Chores.getTotalObligation(houseId, now);
+
     const view = (choreRankings.length)
-      ? views.choresRankView2(actionPreference, targetChore, choreRankings)
+      ? views.choresRankView2(actionPreference, targetChore, choreRankings, totalObligation)
       : views.choresRankViewZero(actionPreference);
 
     await ack({ response_action: 'push', view });
@@ -283,18 +287,19 @@ module.exports = (app) => {
     const targetChoreRanking = choreRankings.find(chore => chore.id === targetChore.id);
 
     const newPriority = targetChoreRanking.ranking * 100;
-    const change = newPriority - targetChore.priority;
-
     const totalObligation = await Chores.getTotalObligation(houseId, now);
-    const pointsPerDay = formatPointsPerDay(targetChoreRanking.ranking, totalObligation);
+
+    const oldPpd = formatPointsPerDay(targetChore.ranking, totalObligation);
+    const newPpd = formatPointsPerDay(targetChoreRanking.ranking, totalObligation);
+    const change = newPpd - oldPpd;
 
     if (change > 0) {
-      const text = `Someone *prioritized ${targetChore.name}* to *${newPriority.toFixed(1)}%* ` +
-        `(+${change.toFixed(1)}%), or about *${pointsPerDay} points per day* :rocket:`;
+      const text = `Someone *prioritized ${targetChore.name}* to *${newPpd} points per day* ` +
+        `(+${change.toFixed(1)} ppd), or *${newPriority.toFixed(1)}%* of all points :rocket:`;
       await common.postMessage(app, choresConf, text);
     } else if (change < 0) {
-      const text = `Someone *deprioritized ${targetChore.name}* to *${newPriority.toFixed(1)}%* ` +
-        `(${change.toFixed(1)}%), or about *${pointsPerDay} points per day* :snail:`;
+      const text = `Someone *deprioritized ${targetChore.name}* to *${newPpd} points per day* ` +
+        `(${change.toFixed(1)} ppd), or *${newPriority.toFixed(1)}%* of all points :snail:`;
       await common.postMessage(app, choresConf, text);
     }
 

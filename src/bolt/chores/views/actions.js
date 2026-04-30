@@ -222,10 +222,10 @@ exports.choresClaimCallbackView = function (claim, name, minVotes, achivementPoi
 
 // Ranking flow
 
-exports.choresRankPreView = function (choreRankings) {
+exports.choresRankPreView = function (choreRankings, totalObligation) {
   const header = 'Preview priorities';
-  const mainText = 'These are the current chore priorities:\n\n' +
-    choreRankings.map(chore => `- ${chore.name} - ${(chore.ranking * 100).toFixed(1)}%`).join('\n');
+  const mainText = `These are the current chore priorities (about *${totalObligation} points per month* total):\n\n` +
+    choreRankings.map(chore => `- ${chore.name} - ${formatPointsPerDay(chore.ranking, totalObligation)} ppd`).join('\n');
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
@@ -239,11 +239,12 @@ exports.choresRankPreView = function (choreRankings) {
   };
 };
 
-exports.choresRankView = function (choreRankings) {
+exports.choresRankView = function (choreRankings, totalObligation) {
   const header = 'Set chore priorities';
   const mainText = 'The higher a chore\'s priority, the more points it gets over time.\n\n' +
-    'Chore priorities are measured in *percentages*. ' +
-    'A chore with *0% priority* gets no points, while one with *100% priority* gets _all_ the points.';
+    'Chore priorities are measured in *points per day* (ppd). ' +
+    `The total number of points is fixed (about *${totalObligation} per month*), ` +
+    'so prioritizing one chore deprioritizes another.';
 
   const actions = [
     { value: String(1), text: common.blockPlaintext('prioritize (more points over time)') },
@@ -274,7 +275,7 @@ exports.choresRankView = function (choreRankings) {
       action_id: 'chore',
       type: 'static_select',
       placeholder: common.blockPlaintext('Choose a chore'),
-      options: mapChoreRankings(choreRankings),
+      options: mapChoreRankings(choreRankings, totalObligation),
     },
   ));
   blocks.push(common.blockInput(
@@ -296,7 +297,7 @@ exports.choresRankView = function (choreRankings) {
   };
 };
 
-exports.choresRankView2 = function (preference, targetChore, choreRankings) {
+exports.choresRankView2 = function (preference, targetChore, choreRankings, totalObligation) {
   const effect = (preference >= 0.5) ? 'prioritize' : 'deprioritize';
   const magnitude = Math.abs(preference - 0.5) > 0.2 ? 'a lot' : 'a little';
 
@@ -310,7 +311,7 @@ exports.choresRankView2 = function (preference, targetChore, choreRankings) {
     '*3)* set a *stronger* preference, or ' +
     '*4)* get *other people* to put in the same preferences.';
   const actionText = `You want to *${effect}* *${targetChore.name}* ` +
-    `(${targetChore.priority.toFixed(1)}%) by *${magnitude}*,`;
+    `(${formatPointsPerDay(targetChore.ranking, totalObligation)} ppd) by *${magnitude}*,`;
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
@@ -323,7 +324,7 @@ exports.choresRankView2 = function (preference, targetChore, choreRankings) {
       action_id: 'chores',
       type: 'multi_static_select',
       placeholder: common.blockPlaintext('Choose one or more chores'),
-      options: mapChoreRankings(choreRankings),
+      options: mapChoreRankings(choreRankings, totalObligation),
     },
   ));
 
@@ -340,20 +341,20 @@ exports.choresRankView2 = function (preference, targetChore, choreRankings) {
 
 exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetadata, prefSaturation, totalObligation) {
   const newPriority = targetChoreRanking.ranking * 100;
-  const change = newPriority - targetChore.priority;
-  const pointsPerDay = formatPointsPerDay(targetChoreRanking.ranking, totalObligation);
+  const oldPpd = formatPointsPerDay(targetChore.ranking, totalObligation);
+  const newPpd = formatPointsPerDay(targetChoreRanking.ranking, totalObligation);
+  const change = newPpd - oldPpd;
 
   const effect = change >= 0 ? 'an *increase*' : 'a *decrease*';
-  const emoji = change >= 0 ? ':rocket:' : ':snail:';
   const saturation = (change >= 0 ? prefSaturation : 1 - prefSaturation) * 100;
 
   const header = 'Set chore priorities';
   const priorityText = 'After your update, ' +
-      `*${targetChore.name}* will have a priority of *${newPriority.toFixed(1)}%*, ` +
-      `${effect} of *${Math.abs(change).toFixed(1)}%*. ` +
-      `That's about *${pointsPerDay} points per day* ${emoji}`;
-  const submitText = `Your preferences for *${targetChore.name}* are at *${saturation.toFixed(0)}%* of possible strength. ` +
-    '*Submit* to confirm, or go *back* to change your update.';
+      `*${targetChore.name}* will be worth *${newPpd} points per day*, ` +
+      `${effect} of *${Math.abs(change).toFixed(1)} ppd*. ` +
+      `That's *${newPriority.toFixed(1)}%* of all points.`;
+  const submitText = `Your personal preferences for *${targetChore.name}* are at *${saturation.toFixed(0)}%* of possible strength. ` +
+    '*Submit* to confirm, or go *back* to adjust your update.';
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
