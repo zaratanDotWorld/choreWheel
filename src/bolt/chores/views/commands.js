@@ -24,8 +24,7 @@ exports.choresStatsView = function (choreClaims, choreBreaks, choreStats, choreV
       : '\n_No active residents_'
     );
 
-  const claimsHeader = `*<@${residentId}>'s claims:*`;
-  const claimText = `${claimsHeader}\n` +
+  const claimText = `*<@${residentId}>'s claims:*\n` +
     (choreClaims.length > 0
       ? choreClaims
         .map(cc => `\n${cc.claimedAt.toDateString()} - ${cc.name} - ${cc.value} points`)
