@@ -107,6 +107,7 @@ exports.thingsSpecialBuyView = function (numResidents, accounts) {
     {
       action_id: 'title',
       type: 'plain_text_input',
+      max_length: 50,
       placeholder: common.blockPlaintext('Short description of the thing'),
     },
   ));
@@ -309,6 +310,7 @@ exports.thingsProposeAddView = function (thing, branch = '') {
     {
       action_id: 'name',
       type: 'plain_text_input',
+      max_length: 50,
       initial_value: (thing) ? thing.name : undefined,
       placeholder: common.blockPlaintext('Name of the thing, e.g. Oat Milk, Salt'),
     },
