@@ -583,6 +583,7 @@ exports.choresProposeAddView = function (force, chore) {
     {
       action_id: 'name',
       type: 'plain_text_input',
+      max_length: 50,
       initial_value: (chore) ? chore.name : undefined,
       placeholder: common.blockPlaintext('Name of the chore'),
     },
@@ -715,6 +716,7 @@ exports.choresSpecialView = function (minVotes, remainder) {
     {
       action_id: 'name',
       type: 'plain_text_input',
+      max_length: 50,
       placeholder: common.blockPlaintext('Name of the chore'),
     },
   ));
