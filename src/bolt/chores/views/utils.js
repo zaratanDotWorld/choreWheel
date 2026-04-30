@@ -72,7 +72,7 @@ exports.mapChoresValues = function (chores) {
     const name = chore.name || chore.metadata.name;
     return {
       value: JSON.stringify({ choreId: chore.choreId, choreValueId: chore.choreValueId }),
-      // Max length is 75 chars, so we need to truncate the name
+      // Hard limit is 75 chars, but practical viewport limit is ~60, so we truncate the name
       text: common.blockPlaintext(`${name.slice(0, 50)} - ${chore.value.toFixed(0)} points`),
     };
   });
@@ -83,7 +83,7 @@ exports.mapChoreRankings = function (choreRankings, totalObligation) {
     const ppd = exports.formatPointsPerDay(chore.ranking, totalObligation);
     return {
       value: JSON.stringify({ id: chore.id, name: chore.name, ranking: chore.ranking }),
-      // Max length is 75 chars, so we need to truncate the name
+      // Hard limit is 75 chars, but practical viewport limit is ~60, so we truncate the name
       text: common.blockPlaintext(`${chore.name.slice(0, 50)} - ${ppd} ppd`),
     };
   });
