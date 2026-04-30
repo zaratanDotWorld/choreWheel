@@ -36,8 +36,7 @@ exports.formatTotalStats = function (stats) {
 };
 
 exports.formatPointsPerDay = function (ranking, totalObligation) {
-  const pointsPerDay = ranking * totalObligation / 30;
-  return (pointsPerDay >= 3) ? pointsPerDay.toFixed(0) : pointsPerDay.toFixed(1);
+  return (ranking * totalObligation / 30).toFixed(1);
 };
 
 exports.getAchievement = function (totalPoints) {
@@ -79,13 +78,13 @@ exports.mapChoresValues = function (chores) {
   });
 };
 
-exports.mapChoreRankings = function (choreRankings) {
+exports.mapChoreRankings = function (choreRankings, totalObligation) {
   return choreRankings.map((chore) => {
-    const priority = chore.ranking * 100;
+    const pointsPerDay = exports.formatPointsPerDay(chore.ranking, totalObligation);
     return {
-      value: JSON.stringify({ id: chore.id, name: chore.name, priority }),
+      value: JSON.stringify({ id: chore.id, name: chore.name, ranking: chore.ranking }),
       // Max length is 75 chars, so we need to truncate the name
-      text: common.blockPlaintext(`${chore.name.slice(0, 60)} - ${priority.toFixed(1)}%`),
+      text: common.blockPlaintext(`${chore.name.slice(0, 60)} - ${pointsPerDay} ppd`),
     };
   });
 };
