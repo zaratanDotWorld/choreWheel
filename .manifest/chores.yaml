@@ -14,9 +14,11 @@ features:
     - command: /chores-channel
       url: https://chores.mirror.zaratan.world/slack/events
       description: Use the current channel for app events
+      should_escape: false
     - command: /chores-prune
       url: https://chores.mirror.zaratan.world/slack/events
       description: Prune nonexistent residents
+      should_escape: false
     - command: /chores-stats
       url: https://chores.mirror.zaratan.world/slack/events
       description: Show more details about monthly chores
@@ -24,12 +26,15 @@ features:
     - command: /chores-special
       url: https://chores.mirror.zaratan.world/slack/events
       description: View current and upcoming special chores
+      should_escape: false
     - command: /chores-activate
       url: https://chores.mirror.zaratan.world/slack/events
       description: Activate residents for chores
+      should_escape: false
     - command: /chores-reset
       url: https://chores.mirror.zaratan.world/slack/events
       description: Reset chore points
+      should_escape: false
 oauth_config:
   redirect_urls:
     - https://chores.mirror.zaratan.world/slack/oauth_redirect
