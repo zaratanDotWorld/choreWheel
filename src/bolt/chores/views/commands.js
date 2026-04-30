@@ -3,7 +3,7 @@ const { TITLE, formatStats, formatTotalStats } = require('./utils');
 
 // Command views
 
-exports.choresStatsView = function (choreClaims, choreBreaks, choreStats, choreValues) {
+exports.choresStatsView = function (choreClaims, choreBreaks, choreStats, choreValues, targetResidentId) {
   const header = 'See chore stats';
 
   const availablePoints = choreValues.reduce((sum, cv) => sum + cv.value, 0);
@@ -24,7 +24,8 @@ exports.choresStatsView = function (choreClaims, choreBreaks, choreStats, choreV
       : '\n_No active residents_'
     );
 
-  const claimText = '*Your claims:*\n' +
+  const claimsHeader = targetResidentId ? `*<@${targetResidentId}>'s claims:*` : '*Your claims:*';
+  const claimText = `${claimsHeader}\n` +
     (choreClaims.length > 0
       ? choreClaims
         .map(cc => `\n${cc.claimedAt.toDateString()} - ${cc.name} - ${cc.value} points`)

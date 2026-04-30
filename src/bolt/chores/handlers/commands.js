@@ -37,12 +37,17 @@ module.exports = (app) => {
 
     const monthStart = getMonthStart(now);
 
-    const choreClaims = await Chores.getChoreClaims(residentId, monthStart, now);
+    // Optionally accept `@user` to view another resident's claims
+    const mentionedId = (command.text || '').match(/<@([A-Z0-9]+)(?:\|[^>]+)?>/)?.[1];
+    const targetResidentId = mentionedId && mentionedId !== residentId ? mentionedId : null;
+    const claimsResidentId = targetResidentId || residentId;
+
+    const choreClaims = await Chores.getChoreClaims(claimsResidentId, monthStart, now);
     const choreBreaks = await Chores.getChoreBreaks(houseId, now);
     const choreStats = await Chores.getHouseChoreStats(houseId, monthStart, now);
     const choreValues = await Chores.getCurrentChoreValues(houseId, now);
 
-    const view = views.choresStatsView(choreClaims, choreBreaks, choreStats, choreValues);
+    const view = views.choresStatsView(choreClaims, choreBreaks, choreStats, choreValues, targetResidentId);
     await common.openView(app, choresConf.oauth, command.trigger_id, view);
   });
 
