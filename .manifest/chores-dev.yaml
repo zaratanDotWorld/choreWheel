@@ -41,10 +41,11 @@ oauth_config:
       - chat:write
       - commands
       - files:read
-      - files:write
-      - users:read
       - groups:history
       - groups:read
+      - users:read
+      - files:write
+  pkce_enabled: false
 settings:
   event_subscriptions:
     request_url: https://zaratan.ngrok.io/slack/events
@@ -58,3 +59,4 @@ settings:
   org_deploy_enabled: true
   socket_mode_enabled: false
   token_rotation_enabled: false
+  is_mcp_enabled: false
