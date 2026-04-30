@@ -22,7 +22,7 @@ exports.formatTypedThing = function (thing) {
 exports.formatBuy = function (buy, url = true) {
   let text;
 
-  if (buy.metadata && buy.metadata.special) {
+  if (buy.metadata?.special) {
     text = `Special: ${buy.metadata.title}`;
   } else if (buy.metadata && buy.thingMetadata) {
     text = `${buy.name} (${buy.metadata.quantity} x ${buy.thingMetadata.unit})`;
@@ -30,7 +30,7 @@ exports.formatBuy = function (buy, url = true) {
     text = `${buy.name} (?)`;
   }
 
-  if (url && buy.thingMetadata && buy.thingMetadata.url) {
+  if (url && buy.thingMetadata?.url) {
     text = `<${buy.thingMetadata.url}|${text}>`;
   }
 

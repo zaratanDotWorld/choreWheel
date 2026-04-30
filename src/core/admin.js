@@ -98,5 +98,5 @@ exports.getNumResidents = async function (houseId, now) {
 
 exports.isActive = async function (residentId, now) {
   const resident = await exports.getResident(residentId);
-  return (resident && resident.activeAt && resident.activeAt <= now);
+  return (resident?.activeAt && resident.activeAt <= now);
 };

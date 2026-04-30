@@ -412,7 +412,7 @@ exports.makeForceInput = function () {
 
 // Block may or may not exist
 exports.getForceInput = function (block) {
-  if (block && block.force) {
+  if (block?.force) {
     return block.force.selected_option.value === 'true';
   } else {
     return false;

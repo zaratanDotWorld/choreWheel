@@ -197,7 +197,7 @@ module.exports = (app) => {
     await Polls.updateMetadata(claim.pollId, { channel, ts });
 
     // Append the description
-    if (chore.metadata && chore.metadata.description) {
+    if (chore.metadata?.description) {
       const text = `*Description:*\n${chore.metadata.description}`;
       await common.postReply(app, choresConf, ts, text);
     }
