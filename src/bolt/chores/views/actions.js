@@ -341,18 +341,18 @@ exports.choresRankView2 = function (preference, targetChore, choreRankings, tota
 
 exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetadata, prefSaturation, totalObligation) {
   const newPriority = targetChoreRanking.ranking * 100;
-  const oldPointsPerDay = formatPointsPerDay(targetChore.ranking, totalObligation);
-  const newPointsPerDay = formatPointsPerDay(targetChoreRanking.ranking, totalObligation);
-  const change = newPointsPerDay - oldPointsPerDay;
+  const oldPpd = formatPointsPerDay(targetChore.ranking, totalObligation);
+  const newPpd = formatPointsPerDay(targetChoreRanking.ranking, totalObligation);
+  const change = newPpd - oldPpd;
 
   const effect = change >= 0 ? 'an *increase*' : 'a *decrease*';
   const saturation = (change >= 0 ? prefSaturation : 1 - prefSaturation) * 100;
 
   const header = 'Set chore priorities';
   const priorityText = 'After your update, ' +
-      `*${targetChore.name}* will be worth *${newPointsPerDay} points per day*, ` +
+      `*${targetChore.name}* will be worth *${newPpd} points per day*, ` +
       `${effect} of *${Math.abs(change).toFixed(1)} ppd*. ` +
-      `That's *${newPriority.toFixed(1)}%* of total points.`;
+      `That's *${newPriority.toFixed(1)}%* of all points.`;
   const submitText = `Your personal preferences for *${targetChore.name}* are at *${saturation.toFixed(0)}%* of possible strength. ` +
     '*Submit* to confirm, or go *back* to adjust your update.';
 

@@ -80,11 +80,11 @@ exports.mapChoresValues = function (chores) {
 
 exports.mapChoreRankings = function (choreRankings, totalObligation) {
   return choreRankings.map((chore) => {
-    const pointsPerDay = exports.formatPointsPerDay(chore.ranking, totalObligation);
+    const ppd = exports.formatPointsPerDay(chore.ranking, totalObligation);
     return {
       value: JSON.stringify({ id: chore.id, name: chore.name, ranking: chore.ranking }),
       // Max length is 75 chars, so we need to truncate the name
-      text: common.blockPlaintext(`${chore.name.slice(0, 60)} - ${pointsPerDay} ppd`),
+      text: common.blockPlaintext(`${chore.name.slice(0, 60)} - ${ppd} ppd`),
     };
   });
 };

@@ -289,17 +289,17 @@ module.exports = (app) => {
     const newPriority = targetChoreRanking.ranking * 100;
     const totalObligation = await Chores.getTotalObligation(houseId, now);
 
-    const oldPointsPerDay = formatPointsPerDay(targetChore.ranking, totalObligation);
-    const newPointsPerDay = formatPointsPerDay(targetChoreRanking.ranking, totalObligation);
-    const change = newPointsPerDay - oldPointsPerDay;
+    const oldPpd = formatPointsPerDay(targetChore.ranking, totalObligation);
+    const newPpd = formatPointsPerDay(targetChoreRanking.ranking, totalObligation);
+    const change = newPpd - oldPpd;
 
     if (change > 0) {
-      const text = `Someone *prioritized ${targetChore.name}* to *${newPointsPerDay} points per day* ` +
-        `(+${change.toFixed(1)} ppd), or *${newPriority.toFixed(1)}%* of total points :rocket:`;
+      const text = `Someone *prioritized ${targetChore.name}* to *${newPpd} points per day* ` +
+        `(+${change.toFixed(1)} ppd), or *${newPriority.toFixed(1)}%* of all points :rocket:`;
       await common.postMessage(app, choresConf, text);
     } else if (change < 0) {
-      const text = `Someone *deprioritized ${targetChore.name}* to *${newPointsPerDay} points per day* ` +
-        `(${change.toFixed(1)} ppd), or *${newPriority.toFixed(1)}%* of total points :snail:`;
+      const text = `Someone *deprioritized ${targetChore.name}* to *${newPpd} points per day* ` +
+        `(${change.toFixed(1)} ppd), or *${newPriority.toFixed(1)}%* of all points :snail:`;
       await common.postMessage(app, choresConf, text);
     }
 
