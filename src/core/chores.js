@@ -191,7 +191,7 @@ exports.createSourceExclusionSet = function (orientedPreferences, newValue) {
   const prioritizing = newValue >= 0.5;
   // NOTE: Typescript would be useful here
   return new Set(orientedPreferences
-    .filter(pref => (prioritizing) ? pref.preference >= newValue : pref.preference <= newValue)
+    .filter(pref => prioritizing ? pref.preference >= newValue : pref.preference <= newValue)
     .map(pref => pref.sourceChoreId));
 };
 
@@ -241,7 +241,7 @@ exports.getChoreValue = async function (choreId, startTime, endTime) {
 
 exports.getCurrentChoreValue = async function (choreId, now, excludedClaimId = null) {
   const latestClaim = await exports.getLatestChoreClaim(choreId, now, excludedClaimId);
-  const latestClaimedAt = (latestClaim === undefined) ? new Date(0) : latestClaim.claimedAt;
+  const latestClaimedAt = latestClaim === undefined ? new Date(0) : latestClaim.claimedAt;
   return exports.getChoreValue(choreId, latestClaimedAt, now);
 };
 
@@ -373,7 +373,7 @@ exports.getLastChoreValueUpdateTime = async function (houseId, updateTime) {
     .select('valuedAt')
     .first();
 
-  return (lastChoreValue)
+  return lastChoreValue
     ? lastChoreValue.valuedAt
     : updateTime;
 };
@@ -572,7 +572,7 @@ exports.resolveChoreClaim = async function (claimId, resolvedAt) {
   const valid = await Polls.isPollValid(choreClaim.pollId, resolvedAt);
 
   // If a special chore, no need to recalculate the value
-  const choreValue = (choreClaim.choreId)
+  const choreValue = choreClaim.choreId
     ? await exports.getCurrentChoreValue(choreClaim.choreId, choreClaim.claimedAt, claimId)
     : choreClaim.value;
 
@@ -745,7 +745,7 @@ exports.getChoreStats = async function (houseId, residentId, startTime, endTime)
 
   // Note: special chore obligations are not re-allocated by workingPercentage; so are mildly inflationary
   const pointsOwed = Math.round((residentObligation + specialObligation) * workingPercentage);
-  const completionPct = (pointsOwed) ? pointsEarned / pointsOwed : 1;
+  const completionPct = pointsOwed ? pointsEarned / pointsOwed : 1;
 
   return { pointsEarned, pointsOwed, completionPct, workingPercentage, specialObligation };
 };

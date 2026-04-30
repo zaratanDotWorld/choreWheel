@@ -40,7 +40,7 @@ exports.formatBuy = function (buy, url = true) {
 
 function getUrlHost (buy) {
   try {
-    return (new URL(buy.thingMetadata.url)).host;
+    return new URL(buy.thingMetadata.url).host;
   } catch {
     return '';
   }

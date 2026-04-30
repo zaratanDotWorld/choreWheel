@@ -67,7 +67,7 @@ module.exports = (app) => {
     const { now, houseId } = common.beginCommand('/chores-activate', command);
     const { choresConf } = await Admin.getHouse(houseId);
 
-    if (!(await common.isAdmin(app, choresConf.oauth, command.user_id))) {
+    if (!await common.isAdmin(app, choresConf.oauth, command.user_id)) {
       await respond({ response_type: 'ephemeral', text: common.ADMIN_ONLY });
     } else {
       const residents = await Admin.getResidents(houseId, now);
@@ -128,7 +128,7 @@ module.exports = (app) => {
     const { houseId } = common.beginCommand('/chores-reset', command);
     const { choresConf } = await Admin.getHouse(houseId);
 
-    if (!(await common.isAdmin(app, choresConf.oauth, command.user_id))) {
+    if (!await common.isAdmin(app, choresConf.oauth, command.user_id)) {
       await respond({ response_type: 'ephemeral', text: common.ADMIN_ONLY });
     } else {
       const view = views.choresResetView();

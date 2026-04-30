@@ -267,7 +267,7 @@ exports.getThingBuyMinVotes = async function (houseId, boughtBy, thingId, price,
   const minVotesSpecial = Math.ceil(params.minPctSpecial * residents.length);
   const minVotesScaled = Math.ceil(Math.abs(price) / params.minVotesScalar);
 
-  const minVotes = (thingId)
+  const minVotes = thingId
     ? Math.min(maxVotes, minVotesScaled) // Regular buy
     : Math.min(maxVotes, Math.max(minVotesScaled, minVotesSpecial)); // Special buy
 

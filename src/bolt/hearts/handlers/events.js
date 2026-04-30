@@ -23,7 +23,7 @@ module.exports = (app) => {
   app.event('user_change', async ({ payload }) => {
     const [ now, user ] = [ new Date(), payload.user ];
 
-    if (!(await houseActive(user.team_id, now))) { return; }
+    if (!await houseActive(user.team_id, now)) { return; }
 
     console.log(`hearts user_change - ${user.team_id} x ${user.id}`);
 
@@ -47,7 +47,7 @@ module.exports = (app) => {
 
     if (karmaRecipients.length > 0) {
       const [ now, giverId ] = [ new Date(), payload.user ];
-      const houseId = (payload.subtype === 'thread_broadcast') ? payload.root.team : payload.team;
+      const houseId = payload.subtype === 'thread_broadcast' ? payload.root.team : payload.team;
       const { heartsConf } = await Admin.getHouse(houseId);
       console.log(`hearts karma-message - ${houseId} x ${giverId}`);
 
@@ -60,7 +60,7 @@ module.exports = (app) => {
 
     if (karmaRecipients.length > 1 && karmaRecipients.length < 10) {
       const numbers = [ 'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine' ];
-      const houseId = (payload.subtype === 'thread_broadcast') ? payload.root.team : payload.team;
+      const houseId = payload.subtype === 'thread_broadcast' ? payload.root.team : payload.team;
       const { heartsConf } = await Admin.getHouse(houseId);
 
       await common.addReaction(app, heartsConf.oauth, payload, numbers[karmaRecipients.length]);
@@ -79,7 +79,7 @@ module.exports = (app) => {
       const isActive = await Admin.isActive(residentId, now);
       const hearts = await Hearts.getHearts(residentId, now);
 
-      view = views.heartsHomeView(heartsConf.channel, isActive, (hearts || 0));
+      view = views.heartsHomeView(heartsConf.channel, isActive, hearts || 0);
     } else {
       view = views.heartsIntroView();
     }
@@ -89,21 +89,21 @@ module.exports = (app) => {
     // This bookkeeping is done after returning the view
 
     // Resolve any challanges
-    for (const resolvedChallenge of (await Hearts.resolveChallenges(houseId, now))) {
+    for (const resolvedChallenge of await Hearts.resolveChallenges(houseId, now)) {
       console.log(`resolved heartChallenge ${resolvedChallenge.id}`);
       await common.updateVoteResults(app, heartsConf.oauth, resolvedChallenge.pollId, now);
     }
 
-    for (const challengeHeart of (await Hearts.getAgnosticHearts(houseId, now))) {
+    for (const challengeHeart of await Hearts.getAgnosticHearts(houseId, now)) {
       const text = `<@${challengeHeart.residentId}> lost a challenge, ` +
         `and *${(-challengeHeart.value).toFixed(0)}* heart(s)...`;
       await common.postMessage(app, heartsConf, text);
     }
 
     // Regenerate lost hearts // fade karma hearts
-    for (const regenHeart of (await Hearts.regenerateHouseHearts(houseId, now))) {
+    for (const regenHeart of await Hearts.regenerateHouseHearts(houseId, now)) {
       if (regenHeart.value !== 0) {
-        const text = (regenHeart.value > 0)
+        const text = regenHeart.value > 0
           ? `You regenerated *${renderValueText(regenHeart.value)}* heart(s)!`
           : `Your karma faded by *${renderValueText(-regenHeart.value)}* heart(s)!`;
         await common.postEphemeral(app, heartsConf, regenHeart.residentId, text);
@@ -114,7 +114,7 @@ module.exports = (app) => {
     const karmaHearts = await Hearts.generateKarmaHearts(houseId, now);
     if (karmaHearts.length) {
       const karmaWinners = karmaHearts.map(heart => `<@${heart.residentId}>`).join(' and ');
-      const text = (karmaHearts.length > 1)
+      const text = karmaHearts.length > 1
         ? `${karmaWinners} get last month's karma hearts :heart_on_fire:`
         : `${karmaWinners} gets last month's karma heart :heart_on_fire:`;
 
@@ -122,7 +122,7 @@ module.exports = (app) => {
     }
 
     // Retire any residents
-    for (const residentId of (await Hearts.retireResidents(houseId, now))) {
+    for (const residentId of await Hearts.retireResidents(houseId, now)) {
       const text = `*<@${residentId}> lost all their hearts* and is deactivated. :sleeping:`;
       await common.postMessage(app, heartsConf, text);
     }

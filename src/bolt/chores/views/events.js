@@ -28,7 +28,7 @@ exports.choresOnboardView = function () {
 
 exports.choresHomeView = function (choreChannel, choreStats, numActive) {
   const { pointsEarned, pointsOwed } = choreStats;
-  const progressEmoji = (pointsOwed - pointsEarned < Chores.params.penaltyIncrement)
+  const progressEmoji = pointsOwed - pointsEarned < Chores.params.penaltyIncrement
     ? ':white_check_mark:'
     : ':muscle::skin-tone-4:';
 
@@ -40,7 +40,7 @@ exports.choresHomeView = function (choreChannel, choreStats, numActive) {
     'If you feel a chore should be worth more (or less) over time, you can change it\'s *priority*. ' +
     'If you think a chore should be *added*, *changed*, or *removed*, you can propose that too.';
 
-  const pointsText = (pointsOwed > 0)
+  const pointsText = pointsOwed > 0
     ? `You've earned *${pointsEarned} / ${pointsOwed} points* this month ${progressEmoji}`
     : '*You are exempt from chores!* :tada:';
   const activeText = `There are *${numActive} people* around today :sunny:`;

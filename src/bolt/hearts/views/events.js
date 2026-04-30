@@ -35,7 +35,7 @@ exports.heartsHomeView = function (heartsChannel, isActive, numHearts) {
     'Everyone starts with *5 hearts*. ' +
     'We lose hearts when we fail to uphold our commitments, ' +
     'and we regain hearts *over time* or by earning *karma*.';
-  const activeText = (isActive)
+  const activeText = isActive
     ? `You have *${numHearts}* hearts ${heartEmoji(numHearts)}`
     : '*You are exempt from hearts!* :balloon:';
   const channelText = `Events will be posted in <#${heartsChannel}> :mailbox_with_mail:`;
