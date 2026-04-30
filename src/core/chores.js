@@ -747,7 +747,7 @@ exports.getChoreStats = async function (houseId, residentId, startTime, endTime)
   const pointsOwed = Math.round((residentObligation + specialObligation) * workingPercentage);
   const completionPct = (pointsOwed) ? pointsEarned / pointsOwed : 1;
 
-  return { pointsEarned, pointsOwed, completionPct };
+  return { pointsEarned, pointsOwed, completionPct, workingPercentage, specialObligation };
 };
 
 exports.getHouseChoreStats = async function (houseId, startTime, endTime) {

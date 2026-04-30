@@ -10,7 +10,7 @@ exports.DOCS_URL = 'https://docs.chorewheel.zaratan.world/en/latest/tools/chores
 // Formatting functions
 
 exports.formatStats = function (stats) {
-  const { residentId, pointsEarned, pointsOwed, completionPct } = stats;
+  const { residentId, pointsEarned, pointsOwed, completionPct, workingPercentage } = stats;
 
   let emoji = '';
   if (pointsEarned >= pointsOwed) {
@@ -19,13 +19,18 @@ exports.formatStats = function (stats) {
     emoji = ':broken_heart:';
   }
 
-  return `<@${residentId}> - ${pointsEarned} / ${pointsOwed} (${(completionPct * 100).toFixed(0)}%) ${emoji}`;
+  let breakTag = '';
+  if (workingPercentage !== undefined && workingPercentage < 1) {
+    breakTag = ` :palm_tree: -${((1 - workingPercentage) * 100).toFixed(0)}%`;
+  }
+
+  return `${emoji} <@${residentId}> - ${pointsEarned} / ${pointsOwed} (${(completionPct * 100).toFixed(0)}%)${breakTag}`;
 };
 
 exports.formatTotalStats = function (stats) {
   const pointsEarned = stats.reduce((sum, stat) => sum + stat.pointsEarned, 0);
   const pointsOwed = stats.reduce((sum, stat) => sum + stat.pointsOwed, 0);
-  const completionPct = pointsEarned / pointsOwed;
+  const completionPct = pointsOwed ? pointsEarned / pointsOwed : 1;
 
   return `*Total - ${pointsEarned} / ${pointsOwed} (${(completionPct * 100).toFixed(0)}%)*`;
 };

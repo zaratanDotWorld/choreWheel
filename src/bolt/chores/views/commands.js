@@ -1,34 +1,51 @@
 const common = require('../../common');
-const { TITLE, formatStats } = require('./utils');
+const { TITLE, formatStats, formatTotalStats } = require('./utils');
 
 // Command views
 
-exports.choresStatsView = function (choreClaims, choreBreaks, choreStats) {
+exports.choresStatsView = function (choreClaims, choreBreaks, choreStats, choreValues) {
   const header = 'See chore stats';
-  const mainText = 'Extra information about monthly chores.';
 
-  const claimText = '*Your claimed chores:*\n' +
-    choreClaims
-      .map(cc => `\n${cc.claimedAt.toDateString()} - ${cc.name} - ${cc.value} points`)
-      .join('');
+  const availablePoints = choreValues.reduce((sum, cv) => sum + cv.value, 0);
+  const availableText = `*Points available to claim:* ${availablePoints.toFixed(0)}`;
 
-  const breakText = '*Current chore breaks:*\n' +
-    choreBreaks
-      .map(cb => `\n${cb.startDate.toDateString()} - ${cb.endDate.toDateString()} - <@${cb.residentId}>`)
-      .join('');
+  const totalSpecialObligation = choreStats.length
+    ? choreStats[0].specialObligation * choreStats.length
+    : 0;
+  const specialNote = totalSpecialObligation > 0
+    ? `\n_Includes ${totalSpecialObligation.toFixed(0)} points of special chores_`
+    : '';
 
-  const pointsText = '*Last month\'s chore points:*\n' +
-    choreStats
-      .map(cs => `\n${formatStats(cs)}`)
-      .join('');
+  const statsText = '*Current points:*\n' +
+    (choreStats.length > 0
+      ? choreStats
+        .map(cs => `\n${formatStats(cs)}`)
+        .join('') + `\n\n${formatTotalStats(choreStats)}${specialNote}`
+      : '\n_No active residents_'
+    );
+
+  const claimText = '*Your claims:*\n' +
+    (choreClaims.length > 0
+      ? choreClaims
+        .map(cc => `\n${cc.claimedAt.toDateString()} - ${cc.name} - ${cc.value} points`)
+        .join('')
+      : '\n_No claims yet_'
+    );
+
+  const breakText = '*Current breaks:*\n' +
+    (choreBreaks.length > 0
+      ? choreBreaks
+        .map(cb => `\n${cb.startDate.toDateString()} - ${cb.endDate.toDateString()} - <@${cb.residentId}>`)
+        .join('')
+      : '\n_No one is on break_'
+    );
 
   const blocks = [];
   blocks.push(common.blockHeader(header));
-  blocks.push(common.blockSection(mainText));
-  blocks.push(common.blockDivider());
+  blocks.push(common.blockSection(availableText));
+  blocks.push(common.blockSection(statsText));
   blocks.push(common.blockSection(claimText));
   blocks.push(common.blockSection(breakText));
-  blocks.push(common.blockSection(pointsText));
 
   return {
     type: 'modal',

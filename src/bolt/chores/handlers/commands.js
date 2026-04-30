@@ -1,5 +1,5 @@
 const { Admin, Chores } = require('../../../core/index');
-const { getMonthStart, getPrevMonthEnd } = require('../../../time');
+const { getMonthStart } = require('../../../time');
 
 const common = require('../../common');
 const views = require('../views/commands');
@@ -36,16 +36,13 @@ module.exports = (app) => {
     const { choresConf } = await Admin.getHouse(houseId);
 
     const monthStart = getMonthStart(now);
-    const prevMonthEnd = getPrevMonthEnd(now);
-    const prevMonthStart = getMonthStart(prevMonthEnd);
-
-    // TODO: Calculate remaining points in the month
 
     const choreClaims = await Chores.getChoreClaims(residentId, monthStart, now);
     const choreBreaks = await Chores.getChoreBreaks(houseId, now);
-    const choreStats = await Chores.getHouseChoreStats(houseId, prevMonthStart, prevMonthEnd);
+    const choreStats = await Chores.getHouseChoreStats(houseId, monthStart, now);
+    const choreValues = await Chores.getCurrentChoreValues(houseId, now);
 
-    const view = views.choresStatsView(choreClaims, choreBreaks, choreStats);
+    const view = views.choresStatsView(choreClaims, choreBreaks, choreStats, choreValues);
     await common.openView(app, choresConf.oauth, command.trigger_id, view);
   });
 
