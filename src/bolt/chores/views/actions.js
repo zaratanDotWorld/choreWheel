@@ -298,7 +298,7 @@ exports.choresRankView = function (choreRankings, totalObligation) {
 };
 
 exports.choresRankView2 = function (preference, targetChore, choreRankings, totalObligation) {
-  const effect = (preference >= 0.5) ? 'prioritize' : 'deprioritize';
+  const effect = preference >= 0.5 ? 'prioritize' : 'deprioritize';
   const magnitude = Math.abs(preference - 0.5) > 0.2 ? 'a lot' : 'a little';
 
   const header = 'Set chore priorities';
@@ -319,7 +319,7 @@ exports.choresRankView2 = function (preference, targetChore, choreRankings, tota
   blocks.push(common.blockDivider());
   blocks.push(common.blockSection(actionText));
   blocks.push(common.blockInput(
-    `by ${(preference >= 0.5) ? 'deprioritizing' : 'prioritizing'}`,
+    `by ${preference >= 0.5 ? 'deprioritizing' : 'prioritizing'}`,
     {
       action_id: 'chores',
       type: 'multi_static_select',
@@ -374,7 +374,7 @@ exports.choresRankView3 = function (targetChore, targetChoreRanking, prefsMetada
 
 exports.choresRankViewZero = function (preference) {
   const header = 'Set chore priorities';
-  const mainText = `No chores available to *${(preference >= 0.5) ? 'deprioritize' : 'prioritize'}*, ` +
+  const mainText = `No chores available to *${preference >= 0.5 ? 'deprioritize' : 'prioritize'}*, ` +
     'most likely because you\'ve put in these preferences already.\n\n' +
     'Try asking someone else to submit the same preferences as you.';
 
@@ -584,7 +584,7 @@ exports.choresProposeAddView = function (force, chore) {
       action_id: 'name',
       type: 'plain_text_input',
       max_length: 50,
-      initial_value: (chore) ? chore.name : undefined,
+      initial_value: chore ? chore.name : undefined,
       placeholder: common.blockPlaintext('Name of the chore'),
     },
   ));
@@ -595,7 +595,7 @@ exports.choresProposeAddView = function (force, chore) {
       type: 'plain_text_input',
       multiline: true,
       max_length: 1000,
-      initial_value: (chore) ? chore.metadata.description : undefined,
+      initial_value: chore ? chore.metadata.description : undefined,
       placeholder: common.blockPlaintext('Describe the chore (bullet points work well)'),
     },
   ));

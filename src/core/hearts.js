@@ -79,7 +79,7 @@ exports.generateHearts = async function (houseId, residentId, type, generatedAt,
 };
 
 exports.initialiseResident = async function (houseId, residentId, now) {
-  const hearts = (await exports.getHearts(residentId, now)) || 0;
+  const hearts = await exports.getHearts(residentId, now) || 0;
   if (hearts <= 0) {
     const amount = params.baselineAmount - hearts;
     return exports.generateHearts(houseId, residentId, exports.HEART_REGEN, now, amount);
@@ -131,7 +131,7 @@ exports.getRegenAmount = function (currentHearts) {
   // Want to move `regenAmount` up towards `baselineAmount`
   //   and `fadeAmount` down towards `baselineAmount`
   const baselineGap = params.baselineAmount - currentHearts;
-  return (baselineGap >= 0)
+  return baselineGap >= 0
     ? Math.min(params.regenAmount, baselineGap)
     : Math.max(-params.fadeAmount, baselineGap);
 };
@@ -174,7 +174,7 @@ exports.getUnresolvedChallenges = async function (houseId, challengeeId) {
 exports.getChallengeMinVotes = async function (houseId, challengeeId, value, challengedAt) {
   const residents = await Admin.getResidents(houseId, challengedAt);
   const challengeeHearts = await exports.getHearts(challengeeId, challengedAt);
-  return (challengeeHearts - value <= params.criticalNum)
+  return challengeeHearts - value <= params.criticalNum
     ? Math.ceil(residents.length * params.minPctCritical)
     : Math.ceil(residents.length * params.minPctInitial);
 };
@@ -186,7 +186,7 @@ exports.resolveChallenge = async function (challengeId, resolvedAt) {
   assert(!challenge.heartId, 'Challenge already resolved!');
 
   const valid = await Polls.isPollValid(challenge.pollId, resolvedAt);
-  const loser = (valid) ? challengeeId : challengerId;
+  const loser = valid ? challengeeId : challengerId;
 
   const [ heart ] = await exports.generateHearts(houseId, loser, exports.HEART_CHALLENGE, resolvedAt, -value);
 
@@ -267,7 +267,7 @@ exports.getNumKarmaWinners = async function (houseId, startTime, endTime) {
   const maxWinners = Math.floor(residents.length / params.karmaProportion);
 
   const karma = await exports.getKarma(houseId, startTime, endTime);
-  const uniqueReceivers = (new Set(karma.map(k => k.receiverId))).size;
+  const uniqueReceivers = new Set(karma.map(k => k.receiverId)).size;
 
   return Math.min(maxWinners, uniqueReceivers);
 };
@@ -318,6 +318,6 @@ exports.getKarmaHearts = async function (residentId, now) {
 
 exports.getHeartsVoteScalar = async function (residentId, now) {
   const hearts = await exports.getHearts(residentId, now);
-  const heartsValue = (hearts === null) ? params.baselineAmount : hearts;
+  const heartsValue = hearts === null ? params.baselineAmount : hearts;
   return 1 - ((heartsValue - params.baselineAmount) * params.voteScalar);
 };

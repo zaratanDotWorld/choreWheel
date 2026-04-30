@@ -72,7 +72,7 @@ exports.isPollValid = async function (pollId, now) {
   assert(poll.endTime <= now, 'Poll not closed!');
 
   const { yays, nays } = await exports.getPollResultCounts(pollId);
-  return (yays >= poll.minVotes && yays > nays);
+  return yays >= poll.minVotes && yays > nays;
 };
 
 exports.updateMetadata = async function (pollId, metadata) {

@@ -18,7 +18,7 @@ module.exports = (app) => {
     const now = new Date();
     const { user } = payload;
 
-    if (!(await houseActive(user.team_id, now))) { return; }
+    if (!await houseActive(user.team_id, now)) { return; }
 
     console.log(`chores user_change - ${user.team_id} x ${user.id}`);
 
@@ -49,13 +49,13 @@ module.exports = (app) => {
     // This bookkeeping is done after returning the view
 
     // Resolve any claims
-    for (const resolvedClaim of (await Chores.resolveChoreClaims(houseId, now))) {
+    for (const resolvedClaim of await Chores.resolveChoreClaims(houseId, now)) {
       console.log(`resolved choreClaim ${resolvedClaim.id}`);
       await common.updateVoteResults(app, choresConf.oauth, resolvedClaim.pollId, now);
     }
 
     // Resolve any proposals
-    for (const resolvedProposal of (await Chores.resolveChoreProposals(houseId, now))) {
+    for (const resolvedProposal of await Chores.resolveChoreProposals(houseId, now)) {
       console.log(`resolved choreProposal ${resolvedProposal.id}`);
       await common.updateVoteResults(app, choresConf.oauth, resolvedProposal.pollId, now);
     }
@@ -92,7 +92,7 @@ module.exports = (app) => {
           let text = ':scroll: *Last month\'s chore points* :scroll: \n';
           text += choreStats.map(cs => `\n${formatStats(cs)}`).join('');
           text += `\n${formatTotalStats(choreStats)}`;
-          text += (!heartsConf) ? `\n\n:heart: Want month-to-month accountability? *Get <${HEARTS_URL}|Hearts>!* :heart:` : '';
+          text += !heartsConf ? `\n\n:heart: Want month-to-month accountability? *Get <${HEARTS_URL}|Hearts>!* :heart:` : '';
           await common.postMessage(app, choresConf, text);
         }
       }

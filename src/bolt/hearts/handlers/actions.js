@@ -29,7 +29,7 @@ module.exports = (app) => {
 
     const unresolvedChallenges = await Hearts.getUnresolvedChallenges(houseId, challengeeId);
 
-    if (!(await Admin.isActive(challengeeId, now))) {
+    if (!await Admin.isActive(challengeeId, now)) {
       const text = `<@${challengeeId}> is not active and cannot be challenged :weary:`;
       await common.postEphemeral(app, heartsConf, residentId, text);
     } else if (unresolvedChallenges.length) {

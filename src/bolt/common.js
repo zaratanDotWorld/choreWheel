@@ -183,7 +183,7 @@ exports.uninstallApp = async function (app, appName, context) {
 };
 
 exports.setChannel = async function (app, oauth, confName, command, respond) {
-  if (!(await exports.isAdmin(app, oauth, command.user_id))) {
+  if (!await exports.isAdmin(app, oauth, command.user_id)) {
     return respond({ response_type: 'ephemeral', text: exports.ADMIN_ONLY });
   } else {
     let joined;
@@ -253,7 +253,7 @@ exports.getWorkspaceMembers = async function (app, oauth) {
 };
 
 exports.pruneWorkspaceMembers = async function (app, oauth, houseId, now) {
-  for (const member of (await exports.getWorkspaceMembers(app, oauth))) {
+  for (const member of await exports.getWorkspaceMembers(app, oauth)) {
     await exports.pruneWorkspaceMember(houseId, member);
   }
 
@@ -301,7 +301,7 @@ exports.parseLowercase = function (text) {
 exports.getInputBlock = function (body, blockIdx) {
   // https://api.slack.com/reference/interaction-payloads/views#view_submission_fields
   // Indexing is based on the entire block, not only the inputs
-  const realIdx = (blockIdx < 0) ? body.view.blocks.length + blockIdx : blockIdx;
+  const realIdx = blockIdx < 0 ? body.view.blocks.length + blockIdx : blockIdx;
   const blockId = body.view.blocks[realIdx].block_id;
   return body.view.state.values[blockId];
 };
@@ -325,7 +325,7 @@ exports.updateVoteCounts = async function (app, oauth, body, action) {
   const channelId = body.channel.id;
   const residentId = body.user.id;
 
-  if (!(await Admin.isActive(residentId, now))) {
+  if (!await Admin.isActive(residentId, now)) {
     const text = ':warning: Inactive residents are not allowed to vote :warning:';
     await exports.postEphemeral(app, { oauth, channel: channelId }, residentId, text);
     return;

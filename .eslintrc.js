@@ -23,6 +23,7 @@ module.exports = {
     'arrow-parens': [ ERROR, 'as-needed', { requireForBlockBody: true } ],
     'comma-dangle': [ ERROR, 'always-multiline' ],
     'eqeqeq': [ ERROR, 'always' ], // eslint-disable-line quote-props
+    'no-extra-parens': [ ERROR, 'all', { conditionalAssign: false, nestedBinaryExpressions: false } ],
     'no-fallthrough': [ ERROR ],
     'no-bitwise': [ ERROR ],
     'no-only-tests/no-only-tests': [ ERROR, { fix: true } ],

@@ -19,7 +19,7 @@ module.exports = (app) => {
   app.event('user_change', async ({ payload }) => {
     const [ now, user ] = [ new Date(), payload.user ];
 
-    if (!(await houseActive(user.team_id, now))) { return; }
+    if (!await houseActive(user.team_id, now)) { return; }
 
     console.log(`things user_change - ${user.team_id} x ${user.id}`);
 
@@ -49,13 +49,13 @@ module.exports = (app) => {
     // This bookkeeping is done after returning the view
 
     // Resolve any buys
-    for (const resolvedBuy of (await Things.resolveThingBuys(houseId, now))) {
+    for (const resolvedBuy of await Things.resolveThingBuys(houseId, now)) {
       console.log(`resolved thingBuy ${resolvedBuy.id}`);
       await common.updateVoteResults(app, thingsConf.oauth, resolvedBuy.pollId, now);
     }
 
     // Resolve any proposals
-    for (const resolvedProposal of (await Things.resolveThingProposals(houseId, now))) {
+    for (const resolvedProposal of await Things.resolveThingProposals(houseId, now)) {
       console.log(`resolved thingProposal ${resolvedProposal.id}`);
       await common.updateVoteResults(app, thingsConf.oauth, resolvedProposal.pollId, now);
     }

@@ -135,11 +135,11 @@ module.exports = (app) => {
 
     assert(choreId || choreValueId, 'Missing choreId or choreValueId');
 
-    const chore = (choreId)
+    const chore = choreId
       ? await Chores.getChore(choreId)
       : await Chores.getSpecialChoreValue(choreValueId);
 
-    const choreValue = (choreId)
+    const choreValue = choreId
       ? await Chores.getCurrentChoreValue(choreId, now)
       : chore.value;
 
@@ -225,7 +225,7 @@ module.exports = (app) => {
     const targetChore = JSON.parse(common.getInputBlock(body, -2).chore.selected_option.value);
     const preference = JSON.parse(common.getInputBlock(body, -1).preference.selected_option.value);
 
-    const actionPreference = (action) ? preference : 1 - preference;
+    const actionPreference = action ? preference : 1 - preference;
 
     const orientedCurrentPreferences = (await Chores.getResidentChorePreferences(houseId, residentId))
       .map(pref => Chores.orientChorePreference(targetChore.id, pref))
@@ -237,7 +237,7 @@ module.exports = (app) => {
 
     const totalObligation = await Chores.getTotalObligation(houseId, now);
 
-    const view = (choreRankings.length)
+    const view = choreRankings.length
       ? views.choresRankView2(actionPreference, targetChore, choreRankings, totalObligation)
       : views.choresRankViewZero(actionPreference);
 
@@ -373,7 +373,7 @@ module.exports = (app) => {
     const points = common.getInputBlock(body, 3).points.value;
     const circumstance = common.getInputBlock(body, 4).circumstance.value;
 
-    if (!(await Admin.isActive(recipientId, now))) {
+    if (!await Admin.isActive(recipientId, now)) {
       const text = `<@${recipientId}> is not active and cannot earn points :confused:`;
       await common.postEphemeral(app, choresConf, residentId, text);
     } else if (points > currentBalance) {
@@ -525,7 +525,7 @@ module.exports = (app) => {
     const claimableUtc = new Date(common.getInputBlock(body, -1).claimable.selected_date);
 
     const claimable = shiftDate(claimableUtc, now.getTimezoneOffset());
-    const valuedAt = (claimable >= now) ? claimable : now;
+    const valuedAt = claimable >= now ? claimable : now;
 
     // Create the special chore proposal
     const [ proposal ] = await Chores.createSpecialChoreProposal(houseId, residentId, name, description, points, valuedAt, now);
@@ -553,7 +553,7 @@ module.exports = (app) => {
     const { houseId, residentId } = common.beginAction('chores-import', body);
     const { choresConf } = await Admin.getHouse(houseId);
 
-    if (!(await common.isAdmin(app, choresConf.oauth, residentId))) {
+    if (!await common.isAdmin(app, choresConf.oauth, residentId)) {
       await common.postEphemeral(app, choresConf, residentId, common.ADMIN_ONLY);
     } else {
       const view = views.choresImportView();

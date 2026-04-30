@@ -301,7 +301,7 @@ exports.thingsProposeAddView = function (thing, branch = '') {
     {
       action_id: 'type',
       type: 'plain_text_input',
-      initial_value: (thing) ? thing.type : undefined,
+      initial_value: thing ? thing.type : undefined,
       placeholder: common.blockPlaintext('Category of the thing, e.g. Pantry, Beverage'),
     },
   ));
@@ -311,7 +311,7 @@ exports.thingsProposeAddView = function (thing, branch = '') {
       action_id: 'name',
       type: 'plain_text_input',
       max_length: 50,
-      initial_value: (thing) ? thing.name : undefined,
+      initial_value: thing ? thing.name : undefined,
       placeholder: common.blockPlaintext('Name of the thing, e.g. Oat Milk, Salt'),
     },
   ));
@@ -320,7 +320,7 @@ exports.thingsProposeAddView = function (thing, branch = '') {
     {
       action_id: 'unit',
       type: 'plain_text_input',
-      initial_value: (thing) ? thing.metadata.unit : undefined,
+      initial_value: thing ? thing.metadata.unit : undefined,
       placeholder: common.blockPlaintext('Unit sold, e.g. 2 x 24 oz, 2 dozen'),
     },
   ));
@@ -331,7 +331,7 @@ exports.thingsProposeAddView = function (thing, branch = '') {
       type: 'number_input',
       min_value: '1',
       is_decimal_allowed: false,
-      initial_value: (thing) ? thing.value.toString() : undefined,
+      initial_value: thing ? thing.value.toString() : undefined,
       placeholder: common.blockPlaintext('Cost of the thing (including tax & shipping)'),
     },
   ));
@@ -340,7 +340,7 @@ exports.thingsProposeAddView = function (thing, branch = '') {
     {
       action_id: 'url',
       type: 'url_text_input',
-      initial_value: (thing) ? thing.metadata.url : undefined,
+      initial_value: thing ? thing.metadata.url : undefined,
       placeholder: common.blockPlaintext('Link to the thing'),
     },
   ));

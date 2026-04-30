@@ -20,7 +20,7 @@ exports.heartEmoji = function (numHearts) {
   }
 
   let text = emoji.repeat(Math.max(1, Math.floor(numHearts)));
-  text += (numHearts % 1 > 0) ? ':heavy_plus_sign:' : '';
+  text += numHearts % 1 > 0 ? ':heavy_plus_sign:' : '';
   return text;
 };
 

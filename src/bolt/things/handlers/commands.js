@@ -23,7 +23,7 @@ module.exports = (app) => {
     const { houseId } = common.beginCommand('/things-load', command);
     const { thingsConf } = await Admin.getHouse(houseId);
 
-    if (!(await common.isAdmin(app, thingsConf.oauth, command.user_id))) {
+    if (!await common.isAdmin(app, thingsConf.oauth, command.user_id)) {
       await respond({ response_type: 'ephemeral', text: common.ADMIN_ONLY });
     } else {
       const view = views.thingsLoadView();
@@ -64,7 +64,7 @@ module.exports = (app) => {
     const { now, houseId } = common.beginCommand('/things-fulfill', command);
     const { thingsConf } = await Admin.getHouse(houseId);
 
-    if (!(await common.isAdmin(app, thingsConf.oauth, command.user_id))) {
+    if (!await common.isAdmin(app, thingsConf.oauth, command.user_id)) {
       await respond({ response_type: 'ephemeral', text: common.ADMIN_ONLY });
       return;
     }
@@ -104,7 +104,7 @@ module.exports = (app) => {
     const { houseId } = common.beginCommand('/things-update', command);
     const { thingsConf } = await Admin.getHouse(houseId);
 
-    if (!(await common.isAdmin(app, thingsConf.oauth, command.user_id))) {
+    if (!await common.isAdmin(app, thingsConf.oauth, command.user_id)) {
       await respond({ response_type: 'ephemeral', text: common.ADMIN_ONLY });
     } else {
       const things = await Things.getThings(houseId);

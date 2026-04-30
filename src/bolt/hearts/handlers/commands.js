@@ -43,7 +43,7 @@ module.exports = (app) => {
     const { houseId } = common.beginCommand('/hearts-reset', command);
     const { heartsConf } = await Admin.getHouse(houseId);
 
-    if (!(await common.isAdmin(app, heartsConf.oauth, command.user_id))) {
+    if (!await common.isAdmin(app, heartsConf.oauth, command.user_id)) {
       await respond({ response_type: 'ephemeral', text: common.ADMIN_ONLY });
     } else {
       const view = views.heartsResetView();
