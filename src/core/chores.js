@@ -201,7 +201,7 @@ exports.getPreferenceSaturation = async function (houseId, residentId, choreId, 
 
   const filteredPreferences = preferences
     .map(pref => exports.orientChorePreference(choreId, pref))
-    .filter(pref => pref && pref.residentId === residentId);
+    .filter(pref => pref?.residentId === residentId);
 
   const preferenceValues = new Map();
   chores.forEach(chore => preferenceValues.set(chore.id, 0.5));
