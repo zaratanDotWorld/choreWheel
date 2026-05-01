@@ -525,7 +525,7 @@ module.exports = (app) => {
     const claimableUtc = new Date(common.getInputBlock(body, -1).claimable.selected_date);
 
     const claimable = shiftDate(claimableUtc, now.getTimezoneOffset());
-    const valuedAt = claimable >= now ? claimable : now;
+    const valuedAt = claimable >= now ? claimable : new Date(now.getTime() + Chores.params.specialProposalPollLength);
 
     // Create the special chore proposal
     const [ proposal ] = await Chores.createSpecialChoreProposal(houseId, residentId, name, description, points, valuedAt, now);
