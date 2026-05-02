@@ -22,7 +22,7 @@
     "lint": "npx eslint ."
   },
   "dependencies": {
-    "@slack/bolt": "^3.22.0",
+    "@slack/bolt": "^4.7.2",
     "csv-parse": "^6.2.1",
     "dotenv": "^17.4.2",
     "findup-sync": "^5.0.0",
