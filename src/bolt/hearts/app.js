@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 
 if (process.env.NODE_ENV === 'production') {
   require('newrelic');
