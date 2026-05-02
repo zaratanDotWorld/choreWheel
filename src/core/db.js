@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 
 const findup = require('findup-sync');
 const knex = require('knex');
