@@ -47,6 +47,7 @@ module.exports = (app) => {
     await common.publishHome(app, thingsConf.oauth, residentId, view);
 
     // This bookkeeping is done after returning the view
+    if (!thingsConf.channel) { return; }
 
     // Resolve any buys
     for (const resolvedBuy of await Things.resolveThingBuys(houseId, now)) {

@@ -47,6 +47,7 @@ module.exports = (app) => {
     await common.publishHome(app, choresConf.oauth, residentId, view);
 
     // This bookkeeping is done after returning the view
+    if (!choresConf.channel) { return; }
 
     // Resolve any claims
     for (const resolvedClaim of await Chores.resolveChoreClaims(houseId, now)) {
