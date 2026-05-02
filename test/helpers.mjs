@@ -1,23 +1,23 @@
-const randomstring = require('randomstring');
-const { Admin } = require('../src/core/index');
-const { db } = require('../src/core/db');
+import randomstring from 'randomstring';
+import { Admin } from '../src/core/index.js';
+import { db } from '../src/core/db.js';
 
-exports.generateSlackId = function () {
+export function generateSlackId () {
   return randomstring.generate({
     charset: 'alphanumeric',
     capitalization: 'uppercase',
     length: 11,
   });
-};
+}
 
-exports.createActiveUsers = async function (houseId, num, now) {
+export async function createActiveUsers (houseId, num, now) {
   for (let i = 0; i < num; i++) {
-    const residentId = exports.generateSlackId();
+    const residentId = generateSlackId();
     await Admin.activateResident(houseId, residentId, now);
   }
-};
+}
 
-exports.resetDb = async function () {
+export async function resetDb () {
   await db('ThingProposal').del();
   await db('ThingBuy').del();
   await db('Thing').del();
@@ -38,4 +38,4 @@ exports.resetDb = async function () {
 
   await db('Resident').del();
   await db('House').del();
-};
+}

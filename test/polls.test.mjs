@@ -1,13 +1,12 @@
-const { expect } = require('chai');
-const chai = require('chai');
-const chaiAsPromised = require('chai-as-promised');
+import { expect, use } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 
-chai.use(chaiAsPromised);
+import { Polls, Admin } from '../src/core/index.js';
+import { HOUR, DAY } from '../src/time.js';
+import { db } from '../src/core/db.js';
+import * as testHelpers from './helpers.mjs';
 
-const { Polls, Admin } = require('../src/core/index');
-const { HOUR, DAY } = require('../src/time');
-const { db } = require('../src/core/db');
-const testHelpers = require('./helpers');
+use(chaiAsPromised);
 
 describe('Polls', async () => {
   const HOUSE = testHelpers.generateSlackId();

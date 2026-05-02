@@ -1,12 +1,8 @@
-const { expect } = require('chai');
-const chai = require('chai');
-const chaiAsPromised = require('chai-as-promised');
+import { expect, use } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 
-chai.use(chaiAsPromised);
-
-const { Admin } = require('../src/core/index');
-
-const {
+import { Admin } from '../src/core/index.js';
+import {
   HOUR,
   DAY,
   getMonthStart,
@@ -15,9 +11,10 @@ const {
   getPrevMonthEnd,
   getDateStart,
   truncateHour,
-} = require('../src/time');
+} from '../src/time.js';
+import * as testHelpers from './helpers.mjs';
 
-const testHelpers = require('./helpers');
+use(chaiAsPromised);
 
 describe('Admin', async () => {
   const HOUSE1 = testHelpers.generateSlackId();

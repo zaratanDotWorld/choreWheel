@@ -1,12 +1,11 @@
-const { expect } = require('chai');
-const chai = require('chai');
-const chaiAsPromised = require('chai-as-promised');
+import { expect, use } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 
-chai.use(chaiAsPromised);
+import { Things, Hearts, Polls, Admin } from '../src/core/index.js';
+import { HOUR, DAY } from '../src/time.js';
+import * as testHelpers from './helpers.mjs';
 
-const { Things, Hearts, Polls, Admin } = require('../src/core/index');
-const { HOUR, DAY } = require('../src/time');
-const testHelpers = require('./helpers');
+use(chaiAsPromised);
 
 describe('Things', async () => {
   const { HEART_UNKNOWN } = Hearts;

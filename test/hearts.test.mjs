@@ -1,13 +1,11 @@
-const { expect } = require('chai');
-const chai = require('chai');
-const chaiAsPromised = require('chai-as-promised');
+import { expect, use } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 
-chai.use(chaiAsPromised);
+import { Hearts, Polls, Admin } from '../src/core/index.js';
+import { HOUR, DAY, getNextMonthStart } from '../src/time.js';
+import * as testHelpers from './helpers.mjs';
 
-const { Hearts, Polls, Admin } = require('../src/core/index');
-const { HOUR, DAY, getNextMonthStart } = require('../src/time');
-
-const testHelpers = require('./helpers');
+use(chaiAsPromised);
 
 describe('Hearts', async () => {
   const { HEART_UNKNOWN, HEART_CHALLENGE, HEART_KARMA } = Hearts;
@@ -211,11 +209,11 @@ describe('Hearts', async () => {
 
   describe('regenerating hearts', async () => {
     it('can calculate the regen amount', async () => {
-      expect(Hearts.getRegenAmount(1.0)).to.almost.equal(0.5);
-      expect(Hearts.getRegenAmount(4.9)).to.almost.equal(0.1);
-      expect(Hearts.getRegenAmount(5.0)).to.almost.equal(0.0);
-      expect(Hearts.getRegenAmount(5.1)).to.almost.equal(-0.1);
-      expect(Hearts.getRegenAmount(7.0)).to.almost.equal(-0.5);
+      expect(Hearts.getRegenAmount(1.0)).to.be.closeTo(0.5, 1e-6);
+      expect(Hearts.getRegenAmount(4.9)).to.be.closeTo(0.1, 1e-6);
+      expect(Hearts.getRegenAmount(5.0)).to.be.closeTo(0.0, 1e-6);
+      expect(Hearts.getRegenAmount(5.1)).to.be.closeTo(-0.1, 1e-6);
+      expect(Hearts.getRegenAmount(7.0)).to.be.closeTo(-0.5, 1e-6);
     });
 
     it('can regenerate hearts', async () => {
