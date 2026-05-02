@@ -87,6 +87,7 @@ module.exports = (app) => {
     await common.publishHome(app, heartsConf.oauth, residentId, view);
 
     // This bookkeeping is done after returning the view
+    if (!heartsConf.channel) { return; }
 
     // Resolve any challanges
     for (const resolvedChallenge of await Hearts.resolveChallenges(houseId, now)) {
