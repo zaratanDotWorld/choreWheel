@@ -14,7 +14,7 @@
     "app:things": "node src/bolt/things/app.js",
     "app:hearts": "node src/bolt/hearts/app.js",
     "ngrok": "ngrok http --region=us --hostname=zaratan.ngrok.io 3000",
-    "prepare": "husky install",
+    "prepare": "husky",
     "pretest": "npx knex migrate:rollback --all --env test; npx knex migrate:latest --env test",
     "test": "NODE_ENV=test mocha --exit",
     "pretest:coverage": "npx knex migrate:rollback --env test; npx knex migrate:latest --env test",
@@ -45,7 +45,7 @@
     "eslint-plugin-n": "^15.7.0",
     "eslint-plugin-no-only-tests": "^3.4.0",
     "eslint-plugin-promise": "^6.6.0",
-    "husky": "^8.0.3",
+    "husky": "^9.1.7",
     "mocha": "^10.8.2",
     "nyc": "^15.1.0",
     "randomstring": "^1.3.1"
