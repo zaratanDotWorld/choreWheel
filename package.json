@@ -56,7 +56,8 @@
     ],
     "ignoredBuiltDependencies": [
       "@datadog/pprof",
-      "@newrelic/fn-inspect"
+      "@newrelic/fn-inspect",
+      "protobufjs"
     ]
   }
 }
