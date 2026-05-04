@@ -1153,6 +1153,36 @@ describe('Chores', async () => {
       expect(penaltyHearts[0].value).to.equal(-5.0);
     });
 
+    it('caps the chore bonus so hearts do not exceed max', async () => {
+      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
+
+      // R1 fully meets their obligation, qualifying for the bonus
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 200 } ]);
+      await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now, 0);
+
+      // Top R1 up to within 0.25 of max — bonus would be 0.5, but only 0.25 of headroom remains
+      const topUp = (Hearts.params.max - Hearts.params.baselineAmount) - 0.25;
+      await Hearts.generateHearts(HOUSE, RESIDENT1, Hearts.HEART_UNKNOWN, now, topUp);
+
+      const penaltyTime = new Date(getNextMonthStart(now).getTime() + Chores.params.penaltyDelay);
+      const [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
+      expect(penaltyHeart.value).to.equal(0.25);
+    });
+
+    it('gives no chore bonus to a resident already at max hearts', async () => {
+      await Hearts.initialiseResident(HOUSE, RESIDENT1, now);
+
+      await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 200 } ]);
+      await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now, 0);
+
+      const topUp = Hearts.params.max - Hearts.params.baselineAmount;
+      await Hearts.generateHearts(HOUSE, RESIDENT1, Hearts.HEART_UNKNOWN, now, topUp);
+
+      const penaltyTime = new Date(getNextMonthStart(now).getTime() + Chores.params.penaltyDelay);
+      const [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
+      expect(penaltyHeart.value).to.equal(0);
+    });
+
     it('cannot penalize before initialized', async () => {
       await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 50 } ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now, 0);

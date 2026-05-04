@@ -292,12 +292,14 @@ exports.generateKarmaHearts = async function (houseId, now) {
       const metadata = { ranking: winner.ranking };
 
       const hearts = await exports.getHearts(residentId, generatedAt);
-      const value = Math.min(1, Math.max(0, params.max - hearts));
+      if (hearts === null) { continue; } // Skip uninitialized residents
+
+      const value = exports.getCappedAmount(hearts, 1);
 
       karmaHearts.push({ houseId, residentId, type, generatedAt, value, metadata });
     }
 
-    return exports.insertKarmaHearts(karmaHearts);
+    return karmaHearts.length ? exports.insertKarmaHearts(karmaHearts) : [];
   } else { return []; }
 };
 
@@ -315,6 +317,12 @@ exports.getKarmaHearts = async function (residentId, now) {
 };
 
 // Utilities
+
+exports.getCappedAmount = function (currentHearts, requestedAmount) {
+  if (requestedAmount <= 0) return requestedAmount;
+  const headroom = Math.max(0, params.max - (currentHearts || 0));
+  return Math.min(requestedAmount, headroom);
+};
 
 exports.getHeartsVoteScalar = async function (residentId, now) {
   const hearts = await exports.getHearts(residentId, now);

@@ -595,6 +595,28 @@ describe('Hearts', async () => {
       expect(karmaHearts[0].value).to.equal(0.5);
     });
 
+    it('gives nothing to a karma winner already at max hearts', async () => {
+      const topUp = Hearts.params.max - Hearts.params.baselineAmount;
+      await Hearts.generateHearts(HOUSE, RESIDENT2, HEART_UNKNOWN, now, topUp);
+      await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT2, now);
+
+      const karmaHearts = await Hearts.generateKarmaHearts(HOUSE, nextMonthKarma);
+      expect(karmaHearts.length).to.equal(1);
+      expect(karmaHearts[0].residentId).to.equal(RESIDENT2);
+      expect(karmaHearts[0].value).to.equal(0);
+    });
+
+    it('skips karma winners who are not initialized', async () => {
+      const r7 = testHelpers.generateSlackId();
+      await Admin.activateResident(HOUSE, r7, now);
+      // Note: r7 is not initialised, so has null hearts
+      await Hearts.giveKarma(HOUSE, RESIDENT1, r7, now);
+      await Hearts.giveKarma(HOUSE, RESIDENT2, r7, now);
+
+      const karmaHearts = await Hearts.generateKarmaHearts(HOUSE, nextMonthKarma);
+      expect(karmaHearts.length).to.equal(0);
+    });
+
     it('can generate multiple karma hearts', async () => {
       await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT2, now);
       await Hearts.giveKarma(HOUSE, RESIDENT1, RESIDENT3, now);
