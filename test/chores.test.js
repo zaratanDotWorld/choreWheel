@@ -1073,11 +1073,11 @@ describe('Chores', async () => {
 
       let penalty;
       penalty = await Chores.calculatePenalty(HOUSE, RESIDENT1, penaltyTime);
-      expect(penalty).to.equal(0.25);
+      expect(penalty).to.equal(-0.25);
       penalty = await Chores.calculatePenalty(HOUSE, RESIDENT2, penaltyTime);
-      expect(penalty).to.equal(1);
+      expect(penalty).to.equal(-1);
       penalty = await Chores.calculatePenalty(HOUSE, RESIDENT3, penaltyTime);
-      expect(penalty).to.equal(1.5);
+      expect(penalty).to.equal(-1.5);
     });
 
     it('can calculate chore penalties, taking into account chore breaks', async () => {
@@ -1101,11 +1101,11 @@ describe('Chores', async () => {
       let penalty;
       const penaltyTime = new Date(getNextMonthStart(feb1).getTime() + Chores.params.penaltyDelay);
       penalty = await Chores.calculatePenalty(HOUSE, RESIDENT1, penaltyTime);
-      expect(penalty).to.equal(-0.5);
-      penalty = await Chores.calculatePenalty(HOUSE, RESIDENT2, penaltyTime);
-      expect(penalty).to.equal(-0.5);
-      penalty = await Chores.calculatePenalty(HOUSE, RESIDENT3, penaltyTime);
       expect(penalty).to.equal(0.5);
+      penalty = await Chores.calculatePenalty(HOUSE, RESIDENT2, penaltyTime);
+      expect(penalty).to.equal(0.5);
+      penalty = await Chores.calculatePenalty(HOUSE, RESIDENT3, penaltyTime);
+      expect(penalty).to.equal(-0.5);
     });
 
     it('can add a penalty at the right time', async () => {
