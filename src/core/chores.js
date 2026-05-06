@@ -722,7 +722,7 @@ exports.addChorePenalty = async function (houseId, residentId, currentTime) {
     if (hearts === null) { return []; } // Don't penalize if not initialized
 
     const penaltyAmount = await exports.calculatePenalty(houseId, residentId, penaltyTime);
-    const heartValue = Hearts.getCappedAmount(hearts, -penaltyAmount);
+    const heartValue = Hearts.getCappedHearts(hearts, -penaltyAmount);
     return Hearts.generateHearts(houseId, residentId, Hearts.HEART_CHORE, penaltyTime, heartValue);
   } else {
     return [];

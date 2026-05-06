@@ -292,14 +292,12 @@ exports.generateKarmaHearts = async function (houseId, now) {
       const metadata = { ranking: winner.ranking };
 
       const hearts = await exports.getHearts(residentId, generatedAt);
-      if (hearts === null) { continue; } // Skip uninitialized residents
-
-      const value = exports.getCappedAmount(hearts, 1);
+      const value = exports.getCappedHearts(hearts, 1);
 
       karmaHearts.push({ houseId, residentId, type, generatedAt, value, metadata });
     }
 
-    return karmaHearts.length ? exports.insertKarmaHearts(karmaHearts) : [];
+    return exports.insertKarmaHearts(karmaHearts);
   } else { return []; }
 };
 
@@ -318,10 +316,10 @@ exports.getKarmaHearts = async function (residentId, now) {
 
 // Utilities
 
-exports.getCappedAmount = function (currentHearts, requestedAmount) {
-  if (requestedAmount <= 0) return requestedAmount;
-  const headroom = Math.max(0, params.max - (currentHearts || 0));
-  return Math.min(requestedAmount, headroom);
+// Ensure users don't get more than the maximum number of hearts
+exports.getCappedHearts = function (currentHearts, requestedHearts) {
+  const margin = Math.max(0, params.max - (currentHearts || 0));
+  return Math.min(requestedHearts, margin);
 };
 
 exports.getHeartsVoteScalar = async function (residentId, now) {
