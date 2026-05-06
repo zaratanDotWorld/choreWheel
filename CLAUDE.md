@@ -65,6 +65,10 @@ research/         # Standalone analysis scripts (not imported by production code
 
 - When changing algorithm behavior, make changes in dependency order: library → business logic → tests.
 - Database schema changes go through Knex migrations.
+- **Follow the patterns already in the file.**
+  If a file declares shared test constants in a top-level `let` block + outer `beforeEach`, new shared constants go there too — not in an inner describe.
+  Same for module exports, comment style, error handling, etc.
+  Don't invent a smaller-scope alternative under the guise of "minimal change"; idiomatic placement is the minimal change.
 
 ## R&D Best Practices
 

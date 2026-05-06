@@ -292,7 +292,7 @@ exports.generateKarmaHearts = async function (houseId, now) {
       const metadata = { ranking: winner.ranking };
 
       const hearts = await exports.getHearts(residentId, generatedAt);
-      const value = Math.min(1, Math.max(0, params.max - hearts));
+      const value = exports.getCappedHearts(hearts, 1);
 
       karmaHearts.push({ houseId, residentId, type, generatedAt, value, metadata });
     }
@@ -315,6 +315,12 @@ exports.getKarmaHearts = async function (residentId, now) {
 };
 
 // Utilities
+
+// Ensure users don't get more than the maximum number of hearts
+exports.getCappedHearts = function (currentHearts, requestedHearts) {
+  const margin = Math.max(0, params.max - (currentHearts || 0));
+  return Math.min(requestedHearts, margin);
+};
 
 exports.getHeartsVoteScalar = async function (residentId, now) {
   const hearts = await exports.getHearts(residentId, now);

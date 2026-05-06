@@ -722,7 +722,8 @@ exports.addChorePenalty = async function (houseId, residentId, currentTime) {
     if (hearts === null) { return []; } // Don't penalize if not initialized
 
     const penaltyAmount = await exports.calculatePenalty(houseId, residentId, penaltyTime);
-    return Hearts.generateHearts(houseId, residentId, Hearts.HEART_CHORE, penaltyTime, -penaltyAmount);
+    const heartValue = Hearts.getCappedHearts(hearts, penaltyAmount);
+    return Hearts.generateHearts(houseId, residentId, Hearts.HEART_CHORE, penaltyTime, heartValue);
   } else {
     return [];
   }
@@ -767,9 +768,9 @@ exports.calculatePenalty = async function (houseId, residentId, penaltyTime) {
   const deficiency = choreStats.pointsOwed - choreStats.pointsEarned;
 
   if (deficiency <= 0) {
-    return -params.heartBonus; // TODO: don't give more than maximum hearts
+    return params.heartBonus;
   } else {
-    return Math.floor(deficiency / params.penaltyIncrement) * params.penaltyUnit;
+    return -Math.floor(deficiency / params.penaltyIncrement) * params.penaltyUnit;
   }
 };
 
