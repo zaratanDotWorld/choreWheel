@@ -41,6 +41,7 @@ describe('Chores', async () => {
   let challengeEnd;
   let proposalEnd;
   let specialChoreProposalEnd;
+  let penaltyTime;
 
   async function setChorePreference (houseId, residentId, targetChoreId, sourceChoreId, preference) {
     const normalizedPref = Chores.normalizeChorePreference({ targetChoreId, sourceChoreId, preference });
@@ -60,6 +61,7 @@ describe('Chores', async () => {
     challengeEnd = new Date(now.getTime() + Chores.params.pollLength);
     proposalEnd = new Date(now.getTime() + Chores.params.proposalPollLength);
     specialChoreProposalEnd = new Date(now.getTime() + Chores.params.specialProposalPollLength);
+    penaltyTime = new Date(getNextMonthStart(now).getTime() + Chores.params.penaltyDelay);
   });
 
   afterEach(async () => {
@@ -1070,7 +1072,6 @@ describe('Chores', async () => {
       await Chores.claimChore(HOUSE, restock.id, RESIDENT3, now, 0);
 
       let penalty;
-      const penaltyTime = new Date(getNextMonthStart(now).getTime() + Chores.params.penaltyDelay);
       penalty = await Chores.calculatePenalty(HOUSE, RESIDENT1, penaltyTime);
       expect(penalty).to.equal(0.25);
       penalty = await Chores.calculatePenalty(HOUSE, RESIDENT2, penaltyTime);
@@ -1114,7 +1115,6 @@ describe('Chores', async () => {
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now, 0);
 
       let penaltyHeart;
-      const penaltyTime = new Date(getNextMonthStart(now).getTime() + Chores.params.penaltyDelay);
       const beforeTime = new Date(penaltyTime.getTime() - 1);
 
       [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, beforeTime);
@@ -1136,8 +1136,6 @@ describe('Chores', async () => {
       await db('ChoreValue').insert([ { houseId: HOUSE, choreId: restock.id, valuedAt: now, value: 50 } ]);
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now, 0);
       await Chores.claimChore(HOUSE, restock.id, RESIDENT2, now, 0);
-
-      const penaltyTime = new Date(getNextMonthStart(now).getTime() + Chores.params.penaltyDelay);
 
       let penaltyHearts;
       penaltyHearts = await Chores.addChorePenalties(HOUSE, penaltyTime);
@@ -1164,7 +1162,6 @@ describe('Chores', async () => {
       const topUp = (Hearts.params.max - Hearts.params.baselineAmount) - 0.25;
       await Hearts.generateHearts(HOUSE, RESIDENT1, Hearts.HEART_UNKNOWN, now, topUp);
 
-      const penaltyTime = new Date(getNextMonthStart(now).getTime() + Chores.params.penaltyDelay);
       const [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
       expect(penaltyHeart.value).to.equal(0.25);
     });
@@ -1178,7 +1175,6 @@ describe('Chores', async () => {
       const topUp = Hearts.params.max - Hearts.params.baselineAmount;
       await Hearts.generateHearts(HOUSE, RESIDENT1, Hearts.HEART_UNKNOWN, now, topUp);
 
-      const penaltyTime = new Date(getNextMonthStart(now).getTime() + Chores.params.penaltyDelay);
       const [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
       expect(penaltyHeart.value).to.equal(0);
     });
@@ -1188,7 +1184,6 @@ describe('Chores', async () => {
       await Chores.claimChore(HOUSE, dishes.id, RESIDENT1, now, 0);
 
       let penaltyHeart;
-      const penaltyTime = new Date(getNextMonthStart(now).getTime() + Chores.params.penaltyDelay);
 
       // No penalty before initialized
       [ penaltyHeart ] = await Chores.addChorePenalty(HOUSE, RESIDENT1, penaltyTime);
