@@ -1,0 +1,81 @@
+name: doc-sync
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+    paths:
+      - 'src/core/**/*.js'
+      - 'src/bolt/**/*.js'
+      - 'src/lib/**/*.js'
+
+jobs:
+  docs-sync:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Analyze changes and update docs
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Analyze changes in this ChoreWheel PR and update documentation in `docs/`
+            ONLY if user-facing behavior changed.
+
+            **Change Information:**
+            - Title: ${{ github.event.pull_request.title }}
+            - Description: ${{ github.event.pull_request.body }}
+            - PR: #${{ github.event.pull_request.number }}
+            - Base: ${{ github.event.pull_request.base.sha }}
+            - Head: ${{ github.event.pull_request.merge_commit_sha }}
+
+            Read the diff with `git diff <base> <head>` to see what changed.
+
+            **Rules — read these carefully:**
+            1. DEFAULT TO NO CHANGES. Most code PRs do not need docs updates.
+               Internal refactors, test changes, CI changes, and dependency bumps need nothing.
+               Only proceed if there is a concrete user-facing change (new command, changed
+               behavior, new feature, removed feature, changed configuration, or changed
+               algorithm parameters that residents would notice).
+            2. SINGLE CANONICAL LOCATION. Each piece of information belongs on exactly one page.
+               Find the one page that owns the topic and make your substantive edits there.
+               Other pages MAY add a brief cross-reference, but do NOT duplicate explanations
+               or examples across pages.
+            3. MINIMAL EDITS. Update only the specific section affected. Do not rewrite
+               surrounding paragraphs, add new sections for context, or reorganize existing content.
+            4. Match the existing reStructuredText style and tone of the surrounding docs.
+            5. Do NOT create git branches, commits, or PRs — just update files in place.
+            6. If no documentation updates are needed, state that clearly and exit.
+
+          claude_args: '--allowed-tools Read,Write,Edit,Glob,Grep,Bash(git diff:*),Bash(git log:*)'
+
+      - name: Open PR if docs changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No documentation changes."
+            exit 0
+          fi
+
+          BRANCH="docs-update-pr-${{ github.event.pull_request.number }}"
+          git checkout -b "$BRANCH"
+          git add docs/
+          git commit -m "docs: update for PR #${{ github.event.pull_request.number }}"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "docs: update for #${{ github.event.pull_request.number }}" \
+            --body "Auto-generated docs sync for #${{ github.event.pull_request.number }} (${{ github.event.pull_request.title }})."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
