@@ -27,6 +27,15 @@ module.exports = (app) => {
     await common.pruneWorkspaceMember(user.team_id, user);
   });
 
+  // Direct message (placeholder for AI chat)
+  app.event('message', async ({ payload }) => {
+    if (payload.channel_type !== 'im') { return; }
+    if (payload.subtype) { return; }
+
+    console.log(`things message.im - ${payload.user}`);
+    // TODO: AI chat handler
+  });
+
   // App home opened
   app.event('app_home_opened', async ({ body, event }) => {
     if (event.tab !== 'home') { return; }
