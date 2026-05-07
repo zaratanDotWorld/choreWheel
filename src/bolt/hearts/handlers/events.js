@@ -43,6 +43,8 @@ module.exports = (app) => {
 
   // Message
   app.event('message', async ({ payload }) => {
+    if (payload.channel_type === 'im') { return; }
+
     const karmaRecipients = Hearts.getKarmaRecipients(payload.text);
 
     if (karmaRecipients.length > 0) {
@@ -65,6 +67,15 @@ module.exports = (app) => {
 
       await common.addReaction(app, heartsConf.oauth, payload, numbers[karmaRecipients.length]);
     }
+  });
+
+  // Direct message (placeholder for AI chat)
+  app.event('message', async ({ payload }) => {
+    if (payload.channel_type !== 'im') { return; }
+    if (payload.subtype) { return; }
+
+    console.log(`hearts message.im - ${payload.user}`);
+    // TODO: AI chat handler
   });
 
   // App home opened
