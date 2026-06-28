@@ -73,7 +73,7 @@ jobs:
           git checkout -b "$BRANCH"
           git add docs/
           git commit -m "docs: update for PR #${{ github.event.pull_request.number }}"
-          git push origin "$BRANCH"
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git" "$BRANCH"
           gh pr create \
             --title "docs: update for #${{ github.event.pull_request.number }}" \
             --body "Auto-generated docs sync for #${{ github.event.pull_request.number }} (${{ github.event.pull_request.title }})."
