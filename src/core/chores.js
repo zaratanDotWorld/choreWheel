@@ -268,6 +268,7 @@ exports.getUnclaimedSpecialChoreValues = async function (houseId, now) {
     .leftJoin('ChoreClaim', 'ChoreValue.id', 'ChoreClaim.choreValueId')
     .where('ChoreValue.houseId', houseId)
     .where('ChoreValue.valuedAt', '<=', now)
+    .where('ChoreValue.value', '>', 0) // Exclude deleted special chores
     .whereNull('ChoreValue.choreId')
     .groupBy('ChoreValue.id')
     .havingRaw('COUNT(CASE WHEN "ChoreClaim"."valid" = TRUE THEN 1 END) = 0') // No valid claims
@@ -278,6 +279,7 @@ exports.getFutureSpecialChoreValues = async function (houseId, now) {
   return db('ChoreValue')
     .where('ChoreValue.houseId', houseId)
     .where('ChoreValue.valuedAt', '>', now)
+    .where('ChoreValue.value', '>', 0) // Exclude deleted special chores
     .whereNull('ChoreValue.choreId')
     .orderBy('ChoreValue.valuedAt', 'asc')
     .returning('*');
@@ -487,8 +489,8 @@ exports.getUpdatedChoreValues = async function (houseId, updateTime) {
 };
 
 // Special chore values have choreId = null
-exports.addSpecialChoreValue = async function (houseId, name, description, value, valuedAt) {
-  const metadata = { name, description };
+exports.addSpecialChoreValue = async function (houseId, name, description, value, valuedAt, createdBy) {
+  const metadata = { name, description, createdBy };
   const choreValue = { houseId, value, valuedAt, metadata };
 
   return exports.addChoreValues(choreValue);
@@ -556,6 +558,29 @@ exports.claimSpecialChore = async function (houseId, choreValueId, claimedBy, cl
       pollId: poll.id,
       metadata: { ...choreValue.metadata, timeSpent },
     })
+    .returning('*');
+};
+
+// Deletes an unclaimed special chore by zeroing its value; the value > 0 filter then hides it
+// from the claimable and future lists, and it nets out of the obligation total automatically.
+// The initial value is preserved in metadata for auditability.
+exports.deleteSpecialChore = async function (houseId, choreValueId, deletedBy, now) {
+  const choreValue = await exports.getSpecialChoreValue(choreValueId);
+  assert(choreValue && choreValue.choreId === null, 'Not a special chore!');
+
+  // Cannot delete a chore which has been done, or has a claim in progress
+  const blockingClaims = await db('ChoreClaim')
+    .where({ choreValueId })
+    .where(function () {
+      this.whereNull('resolvedAt').orWhere('valid', true);
+    });
+  assert(blockingClaims.length === 0, 'Cannot delete a claimed special chore!');
+
+  const metadata = { ...choreValue.metadata, deletedBy, deletedAt: now, initialValue: choreValue.value };
+
+  return db('ChoreValue')
+    .where({ id: choreValueId, houseId })
+    .update({ value: 0, metadata })
     .returning('*');
 };
 
@@ -836,11 +861,11 @@ exports.getSpecialChoreProposalMinVotes = async function (houseId, value, now) {
   return Math.min(Math.max(numVotes, minVotes), maxVotes);
 };
 
-exports.executeChoreProposal = async function (houseId, choreId, name, metadata, active, now) {
+exports.executeChoreProposal = async function (houseId, proposedBy, choreId, name, metadata, active, now) {
   if (metadata.value) {
     // Add a special chore
     const { description, value, valuedAt } = metadata;
-    await exports.addSpecialChoreValue(houseId, name, description, value, valuedAt);
+    await exports.addSpecialChoreValue(houseId, name, description, value, valuedAt, proposedBy);
   } else if (!choreId) {
     // Add a regular chore
     const [ chore ] = await exports.addChore(houseId, name, metadata);
@@ -858,8 +883,8 @@ exports.resolveChoreProposal = async function (proposalId, now) {
   assert(!proposal.resolvedAt, 'Proposal already resolved!');
 
   if (await Polls.isPollValid(proposal.pollId, now)) {
-    const { houseId, choreId, name, metadata, active } = proposal;
-    await exports.executeChoreProposal(houseId, choreId, name, metadata, active, now);
+    const { houseId, proposedBy, choreId, name, metadata, active } = proposal;
+    await exports.executeChoreProposal(houseId, proposedBy, choreId, name, metadata, active, now);
   }
 
   return db('ChoreProposal')

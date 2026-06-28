@@ -1,5 +1,5 @@
 const common = require('../../common');
-const { TITLE, formatStats, formatTotalStats } = require('./utils');
+const { TITLE, formatStats, formatTotalStats, mapChoresValues } = require('./utils');
 
 // Command views
 
@@ -55,7 +55,7 @@ exports.choresStatsView = function (choreClaims, choreBreaks, choreStats, choreV
   };
 };
 
-exports.choresSpecialListView = function (currentChores, futureChores) {
+exports.choresSpecialListView = function (currentChores, futureChores, deletableChores = []) {
   const header = 'Special Chores';
 
   const currentText = '*Current*\n' +
@@ -79,6 +79,29 @@ exports.choresSpecialListView = function (currentChores, futureChores) {
   blocks.push(common.blockDivider());
   blocks.push(common.blockSection(currentText));
   blocks.push(common.blockSection(futureText));
+
+  // Offer a delete flow for chores the viewer created (or any chore, if an admin)
+  if (deletableChores.length > 0) {
+    blocks.push(common.blockDivider());
+    blocks.push(common.blockInput(
+      'Delete special chores',
+      {
+        action_id: 'chores',
+        type: 'multi_static_select',
+        placeholder: common.blockPlaintext('Choose special chores to delete'),
+        options: mapChoresValues(deletableChores.map(cv => ({ ...cv, choreValueId: cv.id }))),
+      },
+    ));
+
+    return {
+      type: 'modal',
+      callback_id: 'chores-special-delete-callback',
+      title: TITLE,
+      close: common.CLOSE,
+      submit: common.SUBMIT,
+      blocks,
+    };
+  }
 
   return {
     type: 'modal',
