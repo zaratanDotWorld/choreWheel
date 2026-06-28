@@ -808,6 +808,47 @@ describe('Chores', async () => {
       expect(resolvedClaim.resolvedAt.getTime()).to.equal(challengeEnd.getTime());
     });
 
+    it('can delete an unclaimed special chore', async () => {
+      const [ name, description, value ] = [ 'Special Chore', 'Complicated task', 55 ];
+      await Chores.addSpecialChoreValue(HOUSE, name, description, value, now, RESIDENT1);
+
+      // The chore is claimable, and weighs on the special chore balance
+      let choreValues = await Chores.getUnclaimedSpecialChoreValues(HOUSE, now);
+      expect(choreValues.length).to.equal(1);
+      expect(await Chores.getSpecialChoreBalance(HOUSE, now)).to.equal(15 - 55);
+
+      await Chores.deleteSpecialChore(HOUSE, choreValues[0].id, RESIDENT1, now);
+
+      // The chore is gone, and the obligation is nullified as though it never existed
+      choreValues = await Chores.getUnclaimedSpecialChoreValues(HOUSE, now);
+      expect(choreValues.length).to.equal(0);
+      expect(await Chores.getSpecialChoreBalance(HOUSE, now)).to.equal(15);
+    });
+
+    it('can delete a future special chore', async () => {
+      const [ name, description, value ] = [ 'Special Chore', 'Complicated task', 15 ];
+      await Chores.addSpecialChoreValue(HOUSE, name, description, value, soon, RESIDENT1);
+
+      let choreValues = await Chores.getFutureSpecialChoreValues(HOUSE, now);
+      expect(choreValues.length).to.equal(1);
+
+      await Chores.deleteSpecialChore(HOUSE, choreValues[0].id, RESIDENT1, now);
+
+      choreValues = await Chores.getFutureSpecialChoreValues(HOUSE, now);
+      expect(choreValues.length).to.equal(0);
+    });
+
+    it('cannot delete a claimed special chore', async () => {
+      const [ name, description, value ] = [ 'Special Chore', 'Complicated task', 15 ];
+      await Chores.addSpecialChoreValue(HOUSE, name, description, value, now, RESIDENT1);
+
+      const [ choreValue ] = await Chores.getUnclaimedSpecialChoreValues(HOUSE, now);
+      await Chores.claimSpecialChore(HOUSE, choreValue.id, RESIDENT1, now, 20);
+
+      await expect(Chores.deleteSpecialChore(HOUSE, choreValue.id, RESIDENT1, now))
+        .to.be.rejectedWith('Cannot delete a claimed special chore!');
+    });
+
     it('can get the latest chore claim', async () => {
       await db('ChoreValue').insert([ { houseId: HOUSE, choreId: dishes.id, valuedAt: now, value: 10 } ]);
 

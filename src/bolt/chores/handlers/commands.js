@@ -54,14 +54,46 @@ module.exports = (app) => {
   app.command('/chores-special', async ({ ack, command }) => {
     await ack();
 
-    const { now, houseId } = common.beginCommand('/chores-special', command);
+    const { now, houseId, residentId } = common.beginCommand('/chores-special', command);
     const { choresConf } = await Admin.getHouse(houseId);
 
     const currentSpecialChores = await Chores.getUnclaimedSpecialChoreValues(houseId, now);
     const futureSpecialChores = await Chores.getFutureSpecialChoreValues(houseId, now);
 
-    const view = views.choresSpecialListView(currentSpecialChores, futureSpecialChores);
+    // A special chore can be deleted by its creator, or by an admin
+    const isAdmin = await common.isAdmin(app, choresConf.oauth, residentId);
+    const deletableChores = [ ...currentSpecialChores, ...futureSpecialChores ]
+      .filter(cv => isAdmin || cv.metadata.createdBy === residentId);
+
+    const view = views.choresSpecialListView(currentSpecialChores, futureSpecialChores, deletableChores);
     await common.openView(app, choresConf.oauth, command.trigger_id, view);
+  });
+
+  // Callback: chores-special-delete-callback
+  app.view('chores-special-delete-callback', async ({ ack, body }) => {
+    await ack({ response_action: 'clear' });
+
+    const { now, houseId, residentId } = common.beginAction('chores-special-delete-callback', body);
+    const { choresConf } = await Admin.getHouse(houseId);
+
+    // The menu only lists chores the viewer may delete (filtered in the /chores-special handler),
+    // and Slack constrains a multi_static_select submission to the options we provided
+    const selectedOptions = common.getInputBlock(body, -1).chores.selected_options;
+
+    const deleted = [];
+    for (const option of selectedOptions) {
+      const { choreValueId } = JSON.parse(option.value);
+      const choreValue = await Chores.getSpecialChoreValue(choreValueId);
+
+      await Chores.deleteSpecialChore(houseId, choreValueId, residentId, now);
+      deleted.push(choreValue.metadata.name);
+    }
+
+    if (deleted.length > 0) {
+      const text = `<@${residentId}> deleted ${deleted.length} special chore${deleted.length === 1 ? '' : 's'}: ` +
+        deleted.map(name => `*${name}*`).join(', ');
+      await common.postMessage(app, choresConf, text);
+    }
   });
 
   // Slash command: /chores-activate

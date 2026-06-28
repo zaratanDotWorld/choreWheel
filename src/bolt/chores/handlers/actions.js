@@ -479,7 +479,7 @@ module.exports = (app) => {
     const metadata = { description };
 
     if (privateMetadata.force) {
-      await Chores.executeChoreProposal(houseId, choreId, name, metadata, active, now);
+      await Chores.executeChoreProposal(houseId, residentId, choreId, name, metadata, active, now);
 
       const text = 'An admin just edited a chore';
       const blocks = views.choresProposeCallbackViewForce(privateMetadata, residentId, name, description);
