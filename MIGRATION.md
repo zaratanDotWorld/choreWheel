@@ -25,30 +25,19 @@ Delete this file once cutover is complete and AWS is decommissioned.
 ## Step 1 — Copy data (RDS `mirror` → Neon `neondb`)
 
 Run this twice: now, to populate Neon so the preDeploy migrate no-ops and Render can be smoke-tested against real data; and again at cutover (Step 4) to capture writes since.
-The dump contains Slack **OAuth bot tokens** from the installation store.
-Treat any dump file as a secret; prefer the direct pipe (Option B), which persists nothing to disk.
-Three gotchas bite every RDS → Neon dump:
+The dump contains Slack **OAuth bot tokens** from the installation store, so the script streams `pg_dump` straight into Neon and never writes a dump file to disk.
 
-1. **Client version ≥ 17.** `pg_dump` must be at least the server version (RDS is 17.7). Local Homebrew tooling is 18.4, which is fine. In pgAdmin, if it errors on version, point *Preferences → Paths → Binary paths* at `/opt/homebrew/bin`.
-2. **Strip ownership/privileges.** RDS objects are owned by `postgres`/`mirror`, roles that don't exist on Neon. Restoring them as-is fails. Use `--no-owner --no-privileges` (CLI) or check "Do not save → Owner" and "Privileges" in pgAdmin's Backup *and* Restore dialogs.
-3. **Database names differ.** Dump from `mirror`, restore into `neondb`.
-
-### Option A — pgAdmin (GUI)
-
-Register the Neon server (host from the direct connection string, port `5432`, database `neondb`, user `neondb_owner`, **SSL mode: Require**).
-Backup: right-click RDS `mirror` → *Backup…* → Format **Custom** → set the Owner/Privileges options → save `mirror.dump`.
-Restore: right-click Neon `neondb` → *Restore…* → Format **Custom** → select `mirror.dump` → same Owner/Privileges options.
-
-### Option B — CLI (direct pipe, nothing written to disk)
+Run `scripts/migrate-db.sh` from the repo root:
 
 ```sh
-# RDS source: PG_CONNECTION_PROD from .env (read-only). NEON: the direct connection string.
-RDS=$(node -e "require('dotenv').config({quiet:true}); process.stdout.write(process.env.PG_CONNECTION_PROD)")
-NEON='postgresql://neondb_owner:...@ep-...us-west-2.aws.neon.tech/neondb?sslmode=require'
-
-PGSSLMODE=require pg_dump "$RDS" --no-owner --no-privileges --no-acl \
-  | psql "$NEON" -v ON_ERROR_STOP=1
+SOURCE_URL=$(node -e "require('dotenv').config({quiet:true});process.stdout.write(process.env.PG_CONNECTION_PROD)") \
+TARGET_URL=$(npx neonctl@latest connection-string --project-id noisy-poetry-20219969) \
+./scripts/migrate-db.sh
 ```
+
+`SOURCE_URL` is RDS (your `.env` `PG_CONNECTION_PROD`, while it still points at RDS); `TARGET_URL` is the Neon **direct** endpoint. Pass `-y` to skip the confirmation prompt on re-runs.
+
+The script resets the target schema and restores in one transaction (a failed run leaves Neon untouched; re-runs are safe), then verifies source-vs-target row counts. It handles the three things that bite a manual copy: it checks `pg_dump` is ≥ 17; strips ownership/privileges (`--no-owner --no-privileges --no-acl`, since RDS's `postgres`/`mirror` roles don't exist on Neon); and restores into `neondb` regardless of the source db name.
 
 ## Step 2 — Verify parity
 
@@ -59,7 +48,7 @@ NODE_ENV=production PG_CONNECTION_PROD="$NEON" npx knex migrate:latest
 # expect: "Already up to date"
 ```
 
-Spot-check row counts against RDS for the core tables (e.g. `chore_claims`, `hearts`, `things`, and the installation/OAuth table) and confirm all expected tables are present.
+`scripts/migrate-db.sh` already compared every table's row counts; this step just confirms schema + migration-history parity via knex (the dump carries the `knex_migrations` history, so it should be a clean no-op).
 
 ## Step 3 — Wire the app
 
