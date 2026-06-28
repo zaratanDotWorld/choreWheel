@@ -1,0 +1,81 @@
+# Render Blueprint — one web service per Slack app.
+# Render injects PORT per service, terminates TLS, and load-balances,
+# replacing the AWS ALB + NAT scaffolding. Secrets (sync: false) are set
+# in the Render dashboard, never committed.
+
+envVarGroups:
+  - name: chorewheel-shared
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: STATE_SECRET
+        sync: false
+      - key: SALT
+        sync: false
+      - key: PG_CONNECTION_PROD
+        sync: false
+
+services:
+  - type: web
+    name: chores
+    runtime: node
+    plan: starter
+    region: oregon
+    branch: main
+    autoDeploy: true
+    buildCommand: pnpm install --frozen-lockfile
+    startCommand: node src/bolt/chores/app.js
+    # Migrate on the DIRECT (unpooled) endpoint before the deploy goes live.
+    # Only chores migrates, so the three services never race on the lock.
+    preDeployCommand: 'PG_CONNECTION_PROD="$PG_CONNECTION_PROD_DIRECT" npx knex migrate:latest'
+    healthCheckPath: /
+    envVars:
+      - fromGroup: chorewheel-shared
+      - key: PG_CONNECTION_PROD_DIRECT
+        sync: false
+      - key: CHORES_SIGNING_SECRET
+        sync: false
+      - key: CHORES_CLIENT_ID
+        sync: false
+      - key: CHORES_CLIENT_SECRET
+        sync: false
+
+  - type: web
+    name: hearts
+    runtime: node
+    plan: starter
+    region: oregon
+    branch: main
+    autoDeploy: true
+    buildCommand: pnpm install --frozen-lockfile
+    startCommand: node src/bolt/hearts/app.js
+    healthCheckPath: /
+    envVars:
+      - fromGroup: chorewheel-shared
+      - key: HEARTS_SIGNING_SECRET
+        sync: false
+      - key: HEARTS_CLIENT_ID
+        sync: false
+      - key: HEARTS_CLIENT_SECRET
+        sync: false
+
+  - type: web
+    name: things
+    runtime: node
+    plan: starter
+    region: oregon
+    branch: main
+    autoDeploy: true
+    buildCommand: pnpm install --frozen-lockfile
+    startCommand: node src/bolt/things/app.js
+    healthCheckPath: /
+    envVars:
+      - fromGroup: chorewheel-shared
+      - key: THINGS_SIGNING_SECRET
+        sync: false
+      - key: THINGS_CLIENT_ID
+        sync: false
+      - key: THINGS_CLIENT_SECRET
+        sync: false

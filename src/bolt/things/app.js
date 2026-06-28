@@ -1,9 +1,5 @@
 require('dotenv').config({ quiet: true });
 
-if (process.env.NODE_ENV === 'production') {
-  require('newrelic');
-}
-
 const { App, LogLevel } = require('@slack/bolt');
 
 const { Admin } = require('../../core/index');
@@ -48,7 +44,7 @@ require('./handlers/actions')(app);
 // Launch the app
 
 (async () => {
-  const port = process.env.THINGS_PORT || 3000;
+  const port = process.env.PORT || 3000;
   await app.start(port);
   console.log(`⚡️ Things app is running on port ${port} in the ${process.env.NODE_ENV} environment`);
 })();

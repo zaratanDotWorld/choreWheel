@@ -1,9 +1,5 @@
 require('dotenv').config({ quiet: true });
 
-if (process.env.NODE_ENV === 'production') {
-  require('newrelic');
-}
-
 const cron = require('node-cron');
 const { App, LogLevel } = require('@slack/bolt');
 
@@ -61,7 +57,7 @@ cron.schedule('0 12 * * *', async () => {
 // Launch the app
 
 (async () => {
-  const port = process.env.CHORES_PORT || 3000;
+  const port = process.env.PORT || 3000;
   await app.start(port);
   console.log(`⚡️ Chores app is running on port ${port} in the ${process.env.NODE_ENV} environment`);
 })();
