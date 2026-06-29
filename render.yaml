@@ -4,7 +4,7 @@
 # in the Render dashboard, never committed.
 
 envVarGroups:
-  - name: chorewheel-shared
+  - name: cw-core
     envVars:
       - key: NODE_ENV
         value: production
@@ -19,7 +19,7 @@ envVarGroups:
 
 services:
   - type: web
-    name: chores
+    name: cw-chores
     runtime: node
     plan: starter
     region: oregon
@@ -32,7 +32,7 @@ services:
     preDeployCommand: 'PG_CONNECTION_PROD="$PG_CONNECTION_PROD_DIRECT" npx knex migrate:latest'
     healthCheckPath: /
     envVars:
-      - fromGroup: chorewheel-shared
+      - fromGroup: cw-core
       - key: PG_CONNECTION_PROD_DIRECT
         sync: false
       - key: CHORES_SIGNING_SECRET
@@ -43,7 +43,7 @@ services:
         sync: false
 
   - type: web
-    name: hearts
+    name: cw-hearts
     runtime: node
     plan: starter
     region: oregon
@@ -53,7 +53,7 @@ services:
     startCommand: node src/bolt/hearts/app.js
     healthCheckPath: /
     envVars:
-      - fromGroup: chorewheel-shared
+      - fromGroup: cw-core
       - key: HEARTS_SIGNING_SECRET
         sync: false
       - key: HEARTS_CLIENT_ID
@@ -62,7 +62,7 @@ services:
         sync: false
 
   - type: web
-    name: things
+    name: cw-things
     runtime: node
     plan: starter
     region: oregon
@@ -72,7 +72,7 @@ services:
     startCommand: node src/bolt/things/app.js
     healthCheckPath: /
     envVars:
-      - fromGroup: chorewheel-shared
+      - fromGroup: cw-core
       - key: THINGS_SIGNING_SECRET
         sync: false
       - key: THINGS_CLIENT_ID
