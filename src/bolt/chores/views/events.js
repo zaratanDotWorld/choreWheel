@@ -28,6 +28,8 @@ exports.choresOnboardView = function () {
 
 exports.choresHomeView = function (choreChannel, choreStats, numActive) {
   const { pointsEarned, pointsOwed } = choreStats;
+  const pointsCap = pointsOwed * Chores.params.pointsCapMultiplier;
+
   const progressEmoji = pointsOwed - pointsEarned < Chores.params.penaltyIncrement
     ? ':white_check_mark:'
     : ':muscle::skin-tone-4:';
@@ -43,13 +45,14 @@ exports.choresHomeView = function (choreChannel, choreStats, numActive) {
   const pointsText = pointsOwed > 0
     ? `You've earned *${pointsEarned} / ${pointsOwed} points* this month ${progressEmoji}`
     : '*You are exempt from chores!* :tada:';
+  const cappedText = `You've hit your monthly max of *${pointsCap} points*! :confetti_ball:`;
   const activeText = `There are *${numActive} people* around today :sunny:`;
   const channelText = `Events will be posted in <#${choreChannel}> :mailbox_with_mail:`;
 
   const actions = [];
 
   if (pointsOwed > 0) {
-    if (Number(pointsEarned) < Number(pointsOwed) + Chores.params.pointsBuffer) {
+    if (pointsEarned < pointsCap) {
       actions.push(common.blockButton('chores-claim', ':hand::skin-tone-4: Claim a chore'));
     }
     actions.push(common.blockButton('chores-rank', ':scales: Set priorities'));
@@ -69,6 +72,11 @@ exports.choresHomeView = function (choreChannel, choreStats, numActive) {
   blocks.push(common.blockSection(common.feedbackLink));
   blocks.push(common.blockDivider());
   blocks.push(common.blockSection(pointsText));
+
+  if (pointsOwed > 0 && pointsEarned >= pointsCap) {
+    blocks.push(common.blockSection(cappedText));
+  }
+
   blocks.push(common.blockSection(activeText));
   blocks.push(common.blockSection(channelText));
   blocks.push(common.blockActions(actions));

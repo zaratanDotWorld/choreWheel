@@ -25,7 +25,7 @@ exports.params = {
   valueThreshold: 10,
   numResidentsThreshold: 4,
   pointsPerResident: 100,
-  pointsBuffer: 200,
+  pointsCapMultiplier: 3,
   inflationFactor: 1.02,
   displayThreshold: 0.5,
   penaltyDelay: DAY + 6 * HOUR, // TODO: make robust
