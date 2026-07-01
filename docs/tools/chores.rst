@@ -146,6 +146,9 @@ The app home is also the entryway into the basic functionality, described below:
   In the unlikely scenario that someone lies about doing a chore (or does an extremely poor job), the rest of the residents may downvote the claim.
   A failed claim returns the points to the chore, allowing someone else to do the job properly.
 
+  There's a monthly cap on how many points you can claim, equal to **3x your obligation** (so someone who owes 100 points can earn up to 300).
+  Once you hit that cap, the ``Claim a chore`` button disappears from the home page and is replaced with a congratulatory message.
+
 :guilabel:`Take a break`
   The point of Chores is to help folks clean up their own messes, with more points (roughly) meaning more mess.
   When someone is out of town, they aren't making a mess, and so they shouldn't owe as many points.
