@@ -35,4 +35,8 @@ If you would like help integrating Chore Wheel into your community, check out ou
 We welcome contributions!
 Please read our **[contributing guide](https://docs.chorewheel.zaratan.world/en/latest/development/contributing.html)** for more information.
 
-*Patent Pending*
+### License
+
+Chore Wheel is licensed under the [GNU Affero General Public License v3.0 or later](LICENSE.txt).
+
+Copyright © 2020 Kronosapiens Labs, LLC.

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2020 Kronosapiens Labs, LLC
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 exports.SECOND = 1000;
 exports.MINUTE = 60 * exports.SECOND;
 exports.HOUR = 60 * exports.MINUTE;
